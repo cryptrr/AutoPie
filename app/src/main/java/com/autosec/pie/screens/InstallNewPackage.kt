@@ -44,8 +44,7 @@ fun InstallNewPackageBottomSheet(
                 .fillMaxHeight(0.75F)
             ,
             contentAlignment = Alignment.TopStart
-            //TODO: Expect actual implement
-            //.windowInsetsPadding(WindowInsets.navigationBars)
+
 
         )
         {

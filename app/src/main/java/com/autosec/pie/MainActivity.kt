@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
                                     0 -> {
                                         FloatingActionButton(
                                             modifier = Modifier.height(65.dp),
-                                            onClick = { /*TODO*/ },
+                                            onClick = { },
                                             containerColor = MaterialTheme.colorScheme.primary
 
                                         ) {

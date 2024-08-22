@@ -25,6 +25,8 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetDefaults
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,9 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.ShareItemModel
 import com.autosec.pie.elements.AutoPieLogo
+import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.ShareReceiverViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -55,35 +57,8 @@ class ShareReceiverActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-
-//        WindowCompat.setDecorFitsSystemWindows(window, false)
-//
-//        if (Build.VERSION.SDK_INT in 21..29) {
-//            window.statusBarColor = TRANSPARENT
-//            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-//            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-//            window.decorView.systemUiVisibility =
-//                SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or SYSTEM_UI_FLAG_LAYOUT_STABLE
-//
-//        } else if (Build.VERSION.SDK_INT >= 30) {
-//            window.statusBarColor = TRANSPARENT
-//            // Making status bar overlaps with the activity
-//            WindowCompat.setDecorFitsSystemWindows(window, false)
-//        }
-//
-//
-//        window.statusBarColor = Color.Transparent.toArgb()
-//        window.navigationBarColor = Color.Transparent.toArgb()
-//
-//
-//
-//        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = true
-//        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = true
-
-
         super.onCreate(savedInstanceState)
-        //requestWindowFeature(Window.FEATURE_NO_TITLE)
-        //window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT));
+
 
         Timber.d("What is this")
         Timber.d(this.intent.toString())
@@ -93,105 +68,6 @@ class ShareReceiverActivity : ComponentActivity() {
 
 
         val files = mutableListOf<String>()
-
-
-//        val intent = intent
-//        val action = intent.action
-//        val type = intent.type
-//        val scheme = intent.scheme
-//
-//        if (Intent.ACTION_SEND == action && type != null) {
-//            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-//            val sharedUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-//            val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
-//
-//            Timber.d("sharedText : $sharedText")
-//            Timber.d("sharedUri : $sharedUri")
-//            Timber.d("sharedPath : $sharedPath")
-//
-//
-//            if (sharedText != null) {
-//                if (isValidUrl(sharedText)) {
-//                    //handleUrlAndFinish(sharedText)
-//                } else {
-//                    //handleDirectText(sharedText)
-//                }
-//            } else if (sharedUri != null) {
-//                if (sharedPath != null) {
-//                    //removing starting "file://" from path
-//                    val newPath = sharedPath.path
-//                    //handleRealPath(newPath)
-//                } else if (sharedUri.path != null) {
-////                    val file: DocumentFile = DocumentFile.fromSingleUri(context, sharedUri)
-////                    if (file == null) {
-////                        showErrorDialogAndQuit("Unable to receive any file or URL.")
-////                    }
-////                    val abs_path: String = DocumentFileUtils.getAbsolutePath(file, context)
-////
-////                    Log.d("absolute path", abs_path)
-////                    handleRealPath(abs_path)
-//                } else {
-//                    //handleContentUri(sharedUri, intent.getStringExtra(Intent.EXTRA_TITLE))
-//                }
-//            } else {
-//                //showErrorDialogAndQuit("Send action without content - nothing to save.")
-//                Toast.makeText(this, "Send action without content - nothing to save.", Toast.LENGTH_LONG).show()
-//            }
-//        } else if (Intent.ACTION_SEND_MULTIPLE == action && type != null) {
-//            val sharedPaths = intent.getParcelableArrayListExtra<Uri>("extra_file_uris")
-//
-//            Timber.d(sharedPaths.toString())
-//            if (sharedPaths != null) {
-//                //handleMultipleFiles(sharedPaths)
-//            } else {
-//                //showErrorDialogAndQuit("Unable to receive files")
-//
-//                Toast.makeText(this, "Unable to receive files", Toast.LENGTH_LONG).show()
-//
-//            }
-//            //sendArrayToIntent();
-//        } else if ("content" == scheme) {
-//            val sharedUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-//
-//            val realPath = intent.getStringExtra("real_path")
-//            Timber.d("Real Path : $realPath")
-//
-//            if (realPath != null) {
-//                //handleRealPath(realPath)
-//            } else if (sharedUri!!.path != null) {
-//                //handleRealPath(sharedUri.path)
-//            } else {
-//                //handleContentUri(intent.data, intent.getStringExtra(Intent.EXTRA_TITLE))
-//            }
-//        } else if ("file" == scheme) {
-//            // When e.g. clicking on a downloaded apk:
-//            val path = intent.data!!.path
-//            val file = File(path)
-//            try {
-//                val `in` = FileInputStream(file)
-//                //promptNameAndSave(`in`, file.name)
-//            } catch (e: FileNotFoundException) {
-//                //showErrorDialogAndQuit("Cannot open file: " + e.message + ".")
-//
-//                Toast.makeText(this, "Cannot open file: " + e.message + ".", Toast.LENGTH_LONG).show()
-//
-//            }
-//        } else {
-//            //showErrorDialogAndQuit("Unable to receive any file or URL.")
-//            Toast.makeText(this, "Unable to receive any file or URL.", Toast.LENGTH_LONG).show()
-//
-//        }
-
-
-
-
-
-
-
-
-
-
-
 
         when {
             Intent.ACTION_SEND_MULTIPLE == intent?.action -> {
@@ -264,7 +140,9 @@ fun ShareContextMenuBottomSheet(
     onExpand: () -> Unit = {}
 ) {
 
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = {
+        it != SheetValue.Hidden
+    })
 
     val scope = rememberCoroutineScope()
 
@@ -282,8 +160,6 @@ fun ShareContextMenuBottomSheet(
                 .fillMaxHeight(0.75F)
             ,
             contentAlignment = Alignment.TopStart
-            //TODO: Expect actual implement
-            //.windowInsetsPadding(WindowInsets.navigationBars)
 
         )
         {
@@ -299,7 +175,12 @@ fun ShareContextMenuBottomSheet(
                         AutoPieLogo()
                         Spacer(modifier = Modifier.height(15.dp))
                     }
-                    items(shareReceiverViewModel.shareItemsResult){ item ->
+                    item {
+                        SearchBar(searchQuery = shareReceiverViewModel.searchQuery) {
+                            shareReceiverViewModel.search(shareReceiverViewModel.searchQuery.value)
+                        }
+                    }
+                    items(shareReceiverViewModel.filteredShareItemsResult){ item ->
                         ShareCard(card = item, currentLink, fileUris)
                     }
                 }
@@ -314,9 +195,11 @@ fun ShareContextMenuBottomSheet(
     ModalBottomSheet(
 
         sheetState = state,
+
         content = { bottomSheetContent() },
         shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        properties = ModalBottomSheetDefaults.properties(),
         onDismissRequest = {
             scope.launch {
                 state.hide()

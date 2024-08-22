@@ -25,9 +25,18 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
     var shareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
+    var filteredShareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
+
+    var searchQuery = mutableStateOf("")
 
     init {
         getSharesConfig()
+    }
+
+    fun search(query: String){
+
+        filteredShareItemsResult = shareItemsResult.filter { it.name.contains(query, ignoreCase = true) || it.command.contains(query, ignoreCase = true) || it.exec.contains(query, ignoreCase = true) }
+
     }
 
 
@@ -67,6 +76,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         }
 
         shareItemsResult = tempList
+        filteredShareItemsResult = tempList
     }
 
     private fun readSharesConfig(): JsonObject? {
