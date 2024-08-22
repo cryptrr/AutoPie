@@ -5,7 +5,6 @@ import android.os.Environment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -204,7 +203,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     fun searchInCommands(query: String){
 
-        filteredListOfCommands = fullListOfCommands.filter { it.name.contains(query, ignoreCase = true) || it.command.contains(query, ignoreCase = true) || it.exec.contains(query, ignoreCase = true) }
+        filteredListOfCommands = fullListOfCommands.filter { it.name.contains(query, ignoreCase = true) || it.command.contains(query, ignoreCase = true) || it.exec.contains(query, ignoreCase = true) || it.type.toString().contains(query, ignoreCase = true) }
 
     }
 

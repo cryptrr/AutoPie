@@ -21,14 +21,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -50,11 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
@@ -67,16 +60,10 @@ import com.autosec.pie.screens.HomeScreen
 import com.autosec.pie.screens.InstallNewPackageBottomSheet
 import com.autosec.pie.screens.InstalledScreen
 import com.autosec.pie.screens.SettingsScreen
-import com.autosec.pie.services.BinaryCopierService
-import com.autosec.pie.services.ProcessManagerService
 import com.autosec.pie.ui.theme.AutoPieTheme
-import com.autosec.pie.ui.theme.PastelGreen
-import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import org.koin.java.KoinJavaComponent
-import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)

@@ -2,48 +2,29 @@ package com.autosec.pie.screens
 
 import android.app.Activity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,21 +34,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
-import com.autosec.pie.data.ShareItemModel
 import com.autosec.pie.elements.EmptyItemsBadge
-import com.autosec.pie.ui.theme.PastelGreen
+import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
-import com.autosec.pie.viewModels.ShareReceiverViewModel
 import org.koin.java.KoinJavaComponent.inject
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(innerPadding: PaddingValues) {
 
@@ -94,55 +71,6 @@ fun HomeScreen(innerPadding: PaddingValues) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
-
-
-                OutlinedTextField(
-                    shape = RoundedCornerShape(15.dp),
-                    value = commandsListScreenViewModel.searchCommandQuery.value,
-                    onValueChange = {
-                        commandsListScreenViewModel.searchCommandQuery.value = it
-                        commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
-
-                    },
-                    colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
-                    //label = { Text("Search") },
-                    placeholder = { Text("Search your commands") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = {
-                            commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
-                        }
-                    ),
-                    trailingIcon = {
-                        Button(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(60.dp),
-                            onClick = {
-                                commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Search,
-                                contentDescription = "Search",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(25.dp)
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-
-
-                )
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-
 //                SingleChoiceSegmentedButtonRow {
 //                    commandsListScreenViewModel.commandTypeOptions.forEachIndexed { index, label ->
 //                        SegmentedButton(
@@ -165,6 +93,11 @@ fun HomeScreen(innerPadding: PaddingValues) {
 //                        }
 //                    }
 //                }
+            }
+            item {
+                SearchBar(searchQuery = commandsListScreenViewModel.searchCommandQuery) {
+                    commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
+                }
             }
             if (commandsListScreenViewModel.filteredListOfCommands.isNotEmpty()) {
                 items(commandsListScreenViewModel.filteredListOfCommands) { item ->
