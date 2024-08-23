@@ -180,7 +180,7 @@ fun ShareContextMenuBottomSheet(
                             shareReceiverViewModel.search(shareReceiverViewModel.searchQuery.value)
                         }
                     }
-                    items(shareReceiverViewModel.filteredShareItemsResult){ item ->
+                    items(shareReceiverViewModel.filteredShareItemsResult, key = {it.name}){ item ->
                         ShareCard(card = item, currentLink, fileUris)
                     }
                 }

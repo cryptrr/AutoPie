@@ -1,7 +1,6 @@
 package com.autosec.pie.screens
 
 import android.app.Activity
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,13 +26,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.data.InstalledPackageModel
-import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import org.koin.java.KoinJavaComponent.inject
@@ -49,7 +46,7 @@ fun InstalledScreen(innerPadding: PaddingValues) {
                 Text(text = "Installed Packages", fontSize = 33.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(modifier = Modifier.height(15.dp))
             }
-            items(installedPackagesViewModel.installedPackages){ item ->
+            items(installedPackagesViewModel.installedPackages, key = {it.path}){ item ->
                 PackageCard(item = item)
             }
         }

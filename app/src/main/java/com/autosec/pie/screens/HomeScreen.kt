@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.EmptyItemsBadge
 import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.ui.theme.PastelPurple
@@ -51,6 +53,10 @@ fun HomeScreen(innerPadding: PaddingValues) {
     val commandsListScreenViewModel: CommandsListScreenViewModel by inject(
         CommandsListScreenViewModel::class.java
     )
+
+    LaunchedEffect(key1 = Unit) {
+        commandsListScreenViewModel.getCommandsList()
+    }
 
     Box(
         modifier = Modifier
@@ -100,7 +106,7 @@ fun HomeScreen(innerPadding: PaddingValues) {
                 }
             }
             if (commandsListScreenViewModel.filteredListOfCommands.isNotEmpty()) {
-                items(commandsListScreenViewModel.filteredListOfCommands) { item ->
+                items(commandsListScreenViewModel.filteredListOfCommands, key = {it.name}) { item ->
                     CommandCard(card = item)
                 }
             } else {
@@ -132,8 +138,8 @@ fun CommandCard(
 
     ElevatedCard(
         onClick = {
-
-
+            commandsListScreenViewModel.main.currentCommandKey.value = card.name
+            commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
         },
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier

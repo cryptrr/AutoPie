@@ -34,10 +34,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,11 +53,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AppBottomBar
 import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SnackbarHostCustom
 import com.autosec.pie.screens.AddShareCommandBottomSheet
 import com.autosec.pie.screens.CommandsSearchBottomSheet
+import com.autosec.pie.screens.EditCommandBottomSheet
 import com.autosec.pie.screens.HomeScreen
 import com.autosec.pie.screens.InstallNewPackageBottomSheet
 import com.autosec.pie.screens.InstalledScreen
@@ -77,7 +81,9 @@ class MainActivity : ComponentActivity() {
 
             val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
-            val addShareBottomSheetState = rememberModalBottomSheetState(true)
+            val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
             val openBottomSheet = rememberSaveable { mutableStateOf(false) }
 
             val commandsSearchBottomSheetState = rememberModalBottomSheetState(true)
@@ -86,7 +92,27 @@ class MainActivity : ComponentActivity() {
             val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
             val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
+            val editCommandBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
+            val editCommandBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
             val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+            LaunchedEffect(key1 = Unit) {
+
+                mainViewModel.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.OpenEditCommandSheet -> {
+                            editCommandBottomSheetOpen.value = true
+                        }
+                        else -> {}
+                    }
+                }
+
+            }
+
+
 
 
 
@@ -330,6 +356,13 @@ class MainActivity : ComponentActivity() {
                         InstallNewPackageBottomSheet(
                             state = installNewPackageBottomSheet,
                             open = installNewPackageBottomSheetOpen
+                        )
+                    }
+                    if (editCommandBottomSheetOpen.value) {
+                        EditCommandBottomSheet(
+                            state = editCommandBottomSheet,
+                            open = editCommandBottomSheetOpen,
+                            key = mainViewModel.currentCommandKey.value
                         )
                     }
 

@@ -50,8 +50,4 @@ class InstalledPackagesViewModel(application: Application) : AndroidViewModel(ap
         }
     }
 
-
-
-
-
 }

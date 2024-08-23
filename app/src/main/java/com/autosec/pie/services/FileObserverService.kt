@@ -4,13 +4,9 @@ import android.app.Activity
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.content.Context
-import android.os.Environment
 import android.os.FileObserver
 import com.autosec.pie.viewModels.MainViewModel
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParseException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -19,7 +15,6 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
-import java.io.FileInputStream
 
 class FileObserverJobService : JobService() {
 
@@ -29,73 +24,50 @@ class FileObserverJobService : JobService() {
 
 
     override fun onStartJob(params: JobParameters?): Boolean {
+
         Timber.d("Job is starting")
 
+        CoroutineScope(Dispatchers.Default).launch {
 
-        val observerConfig = readFileObserversConfig()
-
-        if(observerConfig == null){
-            Timber.d("Observers file not available")
-            mainViewModel.schedulerConfigAvailable = false
-            return false
-        }else{
-            mainViewModel.schedulerConfigAvailable = true
-        }
+            Timber.d( "Thread Running on: ${Thread.currentThread().name}")
 
 
-        for (entry in observerConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
-            println("Key: $key, Value: $value")
-
-            val directoryPath = value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val selectors = value.get("selectors").asJsonArray.map { it.asString }
+            val observerConfig = JSONService.readObserversConfig()
 
 
-            Timber.d("Starting $key observer for $directoryPath")
-
-            val fileObserver = DirectoryFileObserver(directoryPath, exec, command, selectors)
-            fileObservers.add(fileObserver)
-            fileObserver.startWatching()
-        }
-
-
-        return true // Job is still running
-    }
-
-    private fun readFileObserversConfig(): JsonObject? {
-
-        val filePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
-
-        try {
-            val file = File(filePath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            Timber.d(jsonString)
-
-            // Parse the JSON string
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Observer Config is not valid json object")
-                throw JsonParseException("Config not valid")
+            if(observerConfig == null){
+                Timber.d("Observers file not available")
+                mainViewModel.schedulerConfigAvailable = false
+                return@launch
+            }else{
+                mainViewModel.schedulerConfigAvailable = true
             }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            e.printStackTrace()
-            // Handle potential exceptions like file not found or permission errors
-            return null
+
+
+            for (entry in observerConfig.entrySet()) {
+                val key = entry.key
+                val value = entry.value.asJsonObject
+                // Process the key-value pair
+                println("Key: $key, Value: $value")
+
+                val directoryPath = value.get("path").asString
+                val exec = value.get("exec").asString
+                val command = value.get("command").asString
+                val selectors = value.get("selectors").asJsonArray.map { it.asString }
+
+
+                Timber.d("Starting $key observer for $directoryPath")
+
+                val fileObserver = DirectoryFileObserver(directoryPath, exec, command, selectors)
+                fileObservers.add(fileObserver)
+                fileObserver.startWatching()
+            }
         }
+
+
+        return true
     }
+
 
     override fun onStopJob(params: JobParameters?): Boolean {
         Timber.d("Job is Stopped")

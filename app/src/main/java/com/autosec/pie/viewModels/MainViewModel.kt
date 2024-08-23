@@ -34,6 +34,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
 
+    var currentCommandKey = mutableStateOf("")
+
     var viewModelError = MutableSharedFlow<Notification?>(replay = 1)
     var appNotification = MutableSharedFlow<Notification?>(replay = 1)
 
@@ -43,6 +45,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var schedulerConfigAvailable by mutableStateOf(false)
 
     var sharesConfigAvailable by mutableStateOf(false)
+
 
     var turnOffFileObservers by mutableStateOf(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_OFF)).also { state ->
         viewModelScope.launch {

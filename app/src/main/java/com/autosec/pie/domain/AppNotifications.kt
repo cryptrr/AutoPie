@@ -25,7 +25,8 @@ import com.autosec.pie.elements.BannerType
 sealed class ViewModelError() : Exception(), Notification{
     object CameraPermissionDenied : ViewModelError()
     object ProductNotFound : ViewModelError()
-    object CouldNotAddProduct : ViewModelError()
+    data object CouldNotAddProduct : ViewModelError()
+    data class InvalidJson(val name: String) : ViewModelError()
 
     object Unknown : ViewModelError()
 
@@ -36,6 +37,7 @@ sealed class ViewModelError() : Exception(), Notification{
             is CameraPermissionDenied -> "App requires camera permission."
             is ProductNotFound -> "Product Not Available"
             is CouldNotAddProduct -> "Unable to add product to history"
+            is InvalidJson -> "$name Config is not valid JSON."
             else -> "An Unknown Error has occurred"
         }
 
