@@ -11,13 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -33,11 +39,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.viewModels.EditCommandViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 
@@ -85,7 +94,7 @@ fun EditCommandBottomSheet(
                         .padding(horizontal = 15.dp)
                 ) {
 
-                    EditCommandScreen(key)
+                    EditCommandScreen(key, open)
 
 
                 }
@@ -114,7 +123,7 @@ fun EditCommandBottomSheet(
 
 
 @Composable
-fun EditCommandScreen(commandKey: String) {
+fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
     val viewModel: EditCommandViewModel by KoinJavaComponent.inject(EditCommandViewModel::class.java)
 
@@ -173,37 +182,29 @@ fun EditCommandScreen(commandKey: String) {
             Spacer(modifier = Modifier.height(25.dp))
 
 
-            GenericTextFormField(text = viewModel.commandName, "Name", placeholder = "name")
+            GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
 
             Spacer(modifier = Modifier.height(20.dp))
-            GenericTextFormField(text = viewModel.execFile, "Exec File", placeholder = "exec file")
+            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file")
 
             Spacer(modifier = Modifier.height(20.dp))
 
             GenericTextFormField(
                 text = viewModel.command,
-                "Command To Run",
+                "Command".uppercase(),
                 placeholder = "command",
                 maxLines = 4,
                 singleLine = false,
                 modifier = Modifier
                     .height(100.dp)
-                    .wrapContentHeight()
+                    //.wrapContentHeight()
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             GenericTextFormField(
                 text = viewModel.directory,
-                "Directory To Store",
-                placeholder = "directory"
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            GenericTextFormField(
-                text = viewModel.directory,
-                "Directory To Store",
+                "DIRECTORY",
                 placeholder = "directory"
             )
 
@@ -212,33 +213,66 @@ fun EditCommandScreen(commandKey: String) {
 
             GenericFormSwitch(
                 text = "Delete source file after completion",
-                switchState = viewModel.deleteSource
-            ) {
-
-            }
+                switchState = viewModel.deleteSource,
+                onChange = { viewModel.deleteSource.value = it}
+            )
         }
 
 
-        Button(
-            modifier = Modifier
-                .padding(vertical = 15.dp)
-                .height(43.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(20),
-            //contentPadding = PaddingValues(vertical = 20.dp),
-            onClick = {
+        Row {
+            Button(
+                modifier = Modifier
+                    .padding(vertical = 15.dp)
+                    .height(52.dp)
+                    .width(70.dp),
+                shape = RoundedCornerShape(20),
+                //contentPadding = PaddingValues(vertical = 20.dp),
+                onClick = {
+                    viewModel.viewModelScope.launch {
+                        viewModel.deleteCommand(key = commandKey)
+                        delay(500L)
+                        viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                        open.value = false
+                    }
+                },
 
-            },
+                ) {
+                Icon(
+                    modifier = Modifier
 
-            ) {
-            Text(
-                text = "SAVE",
-                //modifier = Modifier.align(Alignment.Center),
-                color = Color.White,
-                letterSpacing = 1.11.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+                        .size(27.dp),
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                )
 
+            }
+            
+            Spacer(modifier = Modifier.width(15.dp))
+            Button(
+                modifier = Modifier
+                    .padding(vertical = 15.dp)
+                    .height(52.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20),
+                //contentPadding = PaddingValues(vertical = 20.dp),
+                onClick = {
+                    viewModel.viewModelScope.launch {
+                        viewModel.changeCommandDetails(key = commandKey)
+                        delay(500L)
+                        viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                        open.value = false
+                    }
+                },
+
+                ) {
+                Text(
+                    text = "SAVE",
+                    //modifier = Modifier.align(Alignment.Center),
+                    letterSpacing = 1.11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+            }
         }
 
     }

@@ -21,9 +21,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String, placeholder: String, maxLines: Int = 1, singleLine: Boolean = true, modifier: Modifier = Modifier){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int = 1, singleLine: Boolean = true, modifier: Modifier = Modifier){
     Column {
-        Text(text = title, fontSize = 21.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(3.dp))
+
+        subtitle?.let {
+            Text(text = subtitle, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+        }
+
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
@@ -36,7 +42,7 @@ fun GenericTextFormField(text: MutableState<String>,title: String, placeholder: 
             maxLines = maxLines,
             colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
             //label = { Text("Search") },
-            placeholder = { Text(placeholder) },
+            placeholder = { placeholder?.let{Text(it)} },
             singleLine = singleLine,
             modifier = Modifier
                 .fillMaxWidth()
@@ -56,7 +62,7 @@ fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>, onChange
             .fillMaxWidth()
             .height(55.dp)
     ) {
-        Text(text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, fontSize = 16.4.sp, fontWeight = FontWeight.SemiBold)
         Switch(checked = switchState.value, onCheckedChange = {
                 onChange(it)
         })

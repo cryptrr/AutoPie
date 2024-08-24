@@ -9,8 +9,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.JSONService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
@@ -27,10 +30,26 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     val commandTypeOptions = listOf("All", "Share", "Observers")
 
     val searchCommandQuery = mutableStateOf("")
+    val isLoading = mutableStateOf(false)
 
+
+    init {
+        viewModelScope.launch {
+            getCommandsList()
+
+            main.eventFlow.collect{
+                when(it){
+                    is ViewModelEvent.RefreshCommandsList -> getCommandsList()
+                    else -> {}
+                }
+            }
+        }
+    }
 
 
     suspend fun getCommandsList(){
+        isLoading.value = true
+        delay(1000L)
         viewModelScope.launch(Dispatchers.IO){
             val sharesConfig = JSONService.readSharesConfig()
             val observersConfig = JSONService.readObserversConfig()
@@ -104,6 +123,8 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 fullListOfCommands = tempList.sortedBy { it.name }
 
                 filteredListOfCommands = tempList.sortedBy { it.name }
+
+                isLoading.value = false
             }
 
 

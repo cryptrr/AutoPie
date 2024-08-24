@@ -175,11 +175,14 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         val resultString = "\"${item.command.replace("{INPUT_FILE}", currentLink)}\""
 
+        val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
         viewModelScope.launch {
-            ProcessManagerService.runCommandForShare(item.exec, item.command , item.path)
+            ProcessManagerService.runCommandForShare(fullExecPath, item.command , item.path)
         }
 
     }
@@ -199,7 +202,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             currentItems.map { path  ->
                 val resultString = "\"${item.command.replace("{INPUT_FILE}", path)}\""
 
-                ProcessManagerService.runCommandForShare(item.exec, resultString , item.path)
+                val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                ProcessManagerService.runCommandForShare(fullExecPath, resultString , item.path)
             }
         }
 

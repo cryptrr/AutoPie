@@ -17,8 +17,6 @@ class JSONService {
         private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
         fun readSharesConfig(): JsonObject? {
-
-
             val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
 
 
@@ -75,6 +73,33 @@ class JSONService {
             } catch (e: Exception) {
                 e.printStackTrace()
                 return null
+            }
+        }
+
+
+        fun writeSharesConfig(jsonString: String) {
+
+            val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
+
+            try {
+                val file = File(sharesFilePath)
+                file.writeText(jsonString)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return
+            }
+        }
+
+        fun writeObserversConfig(jsonString: String) {
+            val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
+
+            try {
+                val file = File(fileObserverPath)
+                file.writeText(jsonString)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return
             }
         }
     }

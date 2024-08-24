@@ -56,7 +56,7 @@ fun AddShareCommandBottomSheet(
                     .fillMaxSize()
                     .padding(horizontal = 15.dp)){
 
-                NewCommand()
+                NewCommand(open)
 
 
             }
@@ -81,7 +81,7 @@ fun AddShareCommandBottomSheet(
 
 @Composable
 fun NewCommand(
-
+    open: MutableState<Boolean>
 ) {
-    CreateCommandScreen()
+    CreateCommandScreen(open)
 }

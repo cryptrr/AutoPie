@@ -77,9 +77,21 @@ class ProcessManagerService {
                        "PWD" to "${cwd}"
                    )
 
+                   shell.addOnCommandResultListener(object : Shell.OnCommandResultListener {
+                       override fun onResult(result: Shell.Command.Result) {
+                           Timber.d("RESULT LISTENER $result")
+
+                           if(result.isSuccess){
+                               //Timber.d("RESULT LISTENER : SUCCESS")
+                           }
+                       }
+                   })
+
                    Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
                    val setEnvResult = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+
+                   shell.run("cd ${cwd}")
 
                    Timber.d("python3.9 $exec $command")
 

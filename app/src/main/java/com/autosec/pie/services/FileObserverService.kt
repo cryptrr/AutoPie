@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.content.Context
+import android.os.Environment
 import android.os.FileObserver
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -109,6 +110,8 @@ class FileObserverJobService : JobService() {
 
                         Timber.d("Edited command $exec $resultString")
 
+                        val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + exec
+
                         //val command = "${path}${file.absolutePath} ${path}${}"
 
                         val regSelectors = selectors.map { it.toRegex() }
@@ -116,7 +119,7 @@ class FileObserverJobService : JobService() {
                         //Checking if file passes selectors list
                         if(regSelectors.any { file.name.matches(it) }){
                             Timber.d("Selector matched for file")
-                            ProcessManagerService.runCommand4(exec, resultString , path)
+                            ProcessManagerService.runCommand4(fullExecPath, resultString , path)
                         }else{
                             Timber.d("File does not match selector")
                         }

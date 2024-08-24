@@ -41,6 +41,7 @@ import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.EmptyItemsBadge
+import com.autosec.pie.elements.LoadingBadge
 import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
@@ -54,9 +55,9 @@ fun HomeScreen(innerPadding: PaddingValues) {
         CommandsListScreenViewModel::class.java
     )
 
-    LaunchedEffect(key1 = Unit) {
-        commandsListScreenViewModel.getCommandsList()
-    }
+//    LaunchedEffect(key1 = Unit) {
+//        commandsListScreenViewModel.getCommandsList()
+//    }
 
     Box(
         modifier = Modifier
@@ -105,17 +106,29 @@ fun HomeScreen(innerPadding: PaddingValues) {
                     commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
                 }
             }
-            if (commandsListScreenViewModel.filteredListOfCommands.isNotEmpty()) {
-                items(commandsListScreenViewModel.filteredListOfCommands, key = {it.name}) { item ->
-                    CommandCard(card = item)
+
+            when{
+                commandsListScreenViewModel.isLoading.value -> {
+                    item{
+                        LoadingBadge()
+                    }
                 }
-            } else {
-                item {
-                    EmptyItemsBadge(
-                        icon = Icons.Outlined.Share,
-                        text = "Your commands list is empty"
-                    )
+
+                commandsListScreenViewModel.filteredListOfCommands.isNotEmpty() -> {
+                    items(commandsListScreenViewModel.filteredListOfCommands, key = {it.name}) { item ->
+                        CommandCard(card = item)
+                    }
                 }
+
+                else -> {
+                    item {
+                        EmptyItemsBadge(
+                            icon = Icons.Outlined.Share,
+                            text = "Your commands list is empty"
+                        )
+                    }
+                }
+
             }
 
         }

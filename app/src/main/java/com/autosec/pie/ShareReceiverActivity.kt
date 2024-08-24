@@ -48,6 +48,7 @@ import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.ShareReceiverViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -60,7 +61,6 @@ class ShareReceiverActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        Timber.d("What is this")
         Timber.d(this.intent.toString())
 
 
@@ -227,8 +227,8 @@ fun ShareCard(
         shareReceiverViewModel.viewModelScope.launch {
             shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
             isLoading = true
-            //delay(1500)
-            //activity?.finish()
+            delay(1500)
+            activity?.finish()
         }
 
     },
