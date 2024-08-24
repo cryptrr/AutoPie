@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.autosec.pie.di.appModule
+import com.autosec.pie.logging.FileLoggingTree
 import com.autosec.pie.services.BinaryCopierService
 import com.autosec.pie.services.FileObserverJobService
 import com.autosec.pie.services.ScreenStateReceiver
@@ -27,7 +28,7 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Timber.plant(Timber.DebugTree())
+        Timber.plant(FileLoggingTree(this@MyApplication))
 
         startKoin {
             androidContext(this@MyApplication)
@@ -73,6 +74,7 @@ class MyApplication : Application() {
         if(mainViewModel.storageManagerPermissionGranted && !autosecFolderExists){
             Timber.d("Autosec folder does not exist. Creating and copying files")
             BinaryCopierService.createAutoSecFolder()
+            BinaryCopierService.createLogsFolder()
             BinaryCopierService.downloadAutoSecInitArchive()
             BinaryCopierService.extractAutoSecFiles()
         }else{

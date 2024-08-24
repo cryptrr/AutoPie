@@ -302,6 +302,15 @@ class BinaryCopierService {
             }
         }
 
+        fun createLogsFolder() {
+            CoroutineScope(Dispatchers.IO).launch {
+                val logsFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs")
+
+                logsFolder.mkdir()
+            }
+        }
+
         fun downloadAutoSecInitArchive() {
 
             CoroutineScope(Dispatchers.IO).launch {
