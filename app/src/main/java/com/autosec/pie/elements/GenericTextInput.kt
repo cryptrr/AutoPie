@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int = 1, singleLine: Boolean = true, modifier: Modifier = Modifier){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true, modifier: Modifier = Modifier){
     Column {
         Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(3.dp))
@@ -39,7 +39,8 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
             onValueChange = {
                 text.value = it
             },
-            maxLines = maxLines,
+            minLines = 2,
+            maxLines = Int.MAX_VALUE,
             colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
             //label = { Text("Search") },
             placeholder = { placeholder?.let{Text(it)} },

@@ -10,7 +10,7 @@ import java.util.*
 
 class FileLoggingTree(context: Context) : Timber.DebugTree() {
     //private val logFile = File(context.filesDir, "autopie_log.txt")
-    private val logFile = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie_log.log")
+    private val logFile = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie.log")
     private val maxFileSize = 100 * 1024 // 100 KB
 
     // Format the timestamp for log entries
@@ -55,9 +55,9 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
     private fun getPriorityString(priority: Int): String {
         return when (priority) {
             0 -> "VERBOSE"
-            1 -> "DEBUG"
+            1 -> "WARN"
             2 -> "INFO"
-            3 -> "WARN"
+            3 -> "DEBUG"
             4 -> "ERROR"
             5 -> "ASSERT"
             else -> "UNKNOWN"

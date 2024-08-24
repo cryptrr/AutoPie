@@ -14,11 +14,14 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
+import kotlin.coroutines.CoroutineContext
 
 class ShareReceiverViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -33,21 +36,29 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         getSharesConfig()
     }
 
-    fun search(query: String){
+    fun search(query: String) {
 
-        filteredShareItemsResult = shareItemsResult.filter { it.name.contains(query, ignoreCase = true) || it.command.contains(query, ignoreCase = true) || it.exec.contains(query, ignoreCase = true) }
+        filteredShareItemsResult = shareItemsResult.filter {
+            it.name.contains(
+                query,
+                ignoreCase = true
+            ) || it.command.contains(query, ignoreCase = true) || it.exec.contains(
+                query,
+                ignoreCase = true
+            )
+        }
 
     }
 
 
-    fun getSharesConfig(){
+    fun getSharesConfig() {
         val observerConfig = readSharesConfig()
 
-        if(observerConfig == null){
+        if (observerConfig == null) {
             Timber.d("Observers file not available")
             mainViewModel.sharesConfigAvailable = false
             return
-        }else{
+        } else {
             mainViewModel.schedulerConfigAvailable = true
         }
 
@@ -81,7 +92,8 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
     private fun readSharesConfig(): JsonObject? {
 
-        val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
+        val sharesFilePath =
+            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
 
 
         try {
@@ -112,7 +124,8 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
     private fun readObserversConfig(): JsonObject? {
 
-        val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
+        val fileObserverPath =
+            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
 
         try {
             val file = File(fileObserverPath)
@@ -141,7 +154,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
 
-    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>){
+    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>) {
 
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
@@ -149,7 +162,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         println(item.toString())
         println(fileUris.toString())
 
-        when{
+        when {
             fileUris.isNotEmpty() -> {
                 runShareCommandForFiles(item, currentLink, fileUris)
             }
@@ -157,6 +170,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             currentLink.isValidUrl() -> {
                 runShareCommandForUrl(item, currentLink!!, fileUris)
             }
+
             !currentLink.isNullOrBlank() -> {
 
             }
@@ -168,21 +182,26 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
 
-    private fun runShareCommandForUrl(item: ShareItemModel, currentLink: String, fileUris: List<String>){
+    private fun runShareCommandForUrl(
+        item: ShareItemModel,
+        currentLink: String,
+        fileUris: List<String>
+    ) {
 
-        println("runShareCommandForUrl")
+        Timber.d("runShareCommandForUrl")
 
 
         val resultString = "\"${item.command.replace("{INPUT_FILE}", currentLink)}\""
 
-        val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+        val fullExecPath =
+            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
 
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
-        viewModelScope.launch {
-            ProcessManagerService.runCommandForShare(fullExecPath, item.command , item.path)
+        viewModelScope.launch(Dispatchers.IO) {
+            ProcessManagerService.runCommandForShare(fullExecPath, item.command, item.path)
         }
 
     }
@@ -191,26 +210,51 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         item: ShareItemModel,
         currentLink: String?,
         fileUris: List<String>
-    ){
+    ) {
 
-        println("runShareCommandForFiles")
 
+        Timber.d("runShareCommandForFiles")
         val currentItems = fileUris
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
 
-            currentItems.map { path  ->
-                val resultString = "\"${item.command.replace("{INPUT_FILE}", path)}\""
+            if (item.command.contains("{INPUT_FILES}")) {
 
-                val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                Timber.d("Multiple Input files detected")
 
-                ProcessManagerService.runCommandForShare(fullExecPath, resultString , item.path)
+                val replacedString = item.command
+                    .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
+                    .replace("''", "'")
+                    .replace("{INPUT_FILE}", currentItems.firstOrNull() ?: "")
+
+
+                Timber.d("Replaced String $replacedString")
+
+                val resultString = "\"${replacedString}\""
+
+                val fullExecPath =
+                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+            } else {
+
+                Timber.d("Single input file")
+
+
+                currentItems.map { path ->
+                    val resultString = "\"${item.command.replace("{INPUT_FILE}", path)}\""
+
+                    val fullExecPath =
+                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                    ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                }
             }
+
+
         }
 
     }
-
-
 
 
 }

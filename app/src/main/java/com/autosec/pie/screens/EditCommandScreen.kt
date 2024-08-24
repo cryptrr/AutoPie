@@ -193,10 +193,9 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 text = viewModel.command,
                 "Command".uppercase(),
                 placeholder = "command",
-                maxLines = 4,
                 singleLine = false,
                 modifier = Modifier
-                    .height(100.dp)
+                    //.height(100.dp)
                     //.wrapContentHeight()
             )
 

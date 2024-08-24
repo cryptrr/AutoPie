@@ -29,6 +29,7 @@ class MyApplication : Application() {
         super.onCreate()
 
         Timber.plant(FileLoggingTree(this@MyApplication))
+        Timber.plant(Timber.DebugTree())
 
         startKoin {
             androidContext(this@MyApplication)

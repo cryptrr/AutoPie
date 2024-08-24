@@ -112,8 +112,6 @@ class FileObserverJobService : JobService() {
 
                         val fullExecPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + exec
 
-                        //val command = "${path}${file.absolutePath} ${path}${}"
-
                         val regSelectors = selectors.map { it.toRegex() }
 
                         //Checking if file passes selectors list

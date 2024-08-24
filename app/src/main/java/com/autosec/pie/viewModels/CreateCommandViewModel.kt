@@ -13,6 +13,7 @@ import com.autosec.pie.services.JSONService
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
@@ -82,6 +83,7 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                 }
             }
 
+            delay(1500L)
             clear()
         }
 

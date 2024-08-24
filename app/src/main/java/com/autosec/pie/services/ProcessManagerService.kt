@@ -13,212 +13,211 @@ import java.io.File
 import java.io.InputStreamReader
 
 class ProcessManagerService {
-   companion object{
+    companion object {
 
-       private val activity: Application by inject(Context::class.java)
+        private val activity: Application by inject(Context::class.java)
 
 
-       fun runCommand4(exec: String, command: String, cwd: String) {
+        fun runCommand4(exec: String, command: String, cwd: String) {
+            try {
 
-           CoroutineScope(Dispatchers.IO).launch {
-               try {
+                val shellPath = File(activity.filesDir, "sh").absolutePath
 
-                   val busyBoxPath = File(activity.filesDir, "sh").absolutePath
+                val shell = Shell(
+                    shellPath,
+                    "PWD" to "${cwd}"
+                )
 
-                   val shell = Shell(
-                       busyBoxPath,
-                       "PWD" to "${cwd}"
-                   )
+                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+                //Log.d("Directory pwd", "cd ${activity.filesDir.absolutePath}/build")
 
-                   Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-                   //Log.d("Directory pwd", "cd ${activity.filesDir.absolutePath}/build")
+                //val cwdResult = shell.run("cd ${activity.filesDir.absolutePath}/build")
 
-                   //val cwdResult = shell.run("cd ${activity.filesDir.absolutePath}/build")
+                //Log.d("output", cwdResult.output())
 
-                   //Log.d("output", cwdResult.output())
+                val setEnvResult =
+                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
 
-                   val setEnvResult = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
-
-                   //Log.d("running", shell.isRunning().toString())
-                   //Log.d("output", setEnvResult.output())
+                //Log.d("running", shell.isRunning().toString())
+                //Log.d("output", setEnvResult.output())
 
 //               val checkEnvResult = shell.run("echo PATH=\$PATH && echo \"LD_LIBRARY_PATH=\$LD_LIBRARY_PATH\"")
-                   val checkEnvResult = shell.run("cd ${cwd}")
+                val checkEnvResult = shell.run("cd ${cwd}")
 
 
-                   //Log.d("running", shell.isRunning().toString())
-                   Timber.d(checkEnvResult.output())
+                //Log.d("running", shell.isRunning().toString())
+                Timber.d(checkEnvResult.output())
 
-                   Timber.d("python3.9 $exec $command")
+                Timber.d("python3.9 $exec $command")
 
 
-                   //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
-                   val result = shell.run("python3.9 ${exec} $command")
+                //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
+                val result = shell.run("python3.9 ${exec} $command")
 
 
-                   Timber.d(shell.isRunning().toString())
-                   Timber.d(result.output())
+                Timber.d(shell.isRunning().toString())
+                Timber.d(result.output())
 
-               }catch (e: Exception){
-                   Timber.e(e.toString())
-               }
-           }
-       }
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+            }
 
-       fun runCommandForShare(exec: String, command: String, cwd: String) {
+        }
 
-           CoroutineScope(Dispatchers.IO).launch{
-               try {
+        fun runCommandForShare(exec: String, command: String, cwd: String) {
 
-                   val busyBoxPath = File(activity.filesDir, "sh").absolutePath
+            try {
 
-                   val shell = Shell(
-                       busyBoxPath,
-                       "PWD" to "${cwd}"
-                   )
+                val shellPath = File(activity.filesDir, "sh").absolutePath
 
-                   shell.addOnCommandResultListener(object : Shell.OnCommandResultListener {
-                       override fun onResult(result: Shell.Command.Result) {
-                           Timber.d("RESULT LISTENER $result")
+                val shell = Shell(
+                    shellPath,
+                    "PWD" to "${cwd}"
+                )
 
-                           if(result.isSuccess){
-                               //Timber.d("RESULT LISTENER : SUCCESS")
-                           }
-                       }
-                   })
 
-                   Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
-                   val setEnvResult = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                val setEnvResult =
+                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
 
-                   shell.run("cd ${cwd}")
+                shell.run("cd ${cwd}")
 
-                   Timber.d("python3.9 $exec $command")
+                Timber.d("python3.9 $exec $command")
 
-                   val result = shell.run("python3.9 ${exec} $command")
+                val result = shell.run("python3.9 ${exec} $command")
 
+                if (result.isSuccess) {
+                    Timber.d("Process Success".uppercase())
+                } else {
+                    Timber.d("Process FAILED".uppercase())
+                }
 
-                   Timber.d(shell.isRunning().toString())
-                   Timber.d(result.output())
-               }catch (e: Exception){
-                   Timber.e(e.toString())
-               }
-           }
 
-       }
+                Timber.d(shell.isRunning().toString())
+                Timber.d(result.output())
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+            }
 
-       fun createAutoPieShell() : Shell? {
 
-           try {
-               val busyBoxPath = File(activity.filesDir, "sh").absolutePath
+        }
 
-               val shell = Shell(
-                   busyBoxPath,
-               )
+        fun createAutoPieShell(): Shell? {
 
-               Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+            try {
+                val shellPath = File(activity.filesDir, "sh").absolutePath
 
-               shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                val shell = Shell(
+                    shellPath,
+                )
 
-               shell.run("cd ${activity.filesDir.absolutePath}")
+                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
-               return shell
-           }catch (e: Exception){
-               Timber.e(e.toString())
+                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
 
-               return null
-           }
-       }
+                shell.run("cd ${activity.filesDir.absolutePath}")
 
-       fun runWget(url: String, fullFilePath: String) {
+                return shell
+            } catch (e: Exception) {
+                Timber.e(e.toString())
 
-           CoroutineScope(Dispatchers.IO).launch{
-               try {
+                return null
+            }
+        }
 
-                   val busyBoxPath = File(activity.filesDir, "sh").absolutePath
+        fun runWget(url: String, fullFilePath: String) {
 
-                   val shell = Shell(
-                       busyBoxPath,
-                   )
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
 
-                   Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+                    val shellPath = File(activity.filesDir, "sh").absolutePath
 
-                   shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                    val shell = Shell(
+                        shellPath,
+                    )
 
-                   Timber.d("wget")
+                    Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
-                   val result = shell.run("wget -O $fullFilePath $url")
+                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
 
+                    Timber.d("wget")
 
-                   Timber.d(shell.isRunning().toString())
-                   Timber.d(result.output())
-               }catch (e: Exception){
-                   Timber.e(e.toString())
-               }
-           }
+                    val result = shell.run("wget -O $fullFilePath $url")
 
-       }
 
-       fun clearPackagesCache() {
+                    Timber.d(shell.isRunning().toString())
+                    Timber.d(result.output())
+                } catch (e: Exception) {
+                    Timber.e(e.toString())
+                }
+            }
 
-           val folderPath = activity.filesDir.absolutePath + "/.shiv"
+        }
 
-           Timber.d(folderPath)
+        fun clearPackagesCache() {
 
-           CoroutineScope(Dispatchers.IO).launch{
-               try {
+            val folderPath = activity.filesDir.absolutePath + "/.shiv"
 
-                   val directory = File(folderPath)
-                   directory.deleteRecursively()
+            Timber.d(folderPath)
 
-               }catch (e: Exception){
-                   Timber.e(e.toString())
-               }
-           }
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
 
-       }
+                    val directory = File(folderPath)
+                    directory.deleteRecursively()
 
-       fun runBusyBoxShell(): String {
-           val busyBoxPath = File(activity.filesDir, "busybox").absolutePath
+                } catch (e: Exception) {
+                    Timber.e(e.toString())
+                }
+            }
 
-           val command = listOf(busyBoxPath, "sh", "-c", "python --help")
+        }
 
-           val processBuilder = ProcessBuilder(command)
+        fun runBusyBoxShell(): String {
+            val busyBoxPath = File(activity.filesDir, "busybox").absolutePath
 
-           // Setting up environment variables if needed
-           val environment = processBuilder.environment()
-           environment["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/aarch64-linux-android/lib"
-           environment["PATH"] = "${activity.filesDir.absolutePath}/aarch64-linux-android/bin:$busyBoxPath"
-           environment["HOME"] = "${activity.filesDir.absolutePath}:$busyBoxPath"
+            val command = listOf(busyBoxPath, "sh", "-c", "python --help")
 
-           // Start the process
-           val process = processBuilder.start()
+            val processBuilder = ProcessBuilder(command)
 
-           // Capture the output
-           val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-           val error = BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
+            // Setting up environment variables if needed
+            val environment = processBuilder.environment()
+            environment["LD_LIBRARY_PATH"] =
+                "${activity.filesDir.absolutePath}/aarch64-linux-android/lib"
+            environment["PATH"] =
+                "${activity.filesDir.absolutePath}/aarch64-linux-android/bin:$busyBoxPath"
+            environment["HOME"] = "${activity.filesDir.absolutePath}:$busyBoxPath"
 
-           Timber.d(output)
+            // Start the process
+            val process = processBuilder.start()
 
+            // Capture the output
+            val output =
+                BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+            val error = BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
 
-           return if (error.isEmpty()) output else error
-       }
+            Timber.d(output)
 
 
-       fun runCommand2(binary: File, arguments: List<String>, cwd: File): String {
+            return if (error.isEmpty()) output else error
+        }
 
 
-           val command = arrayOf("ls", activity.filesDir.absolutePath + "/bin")
-           val process = Runtime.getRuntime().exec(command)
-           val result = process.inputStream.bufferedReader().readText()
+        fun runCommand2(binary: File, arguments: List<String>, cwd: File): String {
 
-           process.waitFor()
 
-           Timber.d(result)
+            val command = arrayOf("ls", activity.filesDir.absolutePath + "/bin")
+            val process = Runtime.getRuntime().exec(command)
+            val result = process.inputStream.bufferedReader().readText()
 
-           return result
-       }
+            process.waitFor()
 
+            Timber.d(result)
 
-   }
+            return result
+        }
+
+
+    }
 }
