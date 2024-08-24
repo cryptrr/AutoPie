@@ -3,6 +3,7 @@ package com.autosec.pie
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +31,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,13 +44,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.ShareItemModel
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SearchBar
+import com.autosec.pie.services.ForegroundService
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.ShareReceiverViewModel
+import com.google.gson.Gson
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -139,6 +147,20 @@ fun ShareContextMenuBottomSheet(
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
+    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+
+    val activity = (LocalContext.current as? Activity)
+
+
+
+    LaunchedEffect(key1 = currentLink, fileUris) {
+        shareReceiverViewModel.main.eventFlow.collect{
+            when(it){
+                is ViewModelEvent.CloseShareReceiverSheet -> activity?.finish()
+                else -> {}
+            }
+        }
+    }
 
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = {
         it != SheetValue.Hidden
@@ -146,9 +168,7 @@ fun ShareContextMenuBottomSheet(
 
     val scope = rememberCoroutineScope()
 
-    val activity = (LocalContext.current as? Activity)
 
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
 
 
     @Composable
@@ -217,6 +237,7 @@ fun ShareCard(
 ) {
 
     val activity = (LocalContext.current as? Activity)
+    val context = LocalContext.current
     var isLoading by remember {
         mutableStateOf(false)
     }
@@ -225,7 +246,19 @@ fun ShareCard(
 
     ElevatedCard(onClick = {
         shareReceiverViewModel.viewModelScope.launch {
-            shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
+
+            val commandJson = Gson().toJson(card)
+            val fileUrisJson = Gson().toJson(fileUris)
+
+            val intent = Intent(context, ForegroundService::class.java).apply {
+                putExtra("command", commandJson)
+                putExtra("currentLink", currentLink)
+                putExtra("fileUris", fileUrisJson)
+            }
+
+            startForegroundService(context, intent)
+
+            //shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
             isLoading = true
             delay(1500)
             activity?.finish()

@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import com.autosec.pie.di.appModule
 import com.autosec.pie.logging.FileLoggingTree
+import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.BinaryCopierService
 import com.autosec.pie.services.FileObserverJobService
 import com.autosec.pie.services.ScreenStateReceiver
@@ -38,6 +39,7 @@ class MyApplication : Application() {
 
         scheduleJob()
         startScreenStateReceiver()
+
 
         BinaryCopierService.extractTarXzFromAssets(this@MyApplication)
         BinaryCopierService.extractAndExecuteBinary(this@MyApplication)

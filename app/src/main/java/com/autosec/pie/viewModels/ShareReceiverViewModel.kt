@@ -8,27 +8,31 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.ShareItemModel
+import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.ProcessManagerService
 import com.autosec.pie.utils.isValidUrl
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
-import kotlin.coroutines.CoroutineContext
 
 class ShareReceiverViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    val main: MainViewModel by inject(MainViewModel::class.java)
 
     var shareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
     var filteredShareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
+
+    private val autoPieNotification: AutoPieNotification by inject(
+        AutoPieNotification::class.java)
 
     var searchQuery = mutableStateOf("")
 
@@ -56,10 +60,10 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         if (observerConfig == null) {
             Timber.d("Observers file not available")
-            mainViewModel.sharesConfigAvailable = false
+            main.sharesConfigAvailable = false
             return
         } else {
-            mainViewModel.schedulerConfigAvailable = true
+            main.schedulerConfigAvailable = true
         }
 
         val tempList = mutableListOf<ShareItemModel>()
@@ -154,7 +158,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
 
-    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>) {
+    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>)  {
 
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
@@ -201,7 +205,22 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            ProcessManagerService.runCommandForShare(fullExecPath, item.command, item.path)
+            val success = ProcessManagerService.runCommandForShare(fullExecPath, item.command, item.path)
+
+            if (success) {
+                Timber.d("Process Success".uppercase())
+                autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
+
+            } else {
+                Timber.d("Process FAILED".uppercase())
+                autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
+            }
+
+            main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+
+            //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
+
         }
 
     }
@@ -235,7 +254,21 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                 val fullExecPath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-                ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+
+                if (success) {
+                    Timber.d("Process Success".uppercase())
+                    autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
+
+                } else {
+                    Timber.d("Process FAILED".uppercase())
+                    autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
+                }
+
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+                //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
+
             } else {
 
                 Timber.d("Single input file")
@@ -247,8 +280,23 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                     val fullExecPath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-                    ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+
+                    if (success) {
+                        Timber.d("Process Success".uppercase())
+                        autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
+
+                    } else {
+                        Timber.d("Process FAILED".uppercase())
+                        autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
+                    }
                 }
+
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+
+                //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
+
             }
 
 

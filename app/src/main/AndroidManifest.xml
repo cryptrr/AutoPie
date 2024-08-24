@@ -10,6 +10,9 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
 
 
 
@@ -86,6 +89,9 @@
         <service
             android:name=".services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".services.ForegroundService"
+            android:exported="false" />
         <receiver android:name=".services.ScreenStateReceiver"
             android:exported="true">
             <intent-filter>
@@ -93,6 +99,7 @@
                 <action android:name="android.intent.action.SCREEN_OFF" />
             </intent-filter>
         </receiver>
+
 
 
     </application>

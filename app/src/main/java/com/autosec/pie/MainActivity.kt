@@ -57,6 +57,7 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AppBottomBar
 import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SnackbarHostCustom
+import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.screens.AddShareCommandBottomSheet
 import com.autosec.pie.screens.CommandsSearchBottomSheet
 import com.autosec.pie.screens.EditCommandBottomSheet
@@ -70,11 +71,17 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 
 class MainActivity : ComponentActivity() {
+
+    private val autoPieNotification: AutoPieNotification by KoinJavaComponent.inject(
+        AutoPieNotification::class.java)
+
     @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        autoPieNotification.requestNotificationPermission(this)
+        autoPieNotification.createNotificationChannel()
 
 
         setContent {

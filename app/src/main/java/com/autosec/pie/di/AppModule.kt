@@ -1,6 +1,7 @@
 package com.autosec.pie.di
 
 import com.autosec.pie.data.preferences.AppPreferences
+import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.viewModels.CreateCommandViewModel
 import com.autosec.pie.viewModels.EditCommandViewModel
@@ -17,5 +18,6 @@ val appModule = module {
     single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
     single<EditCommandViewModel> { EditCommandViewModel(get()) }
     single<AppPreferences> { AppPreferences(get()) }
+    single<AutoPieNotification> { AutoPieNotification(get()) }
 
 }

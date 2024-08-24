@@ -2,10 +2,12 @@ package com.autosec.pie.services
 
 import android.app.Application
 import android.content.Context
+import com.autosec.pie.notifications.AutoPieNotification
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.BufferedReader
@@ -64,7 +66,7 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShare(exec: String, command: String, cwd: String) {
+        fun runCommandForShare(exec: String, command: String, cwd: String): Boolean {
 
             try {
 
@@ -74,7 +76,6 @@ class ProcessManagerService {
                     shellPath,
                     "PWD" to "${cwd}"
                 )
-
 
                 Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
@@ -87,19 +88,21 @@ class ProcessManagerService {
 
                 val result = shell.run("python3.9 ${exec} $command")
 
-                if (result.isSuccess) {
-                    Timber.d("Process Success".uppercase())
-                } else {
-                    Timber.d("Process FAILED".uppercase())
-                }
-
-
-                Timber.d(shell.isRunning().toString())
                 Timber.d(result.output())
+
+                Timber.d("Exit Code ${result.exitCode}")
+
+                shell.shutdown()
+
+                return result.isSuccess
+
+
+
             } catch (e: Exception) {
                 Timber.e(e.toString())
             }
 
+            return false
 
         }
 
