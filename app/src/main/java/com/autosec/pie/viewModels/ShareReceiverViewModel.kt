@@ -166,7 +166,12 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         println(item.toString())
         println(fileUris.toString())
 
+        val inputDir = fileUris.firstOrNull()?.let { File(it) }
+
         when {
+            inputDir?.isDirectory == true -> {
+                runShareCommandForDirectory(item,inputDir )
+            }
             fileUris.isNotEmpty() -> {
                 runShareCommandForFiles(item, currentLink, fileUris)
             }
@@ -205,15 +210,15 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            val success = ProcessManagerService.runCommandForShare(fullExecPath, item.command, item.path)
+            val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
 
             if (success) {
                 Timber.d("Process Success".uppercase())
-                autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
+                autoPieNotification.sendNotification("Command Success", "${item.name} $currentLink")
 
             } else {
                 Timber.d("Process FAILED".uppercase())
-                autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
+                autoPieNotification.sendNotification("Command Failed", "${item.name} $currentLink")
             }
 
             main.dispatchEvent(ViewModelEvent.CommandCompleted)
@@ -298,6 +303,55 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                 //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
 
             }
+
+
+        }
+
+    }
+
+    private fun runShareCommandForDirectory(
+        item: ShareItemModel,
+        inputDir: File
+    ) {
+
+
+        Timber.d("runShareCommandForDirectory")
+
+
+        val currentItems = inputDir.listFiles()!!
+
+        viewModelScope.launch(Dispatchers.IO) {
+
+            val startTime = System.currentTimeMillis()
+
+
+            currentItems.map { path ->
+                val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+
+                val fullExecPath =
+                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+
+                if (success) {
+                    Timber.d("Process Success".uppercase())
+                    //autoPieNotification.sendNotification("Command Success", "${item.name} $inputDir")
+
+                    if (item.deleteSourceFile == true) {
+                        ProcessManagerService.deleteFile(path.absolutePath)
+                    }
+
+                } else {
+                    Timber.d("Process FAILED".uppercase())
+                    //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
+                }
+            }
+
+            main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+            val endTime = System.currentTimeMillis()
+
+            Timber.d("Time Elapsed: ${endTime - startTime}")
 
 
         }

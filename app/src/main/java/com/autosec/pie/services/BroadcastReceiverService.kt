@@ -15,12 +15,12 @@ class ScreenStateReceiver : BroadcastReceiver() {
             // Screen is on, schedule the job
             Timber.d("Screen On")
 
-            scheduleJob(context)
+            //scheduleJob(context)
         } else if (Intent.ACTION_SCREEN_OFF == intent.action) {
             // Screen is off, cancel the job
             Timber.d("Screen off")
 
-            cancelJob(context)
+            //cancelJob(context)
         }
     }
 

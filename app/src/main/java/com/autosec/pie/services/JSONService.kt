@@ -29,7 +29,7 @@ class JSONService {
                 inputStream.close()
                 val jsonString = String(buffer)
 
-                Timber.d(jsonString)
+                //Timber.d(jsonString)
 
                 // Parse the JSON string
                 val gson = Gson()
@@ -59,7 +59,7 @@ class JSONService {
                 inputStream.close()
                 val jsonString = String(buffer)
 
-                Timber.d(jsonString)
+                //Timber.d(jsonString)
 
                 // Parse the JSON string
                 val gson = Gson()

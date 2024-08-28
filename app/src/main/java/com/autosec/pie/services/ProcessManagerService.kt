@@ -6,6 +6,7 @@ import com.autosec.pie.notifications.AutoPieNotification
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
@@ -20,7 +21,7 @@ class ProcessManagerService {
         private val activity: Application by inject(Context::class.java)
 
 
-        fun runCommand4(exec: String, command: String, cwd: String) {
+        fun runCommand4(exec: String, command: String, cwd: String) : Boolean {
             try {
 
                 val shellPath = File(activity.filesDir, "sh").absolutePath
@@ -56,13 +57,16 @@ class ProcessManagerService {
                 //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
                 val result = shell.run("python3.9 ${exec} $command")
 
-
-                Timber.d(shell.isRunning().toString())
                 Timber.d(result.output())
+
+                return result.isSuccess
+
 
             } catch (e: Exception) {
                 Timber.e(e.toString())
             }
+
+            return false
 
         }
 
@@ -106,6 +110,8 @@ class ProcessManagerService {
 
         }
 
+
+
         fun createAutoPieShell(): Shell? {
 
             try {
@@ -147,6 +153,38 @@ class ProcessManagerService {
                     Timber.d("wget")
 
                     val result = shell.run("wget -O $fullFilePath $url")
+
+
+                    Timber.d(shell.isRunning().toString())
+                    Timber.d(result.output())
+                } catch (e: Exception) {
+                    Timber.e(e.toString())
+                }
+            }
+
+        }
+
+        fun deleteFile(filePath: String) {
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                delay(20000L)
+
+                try {
+
+                    val shellPath = File(activity.filesDir, "sh").absolutePath
+
+                    val shell = Shell(
+                        shellPath,
+                    )
+
+                    Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+
+                    Timber.d("Deleting file at $filePath")
+
+                    val result = shell.run("rm '$filePath'")
 
 
                     Timber.d(shell.isRunning().toString())
