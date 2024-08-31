@@ -73,15 +73,22 @@ class MyApplication : Application() {
     private fun initAutosec(){
 
         val autosecFolderExists = BinaryCopierService.checkForAutoSecFolder()
+        val binFolderExists = BinaryCopierService.checkForBinFolder()
 
         if(mainViewModel.storageManagerPermissionGranted && !autosecFolderExists){
             Timber.d("Autosec folder does not exist. Creating and copying files")
             BinaryCopierService.createAutoSecFolder()
             BinaryCopierService.createLogsFolder()
+
+        }else{
+            Timber.d("Autosec folder exists. Doing nothing.")
+        }
+
+        if(mainViewModel.storageManagerPermissionGranted && !binFolderExists){
             BinaryCopierService.downloadAutoSecInitArchive()
             BinaryCopierService.extractAutoSecFiles()
         }else{
-            Timber.d("Autosec folder exists. Doing nothing.")
+            Timber.d("Bin folder exists. Doing nothing.")
         }
     }
 

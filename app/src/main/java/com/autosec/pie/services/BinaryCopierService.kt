@@ -293,7 +293,14 @@ class BinaryCopierService {
             return autoSecFolder.exists()
         }
 
+        fun checkForBinFolder() : Boolean {
+            val binFolder = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+
+            return binFolder.exists()
+        }
+
         fun createAutoSecFolder() {
+            Timber.d("Creating AutoSec Folder")
             CoroutineScope(Dispatchers.IO).launch {
                 val autoSecFolder =
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
@@ -303,6 +310,7 @@ class BinaryCopierService {
         }
 
         fun createLogsFolder() {
+            Timber.d("Creating Logs Folder")
             CoroutineScope(Dispatchers.IO).launch {
                 val logsFolder =
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs")
@@ -312,6 +320,9 @@ class BinaryCopierService {
         }
 
         fun downloadAutoSecInitArchive() {
+
+            Timber.d("Downloading Init Archive")
+
 
             CoroutineScope(Dispatchers.IO).launch {
 
@@ -356,6 +367,7 @@ class BinaryCopierService {
 
         fun extractAutoSecFiles() {
 
+            Timber.d("extractAutoSecFiles()")
 
             val autoSecFolder = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
             val initArchiveFile = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
@@ -372,7 +384,6 @@ class BinaryCopierService {
 //            }
 
 
-
             CoroutineScope(Dispatchers.IO).launch {
 
                 //Waits until the file is downloaded
@@ -380,7 +391,7 @@ class BinaryCopierService {
 
 
                 if(!isFileDownloaded){
-                    mainViewModel.showError(ViewModelError.Unknown)
+                    mainViewModel.showNotification(AppNotification.FailedDownloadingArchive)
                     return@launch
                 }
 
@@ -426,11 +437,13 @@ class BinaryCopierService {
                     e.printStackTrace()
 
                     CoroutineScope(Dispatchers.Main).launch {
-                        Toast.makeText(
-                            activity.applicationContext,
-                            "Error installing init archive. Please Reinstall this app.",
-                            Toast.LENGTH_LONG
-                        ).show()
+//                        Toast.makeText(
+//                            activity.applicationContext,
+//                            "Error installing init archive. Please Reinstall this app.",
+//                            Toast.LENGTH_LONG
+//                        ).show()
+
+                        mainViewModel.showNotification(AppNotification.FailedDownloadingArchive)
                     }
 
                 } finally {

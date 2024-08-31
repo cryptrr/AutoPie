@@ -3,9 +3,11 @@ package com.autosec.pie.screens
 import android.app.Activity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,7 +65,6 @@ fun CommandsSearchBottomSheet(
 
     }
 
-
     ModalBottomSheet(
         sheetState = state,
         content = { bottomSheetContent() },
@@ -84,7 +85,8 @@ fun SearchCommands(
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
         Column(horizontalAlignment = Alignment.CenterHorizontally){
-            Text("Search Commands to Add")
+            Text("Search from Commands Repository to Add")
+            Spacer(modifier = Modifier.height(7.dp))
             Text("Work In Progress")
         }
     }

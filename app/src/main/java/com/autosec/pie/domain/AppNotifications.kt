@@ -65,6 +65,8 @@ sealed class AppNotification: Notification {
     data object InstallingPythonPackages : AppNotification()
     data object InstallingPythonPackagesSuccess : AppNotification()
     data object FeatureWIP : AppNotification()
+    object FailedDownloadingArchive : AppNotification()
+    object FailedExtractingArchive : AppNotification()
 
 
 
@@ -76,6 +78,8 @@ sealed class AppNotification: Notification {
             is InstallingPythonPackages -> "Installing Python. Don't close the app."
             is InstallingPythonPackagesSuccess -> "Installing Python: Success"
             is FeatureWIP -> "This feature is 'Work In Progress'"
+            is FailedDownloadingArchive -> "Failed Downloading Bootstrap binaries. Check Internet."
+            is FailedExtractingArchive -> "Failed Extracting Init Archive. Please manually download zip from github"
             else -> "An Event Occurred"
         }
 
@@ -89,6 +93,7 @@ sealed class AppNotification: Notification {
     override val infinite: Boolean
         get() = when(this){
             is InstallingPythonPackages -> true
+            is FailedDownloadingArchive -> true
             else -> false
         }
     override val hasAction: Boolean
