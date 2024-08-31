@@ -97,7 +97,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                         },
                         colors = SegmentedButtonDefaults.colors().copy(
                             inactiveContainerColor = Color.Transparent,
-                            activeContentColor = Purple10
+                            activeContentColor = MaterialTheme.colorScheme.primary
                         ),
                         selected = index == viewModel.selectedICommandTypeIndex
                     ) {

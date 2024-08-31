@@ -149,38 +149,38 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             AutoPieLogo()
-                                            IconButton(
-                                                onClick = { /*TODO*/ }, modifier = Modifier
-                                                    .clip(
-                                                        RoundedCornerShape(10.dp)
-                                                    )
-                                                    .padding(end = 17.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Settings,
-                                                    contentDescription = "Settings",
-                                                    tint = MaterialTheme.colorScheme.onSurface,
-                                                    modifier = Modifier.size(28.dp)
-                                                )
-                                            }
+//                                            IconButton(
+//                                                onClick = { /*TODO*/ }, modifier = Modifier
+//                                                    .clip(
+//                                                        RoundedCornerShape(10.dp)
+//                                                    )
+//                                                    .padding(end = 17.dp)
+//                                            ) {
+//                                                Icon(
+//                                                    imageVector = Icons.Outlined.Settings,
+//                                                    contentDescription = "Settings",
+//                                                    tint = MaterialTheme.colorScheme.onSurface,
+//                                                    modifier = Modifier.size(28.dp)
+//                                                )
+//                                            }
                                         }
                                     },
                                     //colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black),
                                     navigationIcon = {
-                                        IconButton(
-                                            modifier = Modifier
-                                                .padding(4.dp),
-                                            onClick = {}
-                                        ) {
-                                            Icon(
-                                                modifier = Modifier
-
-                                                    .size(27.dp),
-                                                imageVector = Icons.Default.Menu,
-                                                contentDescription = "Search",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
+//                                        IconButton(
+//                                            modifier = Modifier
+//                                                .padding(4.dp),
+//                                            onClick = {}
+//                                        ) {
+//                                            Icon(
+//                                                modifier = Modifier
+//
+//                                                    .size(27.dp),
+//                                                imageVector = Icons.Default.Menu,
+//                                                contentDescription = "Search",
+//                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+//                                            )
+//                                        }
                                     },
 
                                     scrollBehavior = scrollBehavior

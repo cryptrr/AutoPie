@@ -199,6 +199,17 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     //.wrapContentHeight()
             )
 
+            if(viewModel.selectedCommandType == "FILE_OBSERVER"){
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                GenericTextFormField(
+                    text = viewModel.selectors,
+                    "Selectors".uppercase(),
+                    subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
+                )
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             GenericTextFormField(

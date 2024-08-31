@@ -64,6 +64,8 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     shareCommands.add(commandName.value, commandObject)
                 }
                 "FILE_OBSERVER" -> {
+                    commandObject.addProperty("selectors", selectors.value)
+
                     observerCommands.add(commandName.value, commandObject)
                 }
             }

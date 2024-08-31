@@ -1,7 +1,11 @@
 package com.autosec.pie.viewModels
 
 import android.app.Application
+import android.os.Environment
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.services.JSONService
@@ -31,6 +35,15 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     val deleteSource = mutableStateOf(false)
 
     val isLoading = mutableStateOf(true)
+
+    val commandTypeOptions = listOf("Share", "Observer")
+
+    val selectors = mutableStateOf("")
+
+
+    var selectedCommandType by mutableStateOf("")
+
+    val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
 
 
     suspend fun getCommandDetails(key: String) {
@@ -73,6 +86,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 execFile.value = commandDetails.get("exec").asString
                 command.value = commandDetails.get("command").asString
                 deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
+                selectors.value = try{commandDetails.get("selectors").asString}catch (e: Exception) {""}
+                selectedCommandType = commandType
                 isLoading.value = false
             }
         }
@@ -122,6 +137,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                     }
 
                     "FILE_OBSERVER" -> {
+                        commandObject.addProperty("selectors", selectors.value)
+
                         observerCommands.add(commandName.value, commandObject)
                         //observerCommands.remove(oldCommandName.value)
                     }
@@ -144,6 +161,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                     }
 
                     "FILE_OBSERVER" -> {
+                        commandObject.addProperty("selectors", selectors.value)
+
+
                         observerCommands.add(commandName.value, commandObject)
                         observerCommands.remove(oldCommandName.value)
                     }
@@ -238,6 +258,16 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
         }
 
+    }
+
+    private fun clear(){
+        command.value = ""
+        execFile.value = ""
+        commandName.value = ""
+        selectors.value = ""
+        directory.value = "${Environment.getExternalStorageDirectory().absolutePath}/"
+        deleteSource.value = false
+        selectedCommandType = "SHARE"
     }
 
 

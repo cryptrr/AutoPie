@@ -21,41 +21,39 @@ class ProcessManagerService {
         private val activity: Application by inject(Context::class.java)
 
 
+        private var shell : Shell? = null
+
+        private fun initShell(){
+            val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            shell = Shell(
+                shellPath,
+            )
+
+            Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+
+            val setEnvResult =
+                shell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+
+        }
+
+
         fun runCommand4(exec: String, command: String, cwd: String) : Boolean {
             try {
 
-                val shellPath = File(activity.filesDir, "sh").absolutePath
+                if(shell?.isAlive() != true) initShell()
 
-                val shell = Shell(
-                    shellPath,
-                    "PWD" to "${cwd}"
-                )
-
-                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-                //Log.d("Directory pwd", "cd ${activity.filesDir.absolutePath}/build")
-
-                //val cwdResult = shell.run("cd ${activity.filesDir.absolutePath}/build")
-
-                //Log.d("output", cwdResult.output())
-
-                val setEnvResult =
-                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                val checkEnvResult = shell?.run("cd ${cwd}")
 
                 //Log.d("running", shell.isRunning().toString())
-                //Log.d("output", setEnvResult.output())
-
-//               val checkEnvResult = shell.run("echo PATH=\$PATH && echo \"LD_LIBRARY_PATH=\$LD_LIBRARY_PATH\"")
-                val checkEnvResult = shell.run("cd ${cwd}")
-
-
-                //Log.d("running", shell.isRunning().toString())
-                Timber.d(checkEnvResult.output())
+                Timber.d(checkEnvResult?.output())
 
                 Timber.d("python3.9 $exec $command")
 
 
                 //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
-                val result = shell.run("python3.9 ${exec} $command")
+                val result = shell!!.run("python3.9 ${exec} $command")
 
                 Timber.d(result.output())
 
@@ -74,29 +72,19 @@ class ProcessManagerService {
 
             try {
 
-                val shellPath = File(activity.filesDir, "sh").absolutePath
+                if(shell?.isAlive() != true) initShell()
 
-                val shell = Shell(
-                    shellPath,
-                    "PWD" to "${cwd}"
-                )
-
-                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-                val setEnvResult =
-                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
-
-                shell.run("cd ${cwd}")
+                shell!!.run("cd ${cwd}")
 
                 Timber.d("python3.9 $exec $command")
 
-                val result = shell.run("python3.9 ${exec} $command")
+                val result = shell!!.run("python3.9 ${exec} $command")
 
                 Timber.d(result.output())
 
                 Timber.d("Exit Code ${result.exitCode}")
 
-                shell.shutdown()
+                //shell?.shutdown()
 
                 return result.isSuccess
 
