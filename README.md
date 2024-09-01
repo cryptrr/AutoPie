@@ -34,6 +34,76 @@ Lets you run Python scripts with or without included binaries on Android.
 
 ### More Command Placeholders will be available later.
 
+### WIP: Custom Defined Inputs for Customization
+
+### How do I create binaries for AutoPie
+
+AutoPie binaries are just thin python wrappers around binaries like `ffmpeg` `magick` etc.
+
+Using **Shiv** to package the binaries, dependencies and python files is strongly recommended.
+
+This is an example for how to include the `ffmpeg` binaries and libraries in a single file.
+
+A more detailed docs is in WIP.
+
+```py
+
+import subprocess
+import sys
+import os
+import shlex
+
+script_dir = os.path.dirname(__file__)
+
+# Set the path to the ImageMagick binary and library directories
+bin_path = os.path.join(script_dir, 'usr', 'bin')
+lib_path = os.path.join(script_dir, 'usr', 'lib')
+
+# Update PATH environment variable
+os.environ['PATH'] = bin_path + os.pathsep + os.environ['PATH']
+
+# Update LD_LIBRARY_PATH environment variable
+os.environ['LD_LIBRARY_PATH'] = lib_path + os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')
+
+
+
+def main():
+    
+    """Console script for ffmpeg wrapper"""
+
+    input_command = sys.argv[1]
+
+    commands_list = shlex.split(input_command)
+
+    runner(commands_list)
+
+def runner(commands_list: list[str]):
+
+    try:
+
+        commands_list= ["ffmpeg"] + commands_list
+
+        print(f"shlex command list: {commands_list}")
+
+        result = subprocess.run(commands_list)
+
+        if result.returncode == 0:
+            print(f"Successfully executed {commands_list}")
+        else:
+            print(f"Subprocess failed with exit code {result.returncode} : {commands_list}")
+        
+        sys.exit(result.returncode)
+        
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(e.returncode)
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
 
 ## Support
 * Supports only aarch64/arm-v8 as of now. It should run on most newer phones.
@@ -47,7 +117,7 @@ Lets you run Python scripts with or without included binaries on Android.
 
 ## Thanks To
 
-Jared Drummler
+[Jared Drummler](https://github.com/jaredrummler)
 
 
 
