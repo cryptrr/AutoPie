@@ -10,7 +10,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.services.JSONService
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
 import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -48,13 +50,13 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
     suspend fun getCommandDetails(key: String) {
 
-        Timber.tag("ThreadCheck").d( "Running on: ${Thread.currentThread().name}")
+        Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
         isLoading.value = true
 
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(Dispatchers.IO) {
 
-            Timber.tag("ThreadCheck").d( "Running on: ${Thread.currentThread().name}")
+            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
 
@@ -76,9 +78,16 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 return@launch
             }
 
+            val selectorsFormatted = try {
+                val arr = commandDetails.get("selectors").asJsonArray
+                arr.joinToString(",")
+            } catch (e: Exception) {
+                ""
+            }
+
             delay(500L)
 
-            withContext(Dispatchers.Main){
+            withContext(Dispatchers.Main) {
                 oldCommandName.value = key
                 commandName.value = key
                 type.value = commandType
@@ -86,7 +95,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 execFile.value = commandDetails.get("exec").asString
                 command.value = commandDetails.get("command").asString
                 deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
-                selectors.value = try{commandDetails.get("selectors").asString}catch (e: Exception) {""}
+                selectors.value = selectorsFormatted
                 selectedCommandType = commandType
                 isLoading.value = false
             }
@@ -94,15 +103,15 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     }
 
 
-   fun changeCommandDetails(key: String) {
+    fun changeCommandDetails(key: String) {
 
-        Timber.tag("ThreadCheck").d( "Running on: ${Thread.currentThread().name}")
+        Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
         //isLoading.value = true
 
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(Dispatchers.IO) {
 
-            Timber.tag("ThreadCheck").d( "Running on: ${Thread.currentThread().name}")
+            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
@@ -118,6 +127,18 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 key
             ).also { if (it != null) commandType = "FILE_OBSERVER" }
 
+            val selectorsJson = if(selectors.value.isNotBlank()){
+                val jsonArray = JsonArray()
+
+                selectors.value.split(",").map { string ->
+                    jsonArray.add(string)
+                }
+
+                jsonArray
+
+            }else{
+                JsonArray()
+            }
 
             Timber.d("commandObject: $commandObject")
 
@@ -130,14 +151,14 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 commandObject.addProperty("command", command.value)
                 commandObject.addProperty("deleteSourceFile", deleteSource.value)
 
-                when(type.value){
+                when (type.value) {
                     "SHARE" -> {
                         shareCommands.add(commandName.value, commandObject)
                         //shareCommands.remove(oldCommandName.value)
                     }
 
                     "FILE_OBSERVER" -> {
-                        commandObject.addProperty("selectors", selectors.value)
+                        commandObject.add("selectors", selectorsJson)
 
                         observerCommands.add(commandName.value, commandObject)
                         //observerCommands.remove(oldCommandName.value)
@@ -145,7 +166,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 }
 
 
-            }else{
+            } else {
 
                 Timber.d("Command key changed")
 
@@ -154,14 +175,14 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 commandObject.addProperty("command", command.value)
                 commandObject.addProperty("deleteSourceFile", deleteSource.value)
 
-                when(type.value){
+                when (type.value) {
                     "SHARE" -> {
                         shareCommands.add(commandName.value, commandObject)
                         shareCommands.remove(oldCommandName.value)
                     }
 
                     "FILE_OBSERVER" -> {
-                        commandObject.addProperty("selectors", selectors.value)
+                        commandObject.add("selectors", selectorsJson)
 
 
                         observerCommands.add(commandName.value, commandObject)
@@ -173,7 +194,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-            when(type.value){
+            when (type.value) {
                 "SHARE" -> {
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
@@ -191,8 +212,6 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
             }
 
 
-
-
         }
 
     }
@@ -200,9 +219,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteCommand(key: String) {
 
 
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(Dispatchers.IO) {
 
-            Timber.tag("ThreadCheck").d( "Running on: ${Thread.currentThread().name}")
+            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
@@ -221,7 +240,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             Timber.d("commandObject: $commandObject")
 
-            when(type.value){
+            when (type.value) {
                 "SHARE" -> {
                     shareCommands.remove(commandName.value)
                     //shareCommands.remove(oldCommandName.value)
@@ -236,7 +255,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-            when(type.value){
+            when (type.value) {
                 "SHARE" -> {
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
@@ -254,13 +273,11 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
             }
 
 
-
-
         }
 
     }
 
-    private fun clear(){
+    private fun clear() {
         command.value = ""
         execFile.value = ""
         commandName.value = ""

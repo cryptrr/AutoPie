@@ -11,6 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.services.JSONService
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -59,12 +60,25 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
             commandObject.addProperty("command", command.value)
             commandObject.addProperty("deleteSourceFile", deleteSource.value)
 
+            val selectorsJson = if(selectors.value.isNotBlank()){
+                val jsonArray = JsonArray()
+
+                selectors.value.split(",").map { string ->
+                    jsonArray.add(string)
+                }
+
+                jsonArray
+
+            }else{
+                JsonArray()
+            }
+
             when (selectedCommandType) {
                 "SHARE" -> {
                     shareCommands.add(commandName.value, commandObject)
                 }
                 "FILE_OBSERVER" -> {
-                    commandObject.addProperty("selectors", selectors.value)
+                    commandObject.add("selectors", selectorsJson)
 
                     observerCommands.add(commandName.value, commandObject)
                 }
