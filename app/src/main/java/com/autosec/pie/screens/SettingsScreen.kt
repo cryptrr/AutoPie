@@ -277,10 +277,10 @@ fun SettingsToggles() {
             //.height(90.dp)
         ) {
             Column(Modifier.fillMaxWidth(0.8F)){
-                Text("Clear Cache")
+                Text("Clear Package Cache")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Useful when old cached versions are incorrectly used.",
+                    "Useful when old cached versions of packages are incorrectly used.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
@@ -363,7 +363,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.75F))
+            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
