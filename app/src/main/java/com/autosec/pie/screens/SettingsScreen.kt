@@ -34,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.domain.AppNotification
@@ -151,6 +150,8 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
+    //TODO: Themes - Work in Progress
+
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
@@ -166,17 +167,13 @@ fun SettingsToggles() {
         ) {
             Text(
                 "Dark Theme",
-                color = if ("SYSTEMh" != "SYSTEM") MaterialTheme.colorScheme.onSurface else Color.Gray
+                color = if (false) MaterialTheme.colorScheme.onSurface else Color.Gray
             )
             Switch(
-                checked = "DARK" == "DARK",
-                enabled = "SYSTEM" != "SYSTEM",
+                checked = false,
+                enabled = false,
                 onCheckedChange = {
-                    if (it) {
-                        //viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.DarkThemeEnableEvent)
-                    } else {
-                        //viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.LightThemeEnableEvent)
-                    }
+
                 })
         }
 
@@ -188,9 +185,9 @@ fun SettingsToggles() {
                 .height(55.dp)
         ) {
             Text("Use System Theme")
-            Switch(checked = "SYSTEM" == "SYSTEM", onCheckedChange = {
-//                if (it) //viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.SystemThemeEnableEvent)
-//                else viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.LightThemeEnableEvent)
+            Switch(checked = true, onCheckedChange = {
+
+
             })
         }
         Row(
@@ -207,8 +204,7 @@ fun SettingsToggles() {
             Switch(checked = true,
                 enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                 onCheckedChange = {
-//                    if (it) viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.DynamicColorsEnabled)
-//                    else viewModel.main.dispatchEvent(ProCheckoutViewModelEvent.DynamicColorsDisabled)
+
                 })
         }
 
