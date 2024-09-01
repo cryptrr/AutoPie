@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.domain.AppNotification
@@ -217,9 +218,10 @@ fun SettingsToggles() {
     Spacer(modifier = Modifier.height(20.dp))
 
     Column(
-        verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
+        verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .fillMaxWidth()
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
@@ -227,18 +229,22 @@ fun SettingsToggles() {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp)
+                .padding(vertical = 10.dp)
+
+                //.height(90.dp)
         ) {
-            Column {
-                Text("Turn Off File Observers")
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Turn On File Observers")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Needs app restart to take effect.",
+                    "Turn off if you are not using FileObserver feature is good",
+                    softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
                 )
             }
-            Switch(checked = mainViewModel.turnOffFileObservers, onCheckedChange = {
+            //Spacer(modifier = Modifier.width(20.dp))
+            Switch(checked = !mainViewModel.turnOffFileObservers, onCheckedChange = {
                 mainViewModel.toggleFileObservers()
             })
         }
@@ -247,11 +253,11 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
-
     Column(
-        verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
+        verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .fillMaxWidth()
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
@@ -259,19 +265,7 @@ fun SettingsToggles() {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
-        ) {
-            Text("Logout")
-        }
-
-
-
-        Row(horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-
+                .padding(vertical = 10.dp)
                 .clickable(
                     indication = null,
                     enabled = true,
@@ -280,20 +274,20 @@ fun SettingsToggles() {
                     mainViewModel.clearPackagesCache()
                 }
 
+            //.height(90.dp)
         ) {
-            Column {
-                Text(
-                    "Clear Cache",
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Clear Cache")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     "Useful when old cached versions are incorrectly used.",
+                    softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
                 )
             }
         }
+
     }
 
 
@@ -301,19 +295,20 @@ fun SettingsToggles() {
 
     //MARK: BACKUPS
 
+
     Column(
-        verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier
+        verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
-            .padding(vertical = 15.dp, horizontal = 15.dp)
+            .fillMaxWidth()
+            .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
-
-        Row(horizontalArrangement = Arrangement.SpaceBetween,
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp)
-
+                .padding(vertical = 10.dp)
                 .clickable(
                     indication = null,
                     enabled = true,
@@ -322,26 +317,26 @@ fun SettingsToggles() {
                     mainViewModel.showNotification(AppNotification.FeatureWIP)
                 }
 
+            //.height(90.dp)
         ) {
-            Column {
-                Text(
-                    "Generate Backup File",
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Generate Backup File")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     "Generates a tar.xz backup file and stores it to the base directory of your storage.",
+                    softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.SpaceBetween,
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
-
+                .padding(vertical = 10.dp)
                 .clickable(
                     indication = null,
                     enabled = true,
@@ -349,21 +344,14 @@ fun SettingsToggles() {
                 {
                     mainViewModel.showNotification(AppNotification.FeatureWIP)
                 }
+
+            //.height(90.dp)
         ) {
-            Text(
-                "Restore From Backup",
-                color = MaterialTheme.colorScheme.onSurface
-            )
-//            Column {
-//
-//                Spacer(modifier = Modifier.height(2.dp))
-//                Text(
-//                    "Useful when old cached versions are incorrectly used.",
-//                    fontSize = 14.sp,
-//                    color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
-//                )
-//            }
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Restore From Backup")
+            }
         }
+
     }
 
 
