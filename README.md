@@ -27,10 +27,10 @@ Lets you run Python scripts with or without included binaries on Android.
 
 ## Example Commands
 
-| USE                             | COMMAND                                                                                         |
-|---------------------------------|-------------------------------------------------------------------------------------------------|
-| Ffmpeg Extract Audio from Video | `-i '{INPUT_FILE}' -b:a 192K -vn '{INPUT_FILE}.mp3'`                                                |
-| ImageMagick combine horizontal  | `'{INPUT_FILES}' +append '{INPUT_FILE}.horiz.jpeg'` |
+| USE                             | COMMAND                                                                                     |
+|---------------------------------|---------------------------------------------------------------------------------------------|
+| Ffmpeg Extract Audio from Video | `-i {INPUT_FILE} -b:a 192K -vn {INPUT_FILE}.mp3'`                                            |
+| ImageMagick combine horizontal  | `{INPUT_FILES} +append {INPUT_FILE}.horiz.jpeg` |
 
 ### More Command Placeholders will be available later.
 
@@ -43,5 +43,12 @@ Lets you run Python scripts with or without included binaries on Android.
 * Makes it easier to automate and run any task.
 * Termux will be constrained in the future by Android Platform limitations.
 * Needed to find an alternative method to Termux by including a whole Python installation in the APK itself that enables us to run scripts and binaries from anywhere on the storage.
-* 
+
+
+## Thanks To
+
+Jared Drummler
+
+
+
 
