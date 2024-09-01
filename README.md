@@ -4,6 +4,8 @@ Create your own Commands and Run them on your Android without wasting time.
 
 Lets you run Python scripts with or without included binaries on Android.
 
+https://github.com/cryptrr/AutoPie/raw/main/autopie-demo.webm
+
 ## Installation
 
 1) Build from source yourself or get the prebuilt APK from the releases section.
