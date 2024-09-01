@@ -370,8 +370,8 @@ fun SettingsToggles() {
                 .height(55.dp)
         ) {
             //TODO: Use build config to set these values.
-            Text("Version", fontSize = 15.4.sp,)
-            Text("0.06-beta", fontSize = 15.4.sp,)
+            Text("Version", fontSize = 15.4.sp)
+            Text("0.06-beta", fontSize = 15.4.sp)
         }
     }
 
