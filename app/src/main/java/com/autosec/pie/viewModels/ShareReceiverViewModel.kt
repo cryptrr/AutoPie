@@ -200,7 +200,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         Timber.d("runShareCommandForUrl")
 
 
-        val resultString = "\"${item.command.replace("{INPUT_FILE}", currentLink)}\""
+        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
 
         val fullExecPath =
             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -249,7 +249,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                 val replacedString = item.command
                     .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
                     .replace("''", "'")
-                    .replace("{INPUT_FILE}", currentItems.firstOrNull() ?: "")
+                    .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
 
                 Timber.d("Replaced String $replacedString")
@@ -280,7 +280,10 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
                 currentItems.map { path ->
-                    val resultString = "\"${item.command.replace("{INPUT_FILE}", path)}\""
+                    val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+
+                    Timber.d("Replaced String $resultString")
+
 
                     val fullExecPath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec

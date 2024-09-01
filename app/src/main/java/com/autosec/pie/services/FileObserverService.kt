@@ -141,7 +141,7 @@ class FileObserverJobService : JobService() {
 
                         Timber.d("Edited Filename: $fileName")
 
-                        val resultString = "\"${command.replace("{INPUT_FILE}", fileName)}\""
+                        val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
 
                         Timber.d("Edited command $exec $resultString")
 
@@ -184,7 +184,7 @@ class FileObserverJobService : JobService() {
 
                 val fullFilepath = "$path/$fileName"
 
-                val resultString = "\"${command.replace("{INPUT_FILE}", fileName)}\""
+                val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
 
                 Timber.d("Edited command $exec $resultString")
 

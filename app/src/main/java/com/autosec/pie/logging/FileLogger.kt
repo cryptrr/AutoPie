@@ -1,6 +1,7 @@
 package com.autosec.pie.logging
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import timber.log.Timber
 import java.io.File
 import java.io.FileWriter
@@ -54,12 +55,12 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
     // Convert priority to a readable string
     private fun getPriorityString(priority: Int): String {
         return when (priority) {
-            0 -> "VERBOSE"
-            1 -> "WARN"
-            2 -> "INFO"
-            3 -> "DEBUG"
-            4 -> "ERROR"
-            5 -> "ASSERT"
+            Log.VERBOSE -> "VERBOSE"
+            Log.WARN -> "WARN"
+            Log.INFO -> "INFO"
+            Log.DEBUG -> "DEBUG"
+            Log.ERROR -> "ERROR"
+            Log.ASSERT -> "ASSERT"
             else -> "UNKNOWN"
         }
     }
