@@ -4,7 +4,7 @@ Create your own Commands and Run them on your Android without wasting time.
 
 Lets you run Python scripts with or without included binaries on Android.
 
-https://github.com/cryptrr/AutoPie/raw/main/autopie-demo.mp4
+https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 ## Installation
 
@@ -31,7 +31,7 @@ https://github.com/cryptrr/AutoPie/raw/main/autopie-demo.mp4
 
 | USE                             | COMMAND                                                                                     |
 |---------------------------------|---------------------------------------------------------------------------------------------|
-| Ffmpeg Extract Audio from Video | `-i {INPUT_FILE} -b:a 192K -vn {INPUT_FILE}.mp3'`                                            |
+| Ffmpeg Extract Audio from Video | `-i {INPUT_FILE} -b:a 192K -vn {INPUT_FILE}.mp3`                                            |
 | ImageMagick combine horizontal  | `{INPUT_FILES} +append {INPUT_FILE}.horiz.jpeg` |
 
 ### More Command Placeholders will be available later.
