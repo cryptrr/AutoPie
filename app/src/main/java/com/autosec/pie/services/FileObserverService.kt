@@ -88,7 +88,7 @@ class FileObserverJobService : JobService() {
         private val command: String,
         private val selectors: List<String>,
         private val deleteSourceFile: Boolean
-    ) : FileObserver(path, CREATE+ MODIFY) {
+    ) : FileObserver(path, CREATE) {
 
         //val activity: Activity by inject(Context::class.java)
 
@@ -100,11 +100,11 @@ class FileObserverJobService : JobService() {
                 //execCommand(File("$path"))
             }
 
-            if (event == MODIFY && path != null) {
-                Timber.d("File modified: $path")
-                //checkFileCompletion(File("$path"))
-                execCommand(File("$path"))
-            }
+//            if (event == MODIFY && path != null) {
+//                Timber.d("File modified: $path")
+//                //checkFileCompletion(File("$path"))
+//                execCommand(File("$path"))
+//            }
 
         }
 

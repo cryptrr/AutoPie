@@ -14,6 +14,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -127,16 +128,15 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 key
             ).also { if (it != null) commandType = "FILE_OBSERVER" }
 
-            val selectorsJson = if(selectors.value.isNotBlank()){
+            val selectorsJson = if (selectors.value.isNotBlank()) {
                 val jsonArray = JsonArray()
 
                 selectors.value.split(",").map { string ->
-                    jsonArray.add(string)
+                    jsonArray.add(JsonParser.parseString(string.trim()))
                 }
 
                 jsonArray
-
-            }else{
+            } else {
                 JsonArray()
             }
 
