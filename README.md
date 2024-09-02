@@ -40,7 +40,7 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 ###  This configuration enables you to automatically convert each screenshot you take into webp.
 
-https://github.com/user-attachments/assets/cff1f4bd-a13d-4a85-89f6-dbea3fb90461
+![AutoPie-command-example](https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677)
 
 ### More Command Placeholders will be available later.
 
