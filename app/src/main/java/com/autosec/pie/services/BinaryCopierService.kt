@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import com.autosec.pie.data.AutoPieConstants
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.domain.ViewModelError
 import com.autosec.pie.domain.ViewModelEvent
@@ -330,7 +331,7 @@ class BinaryCopierService {
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
                 if(autoSecFolder.exists()){
-                    ProcessManagerService.runWget("", Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
+                    ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
                 }
             }
         }
@@ -437,11 +438,6 @@ class BinaryCopierService {
                     e.printStackTrace()
 
                     CoroutineScope(Dispatchers.Main).launch {
-//                        Toast.makeText(
-//                            activity.applicationContext,
-//                            "Error installing init archive. Please Reinstall this app.",
-//                            Toast.LENGTH_LONG
-//                        ).show()
 
                         mainViewModel.showNotification(AppNotification.FailedDownloadingArchive)
                     }
