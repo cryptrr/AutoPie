@@ -57,7 +57,13 @@ val PastelYellow = Color(0xFFebab36)
 val ElectricPurple = Color(0xFFa537fd)
 val Mauve = Color(0xFFd5b8ff)
 val Purple10 = Color(0xFFc4c0ff)
+val Purple05 = Color(0xFFf3f2ff)
+val Purple90 = Color(0xFF201F22)
+val Purple60 = Color(0xFF8482A5)
+val Purple70 = Color(0xFF47445a)
+
 val Purple50 = Color(0xFF757399)
+val Purple01 = Color(0xFFF5F5FF)
 
 val PastelPurple = Color(0xFFffb1c1)
 

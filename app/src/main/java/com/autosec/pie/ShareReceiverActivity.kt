@@ -269,7 +269,9 @@ fun ShareCard(
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp), shape = RoundedCornerShape(15.dp), colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(alpha = 0.15F))) {
+            .height(110.dp),
+        shape = RoundedCornerShape(15.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(alpha = 0.08F))) {
 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
             if(isLoading){

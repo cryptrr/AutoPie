@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
                                                 {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         Icon(
-                                                            tint = Color.Black.copy(0.7F),
+                                                            tint = MaterialTheme.colorScheme.onPrimary,
                                                             imageVector = Icons.Outlined.AddBox,
                                                             contentDescription = "Create command",
                                                             modifier = Modifier.size(28.dp)
@@ -229,7 +229,7 @@ class MainActivity : ComponentActivity() {
                                                         Text(
                                                             "Add",
                                                             fontSize = 15.7.sp,
-                                                            color = Color.Black.copy(0.7F),
+                                                            color = MaterialTheme.colorScheme.onPrimary,
                                                             fontWeight = FontWeight.SemiBold
                                                         )
 
@@ -246,7 +246,7 @@ class MainActivity : ComponentActivity() {
                                                         .fillMaxHeight()
                                                         .clip(RoundedCornerShape(100))
                                                         .width(3.dp)
-                                                        .background(Color.Black.copy(0.06f))
+                                                        .background(MaterialTheme.colorScheme.onPrimary.copy(0.06f))
                                                 )
                                                 Spacer(
                                                     modifier = Modifier
@@ -268,14 +268,14 @@ class MainActivity : ComponentActivity() {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         Icon(
                                                             imageVector = Icons.Default.Search,
-                                                            tint = Color.Black.copy(0.7F),
+                                                            tint = MaterialTheme.colorScheme.onPrimary,
                                                             contentDescription = "Search",
                                                             modifier = Modifier.size(28.dp)
                                                         )
                                                         Spacer(modifier = Modifier.width(5.dp))
                                                         Text(
                                                             "Search",
-                                                            color = Color.Black.copy(0.7F),
+                                                            color = MaterialTheme.colorScheme.onPrimary,
                                                             fontSize = 15.7.sp,
                                                             fontWeight = FontWeight.SemiBold
                                                         )
@@ -304,7 +304,7 @@ class MainActivity : ComponentActivity() {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Icon(
                                                         imageVector = Icons.Outlined.Download,
-                                                        tint = Color.Black.copy(0.7F),
+                                                        tint = MaterialTheme.colorScheme.onPrimary,
                                                         contentDescription = "Install package",
                                                         modifier = Modifier.size(28.dp)
                                                     )
@@ -313,7 +313,7 @@ class MainActivity : ComponentActivity() {
 
                                                         "Install New",
                                                         fontSize = 15.7.sp,
-                                                        color = Color.Black.copy(0.7F),
+                                                        color = MaterialTheme.colorScheme.onPrimary,
                                                         fontWeight = FontWeight.SemiBold
                                                     )
 
