@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
 
 ## Troubleshooting
-* Check that the `AutoSec` folder contains a `bin` folder with the binaries like `ffmpeg`, `observers.json` for Folder Observation Automation and `shares.json` for Share Sheet Configuration.
+* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation and `shares.json` for Share Sheet Configuration. And a `bin` folder with the binaries like `ffmpeg`.
 
 ## Command Format
 
@@ -37,6 +37,10 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 |---------------------------------|---------------------------------------------------------------------------------------------|
 | Ffmpeg Extract Audio from Video | `-i {INPUT_FILE} -b:a 192K -vn {INPUT_FILE}.mp3`                                            |
 | ImageMagick combine horizontal  | `{INPUT_FILES} +append {INPUT_FILE}.horiz.jpeg` |
+
+###  This configuration enables you to automatically convert each screenshot you take into webp.
+
+https://github.com/user-attachments/assets/cff1f4bd-a13d-4a85-89f6-dbea3fb90461
 
 ### More Command Placeholders will be available later.
 
