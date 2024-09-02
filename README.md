@@ -10,15 +10,19 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 1) Build from source yourself or get the prebuilt APK from the releases section.
 2) Install the APK and accept Play Protect Dialogs if any.
-3) Grant Storage Manager Permission.
-4) Optional: Disable Battery Optimization for AutoPie.
+3) Wait for the Python Binaries to get installed.
+4) Grant necessary permissions.
+5) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the `autosec.tar.xz` file and extract to the `AutoSec` folder.
+6) Optional: Disable Battery Optimization for AutoPie.
 
 ## Usage
 
-1) Wait for the Python Binaries to get installed.
-2) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the `autosec.tar.xz` file and extract to the `AutoSec` folder.
-3) Check that the `AutoSec` folder contains a `bin` folder with the binaries like `ffmpeg`, `observers.json` for Folder Observation Automation and `shares.json` for Share Sheet Configuration.
-4) Add your desired Commands in the AutoPie App by clicking on Add Button.
+1) Open AutoPie App
+2) There are currently two types of commands. `Share Sheet Commands` and `Folder Observer Commands`
+3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
+
+## Troubleshooting
+* Check that the `AutoSec` folder contains a `bin` folder with the binaries like `ffmpeg`, `observers.json` for Folder Observation Automation and `shares.json` for Share Sheet Configuration.
 
 ## Command Format
 
@@ -36,15 +40,23 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 ### More Command Placeholders will be available later.
 
-### WIP: Custom Defined Inputs for Customization
+## Custom Defined Command Arguments for Customization.
 
-### How do I create binaries for AutoPie
+WIP: AutoPie is working on supporting taking custom arguments that can be defined in a command .
+
+This will show a card where you can input details to customize the behaviour of the command.
+
+## Commands and Package Repository
+
+A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+
+### How do I create binaries for AutoPie.
 
 AutoPie binaries are just thin python wrappers around binaries like `ffmpeg` `magick` etc.
 
 Using **Shiv** to package the binaries, dependencies and python files is strongly recommended.
 
-This is an example for how to include the `ffmpeg` binaries and libraries in a single file.
+This is an example for how to include the `ffmpeg` binaries and libraries in a single file with shiv.
 
 A more detailed docs is in WIP.
 
