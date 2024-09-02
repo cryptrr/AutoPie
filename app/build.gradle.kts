@@ -7,13 +7,17 @@ android {
     namespace = "com.autosec.pie"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.autosec.pie"
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "\"0.7-beta\""
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -21,9 +25,18 @@ android {
         }
     }
 
+
+
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
+            buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
+            buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

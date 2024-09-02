@@ -260,7 +260,7 @@ fun ShareCard(
 
             //shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
             isLoading = true
-            delay(1500)
+            delay(900)
             activity?.finish()
         }
 

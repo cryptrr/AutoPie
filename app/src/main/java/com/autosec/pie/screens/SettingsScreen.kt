@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autosec.pie.BuildConfig
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.terminal.TerminalEmulatorActivity
 import com.autosec.pie.viewModels.MainViewModel
@@ -369,9 +370,8 @@ fun SettingsToggles() {
                 .fillMaxWidth()
                 .height(55.dp)
         ) {
-            //TODO: Use build config to set these values.
             Text("Version", fontSize = 15.4.sp)
-            Text("0.06-beta", fontSize = 15.4.sp)
+            Text(BuildConfig.VERSION_NAME, fontSize = 15.4.sp)
         }
     }
 

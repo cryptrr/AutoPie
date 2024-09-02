@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,28 +22,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat.startActivity
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.viewModels.MainViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import timber.log.Timber
+
 
 @RequiresApi(Build.VERSION_CODES.R)
 @OptIn(ExperimentalPermissionsApi::class)
@@ -70,8 +72,23 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
         }
     }
 
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val hasPermission = Environment.isExternalStorageManager()
+            if (hasPermission) {
+                Timber.d("All files access granted")
+                mainViewModel.storageManagerPermissionGranted = true
+                AutoPieCoreService.initAutosec()
+            } else {
+                Timber.d("All files access denied")
+            }
+        }
+    }
 
-    Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center){
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(innerPadding), contentAlignment = Alignment.Center){
         if(isInstallingPython){
             Box(
                 Modifier
@@ -91,9 +108,10 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
                         modifier = Modifier.height(50.dp),
                         shape = RoundedCornerShape(15.dp),
                         onClick = {
+
                             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                             intent.data = Uri.parse("package:" + context.packageName)
-                            startActivity(context, intent, null)
+                            launcher.launch(intent, null)
 
                         }) {
                         Text(text = "Request Manage Storage Permission")

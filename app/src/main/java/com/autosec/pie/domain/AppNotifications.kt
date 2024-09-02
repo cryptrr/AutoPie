@@ -67,6 +67,10 @@ sealed class AppNotification: Notification {
     data object FeatureWIP : AppNotification()
     object FailedDownloadingArchive : AppNotification()
     object FailedExtractingArchive : AppNotification()
+    data object DownloadingInitPackages : AppNotification()
+    data object DownloadedInitPackages : AppNotification()
+    data object InstallingInitPackages : AppNotification()
+    data object InstallingInitPackagesSuccess : AppNotification()
 
 
 
@@ -80,6 +84,11 @@ sealed class AppNotification: Notification {
             is FeatureWIP -> "This feature is 'Work In Progress'"
             is FailedDownloadingArchive -> "Failed Downloading Bootstrap binaries. Check Internet."
             is FailedExtractingArchive -> "Failed Extracting Init Archive. Please manually download zip from github"
+
+            is DownloadingInitPackages -> "Downloading Init packages"
+            is DownloadedInitPackages -> "Downloading Init packages: Success"
+            is InstallingInitPackages -> "Installing Init packages"
+            is InstallingInitPackagesSuccess -> "Installing Init packages: Success"
             else -> "An Event Occurred"
         }
 

@@ -17,6 +17,11 @@ class JSONService {
         private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
         fun readSharesConfig(): JsonObject? {
+
+            if(!mainViewModel.storageManagerPermissionGranted){
+                return null
+            }
+
             val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
 
 
@@ -47,6 +52,10 @@ class JSONService {
         }
 
         fun readObserversConfig(): JsonObject? {
+
+            if(!mainViewModel.storageManagerPermissionGranted){
+                return null
+            }
 
             val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
 

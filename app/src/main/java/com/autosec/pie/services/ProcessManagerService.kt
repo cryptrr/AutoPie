@@ -38,6 +38,24 @@ class ProcessManagerService {
 
         }
 
+        fun checkShell(): Boolean {
+            try{
+                val shellPath = File(activity.filesDir, "sh").absolutePath
+
+                val shell = Shell(
+                    shellPath,
+                )
+
+                val result = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+
+                shell.shutdown()
+
+                return result.isSuccess
+            }catch (e: Exception){
+                return false
+            }
+        }
+
 
         fun runCommand4(exec: String, command: String, cwd: String) : Boolean {
             try {
@@ -148,6 +166,41 @@ class ProcessManagerService {
                 } catch (e: Exception) {
                     Timber.e(e.toString())
                 }
+            }
+
+        }
+
+        fun downloadFileWithPython(url: String, fullFilePath: String): Boolean {
+
+            Timber.d("Downloading file with python")
+
+            try {
+
+                val shellPath = File(activity.filesDir, "sh").absolutePath
+
+                val shell = Shell(
+                    shellPath,
+                )
+
+                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+
+                val command = "python3.9 -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
+
+                Timber.d(command)
+
+                val result = shell.run(command)
+
+
+                Timber.d(shell.isRunning().toString())
+                Timber.d(result.output())
+
+                return result.isSuccess
+
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+                return false
             }
 
         }

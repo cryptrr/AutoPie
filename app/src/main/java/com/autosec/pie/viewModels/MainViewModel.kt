@@ -55,11 +55,11 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    var storageManagerPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    var storageManagerPermissionGranted by mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         Environment.isExternalStorageManager()
     } else {
         true
-    }
+    })
 
     fun showNotification(notification: AppNotification){
         viewModelScope.launch {

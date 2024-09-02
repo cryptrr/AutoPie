@@ -9,8 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import com.autosec.pie.di.appModule
 import com.autosec.pie.logging.FileLoggingTree
-import com.autosec.pie.notifications.AutoPieNotification
-import com.autosec.pie.services.BinaryCopierService
+import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.services.FileObserverJobService
 import com.autosec.pie.services.ScreenStateReceiver
 import com.autosec.pie.viewModels.MainViewModel
@@ -41,8 +40,8 @@ class MyApplication : Application() {
         startScreenStateReceiver()
 
 
-        BinaryCopierService.extractTarXzFromAssets(this@MyApplication)
-        BinaryCopierService.extractAndExecuteBinary(this@MyApplication)
+        AutoPieCoreService.extractTarXzFromAssets(this@MyApplication)
+        AutoPieCoreService.extractAndExecuteBinary(this@MyApplication)
 
         initAutosec()
     }
@@ -72,24 +71,7 @@ class MyApplication : Application() {
 
     private fun initAutosec(){
 
-        val autosecFolderExists = BinaryCopierService.checkForAutoSecFolder()
-        val binFolderExists = BinaryCopierService.checkForBinFolder()
-
-        if(mainViewModel.storageManagerPermissionGranted && !autosecFolderExists){
-            Timber.d("Autosec folder does not exist. Creating and copying files")
-            BinaryCopierService.createAutoSecFolder()
-            BinaryCopierService.createLogsFolder()
-
-        }else{
-            Timber.d("Autosec folder exists. Doing nothing.")
-        }
-
-        if(mainViewModel.storageManagerPermissionGranted && !binFolderExists){
-            BinaryCopierService.downloadAutoSecInitArchive()
-            BinaryCopierService.extractAutoSecFiles()
-        }else{
-            Timber.d("Bin folder exists. Doing nothing.")
-        }
+        AutoPieCoreService.initAutosec()
     }
 
 }
