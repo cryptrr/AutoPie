@@ -38,7 +38,6 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.viewModels.MainViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
@@ -46,15 +45,32 @@ import timber.log.Timber
 
 
 @RequiresApi(Build.VERSION_CODES.R)
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValues) {
 
-    val manageExternalStorageState = rememberPermissionState(
-        android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
-    )
-
     val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+
+    val android10Permissions = arrayOf(
+        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+    val android10PermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            val permissionsGranted = permissions.values.reduce { acc, isPermissionGranted ->
+                acc && isPermissionGranted
+            }
+
+            if (!permissionsGranted) {
+                Timber.d("Permission not granted")
+            }
+            else{
+                mainViewModel.storageManagerPermissionGranted = true
+                AutoPieCoreService.initAutosec()
+            }
+        })
+
+
 
     var isInstallingPython by remember {
         mutableStateOf(false)
@@ -63,7 +79,7 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
     LaunchedEffect(key1 = context) {
         launch {
             mainViewModel.eventFlow.collectLatest {
-                when(it){
+                when (it) {
                     is ViewModelEvent.InstallingPython -> isInstallingPython = true
                     is ViewModelEvent.InstalledPythonSuccessfully -> isInstallingPython = false
                     else -> {}
@@ -72,36 +88,44 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
         }
     }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val hasPermission = Environment.isExternalStorageManager()
-            if (hasPermission) {
-                Timber.d("All files access granted")
-                mainViewModel.storageManagerPermissionGranted = true
-                AutoPieCoreService.initAutosec()
-            } else {
-                Timber.d("All files access denied")
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val hasPermission = Environment.isExternalStorageManager()
+                if (hasPermission) {
+                    Timber.d("All files access granted")
+                    mainViewModel.storageManagerPermissionGranted = true
+                    AutoPieCoreService.initAutosec()
+                } else {
+                    Timber.d("All files access denied")
+                }
             }
         }
-    }
+
 
     Box(
         Modifier
             .fillMaxSize()
-            .padding(innerPadding), contentAlignment = Alignment.Center){
-        if(isInstallingPython){
+            .padding(innerPadding), contentAlignment = Alignment.Center
+    ) {
+        if (isInstallingPython) {
             Box(
                 Modifier
                     .fillMaxHeight()
                     .height(500.dp)
-                    .fillMaxWidth(), contentAlignment = Alignment.Center){
-                Column(horizontalAlignment = Alignment.CenterHorizontally){
+                    .fillMaxWidth(), contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(Modifier.size(150.dp))
                     Spacer(Modifier.height(20.dp))
-                    Text(text = "Please wait while installing python...", color = Color.White.copy(0.7F), fontSize = 15.7.sp)
+                    Text(
+                        text = "Please wait while installing python...",
+                        color = Color.White.copy(0.7F),
+                        fontSize = 15.7.sp
+                    )
                 }
             }
-        }else{
+        } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     Button(
@@ -109,7 +133,8 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
                         shape = RoundedCornerShape(15.dp),
                         onClick = {
 
-                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                            val intent =
+                                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                             intent.data = Uri.parse("package:" + context.packageName)
                             launcher.launch(intent, null)
 
@@ -121,7 +146,22 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
                 }
             } else {
                 // Handle permissions for Android 10 and below
-                Text(text = "This feature requires Android 11 or higher")
+
+                Button(
+                    modifier = Modifier.height(50.dp),
+                    shape = RoundedCornerShape(15.dp),
+                    onClick = {
+
+                        android10PermissionsLauncher.launch(android10Permissions)
+
+                    }) {
+                    Text(text = "Request Storage Permission")
+                }
+
+                LaunchedEffect(key1 = context) {
+
+                }
+
             }
         }
     }

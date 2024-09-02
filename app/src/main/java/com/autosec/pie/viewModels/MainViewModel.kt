@@ -5,6 +5,7 @@ import android.app.job.JobInfo
 import android.app.job.JobScheduler
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import androidx.compose.runtime.getValue
@@ -58,7 +59,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var storageManagerPermissionGranted by mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         Environment.isExternalStorageManager()
     } else {
-        true
+        application.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                application.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     })
 
     fun showNotification(notification: AppNotification){

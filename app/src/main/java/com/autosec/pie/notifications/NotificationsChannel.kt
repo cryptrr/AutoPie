@@ -85,8 +85,6 @@ class AutoPieNotification(val context: Application){
                 // Request the permission
                 ActivityCompat.requestPermissions(activity, arrayOf(permission), 1)
             }
-        } else {
-            TODO("VERSION.SDK_INT < TIRAMISU")
         }
 
 
