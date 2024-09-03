@@ -20,6 +20,15 @@ data class CommandModel(
     val deleteSourceFile: Boolean? = false,
 )
 
+data class CommandExtra(
+    val name: String,
+    val type: String,
+    val default: String,
+    val description: String,
+    val defaultBoolean: Boolean,
+    val selectableOptions: List<String>
+)
+
 enum class CommandType{
     SHARE,
     FILE_OBSERVER

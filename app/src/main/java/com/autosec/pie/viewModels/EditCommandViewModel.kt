@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.services.JSONService
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -47,6 +48,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     var selectedCommandType by mutableStateOf("")
 
     val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
+
+    val commandExtras = mutableStateOf<List<CommandExtra>>(emptyList())
 
 
     suspend fun getCommandDetails(key: String) {
@@ -274,7 +277,25 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
 
         }
+    }
 
+    fun addCommandExtra(commandExtra: CommandExtra, key: Int){
+        if(commandExtras.value.getOrNull(key) != null){
+            commandExtras.value = commandExtras.value
+                .toMutableList()
+                .apply { this[key] = commandExtra }
+                .toList()
+        }else{
+            commandExtras.value += commandExtra
+        }
+
+        Timber.d(commandExtras.toString())
+    }
+
+    fun removeCommandExtra(key: Int){
+        Timber.d("Removing item at $key")
+        commandExtras.value = commandExtras.value.toMutableList().apply { removeAt(key) }
+        Timber.d(commandExtras.toString())
     }
 
     private fun clear() {
