@@ -234,7 +234,7 @@ fun SettingsToggles() {
                 Text("Turn On File Observers")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Turn off if you are not using FileObserver feature is good",
+                    "Turn off if you don't want to use FileObserver feature.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
