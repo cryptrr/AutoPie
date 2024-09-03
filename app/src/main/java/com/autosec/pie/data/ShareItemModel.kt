@@ -21,6 +21,7 @@ data class CommandModel(
 )
 
 data class CommandExtra(
+    val id: String,
     val name: String,
     val type: String,
     val default: String,

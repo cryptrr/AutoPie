@@ -58,6 +58,7 @@ import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.EditCommandViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -136,19 +137,15 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
     val viewModel: EditCommandViewModel by KoinJavaComponent.inject(EditCommandViewModel::class.java)
 
-    val extrasElements = remember {
-        mutableStateListOf<Int>()
-    }
-
-    var counter = remember { mutableStateOf(0) }
+    val extrasElements = remember{ mutableStateOf<List<String>>(emptyList()) }
 
 
     fun addExtra(){
-        extrasElements.add(counter.value)
-        counter.value++
+        extrasElements.value += Utils.getRandomNumericalId()
     }
 
 
+    val rowState = rememberLazyListState()
 
 
     Column {
@@ -245,15 +242,20 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
 
             Column {
-               if( extrasElements.isNotEmpty()) {
+               if( extrasElements.value.isNotEmpty()) {
                     Text(text = "EXTRAS", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(10.dp))
-                   Text(text = extrasElements.toString(), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                   //Text(text = extrasElements.toString(), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.horizontalScroll(
-                    rememberScrollState())){
-                    for(item in extrasElements){
-                        CommandExtraInputElement(viewModel, item, extrasElements, counter)
+//                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.horizontalScroll(
+//                    rememberScrollState())){
+//                    for(item in extrasElements.value){
+//                        CommandExtraInputElement(viewModel, item, extrasElements)
+//                    }
+//                }
+                LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)){
+                    items(items = extrasElements.value, key = {it}){
+                        CommandExtraInputElement(viewModel, it, extrasElements)
                     }
                 }
             }
@@ -332,6 +334,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(20),
                 //contentPadding = PaddingValues(vertical = 20.dp),
+                enabled = viewModel.isValidCommand,
                 onClick = {
                     viewModel.viewModelScope.launch {
                         viewModel.changeCommandDetails(key = commandKey)

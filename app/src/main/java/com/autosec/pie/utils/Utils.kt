@@ -1,6 +1,16 @@
 package com.autosec.pie.utils
 
 import kotlinx.coroutines.*
+import kotlin.random.Random
+
+class Utils{
+    companion object{
+        fun getRandomNumericalId(): String {
+            val randomDigits = (1..6).map { Random.nextInt(10) }
+            return randomDigits.joinToString("")
+        }
+    }
+}
 
 class Debouncer(
     private val coroutineScope: CoroutineScope,

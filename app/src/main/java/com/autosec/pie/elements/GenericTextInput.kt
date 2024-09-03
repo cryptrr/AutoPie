@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true, modifier: Modifier = Modifier){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -43,7 +43,9 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
 
             onValueChange = {
                 text.value = it
+                onValueChange(it)
             },
+            isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             minLines = 2,
             maxLines = Int.MAX_VALUE,

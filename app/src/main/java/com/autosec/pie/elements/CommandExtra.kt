@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -47,31 +48,35 @@ import com.autosec.pie.viewModels.EditCommandViewModel
 import timber.log.Timber
 
 @Composable
-fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasElements: SnapshotStateList<Int>, counter: MutableState<Int>) {
+fun CommandExtraInputElement(
+    viewModel: EditCommandViewModel,
+    key: String,
+    extrasElements: MutableState<List<String>>
+) {
 
-    val name = remember {
+    val name = rememberSaveable {
         mutableStateOf("")
     }
 
-    val default = remember {
+    val default = rememberSaveable {
         mutableStateOf("")
     }
 
-    val selectableOptions = remember {
+    val selectableOptions = rememberSaveable {
         mutableStateOf("")
     }
 
-    val description = remember {
+    val description = rememberSaveable {
         mutableStateOf("")
     }
 
     var expanded = remember { mutableStateOf(false) }
-    var selectedCommandType = remember { mutableStateOf("STRING") }
+    var selectedCommandType = rememberSaveable { mutableStateOf("STRING") }
     val options = listOf("STRING", "SELECTABLE", "BOOLEAN")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
-    var selectedOptionForBoolean = remember { mutableStateOf("TRUE") }
+    var selectedOptionForBoolean = rememberSaveable { mutableStateOf("TRUE") }
     val booleanOptions = listOf("TRUE", "FALSE")
 
 
@@ -87,9 +92,10 @@ fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasEl
     ) {
 
         val commandExtra = CommandExtra(
+            id = key,
             name = name.value,
             type = selectedCommandType.value,
-            default = default.value,
+            default = default.value.ifBlank { (selectableOptions.value.split(",").firstOrNull() ?: "") },
             description = description.value,
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = selectableOptions.value.split(",")
@@ -125,12 +131,12 @@ fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasEl
                     .height(55.dp)
                     .aspectRatio(1F, true)
                     .background(Color.Black)
-                    .clickable{
+                    .clickable {
                         viewModel.removeCommandExtra(key)
-                        extrasElements.removeLast()
-                        counter.value--
-                    }
-                ,
+                        extrasElements.value = extrasElements.value.filter { it != key }
+
+
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -145,8 +151,20 @@ fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasEl
 
         when (selectedCommandType.value) {
             "STRING" -> {
-                GenericTextFormField(text = name, "", placeholder = "NAME")
-                GenericTextFormField(text = default, "", placeholder = "DEFAULT")
+                GenericTextFormField(
+                    text = name,
+                    "",
+                    placeholder = "NAME",
+                    isError = name.value.isBlank(),
+
+
+                )
+                GenericTextFormField(
+                    text = default,
+                    "",
+                    placeholder = "DEFAULT",
+                    isError = default.value.isBlank()
+                )
                 GenericTextFormField(
                     text = description,
                     "",
@@ -156,7 +174,12 @@ fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasEl
             }
 
             "BOOLEAN" -> {
-                GenericTextFormField(text = name, "", placeholder = "NAME")
+                GenericTextFormField(
+                    text = name,
+                    "",
+                    placeholder = "NAME",
+                    isError = name.value.isBlank()
+                )
                 OptionSelector(
                     options = booleanOptions,
                     selectedOption = selectedOptionForBoolean,
@@ -171,12 +194,17 @@ fun CommandExtraInputElement(viewModel: EditCommandViewModel, key: Int, extrasEl
             }
 
             "SELECTABLE" -> {
-                GenericTextFormField(text = name, "", placeholder = "NAME")
+                GenericTextFormField(
+                    text = name,
+                    "",
+                    placeholder = "NAME",
+                )
                 GenericTextFormField(
                     text = selectableOptions,
                     "",
                     placeholder = "OPTIONS",
-                    subtitle = "Options for this field. Separate options with commas. First Option will be considered default."
+                    subtitle = "Options for this field. Separate options with commas. First Option will be considered default.",
+                    isError = selectableOptions.value.isBlank().also { if (it) viewModel.formErrorsCount.intValue++ else viewModel.formErrorsCount.intValue-- }
                 )
                 GenericTextFormField(
                     text = description,

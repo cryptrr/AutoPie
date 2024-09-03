@@ -4,11 +4,13 @@ import android.app.Application
 import android.os.Environment
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandExtra
+import com.autosec.pie.domain.ViewModelError
 import com.autosec.pie.services.JSONService
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -48,6 +50,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     var selectedCommandType by mutableStateOf("")
 
     val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
+
+    val formErrorsCount = mutableIntStateOf(0)
 
     val commandExtras = mutableStateOf<List<CommandExtra>>(emptyList())
 
@@ -101,6 +105,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
                 selectors.value = selectorsFormatted
                 selectedCommandType = commandType
+
                 isLoading.value = false
             }
         }
@@ -113,6 +118,23 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
         //isLoading.value = true
 
+        //Validate extras if exists.
+        val validationError = if (commandExtras.value.isEmpty()) {
+            false
+        } else {
+            commandExtras.value.any { it.name.isBlank() }  || commandExtras.value.any { it.default.isBlank() }
+        }
+
+        Timber.d("${commandExtras.value.any { it.name.isBlank() }}")
+        Timber.d("${commandExtras.value.any { it.default.isBlank() }}")
+
+//        if (validationError) {
+//            main.showError(ViewModelError.Unknown)
+//            return
+//        }
+//
+//        Timber.d("NO validation error")
+
         viewModelScope.launch(Dispatchers.IO) {
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
@@ -123,6 +145,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
             if (shareCommands == null || observerCommands == null) {
                 return@launch
             }
+
 
             var commandType = ""
 
@@ -143,8 +166,12 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 JsonArray()
             }
 
+            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+
+
             Timber.d("commandObject: $commandObject")
 
+            //Key didn't change
             if (oldCommandName.value == commandName.value) {
 
                 Timber.d("${oldCommandName.value} == ${commandName.value}")
@@ -156,6 +183,10 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                 when (type.value) {
                     "SHARE" -> {
+                        if(commandExtras.value.isNotEmpty()){
+                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                        }
+
                         shareCommands.add(commandName.value, commandObject)
                         //shareCommands.remove(oldCommandName.value)
                     }
@@ -180,6 +211,11 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                 when (type.value) {
                     "SHARE" -> {
+                        if(commandExtras.value.isNotEmpty()){
+                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                        }
+
+
                         shareCommands.add(commandName.value, commandObject)
                         shareCommands.remove(oldCommandName.value)
                     }
@@ -195,7 +231,6 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
             }
 
 
-            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
             when (type.value) {
                 "SHARE" -> {
@@ -279,22 +314,26 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun addCommandExtra(commandExtra: CommandExtra, key: Int){
-        if(commandExtras.value.getOrNull(key) != null){
-            commandExtras.value = commandExtras.value
-                .toMutableList()
-                .apply { this[key] = commandExtra }
-                .toList()
-        }else{
+    fun addCommandExtra(commandExtra: CommandExtra, key: String) {
+
+        if (commandExtras.value.any { it.id == key }) {
+            commandExtras.value = commandExtras.value.toMutableList().also {
+                val index = it.indexOfFirst { it.id == key }
+
+                it.set(index, commandExtra)
+            }
+        } else {
             commandExtras.value += commandExtra
         }
 
         Timber.d(commandExtras.toString())
+
+
     }
 
-    fun removeCommandExtra(key: Int){
+    fun removeCommandExtra(key: String) {
         Timber.d("Removing item at $key")
-        commandExtras.value = commandExtras.value.toMutableList().apply { removeAt(key) }
+        commandExtras.value = commandExtras.value.filter { it.id != key }
         Timber.d(commandExtras.toString())
     }
 
