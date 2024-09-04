@@ -49,7 +49,6 @@ class FileObserverJobService : JobService() {
                 val key = entry.key
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
-                println("Key: $key, Value: $value")
 
                 val directoryPath = value.get("path").asString
                 val exec = value.get("exec").asString

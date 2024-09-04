@@ -121,7 +121,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 selectors.value = selectorsFormatted
                 selectedCommandType = commandType
 
-                Timber.d("Extras: ${commandModel?.extras}")
+                //Timber.d("Extras: ${commandModel?.extras}")
 
                 commandModel?.let{
                     commandExtras.value = it.extras ?: emptyList()

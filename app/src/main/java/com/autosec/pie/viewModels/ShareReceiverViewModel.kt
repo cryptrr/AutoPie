@@ -85,7 +85,6 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             val key = entry.key
             val value = entry.value.asJsonObject
             // Process the key-value pair
-            println("Key: $key, Value: $value")
 
             val directoryPath = value.get("path").asString
             val exec = value.get("exec").asString
@@ -189,8 +188,6 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
 
-        println(item.toString())
-        println(fileUris.toString())
 
         val inputDir = fileUris.firstOrNull()?.let { File(it) }
 
