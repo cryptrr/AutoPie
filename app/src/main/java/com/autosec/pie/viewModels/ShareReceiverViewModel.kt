@@ -2,11 +2,17 @@ package com.autosec.pie.viewModels
 
 import android.app.Application
 import android.os.Environment
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtra
+import com.autosec.pie.data.CommandModel
+import com.autosec.pie.data.CommandType
+import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.data.ShareItemModel
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
@@ -16,6 +22,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
@@ -28,16 +35,23 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
     val main: MainViewModel by inject(MainViewModel::class.java)
 
-    var shareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
-    var filteredShareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
+    var shareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
+    var filteredShareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
 
     var searchQuery = mutableStateOf("")
 
+    val currentExtrasDetails = mutableStateOf<Triple<Boolean, CommandModel, ShareInputs>?>(null)
+
+
     init {
-        getSharesConfig()
+        try {
+            getSharesConfig()
+        }catch (e:Exception){
+            Timber.e(e)
+        }
     }
 
     fun search(query: String) {
@@ -66,7 +80,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             main.schedulerConfigAvailable = true
         }
 
-        val tempList = mutableListOf<ShareItemModel>()
+        val tempList = mutableListOf<CommandModel>()
+
+        //TODO: Need to do some refactoring
 
         for (entry in observerConfig.entrySet()) {
             val key = entry.key
@@ -79,12 +95,24 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             val command = value.get("command").asString
             val deleteSource = value.get("deleteSourceFile").asBoolean
 
-            val shareObject = ShareItemModel(
+            val extrasJsonArray = value.getAsJsonArray("extras")
+
+            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
+
+            val extras: List<CommandExtra> = try{
+                Gson().fromJson(extrasJsonArray, extrasListType)
+            }catch(e: Exception){
+                emptyList()
+            }
+
+            val shareObject = CommandModel(
+                type = CommandType.SHARE,
                 name = key,
                 path = directoryPath,
                 command = command,
                 exec = exec,
-                deleteSourceFile = deleteSource
+                deleteSourceFile = deleteSource,
+                extras = extras
             )
 
             tempList.add(shareObject)
@@ -109,7 +137,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             inputStream.close()
             val jsonString = String(buffer)
 
-            Timber.d(jsonString)
+            //Timber.d(jsonString)
 
             // Parse the JSON string
             val gson = Gson()
@@ -255,6 +283,8 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                     .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
                     .replace("''", "'")
                     .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
+
+
 
 
                 Timber.d("Replaced String $replacedString")

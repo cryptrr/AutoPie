@@ -22,6 +22,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -307,17 +310,28 @@ fun OptionSelector(
             2.dp,
             MaterialTheme.colorScheme.primary,
             RoundedCornerShape(15.dp)
-        )
+        ).height(57.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color.Black.copy(alpha = 0.15F))
+            .clickable { expanded.value = true }
     ) {
-        Text(
-            text = selectedOption.value,
-            modifier = Modifier
-                .clip(RoundedCornerShape(15.dp))
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.15F))
-                .clickable { expanded.value = true }
-                .padding(16.dp)
-        )
+        Row(horizontalArrangement = Arrangement.SpaceBetween){
+            Text(
+                text = selectedOption.value,
+                modifier = Modifier
+                    //.clip(RoundedCornerShape(15.dp))
+                    .fillMaxWidth(0.7F)
+                    .padding(16.dp)
+            )
+            Box(Modifier.fillMaxHeight().aspectRatio(1F), contentAlignment = Alignment.Center){
+                Icon(
+                    tint = MaterialTheme.colorScheme.primary,
+                    imageVector = Icons.Default.UnfoldMore,
+                    contentDescription = "Show options",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
 
         DropdownMenu(
             expanded = expanded.value,
