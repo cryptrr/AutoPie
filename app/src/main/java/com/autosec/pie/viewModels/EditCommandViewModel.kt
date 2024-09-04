@@ -339,11 +339,11 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun addCommandExtra(commandExtra: CommandExtra, key: String) {
+    fun addCommandExtra(commandExtra: CommandExtra) {
 
-        if (commandExtras.value.any { it.id == key }) {
+        if (commandExtras.value.any { it.id == commandExtra.id }) {
             commandExtras.value = commandExtras.value.toMutableList().also {
-                val index = it.indexOfFirst { it.id == key }
+                val index = it.indexOfFirst { it.id == commandExtra.id }
 
                 it.set(index, commandExtra)
             }

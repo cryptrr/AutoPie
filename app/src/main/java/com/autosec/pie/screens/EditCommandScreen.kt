@@ -55,6 +55,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.AutoPieStrings
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.elements.CommandExtraElement
 import com.autosec.pie.elements.CommandExtraInputElement
 import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
@@ -147,21 +148,6 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
         extrasElements.value += CommandExtra(id = Utils.getRandomNumericalId(), type = "STRING")
     }
 
-
-    val rowState = rememberLazyListState()
-
-    val derivedCommandName = remember {
-        derivedStateOf { viewModel.commandExtras.value.firstOrNull()?.name }
-    }
-
-    val modifiedExtraDescription = remember {
-        derivedStateOf {
-            if (derivedCommandName.value?.isNotBlank() == true) AutoPieStrings.EXTRAS_DESCRIPTION.replace(
-                AutoPieStrings.EXTRAS_DESCRIPTION_TO_REPLACE,
-                derivedCommandName.value!!
-            ) else AutoPieStrings.EXTRAS_DESCRIPTION
-        }
-    }
 
 
     Column {
@@ -264,26 +250,10 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             Column {
                 if (extrasElements.value.isNotEmpty()) {
-                    Text(text = "EXTRAS", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    Spacer(modifier = Modifier.height(3.dp))
-
-                    Text(
-                        text = modifiedExtraDescription.value,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    //Text(text = extrasElements.toString(), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                }
-//                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.horizontalScroll(
-//                    rememberScrollState())){
-//                    for(item in extrasElements.value){
-//                        CommandExtraInputElement(viewModel, item, extrasElements)
-//                    }
-//                }
-                LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(items = extrasElements.value, key = { it.id }) {
-                        CommandExtraInputElement(viewModel, it, extrasElements)
+                    CommandExtraElement(extrasElements = extrasElements, {
+                        viewModel.addCommandExtra(it)
+                    }){
+                        viewModel.removeCommandExtra(it)
                     }
                 }
             }
