@@ -348,7 +348,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 it.set(index, commandExtra)
             }
         } else {
-            commandExtras.value += commandExtra
+            commandExtras.value = commandExtras.value.toMutableList().also { it.add(0,commandExtra) }
         }
 
         Timber.d(commandExtras.toString())

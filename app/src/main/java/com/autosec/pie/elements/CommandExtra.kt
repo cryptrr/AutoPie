@@ -3,6 +3,7 @@ package com.autosec.pie.elements
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
@@ -32,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,6 +81,9 @@ fun CommandExtraElement(
         }
     }
 
+    val scrollState = rememberScrollState()
+
+
     Column {
         Text(text = "EXTRAS", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(3.dp))
@@ -88,9 +95,20 @@ fun CommandExtraElement(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(items = extrasElements.value, key = { it.id }) {
-                CommandExtraInputElement(it, extrasElements, onAddCommandExtra, onRemoveCommandExtra)
+//        LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+//            items(items = extrasElements.value, key = { it.id }) {
+//                CommandExtraInputElement(it, extrasElements, onAddCommandExtra, onRemoveCommandExtra)
+//            }
+//        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.horizontalScroll(scrollState)
+        ) {
+            for (item in extrasElements.value) {
+                key(item.id){
+                    CommandExtraInputElement(item,extrasElements, onAddCommandExtra, onRemoveCommandExtra)
+                }
             }
         }
     }
@@ -159,8 +177,8 @@ fun CommandExtraInputElement(
             selectableOptions = selectableOptions.value.split(",")
         )
 
-        //viewModel.addCommandExtra(commandExtra)
         onAddCommandExtra(commandExtra)
+
     }
 
 
@@ -192,9 +210,7 @@ fun CommandExtraInputElement(
                     .background(Color.Black)
                     .clickable {
 
-                        //viewModel.removeCommandExtra(command.id)
                         onRemoveCommandExtra(command.id)
-                        extrasElements.value = extrasElements.value.filter { it.id != command.id }
 
                     },
                 contentAlignment = Alignment.Center

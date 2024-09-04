@@ -49,7 +49,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     suspend fun getCommandsList(){
         isLoading.value = true
-        delay(1000L)
+        delay(500L)
         viewModelScope.launch(Dispatchers.IO){
             val sharesConfig = JSONService.readSharesConfig()
             val observersConfig = JSONService.readObserversConfig()
