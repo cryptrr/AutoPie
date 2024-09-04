@@ -46,7 +46,7 @@ class JSONService {
                 }
                 return dataObject.asJsonObject
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return null
             }
         }
@@ -80,7 +80,7 @@ class JSONService {
                 }
                 return dataObject.asJsonObject
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return null
             }
         }
@@ -95,7 +95,7 @@ class JSONService {
                 file.writeText(jsonString)
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return
             }
         }
@@ -107,7 +107,7 @@ class JSONService {
                 val file = File(fileObserverPath)
                 file.writeText(jsonString)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return
             }
         }

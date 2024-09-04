@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.autosec.pie.data.InstalledPackageModel
 import org.koin.java.KoinJavaComponent
+import timber.log.Timber
 import java.io.File
 
 class InstalledPackagesViewModel(application: Application) : AndroidViewModel(application) {
@@ -36,7 +37,7 @@ class InstalledPackagesViewModel(application: Application) : AndroidViewModel(ap
         try {
             return getFilesInFolder(folderPath)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Timber.e(e)
             return emptyList()
         }
     }

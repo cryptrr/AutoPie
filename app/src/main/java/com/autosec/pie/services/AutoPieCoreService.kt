@@ -54,6 +54,7 @@ class AutoPieCoreService {
                 }
             }
 
+
         }
 
 
@@ -176,7 +177,7 @@ class AutoPieCoreService {
 
 
                 } catch (e: IOException) {
-                    e.printStackTrace()
+                    Timber.e(e)
 
                     CoroutineScope(Dispatchers.Main).launch {
                         Toast.makeText(
@@ -395,7 +396,7 @@ class AutoPieCoreService {
 
 
                 } catch (e: IOException) {
-                    e.printStackTrace()
+                    Timber.e(e)
 
                     CoroutineScope(Dispatchers.Main).launch {
 
@@ -407,7 +408,7 @@ class AutoPieCoreService {
                         tarInputStream?.close()
 
                     } catch (e: IOException) {
-                        e.printStackTrace()
+                        Timber.e(e)
                     }
                 }
             }

@@ -30,7 +30,7 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
             val logMessage = "$timestamp [${getPriorityString(priority)}] $tag: $message\n"
             appendLogToFile(logMessage)
         } catch (e: IOException) {
-            e.printStackTrace()
+            Timber.e(e)
         }
     }
 

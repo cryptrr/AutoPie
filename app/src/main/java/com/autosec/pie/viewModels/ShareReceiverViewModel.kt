@@ -145,7 +145,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
-            e.printStackTrace()
+            Timber.e(e)
             return null
         }
     }
@@ -176,7 +176,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
-            e.printStackTrace()
+            Timber.e(e)
             return null
         }
     }
