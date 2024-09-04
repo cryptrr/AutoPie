@@ -137,11 +137,12 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
     val viewModel: EditCommandViewModel by KoinJavaComponent.inject(EditCommandViewModel::class.java)
 
-    val extrasElements = remember{ mutableStateOf<List<String>>(emptyList()) }
+    //val extrasElements = remember{ mutableStateOf<List<String>>(emptyList()) }
+    val extrasElements = viewModel.commandExtras
 
 
     fun addExtra(){
-        extrasElements.value += Utils.getRandomNumericalId()
+        extrasElements.value += CommandExtra(id = Utils.getRandomNumericalId(), type = "STRING")
     }
 
 
@@ -254,7 +255,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 //                    }
 //                }
                 LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)){
-                    items(items = extrasElements.value, key = {it}){
+                    items(items = extrasElements.value, key = {it.id}){
                         CommandExtraInputElement(viewModel, it, extrasElements)
                     }
                 }

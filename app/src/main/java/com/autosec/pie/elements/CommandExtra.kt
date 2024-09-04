@@ -50,33 +50,33 @@ import timber.log.Timber
 @Composable
 fun CommandExtraInputElement(
     viewModel: EditCommandViewModel,
-    key: String,
-    extrasElements: MutableState<List<String>>
+    command: CommandExtra,
+    extrasElements: MutableState<List<CommandExtra>>
 ) {
 
     val name = rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(command.name)
     }
 
     val default = rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(command.default)
     }
 
     val selectableOptions = rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(command.selectableOptions.joinToString(","))
     }
 
     val description = rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(command.description)
     }
 
     var expanded = remember { mutableStateOf(false) }
-    var selectedCommandType = rememberSaveable { mutableStateOf("STRING") }
+    var selectedCommandType = rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
     val options = listOf("STRING", "SELECTABLE", "BOOLEAN")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
-    var selectedOptionForBoolean = rememberSaveable { mutableStateOf("TRUE") }
+    var selectedOptionForBoolean = rememberSaveable { mutableStateOf(command.defaultBoolean.toString()) }
     val booleanOptions = listOf("TRUE", "FALSE")
 
 
@@ -92,7 +92,7 @@ fun CommandExtraInputElement(
     ) {
 
         val commandExtra = CommandExtra(
-            id = key,
+            id = command.id,
             name = name.value,
             type = selectedCommandType.value,
             default = default.value.ifBlank { (selectableOptions.value.split(",").firstOrNull() ?: "") },
@@ -101,7 +101,7 @@ fun CommandExtraInputElement(
             selectableOptions = selectableOptions.value.split(",")
         )
 
-        viewModel.addCommandExtra(commandExtra, key)
+        viewModel.addCommandExtra(commandExtra, command.id)
     }
 
 
@@ -132,8 +132,8 @@ fun CommandExtraInputElement(
                     .aspectRatio(1F, true)
                     .background(Color.Black)
                     .clickable {
-                        viewModel.removeCommandExtra(key)
-                        extrasElements.value = extrasElements.value.filter { it != key }
+                        viewModel.removeCommandExtra(command.id)
+                        extrasElements.value = extrasElements.value.filter { it.id != command.id }
 
 
                     },
