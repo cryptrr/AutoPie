@@ -27,14 +27,14 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(10.dp))
-
+            Spacer(modifier = Modifier.height(3.dp))
         }
 
         subtitle?.let {
             Text(text = subtitle, fontSize = 14.sp, fontWeight = FontWeight.Normal)
-            Spacer(modifier = Modifier.height(5.dp))
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
 
         OutlinedTextField(

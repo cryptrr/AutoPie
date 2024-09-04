@@ -2,18 +2,16 @@ package com.autosec.pie.viewModels
 
 import android.app.Application
 import android.os.Environment
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandExtra
+import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.data.ShareInputs
-import com.autosec.pie.data.ShareItemModel
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.ProcessManagerService
@@ -25,7 +23,6 @@ import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -186,7 +183,8 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
 
-    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>)  {
+    fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList())  {
+
 
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
@@ -198,14 +196,14 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         when {
             inputDir?.isDirectory == true -> {
-                runShareCommandForDirectory(item,inputDir )
+                runShareCommandForDirectory(item,inputDir, commandExtraInputs)
             }
             fileUris.isNotEmpty() -> {
-                runShareCommandForFiles(item, currentLink, fileUris)
+                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs)
             }
 
             currentLink.isValidUrl() -> {
-                runShareCommandForUrl(item, currentLink!!, fileUris)
+                runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs)
             }
 
             !currentLink.isNullOrBlank() -> {
@@ -220,15 +218,26 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
     private fun runShareCommandForUrl(
-        item: ShareItemModel,
+        item: CommandModel,
         currentLink: String,
-        fileUris: List<String>
+        fileUris: List<String>,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
         Timber.d("runShareCommandForUrl")
 
 
-        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+        var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+
+        if(commandExtraInputs.isEmpty()){
+            for(extra in item.extras ?: emptyList()){
+                resultString = resultString.replace("{${extra.name}}", extra.default)
+            }
+        }else{
+            for(extra in commandExtraInputs){
+                resultString = resultString.replace("{${extra.name}}", extra.value)
+            }
+        }
 
         val fullExecPath =
             File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec)
@@ -264,9 +273,10 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun runShareCommandForFiles(
-        item: ShareItemModel,
+        item: CommandModel,
         currentLink: String?,
-        fileUris: List<String>
+        fileUris: List<String>,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
 
@@ -279,12 +289,23 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 Timber.d("Multiple Input files detected")
 
-                val replacedString = item.command
+                var replacedString = item.command
                     .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
                     .replace("''", "'")
                     .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
 
+                //Handling extras
+
+                if(commandExtraInputs.isEmpty()){
+                    for(extra in item.extras ?: emptyList()){
+                        replacedString = replacedString.replace("{${extra.name}}", extra.default)
+                    }
+                }else{
+                    for(extra in commandExtraInputs){
+                        replacedString = replacedString.replace("{${extra.name}}", extra.value)
+                    }
+                }
 
 
                 Timber.d("Replaced String $replacedString")
@@ -315,7 +336,17 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
                 currentItems.map { path ->
-                    val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+                    var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+
+                    if(commandExtraInputs.isEmpty()){
+                        for(extra in item.extras ?: emptyList()){
+                            resultString = resultString.replace("{${extra.name}}", extra.default)
+                        }
+                    }else{
+                        for(extra in commandExtraInputs){
+                            resultString = resultString.replace("{${extra.name}}", extra.value)
+                        }
+                    }
 
                     Timber.d("Replaced String $resultString")
 
@@ -348,8 +379,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun runShareCommandForDirectory(
-        item: ShareItemModel,
-        inputDir: File
+        item: CommandModel,
+        inputDir: File,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
 
@@ -364,7 +396,17 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
             currentItems.map { path ->
-                val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+                var resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+
+                if(commandExtraInputs.isEmpty()){
+                    for(extra in item.extras ?: emptyList()){
+                        resultString = resultString.replace("{${extra.name}}", extra.default)
+                    }
+                }else{
+                    for(extra in commandExtraInputs){
+                        resultString = resultString.replace("{${extra.name}}", extra.value)
+                    }
+                }
 
                 val fullExecPath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec

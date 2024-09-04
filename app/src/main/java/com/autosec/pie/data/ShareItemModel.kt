@@ -35,6 +35,16 @@ data class CommandExtra(
     val selectableOptions: List<String> = emptyList()
 )
 
+data class CommandExtraInput(
+    val name: String,
+    val default: String,
+    val value: String,
+    val type: String,
+    val defaultBoolean: Boolean,
+    val id: String,
+    val description: String
+)
+
 enum class CommandType{
     SHARE,
     FILE_OBSERVER

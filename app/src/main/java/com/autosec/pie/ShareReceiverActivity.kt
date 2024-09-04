@@ -7,26 +7,31 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetDefaults
@@ -44,8 +49,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -320,50 +325,83 @@ fun ShareCard(
                         delay(900)
                         activity?.finish()
                     }
-                }
-                ,
+                },
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
                     if (card.extras?.isNotEmpty()!!) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
-
                     }
                 }
-            )
-            ,
+            ),
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(alpha = 0.08F))
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(alpha = 0.1F))
     ) {
 
-        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Column(
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                CommandCard(card = card)
+                CommandCard(card = card) {
+                    shareReceiverViewModel.currentExtrasDetails.value =
+                        Triple(true, card, ShareInputs(currentLink, fileUris))
+                }
             }
         }
     }
 }
 
 @Composable
-fun CommandCard(card: CommandModel) {
+fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
 
 
-    Column(
+    Box(
         Modifier
             .fillMaxSize()
             .padding(15.dp),
-        verticalArrangement = Arrangement.Center
+        //verticalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = "${card.exec} ${card.command}",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        if (card.extras?.isNotEmpty()!!) {
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Color.Black.copy(0.2F))
+                    .clickable {
+                        onExpandButtonClick()
+                    }
+                    .padding(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.UnfoldMore,
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = "Show more options",
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+        }
+        Column {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = card.name,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty()!!) 0.9F else 1F)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "${card.exec} ${card.command}",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }
 

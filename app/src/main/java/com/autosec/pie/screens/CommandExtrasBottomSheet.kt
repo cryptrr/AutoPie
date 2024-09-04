@@ -7,25 +7,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -49,18 +41,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandModel
-import com.autosec.pie.data.ShareInputs
-import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.GenericTextFormField
 import com.autosec.pie.elements.OptionSelector
 import com.autosec.pie.services.ForegroundService
-import com.autosec.pie.ui.theme.PastelRed
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,9 +70,9 @@ fun CommandExtrasBottomSheet(
     val activity = (LocalContext.current as? Activity)
 
     LaunchedEffect(key1 = state.targetValue) {
-        if(state.targetValue == SheetValue.Expanded ){
+        if (state.targetValue == SheetValue.Expanded) {
             parentSheetState.hide()
-        }else{
+        } else {
             parentSheetState.show()
         }
     }
@@ -92,8 +83,8 @@ fun CommandExtrasBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                //.height(700.dp)
-                //.fillMaxHeight(0.40F)
+            //.height(700.dp)
+            //.fillMaxHeight(0.40F)
             ,
             contentAlignment = Alignment.TopStart
 
@@ -104,7 +95,8 @@ fun CommandExtrasBottomSheet(
             Column(
                 Modifier
                     //.fillMaxSize()
-                    .padding(horizontal = 15.dp)){
+                    .padding(horizontal = 15.dp)
+            ) {
 
                 viewModel.currentExtrasDetails.value?.let {
                     CommandExtraInputs(it.second, parentSheetState)
@@ -132,7 +124,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState){
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
 
     val context = LocalContext.current
 
@@ -148,40 +140,130 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState){
         mutableStateOf(false)
     }
 
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)){
+    val commandExtraInputs = remember {
+        mutableStateOf<List<CommandExtraInput>>(emptyList())
+    }
 
-        for(extra in command.extras ?: emptyList()){
-            Column(Modifier.fillMaxWidth(0.47F)){
-                when(extra.type){
+    fun addToExtraInputs(commandExtraInput: CommandExtraInput) {
+        if (commandExtraInputs.value.any { it.name == commandExtraInput.name }) {
+            commandExtraInputs.value = commandExtraInputs.value.toMutableList().also {
+                val index = it.indexOfFirst { it.name == commandExtraInput.name }
+
+                it.set(index, commandExtraInput)
+            }
+        } else {
+            commandExtraInputs.value =
+                commandExtraInputs.value.toMutableList().also { it.add(0, commandExtraInput) }
+        }
+        Timber.d("Extra commands list: $commandExtraInputs")
+    }
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+
+        for (extra in command.extras ?: emptyList()) {
+            Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
+                when (extra.type) {
                     "STRING" -> {
                         val textValue = remember {
                             mutableStateOf(extra.default)
                         }
 
-                        GenericTextFormField(text = textValue, title = extra.name)
+                        LaunchedEffect(key1 = textValue.value) {
+                            addToExtraInputs(
+                                CommandExtraInput(
+                                    extra.name,
+                                    extra.default,
+                                    textValue.value,
+                                    extra.type,
+                                    extra.defaultBoolean,
+                                    extra.id,
+                                    extra.description
+                                )
+                            )
+                        }
+
+                        GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description)
                     }
+
                     "BOOLEAN" -> {
-                        var booleanExpanded = remember { mutableStateOf(false) }
-                        var selectedOptionForBoolean =
-                            rememberSaveable { mutableStateOf(extra.defaultBoolean.toString().uppercase()) }
+                        val booleanExpanded = remember { mutableStateOf(false) }
+                        val selectedOptionForBoolean =
+                            rememberSaveable {
+                                mutableStateOf(extra.defaultBoolean.toString().uppercase())
+                            }
                         val booleanOptions = listOf("TRUE", "FALSE")
 
+                        LaunchedEffect(key1 = selectedOptionForBoolean.value) {
+                            addToExtraInputs(
+                                CommandExtraInput(
+                                    extra.name,
+                                    extra.default,
+                                    selectedOptionForBoolean.value,
+                                    extra.type,
+                                    extra.defaultBoolean,
+                                    extra.id,
+                                    extra.description
+                                )
+                            )
+                        }
+
                         Text(text = extra.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                        if(extra.description.isNotEmpty()){
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+                        }
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        OptionSelector(options = booleanOptions, selectedOption = selectedOptionForBoolean, expanded = booleanExpanded)
+
+                        OptionSelector(
+                            options = booleanOptions,
+                            selectedOption = selectedOptionForBoolean,
+                            expanded = booleanExpanded
+                        )
                     }
+
                     "SELECTABLE" -> {
-                        var expanded = remember { mutableStateOf(false) }
-                        var selectedOption =
-                            rememberSaveable { mutableStateOf(extra.default) }
+                        val expanded = remember { mutableStateOf(false) }
+                        val selectedOption =
+                            rememberSaveable {
+                                mutableStateOf(extra.default)
+                            }
                         val options = extra.selectableOptions
 
+                        LaunchedEffect(key1 = selectedOption.value) {
+                            addToExtraInputs(
+                                CommandExtraInput(
+                                    extra.name,
+                                    extra.default,
+                                    selectedOption.value,
+                                    extra.type,
+                                    extra.defaultBoolean,
+                                    extra.id,
+                                    extra.description
+                                )
+                            )
+                        }
+
                         Column {
-                            Text(text = extra.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = extra.name,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            if(extra.description.isNotEmpty()){
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+                            }
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            OptionSelector(options = options, selectedOption = selectedOption, expanded = expanded)
+                            OptionSelector(
+                                options = options,
+                                selectedOption = selectedOption,
+                                expanded = expanded
+                            )
                         }
                     }
                 }
@@ -205,10 +287,13 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState){
                         val commandJson = gson.toJson(command)
                         val fileUrisJson = gson.toJson(fileUris)
 
+                        val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
+
                         val intent = Intent(context, ForegroundService::class.java).apply {
                             putExtra("command", commandJson)
                             putExtra("currentLink", currentLink)
                             putExtra("fileUris", fileUrisJson)
+                            putExtra("commandExtraInputs", commandExtraInputsJson)
                         }
 
                         startForegroundService(context, intent)
@@ -223,10 +308,15 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState){
 
 
                 Column {
-                    when(isLoading){
+                    when (isLoading) {
                         true -> {
-                            CircularProgressIndicator(strokeWidth = 3.dp, modifier = Modifier.size(24.dp), color = Color.Black.copy(alpha = 0.4F))
+                            CircularProgressIndicator(
+                                strokeWidth = 3.dp,
+                                modifier = Modifier.size(24.dp),
+                                color = Color.Black.copy(alpha = 0.4F)
+                            )
                         }
+
                         false -> {
                             Text(
                                 text = "RUN",
