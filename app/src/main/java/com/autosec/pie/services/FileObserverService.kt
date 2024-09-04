@@ -1,16 +1,12 @@
 package com.autosec.pie.services
 
-import android.app.Activity
 import android.app.job.JobParameters
 import android.app.job.JobService
-import android.content.Context
 import android.os.Environment
 import android.os.FileObserver
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject

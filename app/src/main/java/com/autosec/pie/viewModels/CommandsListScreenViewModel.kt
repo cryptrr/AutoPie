@@ -13,7 +13,6 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.JSONService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
