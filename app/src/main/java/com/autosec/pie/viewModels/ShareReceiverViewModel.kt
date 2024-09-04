@@ -203,14 +203,19 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
 
         val fullExecPath =
-            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+            File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec)
+
+        if(!fullExecPath.exists()){
+            Timber.d("Exec file does not exist")
+            return
+        }
 
 
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+            val success = ProcessManagerService.runCommandForShare(fullExecPath.absolutePath, resultString, item.path)
 
             if (success) {
                 Timber.d("Process Success".uppercase())

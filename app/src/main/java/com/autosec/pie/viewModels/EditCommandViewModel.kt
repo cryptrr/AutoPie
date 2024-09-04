@@ -370,6 +370,4 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
         deleteSource.value = false
         selectedCommandType = "SHARE"
     }
-
-
 }
