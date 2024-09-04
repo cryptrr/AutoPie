@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,11 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.elements.CommandExtraElement
 import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.CreateCommandViewModel
 import com.autosec.pie.viewModels.EditCommandViewModel
 import kotlinx.coroutines.delay
@@ -53,6 +58,10 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
     val viewModel: CreateCommandViewModel by KoinJavaComponent.inject(CreateCommandViewModel::class.java)
 
+
+    fun addExtra() {
+        viewModel.commandExtras.value += CommandExtra(id = Utils.getRandomNumericalId(), type = "STRING")
+    }
 
     Column {
 
@@ -147,6 +156,14 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            if (viewModel.commandExtras.value.isNotEmpty()) {
+                CommandExtraElement(extrasElements = viewModel.commandExtras, {
+                    viewModel.addCommandExtra(it)
+                }){
+                    viewModel.removeCommandExtra(it)
+                }
+            }
+
 
             GenericFormSwitch(
                 text = "Delete source file after completion",
@@ -157,6 +174,30 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
 
         Row {
+            Button(
+                modifier = Modifier
+                    .padding(vertical = 15.dp)
+                    .height(52.dp)
+                    .width(75.dp),
+                enabled = viewModel.isValidCommand && viewModel.selectedCommandType == "SHARE",
+                shape = RoundedCornerShape(20),
+                contentPadding = PaddingValues(vertical = 10.dp),
+                onClick = {
+                    addExtra()
+                },
+
+                ) {
+                Icon(
+                    modifier = Modifier
+
+                        .size(27.dp),
+                    imageVector = Icons.Default.AddCircle,
+                    contentDescription = "Extras",
+                )
+
+            }
+
+            Spacer(modifier = Modifier.width(11.dp))
 
             Button(
                 modifier = Modifier

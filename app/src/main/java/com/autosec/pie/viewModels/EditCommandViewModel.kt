@@ -353,7 +353,6 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
         Timber.d(commandExtras.toString())
 
-
     }
 
     fun removeCommandExtra(key: String) {

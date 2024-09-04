@@ -248,13 +248,11 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
             Spacer(modifier = Modifier.height(20.dp))
 
 
-            Column {
-                if (extrasElements.value.isNotEmpty()) {
-                    CommandExtraElement(extrasElements = extrasElements, {
-                        viewModel.addCommandExtra(it)
-                    }){
-                        viewModel.removeCommandExtra(it)
-                    }
+            if (extrasElements.value.isNotEmpty()) {
+                CommandExtraElement(extrasElements = extrasElements, {
+                    viewModel.addCommandExtra(it)
+                }){
+                    viewModel.removeCommandExtra(it)
                 }
             }
 
