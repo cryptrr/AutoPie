@@ -56,6 +56,8 @@ fun CommandExtraInputElement(
 
     val name = rememberSaveable {
         mutableStateOf(command.name)
+    }.also {
+        it.value = it.value.uppercase()
     }
 
     val default = rememberSaveable {

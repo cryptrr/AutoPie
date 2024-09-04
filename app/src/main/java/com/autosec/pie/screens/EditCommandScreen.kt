@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.AutoPieStrings
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.CommandExtraInputElement
@@ -97,11 +99,11 @@ fun EditCommandBottomSheet(
         )
         {
 
-            if(viewModel.isLoading.value){
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+            if (viewModel.isLoading.value) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            }else{
+            } else {
                 Column(
                     Modifier
                         .fillMaxSize()
@@ -141,12 +143,25 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
     val extrasElements = viewModel.commandExtras
 
 
-    fun addExtra(){
+    fun addExtra() {
         extrasElements.value += CommandExtra(id = Utils.getRandomNumericalId(), type = "STRING")
     }
 
 
     val rowState = rememberLazyListState()
+
+    val derivedCommandName = remember {
+        derivedStateOf { viewModel.commandExtras.value.firstOrNull()?.name }
+    }
+
+    val modifiedExtraDescription = remember {
+        derivedStateOf {
+            if (derivedCommandName.value?.isNotBlank() == true) AutoPieStrings.EXTRAS_DESCRIPTION.replace(
+                AutoPieStrings.EXTRAS_DESCRIPTION_TO_REPLACE,
+                derivedCommandName.value!!
+            ) else AutoPieStrings.EXTRAS_DESCRIPTION
+        }
+    }
 
 
     Column {
@@ -154,9 +169,14 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
-                .weight(1F, true)) {
+                .weight(1F, true)
+        ) {
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "Edit Command",
                     fontSize = 33.sp,
@@ -216,11 +236,11 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 placeholder = "command",
                 singleLine = false,
                 modifier = Modifier
-                    //.height(100.dp)
-                    //.wrapContentHeight()
+                //.height(100.dp)
+                //.wrapContentHeight()
             )
 
-            if(viewModel.selectedCommandType == "FILE_OBSERVER"){
+            if (viewModel.selectedCommandType == "FILE_OBSERVER") {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -243,19 +263,26 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
 
             Column {
-               if( extrasElements.value.isNotEmpty()) {
+                if (extrasElements.value.isNotEmpty()) {
                     Text(text = "EXTRAS", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = modifiedExtraDescription.value,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal
+                    )
                     Spacer(modifier = Modifier.height(10.dp))
-                   //Text(text = extrasElements.toString(), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-               }
+                    //Text(text = extrasElements.toString(), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                }
 //                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.horizontalScroll(
 //                    rememberScrollState())){
 //                    for(item in extrasElements.value){
 //                        CommandExtraInputElement(viewModel, item, extrasElements)
 //                    }
 //                }
-                LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)){
-                    items(items = extrasElements.value, key = {it.id}){
+                LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(items = extrasElements.value, key = { it.id }) {
                         CommandExtraInputElement(viewModel, it, extrasElements)
                     }
                 }
@@ -267,9 +294,8 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
             GenericFormSwitch(
                 text = "Delete source file after completion",
                 switchState = viewModel.deleteSource,
-                onChange = { viewModel.deleteSource.value = it}
+                onChange = { viewModel.deleteSource.value = it }
             )
-
 
 
         }
@@ -295,15 +321,13 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 ) {
                 Icon(
                     modifier = Modifier
-                        .size(27.dp)
-
-                    ,
+                        .size(27.dp),
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
                 )
 
             }
-            
+
             Spacer(modifier = Modifier.width(11.dp))
             Button(
                 modifier = Modifier
