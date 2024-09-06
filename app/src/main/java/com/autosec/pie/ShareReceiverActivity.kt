@@ -39,6 +39,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -336,7 +337,7 @@ fun ShareCard(
                 }
             ),
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(alpha = 0.1F))
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(100.dp))
     ) {
 
         Column(
@@ -372,7 +373,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                 Modifier
                     .align(Alignment.TopEnd)
                     .clip(RoundedCornerShape(15.dp))
-                    .background(Color.Black.copy(0.2F))
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
                     .clickable {
                         onExpandButtonClick()
                     }
@@ -382,7 +383,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                     imageVector = Icons.Default.UnfoldMore,
                     tint = MaterialTheme.colorScheme.primary,
                     contentDescription = "Show more options",
-                    modifier = Modifier.size(25.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
