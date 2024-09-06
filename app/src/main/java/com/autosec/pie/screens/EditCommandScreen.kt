@@ -253,7 +253,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
                 GenericTextFormField(
                     text = viewModel.cronInterval,
-                    "Cron Interval".uppercase(),
+                    "Cron Interval*".uppercase(),
                     subtitle = "The interval in which this needs to run once.\nUse values like 15m, 30m, 1h etc.\nAndroid Limits periodic jobs to minimum of 15m."
                 )
             }

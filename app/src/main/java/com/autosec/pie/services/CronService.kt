@@ -3,6 +3,7 @@ package com.autosec.pie.services
 import android.app.Application
 import android.content.Context
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.autosec.pie.data.CommandModel
@@ -70,7 +71,7 @@ class CronService {
                             .build()
                     }
 
-                    WorkManager.getInstance(activity).enqueue(workRequest)
+                    WorkManager.getInstance(activity).enqueueUniquePeriodicWork(cronJob.value.name, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE ,workRequest)
 
 
                 }
