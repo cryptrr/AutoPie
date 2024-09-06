@@ -11,6 +11,8 @@ android {
         buildConfig = true
     }
 
+
+
     defaultConfig {
         applicationId = "com.autosec.pie"
         minSdk = 27
@@ -32,6 +34,8 @@ android {
             isMinifyEnabled = false
             buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
             buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = ".debug"
         }
         release {
             isMinifyEnabled = false
