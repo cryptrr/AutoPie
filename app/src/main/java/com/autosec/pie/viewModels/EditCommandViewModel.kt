@@ -43,6 +43,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
     val commandTypeOptions = listOf("Share", "Observer")
 
     val selectors = mutableStateOf("")
+    val cronInterval = mutableStateOf("")
 
 
     var selectedCommandType by mutableStateOf("")
@@ -65,17 +66,22 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
+            val cronCommands = JSONService.readCronConfig()
 
-            if (shareCommands == null || observerCommands == null) {
+            if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
             }
 
             var commandType = ""
 
-            val commandDetails = shareCommands.getAsJsonObject(key)
-                .also { if (it != null) commandType = "SHARE" } ?: observerCommands.getAsJsonObject(
-                key
-            ).also { if (it != null) commandType = "FILE_OBSERVER" }
+            //TODO: Need to change this
+            val commandDetails =
+                shareCommands.getAsJsonObject(key).also { if (it != null) commandType = "SHARE" }
+                    ?: observerCommands.getAsJsonObject(
+                        key
+                    ).also { if (it != null) commandType = "FILE_OBSERVER" } ?: cronCommands.getAsJsonObject(
+                        key
+                    ).also { if (it != null) commandType = "CRON" }
 
 
             Timber.d("CommandDetails: $commandDetails")
@@ -113,11 +119,13 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 command.value = commandDetails.get("command").asString
                 deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
                 selectors.value = selectorsFormatted
+                cronInterval.value = try{commandDetails.get("cronInterval").asString} catch (_: Exception) {""}
+
                 selectedCommandType = commandType
 
                 //Timber.d("Extras: ${commandModel?.extras}")
 
-                commandModel?.let{
+                commandModel?.let {
                     commandExtras.value = it.extras ?: emptyList()
                 }
 
@@ -137,7 +145,7 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
         val validationError = if (commandExtras.value.isEmpty()) {
             false
         } else {
-            commandExtras.value.any { it.name.isBlank() }  || commandExtras.value.any { it.default.isBlank() }
+            commandExtras.value.any { it.name.isBlank() } || commandExtras.value.any { it.default.isBlank() }
         }
 
         Timber.d("${commandExtras.value.any { it.name.isBlank() }}")
@@ -156,8 +164,10 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
+            val cronCommands = JSONService.readCronConfig()
 
-            if (shareCommands == null || observerCommands == null) {
+
+            if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
             }
 
@@ -168,6 +178,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 .also { if (it != null) commandType = "SHARE" } ?: observerCommands.getAsJsonObject(
                 key
             ).also { if (it != null) commandType = "FILE_OBSERVER" }
+            ?: cronCommands.getAsJsonObject(
+                key
+            ).also { if (it != null) commandType = "CRON" }
 
             val selectorsJson = if (selectors.value.isNotBlank()) {
                 val jsonArray = JsonArray()
@@ -198,9 +211,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                 when (type.value) {
                     "SHARE" -> {
-                        if(commandExtras.value.isNotEmpty()){
+                        if (commandExtras.value.isNotEmpty()) {
                             commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        }else{
+                        } else {
                             commandObject.remove("extras")
                         }
 
@@ -212,6 +225,12 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                         commandObject.add("selectors", selectorsJson)
 
                         observerCommands.add(commandName.value, commandObject)
+                        //observerCommands.remove(oldCommandName.value)
+                    }
+                    "CRON" -> {
+                        commandObject.addProperty("cronInterval", cronInterval.value)
+
+                        cronCommands.add(commandName.value, commandObject)
                         //observerCommands.remove(oldCommandName.value)
                     }
                 }
@@ -228,9 +247,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                 when (type.value) {
                     "SHARE" -> {
-                        if(commandExtras.value.isNotEmpty()){
+                        if (commandExtras.value.isNotEmpty()) {
                             commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        }else{
+                        } else {
                             commandObject.remove("extras")
                         }
 
@@ -245,6 +264,13 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                         observerCommands.add(commandName.value, commandObject)
                         observerCommands.remove(oldCommandName.value)
+                    }
+                    "CRON" -> {
+                        commandObject.addProperty("cronInterval", cronInterval.value)
+
+
+                        cronCommands.add(commandName.value, commandObject)
+                        cronCommands.remove(oldCommandName.value)
                     }
                 }
             }
@@ -263,8 +289,12 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
                     JSONService.writeObserversConfig(modifiedJsonContent)
+                }
 
+                "CRON" -> {
+                    val modifiedJsonContent = gson.toJson(cronCommands)
 
+                    JSONService.writeCronConfig(modifiedJsonContent)
                 }
             }
 
@@ -282,8 +312,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
+            val cronCommands = JSONService.readCronConfig()
 
-            if (shareCommands == null || observerCommands == null) {
+            if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
             }
 
@@ -293,6 +324,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 .also { if (it != null) commandType = "SHARE" } ?: observerCommands.getAsJsonObject(
                 key
             ).also { if (it != null) commandType = "FILE_OBSERVER" }
+            ?: cronCommands.getAsJsonObject(
+                key
+            ).also { if (it != null) commandType = "CRON" }
 
 
             Timber.d("commandObject: $commandObject")
@@ -305,6 +339,10 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
                 "FILE_OBSERVER" -> {
                     observerCommands.remove(commandName.value)
+                    //observerCommands.remove(oldCommandName.value)
+                }
+                "CRON" -> {
+                    cronCommands.remove(commandName.value)
                     //observerCommands.remove(oldCommandName.value)
                 }
             }
@@ -324,8 +362,11 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
                     JSONService.writeObserversConfig(modifiedJsonContent)
+                }
+                "CRON" -> {
+                    val modifiedJsonContent = gson.toJson(cronCommands)
 
-
+                    JSONService.writeCronConfig(modifiedJsonContent)
                 }
             }
 
@@ -342,7 +383,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 it.set(index, commandExtra)
             }
         } else {
-            commandExtras.value = commandExtras.value.toMutableList().also { it.add(0,commandExtra) }
+            commandExtras.value =
+                commandExtras.value.toMutableList().also { it.add(0, commandExtra) }
         }
 
         Timber.d(commandExtras.toString())

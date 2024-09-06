@@ -140,6 +140,18 @@ class JSONService {
             }
         }
 
+        fun writeCronConfig(jsonString: String) {
+            val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
+
+            try {
+                val file = File(fileObserverPath)
+                file.writeText(jsonString)
+            } catch (e: Exception) {
+                Timber.e(e)
+                return
+            }
+        }
+
 
     }
 }

@@ -52,6 +52,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
         viewModelScope.launch(Dispatchers.IO){
             val sharesConfig = JSONService.readSharesConfig()
             val observersConfig = JSONService.readObserversConfig()
+            val cronConfig = JSONService.readCronConfig()
 
             if(sharesConfig == null){
                 Timber.d("Observers file not available")
@@ -65,7 +66,13 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 Timber.d("Observers file not available")
                 main.sharesConfigAvailable = false
                 return@launch
-
+            }else{
+                main.schedulerConfigAvailable = true
+            }
+            if(cronConfig == null){
+                Timber.d("Cron file not available")
+                main.sharesConfigAvailable = false
+                return@launch
             }else{
                 main.schedulerConfigAvailable = true
             }
@@ -114,6 +121,28 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 )
 
                 tempList.add(shareObject)
+            }
+
+            for (entry in cronConfig.entrySet()) {
+                val key = entry.key
+                val value = entry.value.asJsonObject
+                // Process the key-value pair
+
+                val directoryPath = value.get("path").asString
+                val exec = value.get("exec").asString
+                val command = value.get("command").asString
+                val deleteSource = value.get("deleteSourceFile").asBoolean
+
+                val cronObject = CommandModel(
+                    name = key,
+                    path = directoryPath,
+                    command = command,
+                    exec = exec,
+                    deleteSourceFile = deleteSource,
+                    type = CommandType.CRON
+                )
+
+                tempList.add(cronObject)
             }
 
             withContext(Dispatchers.Main){

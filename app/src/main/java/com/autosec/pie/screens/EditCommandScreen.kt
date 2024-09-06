@@ -59,6 +59,7 @@ import com.autosec.pie.elements.CommandExtraElement
 import com.autosec.pie.elements.CommandExtraInputElement
 import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
+import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.utils.Utils
@@ -179,6 +180,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                             when (viewModel.type.value) {
                                 "SHARE" -> PastelPurple
                                 "FILE_OBSERVER" -> Purple10
+                                "CRON" -> GreenGrey60
                                 else -> Purple10
                             }
                         )
@@ -197,6 +199,14 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         "FILE_OBSERVER" -> {
                             Text(
                                 text = "FILE OBSERVER",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                        "CRON" -> {
+                            Text(
+                                text = "CRON",
                                 fontSize = 13.3.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black
@@ -234,6 +244,17 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     text = viewModel.selectors,
                     "Selectors".uppercase(),
                     subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
+                )
+            }
+
+            if (viewModel.selectedCommandType == "CRON") {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                GenericTextFormField(
+                    text = viewModel.cronInterval,
+                    "Cron Interval".uppercase(),
+                    subtitle = "The interval in which this needs to run once.\nUse values like 15m, 30m, 1h etc.\nAndroid Limits periodic jobs to minimum of 15m."
                 )
             }
 

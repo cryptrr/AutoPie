@@ -31,11 +31,12 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
     val execFile = mutableStateOf("")
     val command = mutableStateOf("")
     val selectors = mutableStateOf("")
+    val cronInterval = mutableStateOf("")
     val directory = mutableStateOf("${Environment.getExternalStorageDirectory().absolutePath}/")
     val deleteSource = mutableStateOf(false)
 
     var selectedICommandTypeIndex by mutableIntStateOf(0)
-    val commandTypeOptions = listOf("Share", "Observer")
+    val commandTypeOptions = listOf("Share", "Observer", "Cron")
 
     var selectedCommandType by mutableStateOf("SHARE")
 
@@ -52,8 +53,9 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
+            val cronCommands = JSONService.readCronConfig()
 
-            if (shareCommands == null || observerCommands == null) {
+            if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
             }
 
@@ -95,6 +97,11 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
                     observerCommands.add(commandName.value, commandObject)
                 }
+                "CRON" -> {
+                    commandObject.addProperty("cronInterval", cronInterval.value)
+
+                    cronCommands.add(commandName.value, commandObject)
+                }
             }
 
             when (selectedCommandType) {
@@ -108,6 +115,11 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
                     JSONService.writeObserversConfig(modifiedJsonContent)
+                }
+                "CRON" -> {
+                    val modifiedJsonContent = gson.toJson(cronCommands)
+
+                    JSONService.writeCronConfig(modifiedJsonContent)
                 }
             }
 

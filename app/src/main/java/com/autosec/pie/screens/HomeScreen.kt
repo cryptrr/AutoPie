@@ -43,8 +43,10 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.EmptyItemsBadge
 import com.autosec.pie.elements.LoadingBadge
 import com.autosec.pie.elements.SearchBar
+import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.ui.theme.Purple60
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import org.koin.java.KoinJavaComponent.inject
 
@@ -177,6 +179,7 @@ fun CommandCard(
                             when (card.type) {
                                 CommandType.SHARE -> PastelPurple
                                 CommandType.FILE_OBSERVER -> Purple10
+                                CommandType.CRON -> GreenGrey60
                             }
                         )
                         .padding(horizontal = 5.dp, vertical = 3.dp)
@@ -194,6 +197,14 @@ fun CommandCard(
                         CommandType.FILE_OBSERVER -> {
                             Text(
                                 text = "FILE OBSERVER",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                        CommandType.CRON -> {
+                            Text(
+                                text = "CRON",
                                 fontSize = 13.3.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black

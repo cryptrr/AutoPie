@@ -102,6 +102,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                             when (label) {
                                 "Share" -> viewModel.selectedCommandType = "SHARE"
                                 "Observer" -> viewModel.selectedCommandType = "FILE_OBSERVER"
+                                "Cron" -> viewModel.selectedCommandType = "CRON"
                             }
                         },
                         colors = SegmentedButtonDefaults.colors().copy(
@@ -143,6 +144,17 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     text = viewModel.selectors,
                     "Selectors".uppercase(),
                     subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
+                )
+            }
+
+            if (viewModel.selectedCommandType == "CRON") {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                GenericTextFormField(
+                    text = viewModel.cronInterval,
+                    "Cron Interval".uppercase(),
+                    subtitle = "The interval in which this needs to run once.\nUse values like 15m, 30m, 1h etc.\nAndroid Limits periodic jobs to minimum of 15m."
                 )
             }
 

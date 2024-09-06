@@ -57,7 +57,8 @@ data class CommandExtraInput(
 
 enum class CommandType{
     SHARE,
-    FILE_OBSERVER
+    FILE_OBSERVER,
+    CRON
 }
 
 data class InstalledPackageModel(
