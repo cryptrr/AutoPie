@@ -84,6 +84,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("com.blacksquircle.ui:editorkit:2.0.0")
     implementation("com.blacksquircle.ui:language-shell:2.0.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")

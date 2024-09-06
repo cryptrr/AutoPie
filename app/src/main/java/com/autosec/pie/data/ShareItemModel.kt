@@ -25,6 +25,16 @@ data class CommandModel(
     val extras: List<CommandExtra>? = null
 )
 
+interface CommandInterface {
+    val type: CommandType
+    val name: String
+    val path: String
+    val command: String
+    val exec: String
+    val deleteSourceFile: Boolean?
+    val extras: List<CommandExtra>?
+}
+
 data class CommandExtra(
     val id: String,
     val name: String = "",
