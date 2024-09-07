@@ -71,7 +71,7 @@ class CronService {
                             .build()
                     }
 
-                    WorkManager.getInstance(activity).enqueueUniquePeriodicWork(cronJob.value.name, ExistingPeriodicWorkPolicy.UPDATE ,workRequest)
+                    WorkManager.getInstance(activity).enqueueUniquePeriodicWork(cronJob.key, ExistingPeriodicWorkPolicy.UPDATE ,workRequest)
 
                 }
             }
