@@ -30,6 +30,7 @@ class MyApplication : Application() {
 
     private val screenStateReceiver = ScreenStateReceiver()
 
+
     override fun onCreate() {
         super.onCreate()
 
@@ -60,7 +61,7 @@ class MyApplication : Application() {
                 .setRequiresCharging(false)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                 .setRequiresDeviceIdle(false)
-                .setPeriodic(15 * 60 * 1000) // Minimum interval for periodic jobs is 15 minutes
+                //.setPeriodic(15 * 60 * 1000) // Minimum interval for periodic jobs is 15 minutes
                 .build()
 
             val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler

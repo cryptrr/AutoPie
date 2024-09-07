@@ -67,6 +67,7 @@ import com.autosec.pie.viewModels.EditCommandViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -354,6 +355,11 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         viewModel.changeCommandDetails(key = commandKey)
                         delay(500L)
                         viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                        when(viewModel.type.value){
+                            "SHARE" -> viewModel.main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
+                            "FILE_OBSERVER" -> viewModel.main.dispatchEvent(ViewModelEvent.ObserversConfigChanged)
+                            "CRON" -> viewModel.main.dispatchEvent(ViewModelEvent.CronConfigChanged)
+                        }
                         open.value = false
                     }
                 },

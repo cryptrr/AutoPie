@@ -2,13 +2,13 @@ package com.autosec.pie.services
 
 import android.app.Application
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CronCommandModel
-import com.autosec.pie.services.FileObserverJobService.DirectoryFileObserver
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.MainViewModel
 import com.google.gson.Gson
@@ -16,15 +16,37 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 class CronService {
 
+
     companion object{
 
-        private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
+        private val main: MainViewModel by inject(MainViewModel::class.java)
+
+
+        init {
+            try {
+                main.viewModelScope.launch {
+                    main.eventFlow.collect{
+                        when(it){
+                            is ViewModelEvent.CronConfigChanged -> {
+                                Timber.d("Cron config changed: Restarting")
+                                setUpChronJobs()
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+
         private val activity: Application by inject(Context::class.java)
 
 
@@ -37,11 +59,11 @@ class CronService {
 
                 if (cronConfig == null) {
                     Timber.d("cron file not available")
-                    mainViewModel.schedulerConfigAvailable = false
+                    main.schedulerConfigAvailable = false
                     return@launch
                 } else {
                     Timber.d("cron file is available")
-                    mainViewModel.schedulerConfigAvailable = true
+                    main.schedulerConfigAvailable = true
                 }
 
                 val mapType = object : TypeToken<Map<String, CronCommandModel>>() {}.type

@@ -1,9 +1,15 @@
 package com.autosec.pie.services
 
+import android.app.job.JobInfo
 import android.app.job.JobParameters
+import android.app.job.JobScheduler
 import android.app.job.JobService
+import android.content.ComponentName
+import android.content.Context
 import android.os.Environment
 import android.os.FileObserver
+import androidx.lifecycle.viewModelScope
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +23,38 @@ class FileObserverJobService : JobService() {
 
     private val fileObservers = mutableListOf<DirectoryFileObserver>()
 
-    val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
+    val main: MainViewModel by inject(MainViewModel::class.java)
+
+    init {
+        try {
+            main.viewModelScope.launch {
+                main.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.ObserversConfigChanged -> {
+                            Timber.d("Observers config changed: Restarting")
+                            restart()
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }catch (e:Exception){
+            Timber.e(e)
+        }
+    }
+
+    private fun restart(){
+        val componentName = ComponentName(this, FileObserverJobService::class.java)
+        val jobInfo = JobInfo.Builder(123, componentName)
+            .setPersisted(true) // Keep the job alive after device reboot
+            .setRequiresCharging(false)
+            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
+            .setRequiresDeviceIdle(false)
+            .build()
+
+        val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        jobScheduler.schedule(jobInfo)
+    }
 
 
     override fun onStartJob(params: JobParameters?): Boolean {
@@ -34,10 +71,10 @@ class FileObserverJobService : JobService() {
 
             if (observerConfig == null) {
                 Timber.d("Observers file not available")
-                mainViewModel.schedulerConfigAvailable = false
+                main.schedulerConfigAvailable = false
                 return@launch
             } else {
-                mainViewModel.schedulerConfigAvailable = true
+                main.schedulerConfigAvailable = true
             }
 
 
@@ -51,7 +88,6 @@ class FileObserverJobService : JobService() {
                 val command = value.get("command").asString
                 val selectors = value.get("selectors").asJsonArray.map { it.asString }
                 val deleteSourceFile = value.get("deleteSourceFile").asBoolean
-
 
 
                 Timber.d("Starting $key observer for $directoryPath")
@@ -164,46 +200,5 @@ class FileObserverJobService : JobService() {
             }
         }
 
-        private fun execCommand(file: File) {
-            CoroutineScope(Dispatchers.IO).launch {
-                Timber.d("File is completely written: " + file.name)
-
-                Timber.d("File abs path " + file.absoluteFile.absolutePath)
-
-                Timber.d("Edited abs path " + path + file.absolutePath)
-
-                //This is to prevent .pending files from causing errors.
-                val fileName =
-                    if (!file.name.startsWith(".pending")) file.name else file.name.split("-")
-                        .subList(2, file.name.split("-").size).joinToString("-")
-
-                val fullFilepath = "$path/$fileName"
-
-                val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
-
-                Timber.d("Edited command $exec $resultString")
-
-                val fullExecPath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + exec
-
-                val regSelectors = selectors.map { it.toRegex() }
-
-                delay(500L)
-
-                //Checking if file passes selectors list
-                if (regSelectors.any { file.name.matches(it) }) {
-                    Timber.d("Selector matched for file")
-                    val execSuccess =
-                        ProcessManagerService.runCommand4(fullExecPath, resultString, path)
-
-                    if (deleteSourceFile && execSuccess) {
-                        //ProcessManagerService.deleteFile(fullFilepath)
-                    }
-
-                } else {
-                    Timber.d("File does not match selector")
-                }
-            }
-        }
     }
 }

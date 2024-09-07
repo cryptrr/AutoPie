@@ -45,7 +45,18 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
     init {
         try {
-            getSharesConfig()
+            viewModelScope.launch {
+                getSharesConfig()
+                main.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.SharesConfigChanged -> {
+                            Timber.d("Share config changed: Restarting")
+                            getSharesConfig()
+                        }
+                        else -> {}
+                    }
+                }
+            }
         }catch (e:Exception){
             Timber.e(e)
         }
@@ -141,37 +152,6 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
             if (!dataObject.isJsonObject) {
                 Timber.d("Share Sheet config is not valid json")
-                throw JsonParseException("Config not valid")
-            }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            Timber.e(e)
-            return null
-        }
-    }
-
-    private fun readObserversConfig(): JsonObject? {
-
-        val fileObserverPath =
-            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
-
-        try {
-            val file = File(fileObserverPath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            Timber.d(jsonString)
-
-            // Parse the JSON string
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Observers config is not valid json")
                 throw JsonParseException("Config not valid")
             }
             return dataObject.asJsonObject
