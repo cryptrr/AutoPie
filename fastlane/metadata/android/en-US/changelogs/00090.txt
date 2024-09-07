@@ -5,6 +5,7 @@ What's Changed
 - Bug Fixes
 - Performance Improvements.
 - Updated the preinstalled commands.
+- Theme improvements.
 
 
 Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.09-beta
