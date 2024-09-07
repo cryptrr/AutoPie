@@ -1,0 +1,47 @@
+<p><strong>AutoPie&nbsp;</strong> is the Swiss Army Knife for Android. It allows you to create and run and automate Linux commands and Python scripts dead easily.</p>
+
+<p>&nbsp;</p>
+
+<p><strong>Features</strong></p>
+
+<ul>
+	<li>Automate Linux Commands and Python scripts on Android.
+	<ul>
+		<li>AutoPie can replace a lot of apps for you with a few clicks with the power of Python and Linux.</li>
+		<li>Makes your phone uncluttered and clean and ad-free since you offloaded utility apps to AutoPie.</li>
+	</ul>
+	</li>
+	<li>AutoPie currently provides three modes of automating commands.
+	<ul>
+		<li>Adds Commands to your Share Sheet</li>
+		<ul>
+		    <li>Convert a file with ffmpeg in just a few clicks.</li>
+		    <li>Save commands for whatever you want to do.</li>
+		</ul>
+		<li>File Observers to automate file creation/conversion</li>
+		<ul>
+            <li>Automatically convert screenshots you take to take up less space.</li>
+            <li>Automatically convert gifs in downloads folder into better formats.</li>
+            <li>Automatically upload files in a specific folder to whatever service you want.</li>
+        </ul>
+		<li>Cron: Add any command/python script to a cron job.</li>
+		<ul>
+            <li>Ping urls with json payloads and get notified when changes occur.</li>
+            <li>Automate Home appliances.</li>
+            <li>Server health monitoring.</li>
+         </ul>
+	</ul>
+	</li>
+	<li>Add GUI to your commands for ease of use and customization.
+	<ul>
+		<li>Customize commands on the fly with AutoPie customization options.</li>
+		<li>Add Text Inputs, Switches and Selectors to make your commands utilize the power of GUI.</li>
+	</ul>
+	</li>
+	<li>Comes with Support for ffmpeg, magick and commands out of the box so that you can experiment with them.</li>
+	<li>Built in terminal with python installed for users to tinker with.</li>
+	<li>Supports adding GUI to Commands for better customization and ease of use</li>
+	<li>Supports Regex selectors to only operate on files that you want.&nbsp;</li>
+	<li>Modern <strong>Material 3</strong> Design Guidelines powered by <strong>Jetpack Compose</strong></li>
+	<li><strong><u>Open Source</u></strong></li>
+</ul>
