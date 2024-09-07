@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -37,10 +34,16 @@ import androidx.compose.ui.unit.sp
 import com.autosec.pie.BuildConfig
 import com.autosec.pie.R
 import com.autosec.pie.data.AutoPieStrings
+import com.autosec.pie.domain.AppNotification
+import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent.inject
 
 @Composable
 fun SettingsHeader() {
+
+    val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
+
 
     val appName = stringResource(id = R.string.app_name)
     val appVersion = remember { "v${BuildConfig.VERSION_NAME}" }
@@ -109,6 +112,7 @@ fun SettingsHeader() {
             Button(
                 onClick = {
                     scope.launch {
+                        mainViewModel.showNotification(AppNotification.FeatureWIP)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(

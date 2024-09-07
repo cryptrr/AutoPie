@@ -16,50 +16,35 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.data.AutoPieStrings
 import com.autosec.pie.data.CommandExtra
-import com.autosec.pie.ui.theme.PastelGreen
-import com.autosec.pie.ui.theme.Purple50
-import com.autosec.pie.ui.theme.Purple90
-import com.autosec.pie.utils.Debouncer
-import com.autosec.pie.viewModels.EditCommandViewModel
-import timber.log.Timber
 
 
 @Composable
@@ -188,7 +173,7 @@ fun CommandExtraInputElement(
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(Color.Black.copy(alpha = 0.15F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(30.dp))
             .width(300.dp)
             //.height(90.dp)
             .padding(15.dp),
@@ -210,7 +195,7 @@ fun CommandExtraInputElement(
                     .clip(RoundedCornerShape(15.dp))
                     .height(55.dp)
                     .aspectRatio(1F, true)
-                    .background(Color.Black)
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(90.dp))
                     .clickable {
 
                         onRemoveCommandExtra(command.id)
