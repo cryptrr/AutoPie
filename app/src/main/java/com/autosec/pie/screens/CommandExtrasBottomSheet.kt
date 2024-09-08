@@ -2,6 +2,7 @@ package com.autosec.pie.screens
 
 import android.app.Activity
 import android.content.Intent
+import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -157,6 +158,15 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
         }
         Timber.d("Extra commands list: $commandExtraInputs")
     }
+
+    Text(
+        text = command.name,
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onPrimaryContainer
+    )
+    
+    Spacer(modifier = Modifier.height(20.dp))
 
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(20.dp),

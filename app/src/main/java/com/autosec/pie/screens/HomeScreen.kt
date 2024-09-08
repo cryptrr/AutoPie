@@ -160,7 +160,7 @@ fun CommandCard(
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp),
+            .height(120.dp),
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
     ) {

@@ -330,7 +330,7 @@ fun ShareCard(
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
-                    if (card.extras?.isNotEmpty()!!) {
+                    if (card.extras?.isNotEmpty() == true) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
                     }
@@ -368,7 +368,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         //verticalArrangement = Arrangement.Center
         contentAlignment = Alignment.Center
     ) {
-        if (card.extras?.isNotEmpty()!!) {
+        if (card.extras?.isNotEmpty() == true) {
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
@@ -399,6 +399,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "${card.exec} ${card.command}",
+                maxLines = 2,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold
             )

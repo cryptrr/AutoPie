@@ -30,9 +30,8 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
             Spacer(modifier = Modifier.height(3.dp))
         }
 
-        subtitle?.let {
+        if(subtitle?.isNotBlank() == true){
             Text(text = subtitle, fontSize = 14.sp, fontWeight = FontWeight.Normal)
-            //Spacer(modifier = Modifier.height(1.dp))
         }
 
         Spacer(modifier = Modifier.height(10.dp))

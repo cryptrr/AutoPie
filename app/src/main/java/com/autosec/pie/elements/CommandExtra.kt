@@ -157,9 +157,7 @@ fun CommandExtraInputElement(
             id = command.id,
             name = name.value,
             type = selectedCommandType.value,
-            default = default.value.ifBlank {
-                (selectableOptions.value.split(",").firstOrNull() ?: "")
-            },
+            default = if(command.type == "SELECTABLE") (selectableOptions.value.split(",").firstOrNull() ?: "") else default.value,
             description = description.value,
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = selectableOptions.value.split(",")
