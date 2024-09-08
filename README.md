@@ -122,6 +122,15 @@ if __name__ == "__main__":
 
 ```
 
+## Build Instructions
+
+You can build the app with prebuilt binaries by opening the project with Android Studio and then run build task.
+
+### If you want to build your own python and busybox binaries
+
+* Set Environment Variable `ANDROID_NDK_ROOT` to your Android NDK installation folder.
+* Run the `./build-all.sh` script to build all dependencies and store them in the Assets folder.
+
 
 ## Support
 * Supports only aarch64/arm-v8 as of now. It should run on most newer phones.
