@@ -11,6 +11,8 @@ android {
         buildConfig = true
     }
 
+
+
     defaultConfig {
         applicationId = "com.autosec.pie"
         minSdk = 27
@@ -32,6 +34,8 @@ android {
             isMinifyEnabled = false
             buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
             buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = ".debug"
         }
         release {
             isMinifyEnabled = false
@@ -80,6 +84,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("com.blacksquircle.ui:editorkit:2.0.0")
     implementation("com.blacksquircle.ui:language-shell:2.0.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")

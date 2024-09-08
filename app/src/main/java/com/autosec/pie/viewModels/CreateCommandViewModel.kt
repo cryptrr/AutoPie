@@ -9,7 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.services.JSONService
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -29,15 +31,19 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
     val execFile = mutableStateOf("")
     val command = mutableStateOf("")
     val selectors = mutableStateOf("")
+    val cronInterval = mutableStateOf("")
     val directory = mutableStateOf("${Environment.getExternalStorageDirectory().absolutePath}/")
     val deleteSource = mutableStateOf(false)
 
     var selectedICommandTypeIndex by mutableIntStateOf(0)
-    val commandTypeOptions = listOf("Share", "Observer")
+    val commandTypeOptions = listOf("Share", "Observer", "Cron")
 
     var selectedCommandType by mutableStateOf("SHARE")
 
     val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
+
+    val commandExtras = mutableStateOf<List<CommandExtra>>(emptyList())
+
 
 
     fun createNewCommand() {
@@ -47,8 +53,9 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
             val shareCommands = JSONService.readSharesConfig()
             val observerCommands = JSONService.readObserversConfig()
+            val cronCommands = JSONService.readCronConfig()
 
-            if (shareCommands == null || observerCommands == null) {
+            if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
             }
 
@@ -73,8 +80,16 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                 JsonArray()
             }
 
+            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+
             when (selectedCommandType) {
                 "SHARE" -> {
+                    if(commandExtras.value.isNotEmpty()){
+                        commandObject.add("extras", Gson().toJsonTree(commandExtras.value))
+                    }else{
+                        commandObject.remove("extras")
+                    }
+
                     shareCommands.add(commandName.value, commandObject)
                 }
                 "FILE_OBSERVER" -> {
@@ -82,12 +97,16 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
                     observerCommands.add(commandName.value, commandObject)
                 }
-            }
+                "CRON" -> {
+                    commandObject.addProperty("cronInterval", cronInterval.value)
 
-            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+                    cronCommands.add(commandName.value, commandObject)
+                }
+            }
 
             when (selectedCommandType) {
                 "SHARE" -> {
+
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
                     JSONService.writeSharesConfig(modifiedJsonContent)
@@ -97,12 +116,40 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
                     JSONService.writeObserversConfig(modifiedJsonContent)
                 }
+                "CRON" -> {
+                    val modifiedJsonContent = gson.toJson(cronCommands)
+
+                    JSONService.writeCronConfig(modifiedJsonContent)
+                }
             }
 
             delay(1500L)
             clear()
         }
 
+    }
+
+    fun addCommandExtra(commandExtra: CommandExtra) {
+
+        if (commandExtras.value.any { it.id == commandExtra.id }) {
+            commandExtras.value = commandExtras.value.toMutableList().also {
+                val index = it.indexOfFirst { it.id == commandExtra.id }
+
+                it.set(index, commandExtra)
+            }
+        } else {
+            commandExtras.value += commandExtra
+        }
+
+        Timber.d(commandExtras.toString())
+
+
+    }
+
+    fun removeCommandExtra(key: String) {
+        Timber.d("Removing item at $key")
+        commandExtras.value = commandExtras.value.filter { it.id != key }
+        Timber.d(commandExtras.toString())
     }
 
     private fun clear(){

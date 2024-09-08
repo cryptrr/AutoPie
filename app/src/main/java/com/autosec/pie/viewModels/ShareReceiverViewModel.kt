@@ -7,7 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.data.ShareItemModel
+import com.autosec.pie.data.CommandExtra
+import com.autosec.pie.data.CommandExtraInput
+import com.autosec.pie.data.CommandModel
+import com.autosec.pie.data.CommandType
+import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.ProcessManagerService
@@ -16,9 +20,9 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -28,16 +32,34 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
     val main: MainViewModel by inject(MainViewModel::class.java)
 
-    var shareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
-    var filteredShareItemsResult by mutableStateOf<List<ShareItemModel>>(emptyList())
+    var shareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
+    var filteredShareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
 
     var searchQuery = mutableStateOf("")
 
+    val currentExtrasDetails = mutableStateOf<Triple<Boolean, CommandModel, ShareInputs>?>(null)
+
+
     init {
-        getSharesConfig()
+        try {
+            viewModelScope.launch {
+                getSharesConfig()
+                main.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.SharesConfigChanged -> {
+                            Timber.d("Share config changed: Restarting")
+                            getSharesConfig()
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }catch (e:Exception){
+            Timber.e(e)
+        }
     }
 
     fun search(query: String) {
@@ -66,25 +88,38 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             main.schedulerConfigAvailable = true
         }
 
-        val tempList = mutableListOf<ShareItemModel>()
+        val tempList = mutableListOf<CommandModel>()
+
+        //TODO: Need to do some refactoring
 
         for (entry in observerConfig.entrySet()) {
             val key = entry.key
             val value = entry.value.asJsonObject
             // Process the key-value pair
-            println("Key: $key, Value: $value")
 
             val directoryPath = value.get("path").asString
             val exec = value.get("exec").asString
             val command = value.get("command").asString
             val deleteSource = value.get("deleteSourceFile").asBoolean
 
-            val shareObject = ShareItemModel(
+            val extrasJsonArray = value.getAsJsonArray("extras")
+
+            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
+
+            val extras: List<CommandExtra> = try{
+                Gson().fromJson(extrasJsonArray, extrasListType)
+            }catch(e: Exception){
+                emptyList()
+            }
+
+            val shareObject = CommandModel(
+                type = CommandType.SHARE,
                 name = key,
                 path = directoryPath,
                 command = command,
                 exec = exec,
-                deleteSourceFile = deleteSource
+                deleteSourceFile = deleteSource,
+                extras = extras
             )
 
             tempList.add(shareObject)
@@ -109,7 +144,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             inputStream.close()
             val jsonString = String(buffer)
 
-            Timber.d(jsonString)
+            //Timber.d(jsonString)
 
             // Parse the JSON string
             val gson = Gson()
@@ -121,63 +156,31 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
-            e.printStackTrace()
-            return null
-        }
-    }
-
-    private fun readObserversConfig(): JsonObject? {
-
-        val fileObserverPath =
-            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
-
-        try {
-            val file = File(fileObserverPath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            Timber.d(jsonString)
-
-            // Parse the JSON string
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Observers config is not valid json")
-                throw JsonParseException("Config not valid")
-            }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            e.printStackTrace()
+            Timber.e(e)
             return null
         }
     }
 
 
-    fun runShareCommand(item: ShareItemModel, currentLink: String?, fileUris: List<String>)  {
+    fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList())  {
+
 
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
 
-        println(item.toString())
-        println(fileUris.toString())
 
         val inputDir = fileUris.firstOrNull()?.let { File(it) }
 
         when {
             inputDir?.isDirectory == true -> {
-                runShareCommandForDirectory(item,inputDir )
+                runShareCommandForDirectory(item,inputDir, commandExtraInputs)
             }
             fileUris.isNotEmpty() -> {
-                runShareCommandForFiles(item, currentLink, fileUris)
+                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs)
             }
 
             currentLink.isValidUrl() -> {
-                runShareCommandForUrl(item, currentLink!!, fileUris)
+                runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs)
             }
 
             !currentLink.isNullOrBlank() -> {
@@ -192,25 +195,41 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
     private fun runShareCommandForUrl(
-        item: ShareItemModel,
+        item: CommandModel,
         currentLink: String,
-        fileUris: List<String>
+        fileUris: List<String>,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
         Timber.d("runShareCommandForUrl")
 
 
-        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+        var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+
+        if(commandExtraInputs.isEmpty()){
+            for(extra in item.extras ?: emptyList()){
+                resultString = resultString.replace("{${extra.name}}", extra.default)
+            }
+        }else{
+            for(extra in commandExtraInputs){
+                resultString = resultString.replace("{${extra.name}}", extra.value)
+            }
+        }
 
         val fullExecPath =
-            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+            File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec)
+
+        if(!fullExecPath.exists()){
+            Timber.d("Exec file does not exist")
+            return
+        }
 
 
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+            val success = ProcessManagerService.runCommandForShare(fullExecPath.absolutePath, resultString, item.path)
 
             if (success) {
                 Timber.d("Process Success".uppercase())
@@ -231,9 +250,10 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun runShareCommandForFiles(
-        item: ShareItemModel,
+        item: CommandModel,
         currentLink: String?,
-        fileUris: List<String>
+        fileUris: List<String>,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
 
@@ -246,10 +266,23 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 Timber.d("Multiple Input files detected")
 
-                val replacedString = item.command
+                var replacedString = item.command
                     .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
                     .replace("''", "'")
                     .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
+
+
+                //Handling extras
+
+                if(commandExtraInputs.isEmpty()){
+                    for(extra in item.extras ?: emptyList()){
+                        replacedString = replacedString.replace("{${extra.name}}", extra.default)
+                    }
+                }else{
+                    for(extra in commandExtraInputs){
+                        replacedString = replacedString.replace("{${extra.name}}", extra.value)
+                    }
+                }
 
 
                 Timber.d("Replaced String $replacedString")
@@ -280,7 +313,17 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
                 currentItems.map { path ->
-                    val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+                    var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+
+                    if(commandExtraInputs.isEmpty()){
+                        for(extra in item.extras ?: emptyList()){
+                            resultString = resultString.replace("{${extra.name}}", extra.default)
+                        }
+                    }else{
+                        for(extra in commandExtraInputs){
+                            resultString = resultString.replace("{${extra.name}}", extra.value)
+                        }
+                    }
 
                     Timber.d("Replaced String $resultString")
 
@@ -313,8 +356,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun runShareCommandForDirectory(
-        item: ShareItemModel,
-        inputDir: File
+        item: CommandModel,
+        inputDir: File,
+        commandExtraInputs: List<CommandExtraInput> = emptyList()
     ) {
 
 
@@ -329,7 +373,17 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
             currentItems.map { path ->
-                val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+                var resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+
+                if(commandExtraInputs.isEmpty()){
+                    for(extra in item.extras ?: emptyList()){
+                        resultString = resultString.replace("{${extra.name}}", extra.default)
+                    }
+                }else{
+                    for(extra in commandExtraInputs){
+                        resultString = resultString.replace("{${extra.name}}", extra.value)
+                    }
+                }
 
                 val fullExecPath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec

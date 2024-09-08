@@ -2,13 +2,13 @@ package com.autosec.pie.services
 
 import android.app.Application
 import android.content.Context
-import com.autosec.pie.notifications.AutoPieNotification
+import com.autosec.pie.data.AutoPieConstants
+import com.autosec.pie.data.AutoPieStrings
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.BufferedReader
@@ -73,7 +73,13 @@ class ProcessManagerService {
                 //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
                 val result = shell!!.run("python3.9 ${exec} $command")
 
-                Timber.d(result.output())
+                val output = result.output()
+
+                Timber.d(output)
+
+                val regex = Regex(AutoPieConstants.AUTOPIE_SHELL_RESULT_REGEX)
+
+                val AUTOPIE_OUTPUT = regex.find(output)?.groups?.get(1)?.value
 
                 return result.isSuccess
 
@@ -98,9 +104,15 @@ class ProcessManagerService {
 
                 val result = shell!!.run("python3.9 ${exec} $command")
 
-                Timber.d(result.output())
-
                 Timber.d("Exit Code ${result.exitCode}")
+
+                val output = result.output()
+
+                Timber.d(output)
+
+                val regex = Regex(AutoPieConstants.AUTOPIE_SHELL_RESULT_REGEX)
+
+                val AUTOPIE_OUTPUT = regex.find(output)?.groups?.get(1)?.value
 
                 //shell?.shutdown()
 

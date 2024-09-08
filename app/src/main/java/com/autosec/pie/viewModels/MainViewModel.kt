@@ -90,6 +90,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun dispatchEvent(event: ViewModelEvent) {
+        Timber.d("Event Fired: $event")
         viewModelScope.launch(Dispatchers.Main) {
             when (event) {
 

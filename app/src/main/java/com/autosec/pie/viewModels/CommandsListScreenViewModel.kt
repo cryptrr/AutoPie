@@ -13,7 +13,6 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.JSONService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
@@ -49,10 +48,11 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     suspend fun getCommandsList(){
         isLoading.value = true
-        delay(1000L)
+        delay(500L)
         viewModelScope.launch(Dispatchers.IO){
             val sharesConfig = JSONService.readSharesConfig()
             val observersConfig = JSONService.readObserversConfig()
+            val cronConfig = JSONService.readCronConfig()
 
             if(sharesConfig == null){
                 Timber.d("Observers file not available")
@@ -66,7 +66,13 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 Timber.d("Observers file not available")
                 main.sharesConfigAvailable = false
                 return@launch
-
+            }else{
+                main.schedulerConfigAvailable = true
+            }
+            if(cronConfig == null){
+                Timber.d("Cron file not available")
+                main.sharesConfigAvailable = false
+                return@launch
             }else{
                 main.schedulerConfigAvailable = true
             }
@@ -77,7 +83,6 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val key = entry.key
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
-                println("Key: $key, Value: $value")
 
                 val directoryPath = value.get("path").asString
                 val exec = value.get("exec").asString
@@ -100,7 +105,6 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val key = entry.key
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
-                println("Key: $key, Value: $value")
 
                 val directoryPath = value.get("path").asString
                 val exec = value.get("exec").asString
@@ -117,6 +121,28 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 )
 
                 tempList.add(shareObject)
+            }
+
+            for (entry in cronConfig.entrySet()) {
+                val key = entry.key
+                val value = entry.value.asJsonObject
+                // Process the key-value pair
+
+                val directoryPath = value.get("path").asString
+                val exec = value.get("exec").asString
+                val command = value.get("command").asString
+                val deleteSource = value.get("deleteSourceFile").asBoolean
+
+                val cronObject = CommandModel(
+                    name = key,
+                    path = directoryPath,
+                    command = command,
+                    exec = exec,
+                    deleteSourceFile = deleteSource,
+                    type = CommandType.CRON
+                )
+
+                tempList.add(cronObject)
             }
 
             withContext(Dispatchers.Main){

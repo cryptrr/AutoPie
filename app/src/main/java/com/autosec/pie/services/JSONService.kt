@@ -34,8 +34,6 @@ class JSONService {
                 inputStream.close()
                 val jsonString = String(buffer)
 
-                //Timber.d(jsonString)
-
                 // Parse the JSON string
                 val gson = Gson()
                 val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
@@ -46,7 +44,7 @@ class JSONService {
                 }
                 return dataObject.asJsonObject
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return null
             }
         }
@@ -68,8 +66,6 @@ class JSONService {
                 inputStream.close()
                 val jsonString = String(buffer)
 
-                //Timber.d(jsonString)
-
                 // Parse the JSON string
                 val gson = Gson()
                 val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
@@ -80,7 +76,39 @@ class JSONService {
                 }
                 return dataObject.asJsonObject
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
+                return null
+            }
+        }
+
+        fun readCronConfig(): JsonObject? {
+
+            if(!mainViewModel.storageManagerPermissionGranted){
+                //TODO: Send notification maybe
+                return null
+            }
+
+            val cronConfigPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
+
+            try {
+                val file = File(cronConfigPath)
+                val inputStream = FileInputStream(file)
+                val size = inputStream.available()
+                val buffer = ByteArray(size)
+                inputStream.read(buffer)
+                inputStream.close()
+                val jsonString = String(buffer)
+
+                val gson = Gson()
+                val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
+
+                if (!dataObject.isJsonObject) {
+                    Timber.d("Cron config is not valid json")
+                    mainViewModel.showError(ViewModelError.InvalidJson("Cron"))
+                }
+                return dataObject.asJsonObject
+            } catch (e: Exception) {
+                Timber.e(e)
                 return null
             }
         }
@@ -95,7 +123,7 @@ class JSONService {
                 file.writeText(jsonString)
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
                 return
             }
         }
@@ -107,7 +135,19 @@ class JSONService {
                 val file = File(fileObserverPath)
                 file.writeText(jsonString)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e)
+                return
+            }
+        }
+
+        fun writeCronConfig(jsonString: String) {
+            val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
+
+            try {
+                val file = File(fileObserverPath)
+                file.writeText(jsonString)
+            } catch (e: Exception) {
+                Timber.e(e)
                 return
             }
         }

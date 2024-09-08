@@ -7,9 +7,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
 import com.autosec.pie.logging.FileLoggingTree
 import com.autosec.pie.services.AutoPieCoreService
+import com.autosec.pie.services.CronJobWorker
+import com.autosec.pie.services.CronService
 import com.autosec.pie.services.FileObserverJobService
 import com.autosec.pie.services.ScreenStateReceiver
 import com.autosec.pie.viewModels.MainViewModel
@@ -17,6 +21,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 
 class MyApplication : Application() {
@@ -24,6 +29,7 @@ class MyApplication : Application() {
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
     private val screenStateReceiver = ScreenStateReceiver()
+
 
     override fun onCreate() {
         super.onCreate()
@@ -37,6 +43,7 @@ class MyApplication : Application() {
         }
 
         scheduleJob()
+        scheduleChron()
         startScreenStateReceiver()
 
 
@@ -54,12 +61,15 @@ class MyApplication : Application() {
                 .setRequiresCharging(false)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                 .setRequiresDeviceIdle(false)
-                .setPeriodic(15 * 60 * 1000) // Minimum interval for periodic jobs is 15 minutes
+                //.setPeriodic(15 * 60 * 1000) // Minimum interval for periodic jobs is 15 minutes
                 .build()
 
             val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
             jobScheduler.schedule(jobInfo)
         }
+    }
+    private fun scheduleChron(){
+        CronService.setUpChronJobs()
     }
 
     private fun startScreenStateReceiver(){

@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.BuildConfig
 import com.autosec.pie.domain.AppNotification
+import com.autosec.pie.elements.SettingsHeader
 import com.autosec.pie.terminal.TerminalEmulatorActivity
 import com.autosec.pie.viewModels.MainViewModel
 import org.koin.java.KoinJavaComponent
@@ -64,6 +66,8 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                 )
                 Spacer(modifier = Modifier.height(15.dp))
             }
+
+            SettingsHeader()
             SettingsToggles()
         }
     }
@@ -102,7 +106,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
@@ -156,7 +160,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
@@ -217,7 +221,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .fillMaxWidth()
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
@@ -253,7 +257,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .fillMaxWidth()
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
@@ -296,7 +300,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .fillMaxWidth()
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
@@ -360,7 +364,7 @@ fun SettingsToggles() {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(0.55F))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(

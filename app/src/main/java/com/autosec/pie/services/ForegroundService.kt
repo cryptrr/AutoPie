@@ -4,13 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.R
-import com.autosec.pie.data.ShareItemModel
+import com.autosec.pie.data.CommandExtraInput
+import com.autosec.pie.data.CommandModel
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -62,14 +61,23 @@ class ForegroundService : Service() {
             val commandString = it.getStringExtra("command")
             val currentLink = it.getStringExtra("currentLink")
             val fileUrisString = it.getStringExtra("fileUris")
+            val commandExtraInputsString = it.getStringExtra("commandExtraInputs")
 
             val listType = object : TypeToken<List<String>>() {}.type
+            val commandExtraInputListType = object : TypeToken<List<CommandExtraInput>>() {}.type
 
-            val command: ShareItemModel = Gson().fromJson(commandString, ShareItemModel::class.java)
+            val command: CommandModel = Gson().fromJson(commandString, CommandModel::class.java)
+
             val fileUris: List<String> = Gson().fromJson(fileUrisString, listType)
 
+            val commandExtraInputs: List<CommandExtraInput> = try {
+                Gson().fromJson(commandExtraInputsString, commandExtraInputListType)
+            }catch (e: Exception){
+                emptyList()
+            }
 
-            shareReceiverViewModel.runShareCommand(command, currentLink, fileUris)
+
+            shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs)
 
         }
 

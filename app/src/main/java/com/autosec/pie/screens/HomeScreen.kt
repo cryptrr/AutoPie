@@ -23,6 +23,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,8 +44,10 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.EmptyItemsBadge
 import com.autosec.pie.elements.LoadingBadge
 import com.autosec.pie.elements.SearchBar
+import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.ui.theme.Purple60
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import org.koin.java.KoinJavaComponent.inject
 
@@ -157,9 +160,9 @@ fun CommandCard(
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp),
+            .height(120.dp),
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2F))
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
     ) {
 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -177,6 +180,7 @@ fun CommandCard(
                             when (card.type) {
                                 CommandType.SHARE -> PastelPurple
                                 CommandType.FILE_OBSERVER -> Purple10
+                                CommandType.CRON -> GreenGrey60
                             }
                         )
                         .padding(horizontal = 5.dp, vertical = 3.dp)
@@ -194,6 +198,14 @@ fun CommandCard(
                         CommandType.FILE_OBSERVER -> {
                             Text(
                                 text = "FILE OBSERVER",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                        CommandType.CRON -> {
+                            Text(
+                                text = "CRON",
                                 fontSize = 13.3.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black

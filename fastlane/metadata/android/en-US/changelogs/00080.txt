@@ -1,0 +1,9 @@
+What's Changed
+
+- Fixed Material Colors.
+- Fixed Permission issues on Android 10
+- Bug Fixes
+- Updated the preinstalled commands.
+
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.08-beta
