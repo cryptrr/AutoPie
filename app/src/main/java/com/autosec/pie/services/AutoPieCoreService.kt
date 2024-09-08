@@ -61,7 +61,7 @@ class AutoPieCoreService {
         fun extractAndExecuteBinary(context: Application) {
 
 
-            val binaries = listOf("busybox", "env.sh")
+            val binaries = listOf("busybox", "ssl_helper", "env.sh")
 
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -70,6 +70,9 @@ class AutoPieCoreService {
                     Timber.d("Shellcheck: Shell is installed correctly")
                     return@launch
                 }
+
+                Timber.d("Shellcheck: Shell is not installed")
+
 
                 for (binary in binaries) {
                     try {
@@ -116,6 +119,7 @@ class AutoPieCoreService {
                     }
 
                 }
+
             }
         }
 
@@ -168,6 +172,10 @@ class AutoPieCoreService {
                         }
                         entry = tarInputStream.nextTarEntry
                     }
+
+                    //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
+
+                    ProcessManagerService.makeBinariesFolderExecutable()
 
                     CoroutineScope(Dispatchers.Main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
@@ -230,6 +238,8 @@ class AutoPieCoreService {
             logsFolder.mkdir()
 
         }
+
+
 
         fun downloadFile(url: String, directory: File, filename: String) {
 

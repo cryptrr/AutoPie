@@ -268,6 +268,23 @@ class ProcessManagerService {
 
         }
 
+        fun makeBinariesFolderExecutable(){
+
+            Timber.d("Making python binary files executable")
+
+            val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            val binLocation = File(activity.filesDir, "build/usr/bin")
+
+            val shell = Shell(
+                shellPath,
+            )
+
+            shell.run("chmod +x ${binLocation.absolutePath}/*")
+
+
+        }
+
         fun runBusyBoxShell(): String {
             val busyBoxPath = File(activity.filesDir, "busybox").absolutePath
 
