@@ -18,11 +18,11 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 ## Usage
 
 1) Open AutoPie App
-2) There are currently two types of commands. `Share Sheet Commands` and `Folder Observer Commands`
+2) There are currently two types of commands. `Share Sheet Commands`, `Folder Observer Commands` and `Cron Commands`.
 3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
 
 ## Troubleshooting
-* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation and `shares.json` for Share Sheet Configuration. And a `bin` folder with the binaries like `ffmpeg`.
+* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. And a `bin` folder with the binaries like `ffmpeg`.
 
 ## Command Format
 
@@ -46,7 +46,7 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 ## Custom Defined Command Arguments for Customization.
 
-WIP: AutoPie is working on supporting taking custom arguments that can be defined in a command .
+With AutoPie, you can define custom arguments called (extras) for commands.
 
 This will show a card where you can input details to customize the behaviour of the command.
 
