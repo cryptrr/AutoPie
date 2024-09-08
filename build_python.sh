@@ -16,7 +16,7 @@ mkdir copied/build/etc
 
 mkdir copied/build/etc/ssl
 
-curl -o copied/build/etc/ssl/cert.pem "http://curl.haxx.se/ca/cacert.pem" 
+curl -o copied/build/etc/ssl/cert.pem "https://curl.haxx.se/ca/cacert.pem"
 
 cd copied
 
