@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.Environment
 import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
+import androidx.work.Configuration
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,8 @@ class FileObserverJobService : JobService() {
     val main: MainViewModel by inject(MainViewModel::class.java)
 
     init {
+        Configuration.Builder().setJobSchedulerJobIdRange(0, 1000).build()
+
         try {
             main.viewModelScope.launch {
                 main.eventFlow.collect{

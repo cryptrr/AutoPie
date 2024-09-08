@@ -74,6 +74,8 @@ class CronService {
 
                     val commandJson = Gson().toJson(cronJob.value)
 
+                    Timber.d("Cron Command Starting: ${cronJob.key}")
+
                     val inputData = Data.Builder()
                         .putString("command", commandJson)
                         .build()
