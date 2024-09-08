@@ -22,11 +22,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -232,12 +236,38 @@ fun ShareContextMenuBottomSheet(
             ) {
 
                 LazyColumn(
+                    Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(15.dp),
                     contentPadding = PaddingValues(10.dp)
                 ) {
                     item {
-                        AutoPieLogo()
-                        Spacer(modifier = Modifier.height(15.dp))
+
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AutoPieLogo()
+                            Spacer(modifier = Modifier.height(15.dp))
+                            Button(
+                                modifier = Modifier,
+                                contentPadding = PaddingValues(10.dp),
+                                shape = RoundedCornerShape(15.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                onClick = {
+                                val intent = Intent(activity, MainActivity::class.java)
+                                activity?.startActivity(intent)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Settings,
+                                    contentDescription = "Open the main app.",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
                     }
                     item {
                         SearchBar(searchQuery = shareReceiverViewModel.searchQuery) {
@@ -337,7 +367,11 @@ fun ShareCard(
                 }
             ),
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(100.dp))
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
+                100.dp
+            )
+        )
     ) {
 
         Column(
