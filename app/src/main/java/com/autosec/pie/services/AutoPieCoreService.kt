@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import com.autosec.pie.data.AutoPieConstants
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.elements.YesNoDialog
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +49,10 @@ class AutoPieCoreService {
 
                 if (mainViewModel.storageManagerPermissionGranted && !binFolderExists) {
                     Timber.d("Starting fetching init files")
-                    downloadAndExtractAutoSecInitArchive()
+                    //downloadAndExtractAutoSecInitArchive()
+
+                    mainViewModel.installInitPackagesPrompt = true
+
                 } else {
                     Timber.d("Bin folder exists. Doing nothing.")
                 }
@@ -302,6 +306,31 @@ class AutoPieCoreService {
 
                     if (isDownloaded) {
                         mainViewModel.showNotification(AppNotification.DownloadedInitPackages)
+                        extractAutoSecFiles()
+                    }
+                }
+            }
+        }
+
+        fun downloadAndExtractAutoSecEmptyInit() {
+
+            Timber.d("Downloading Empty Init")
+
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                val autoSecFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+
+
+                if (autoSecFolder.exists()) {
+
+                    val isDownloaded = ProcessManagerService.downloadFileWithPython(
+                        AutoPieConstants.AUTOPIE_EMPTY_INIT_ARCHIVE_URL,
+                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
+                    )
+
+                    if (isDownloaded) {
                         extractAutoSecFiles()
                     }
                 }

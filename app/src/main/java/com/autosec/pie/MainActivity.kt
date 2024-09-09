@@ -57,6 +57,7 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AppBottomBar
 import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SnackbarHostCustom
+import com.autosec.pie.elements.YesNoDialog
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.screens.AddShareCommandBottomSheet
 import com.autosec.pie.screens.CommandsSearchBottomSheet
@@ -65,6 +66,7 @@ import com.autosec.pie.screens.HomeScreen
 import com.autosec.pie.screens.InstallNewPackageBottomSheet
 import com.autosec.pie.screens.InstalledScreen
 import com.autosec.pie.screens.SettingsScreen
+import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.launch
@@ -345,6 +347,24 @@ class MainActivity : ComponentActivity() {
 
 
                     }
+
+                    YesNoDialog(
+                        showDialog = mainViewModel.installInitPackagesPrompt,
+                        title = "Do you want to install init packages and its commands?",
+                        subtitle = "Contains ffmpeg and imagemagick.",
+                        onYesClicked = {
+                            mainViewModel.installInitPackagesPrompt = false
+                            AutoPieCoreService.downloadAndExtractAutoSecInitArchive()
+                        },
+                        onNoClicked = {
+                            mainViewModel.installInitPackagesPrompt = false
+                            AutoPieCoreService.downloadAndExtractAutoSecEmptyInit()
+                        },
+                        onDismissRequest = {
+
+
+                        }
+                    )
 
 
                     if (openBottomSheet.value) {

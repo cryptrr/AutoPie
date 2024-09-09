@@ -46,6 +46,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var schedulerConfigAvailable by mutableStateOf(false)
 
     var sharesConfigAvailable by mutableStateOf(false)
+    var installInitPackagesPrompt by mutableStateOf(false)
 
 
     var turnOffFileObservers by mutableStateOf(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_OFF)).also { state ->
