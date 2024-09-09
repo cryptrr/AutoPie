@@ -1,6 +1,9 @@
 CUSTOM_DIR="$1"
+PACKAGE_NAME="$2"
 
 echo "FILES DIR : $CUSTOM_DIR"
+
+export ANDROID_PACKAGE_NAME=$PACKAGE_NAME
 
 export PATH=$PATH:$CUSTOM_DIR/build/usr/bin
 if [ ! -z "$LD_LIBRARY_PATH" ] ; then

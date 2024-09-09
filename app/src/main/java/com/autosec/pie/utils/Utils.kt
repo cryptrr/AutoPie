@@ -1,5 +1,6 @@
 package com.autosec.pie.utils
 
+import android.content.Intent
 import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -34,6 +35,10 @@ class Utils{
             return intervalInMillis < fifteenMinutesInMillis
         }
     }
+}
+
+fun Intent.getIntExtraOrNull(key: String): Int? {
+    return if (hasExtra(key)) getIntExtra(key, -1) else null
 }
 
 class Debouncer(

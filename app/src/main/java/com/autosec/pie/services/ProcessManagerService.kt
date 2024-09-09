@@ -23,6 +23,7 @@ class ProcessManagerService {
 
         private var shell : Shell? = null
 
+
         private fun initShell(){
             val shellPath = File(activity.filesDir, "sh").absolutePath
 
