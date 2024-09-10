@@ -4,7 +4,13 @@ Create your own Commands and Run them on your Android without wasting time.
 
 Lets you run Python scripts with or without included binaries on Android.
 
-https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
+**AutoPie is your own power tool-kit for android.**
+
+
+<div style="display:flex;flex-direction:row;justify-content:space-between">
+<img src="https://github.com/user-attachments/assets/ee74f114-2d02-4c6f-8429-68398764c006" alt="AutoPie extras config" width="47%" height="auto">
+<img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie extras config" width="47%" height="auto">
+</div>
 
 ## Installation
 
@@ -40,7 +46,7 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 
 ###  This configuration enables you to automatically convert each screenshot you take into webp.
 
-<img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" width="50%" height="auto">
+<img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" width="45%" height="auto">
 
 ### More Command Placeholders will be available later.
 
@@ -49,6 +55,17 @@ https://github.com/user-attachments/assets/b0b04c0b-a829-42e9-b2df-7f311f9cc153
 With AutoPie, you can define custom arguments called (extras) for commands.
 
 This will show a card where you can input details to customize the behaviour of the command.
+
+For Example,
+
+Defining extra items such as options for codecs etc will look like this.
+
+
+<div style="display:flex;flex-direction:row;justify-content:space-between">
+<img src="https://github.com/user-attachments/assets/cb7c3010-5270-49a8-9854-1f19b17a6a27" alt="AutoPie extras config" width="47%" height="auto">
+<img src="https://github.com/user-attachments/assets/25e2d5a9-bf40-4c23-85ae-8c4dfebe917a" alt="AutoPie extras how to" width="47%" height="auto">
+
+</div>
 
 ## Commands and Package Repository
 
