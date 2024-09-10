@@ -46,7 +46,9 @@ Lets you run Python scripts with or without included binaries on Android.
 
 ###  This configuration enables you to automatically convert each screenshot you take into webp.
 
-<img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" width="45%" height="auto">
+<div style="display:flex; flex-direction:row; width:100%; justify-content:center; align-items:center">
+    <img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" style="width:55%; height:auto">
+</div>
 
 ### More Command Placeholders will be available later.
 
