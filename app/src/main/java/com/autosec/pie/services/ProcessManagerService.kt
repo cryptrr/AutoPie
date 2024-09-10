@@ -35,7 +35,9 @@ class ProcessManagerService {
 
 
             val setEnvResult =
-                shell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                shell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+
+            Timber.d(setEnvResult?.output())
 
         }
 
@@ -142,7 +144,7 @@ class ProcessManagerService {
 
                 Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
-                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
                 shell.run("cd ${activity.filesDir.absolutePath}")
 
@@ -154,34 +156,6 @@ class ProcessManagerService {
             }
         }
 
-        fun runWget(url: String, fullFilePath: String) {
-
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-
-                    val shellPath = File(activity.filesDir, "sh").absolutePath
-
-                    val shell = Shell(
-                        shellPath,
-                    )
-
-                    Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
-
-                    Timber.d("wget")
-
-                    val result = shell.run("wget -O $fullFilePath $url")
-
-
-                    Timber.d(shell.isRunning().toString())
-                    Timber.d(result.output())
-                } catch (e: Exception) {
-                    Timber.e(e.toString())
-                }
-            }
-
-        }
 
         fun downloadFileWithPython(url: String, fullFilePath: String): Boolean {
 
@@ -189,24 +163,16 @@ class ProcessManagerService {
 
             try {
 
-                val shellPath = File(activity.filesDir, "sh").absolutePath
-
-                val shell = Shell(
-                    shellPath,
-                )
-
-                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                if(shell?.isAlive() != true) initShell()
 
                 val command = "python3.9 -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
 
                 Timber.d(command)
 
-                val result = shell.run(command)
+                val result = shell!!.run(command)
 
 
-                Timber.d(shell.isRunning().toString())
+                Timber.d(shell!!.isRunning().toString())
                 Timber.d(result.output())
 
                 return result.isSuccess
@@ -226,22 +192,12 @@ class ProcessManagerService {
 
                 try {
 
-                    val shellPath = File(activity.filesDir, "sh").absolutePath
-
-                    val shell = Shell(
-                        shellPath,
-                    )
-
-                    Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-                    shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath}")
+                    if(shell?.isAlive() != true) initShell()
 
                     Timber.d("Deleting file at $filePath")
 
-                    val result = shell.run("rm '$filePath'")
+                    val result = shell!!.run("rm '$filePath'")
 
-
-                    Timber.d(shell.isRunning().toString())
                     Timber.d(result.output())
                 } catch (e: Exception) {
                     Timber.e(e.toString())
@@ -285,51 +241,6 @@ class ProcessManagerService {
 
 
         }
-
-        fun runBusyBoxShell(): String {
-            val busyBoxPath = File(activity.filesDir, "busybox").absolutePath
-
-            val command = listOf(busyBoxPath, "sh", "-c", "python --help")
-
-            val processBuilder = ProcessBuilder(command)
-
-            // Setting up environment variables if needed
-            val environment = processBuilder.environment()
-            environment["LD_LIBRARY_PATH"] =
-                "${activity.filesDir.absolutePath}/aarch64-linux-android/lib"
-            environment["PATH"] =
-                "${activity.filesDir.absolutePath}/aarch64-linux-android/bin:$busyBoxPath"
-            environment["HOME"] = "${activity.filesDir.absolutePath}:$busyBoxPath"
-
-            // Start the process
-            val process = processBuilder.start()
-
-            // Capture the output
-            val output =
-                BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-            val error = BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
-
-            Timber.d(output)
-
-
-            return if (error.isEmpty()) output else error
-        }
-
-
-        fun runCommand2(binary: File, arguments: List<String>, cwd: File): String {
-
-
-            val command = arrayOf("ls", activity.filesDir.absolutePath + "/bin")
-            val process = Runtime.getRuntime().exec(command)
-            val result = process.inputStream.bufferedReader().readText()
-
-            process.waitFor()
-
-            Timber.d(result)
-
-            return result
-        }
-
 
     }
 }

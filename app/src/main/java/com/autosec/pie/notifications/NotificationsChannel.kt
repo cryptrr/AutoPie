@@ -141,7 +141,7 @@ class AutoPieNotification(val context: Application) {
             null
         }
 
-        Timber.d("Sending notification")
+        //Timber.d("Sending notification")
 
         val fileIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
