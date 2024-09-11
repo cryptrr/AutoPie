@@ -16,12 +16,15 @@ class ProcessBroadcastReceiver : BroadcastReceiver() {
         val action = intent.action
         //Timber.d("Intent Received: $intent")
 
-        if (action == "${context.packageName}.SHOW_NOTIFICATION") {
 
-            autoPieNotification.sendBroadcastNotification(intent, context)
-
+        when(action){
+            "${context.packageName}.SHOW_NOTIFICATION" -> {
+                autoPieNotification.sendBroadcastNotification(intent, context)
+            }
+            "${context.packageName}.CANCEL_NOTIFICATION" -> {
+                autoPieNotification.cancelNotification(intent, context)
+            }
         }
     }
-
 
 }

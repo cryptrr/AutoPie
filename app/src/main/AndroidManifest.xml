@@ -115,6 +115,9 @@
             <intent-filter>
                 <action android:name="${applicationId}.SHOW_NOTIFICATION" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="${applicationId}.CANCEL_NOTIFICATION" />
+            </intent-filter>
         </receiver>
         <provider
             android:name="androidx.core.content.FileProvider"

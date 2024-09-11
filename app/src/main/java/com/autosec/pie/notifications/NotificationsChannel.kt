@@ -211,6 +211,16 @@ class AutoPieNotification(val context: Application) {
         }
     }
 
+    fun cancelNotification(intent: Intent, context: Context) {
+        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+
+        val notificationId = intent.getStringExtra("id")?.toInt() ?: return
+
+        with(NotificationManagerCompat.from(context)) {
+            cancel(notificationId)
+        }
+    }
+
     fun requestNotificationPermission(activity: Activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = Manifest.permission.POST_NOTIFICATIONS
