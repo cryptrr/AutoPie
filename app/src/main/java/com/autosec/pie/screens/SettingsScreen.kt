@@ -34,13 +34,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.BuildConfig
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.elements.SettingsHeader
+import com.autosec.pie.services.GithubApiService
 import com.autosec.pie.terminal.TerminalEmulatorActivity
+import com.autosec.pie.ui.theme.PastelYellow
 import com.autosec.pie.viewModels.MainViewModel
 import org.koin.java.KoinJavaComponent
 
@@ -99,6 +102,8 @@ fun GoToPageIcon() {
 fun SettingsToggles() {
 
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+
 
     val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
@@ -361,10 +366,13 @@ fun SettingsToggles() {
     Spacer(modifier = Modifier.height(20.dp))
 
 
+
     Column(
-        verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
+        verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+            .background(if(mainViewModel.updatesAreAvailable != true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else PastelYellow)
+            .fillMaxWidth()
+
             .padding(vertical = 7.dp, horizontal = 15.dp)
     ) {
         Row(
@@ -372,11 +380,41 @@ fun SettingsToggles() {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp)
+                .padding(vertical = 10.dp)
+                .clickable(
+                    indication = null,
+                    enabled = true,
+                    interactionSource = remember { MutableInteractionSource() })
+                {
+                    if(mainViewModel.updatesAreAvailable == true && mainViewModel.updateDetails != null){
+                        val url = GithubApiService.getAarch64ApkUrl(mainViewModel.updateDetails!!) ?: return@clickable
+                        uriHandler.openUri(url)
+                    }
+                }
+
+            //.height(90.dp)
         ) {
-            Text("Version", fontSize = 15.4.sp)
-            Text(BuildConfig.VERSION_NAME, fontSize = 15.4.sp)
+            Column(Modifier.fillMaxWidth(1F)){
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Version", fontSize = 15.4.sp, color = if(mainViewModel.updatesAreAvailable != true) MaterialTheme.colorScheme.onSurface else Color.Black)
+                    Text(BuildConfig.VERSION_NAME, fontSize = 15.4.sp, color = if(mainViewModel.updatesAreAvailable != true) MaterialTheme.colorScheme.onSurface else Color.Black)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                if(mainViewModel.updatesAreAvailable == true){
+                    Text(
+                        "Click here to update to version ${mainViewModel.updateDetails?.tag_name}",
+                        softWrap = true,
+                        fontSize = 14.sp,
+                        color = if(mainViewModel.updatesAreAvailable != true) MaterialTheme.colorScheme.onSurface else Color.Black
+                    )
+                }
+            }
         }
+
     }
 
     Spacer(modifier = Modifier.height(20.dp))

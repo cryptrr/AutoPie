@@ -31,6 +31,8 @@ class MyApplication : Application() {
     private val screenStateReceiver = ScreenStateReceiver()
 
 
+
+
     override fun onCreate() {
         super.onCreate()
 
@@ -51,6 +53,7 @@ class MyApplication : Application() {
         AutoPieCoreService.extractAndExecuteBinary(this@MyApplication)
 
         initAutosec()
+        checkForUpdates()
     }
 
     private fun scheduleJob() {
@@ -82,6 +85,12 @@ class MyApplication : Application() {
     private fun initAutosec(){
 
         AutoPieCoreService.initAutosec()
+    }
+
+    private fun checkForUpdates(){
+        if(mainViewModel.updatesAreAvailable == null){
+            mainViewModel.checkForUpdates()
+        }
     }
 
 }
