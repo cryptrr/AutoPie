@@ -208,20 +208,29 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         if(commandExtraInputs.isEmpty()){
             for(extra in item.extras ?: emptyList()){
-                resultString = resultString.replace("{${extra.name}}", extra.default)
+                resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
             }
         }else{
             for(extra in commandExtraInputs){
-                resultString = resultString.replace("{${extra.name}}", extra.value)
+                resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
             }
         }
 
-        val fullExecPath =
-            File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec)
+        val execFilePath =
+            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-        if(!fullExecPath.exists()){
-            Timber.d("Exec file does not exist")
-            return
+        val fullExecPath = when{
+            File(item.exec).isAbsolute -> {
+                item.exec
+            }
+            File(execFilePath).exists() -> {
+                //For packages installed inside autosec/bin
+                execFilePath
+            }
+            else -> {
+                //Base case fallback to terminal installed packages such as busybox packages.
+                item.exec
+            }
         }
 
 
@@ -229,7 +238,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            val success = ProcessManagerService.runCommandForShare(fullExecPath.absolutePath, resultString, item.path)
+            val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
 
             if (success) {
                 Timber.d("Process Success".uppercase())
@@ -276,11 +285,11 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 if(commandExtraInputs.isEmpty()){
                     for(extra in item.extras ?: emptyList()){
-                        replacedString = replacedString.replace("{${extra.name}}", extra.default)
+                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.default}'")
                     }
                 }else{
                     for(extra in commandExtraInputs){
-                        replacedString = replacedString.replace("{${extra.name}}", extra.value)
+                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.value}'")
                     }
                 }
 
@@ -289,8 +298,22 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 val resultString = "\"${replacedString}\""
 
-                val fullExecPath =
+                val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                val fullExecPath = when{
+                    File(item.exec).isAbsolute -> {
+                        item.exec
+                    }
+                    File(execFilePath).exists() -> {
+                        //For packages installed inside autosec/bin
+                        execFilePath
+                    }
+                    else -> {
+                        //Base case fallback to terminal installed packages such as busybox packages.
+                        item.exec
+                    }
+                }
 
                 val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
 
@@ -317,19 +340,32 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                     if(commandExtraInputs.isEmpty()){
                         for(extra in item.extras ?: emptyList()){
-                            resultString = resultString.replace("{${extra.name}}", extra.default)
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
                         }
                     }else{
                         for(extra in commandExtraInputs){
-                            resultString = resultString.replace("{${extra.name}}", extra.value)
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
                         }
                     }
 
                     Timber.d("Replaced String $resultString")
 
-
-                    val fullExecPath =
+                    val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                    val fullExecPath = when{
+                        File(item.exec).isAbsolute -> {
+                            item.exec
+                        }
+                        File(execFilePath).exists() -> {
+                            //For packages installed inside autosec/bin
+                            execFilePath
+                        }
+                        else -> {
+                            //Base case fallback to terminal installed packages such as busybox packages.
+                            item.exec
+                        }
+                    }
 
                     val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
 
@@ -377,16 +413,30 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 if(commandExtraInputs.isEmpty()){
                     for(extra in item.extras ?: emptyList()){
-                        resultString = resultString.replace("{${extra.name}}", extra.default)
+                        resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
                     }
                 }else{
                     for(extra in commandExtraInputs){
-                        resultString = resultString.replace("{${extra.name}}", extra.value)
+                        resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
                     }
                 }
 
-                val fullExecPath =
+                val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                val fullExecPath = when{
+                    File(item.exec).isAbsolute -> {
+                        item.exec
+                    }
+                    File(execFilePath).exists() -> {
+                        //For packages installed inside autosec/bin
+                        execFilePath
+                    }
+                    else -> {
+                        //Base case fallback to terminal installed packages such as busybox packages.
+                        item.exec
+                    }
+                }
 
                 val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
 

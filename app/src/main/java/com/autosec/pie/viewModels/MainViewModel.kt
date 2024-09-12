@@ -13,13 +13,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.BuildConfig
 import com.autosec.pie.data.preferences.AppPreferences
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.domain.Notification
 import com.autosec.pie.domain.ViewModelError
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.FileObserverJobService
+import com.autosec.pie.services.GithubApiService
 import com.autosec.pie.services.ProcessManagerService
+import com.autosec.pie.services.ReleaseInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,6 +32,7 @@ import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
+
 
     private val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
 
@@ -44,6 +48,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var pythonInstallationComplete by mutableStateOf(false)
 
     var schedulerConfigAvailable by mutableStateOf(false)
+    var updatesAreAvailable : Boolean? by mutableStateOf(null)
+
+    var updateDetails: ReleaseInfo? by mutableStateOf(null)
 
     var sharesConfigAvailable by mutableStateOf(false)
     var installInitPackagesPrompt by mutableStateOf(false)
@@ -132,5 +139,40 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         jobScheduler.cancel(123)
         Timber.d("FileObserverJobService stopped")
     }
+
+    fun checkForUpdates(){
+        viewModelScope.launch(Dispatchers.IO){
+            try {
+                val latest = GithubApiService.getLatestRelease() ?: return@launch
+
+                Timber.d(latest.toString())
+
+                val tag_name = latest.tag_name.removePrefix("v")
+
+                if(GithubApiService.compareVersions(tag_name, BuildConfig.VERSION_NAME) > 0){
+
+                    Timber.d("Updates are available")
+
+                    updatesAreAvailable = true
+
+                    updateDetails = latest
+
+                    GithubApiService.getAarch64ApkUrl(latest)?.let{
+                        showNotification(AppNotification.UpdatesAvailable(url = it))
+                    }
+
+                }
+                else{
+                    Timber.d("No Updates are available")
+
+                    updatesAreAvailable = false
+                }
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+    }
+
+
 
 }

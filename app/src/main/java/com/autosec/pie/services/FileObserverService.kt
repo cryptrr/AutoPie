@@ -179,8 +179,22 @@ class FileObserverJobService : JobService() {
 
                         Timber.d("Edited command $exec $resultString")
 
-                        val fullExecPath =
+                        val execFilePath =
                             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + exec
+
+                        val fullExecPath = when{
+                            File(exec).isAbsolute -> {
+                                exec
+                            }
+                            File(execFilePath).exists() -> {
+                                //For packages installed inside autosec/bin
+                                execFilePath
+                            }
+                            else -> {
+                                //Base case fallback to terminal installed packages such as busybox packages.
+                                exec
+                            }
+                        }
 
 
                         //Checking if file passes selectors list
