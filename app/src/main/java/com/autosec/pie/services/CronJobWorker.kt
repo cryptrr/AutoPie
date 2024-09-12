@@ -20,7 +20,15 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
 
             val command: CronCommandModel = Gson().fromJson(commandString, CronCommandModel::class.java)
 
-            ProcessManagerService.runCommand4(command.exec, command.command, command.path)
+            var finalCommand = command.command
+
+            if(command.extras?.isNotEmpty() == true){
+                for(extra in command.extras){
+                    finalCommand = finalCommand.replace("{${extra.name}}", "'${extra.default}'")
+                }
+            }
+
+            ProcessManagerService.runCommand4(command.exec, finalCommand, command.path)
 
             return Result.success()
         } catch (e: Exception) {
