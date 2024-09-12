@@ -208,11 +208,11 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         if(commandExtraInputs.isEmpty()){
             for(extra in item.extras ?: emptyList()){
-                resultString = resultString.replace("{${extra.name}}", extra.default)
+                resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
             }
         }else{
             for(extra in commandExtraInputs){
-                resultString = resultString.replace("{${extra.name}}", extra.value)
+                resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
             }
         }
 
@@ -276,11 +276,11 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 if(commandExtraInputs.isEmpty()){
                     for(extra in item.extras ?: emptyList()){
-                        replacedString = replacedString.replace("{${extra.name}}", extra.default)
+                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.default}'")
                     }
                 }else{
                     for(extra in commandExtraInputs){
-                        replacedString = replacedString.replace("{${extra.name}}", extra.value)
+                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.value}'")
                     }
                 }
 
@@ -317,11 +317,11 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                     if(commandExtraInputs.isEmpty()){
                         for(extra in item.extras ?: emptyList()){
-                            resultString = resultString.replace("{${extra.name}}", extra.default)
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
                         }
                     }else{
                         for(extra in commandExtraInputs){
-                            resultString = resultString.replace("{${extra.name}}", extra.value)
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
                         }
                     }
 
@@ -377,11 +377,11 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
                 if(commandExtraInputs.isEmpty()){
                     for(extra in item.extras ?: emptyList()){
-                        resultString = resultString.replace("{${extra.name}}", extra.default)
+                        resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
                     }
                 }else{
                     for(extra in commandExtraInputs){
-                        resultString = resultString.replace("{${extra.name}}", extra.value)
+                        resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
                     }
                 }
 
