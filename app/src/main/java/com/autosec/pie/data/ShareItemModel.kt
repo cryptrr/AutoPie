@@ -22,6 +22,7 @@ data class CommandModel(
     val command: String,
     val exec: String,
     val deleteSourceFile: Boolean? = false,
+    val extrasRequired : Boolean? = false,
     val extras: List<CommandExtra>? = null
 )
 

@@ -15,6 +15,7 @@ import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.ProcessManagerService
+import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.isValidUrl
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -219,6 +220,7 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
         val execFilePath =
             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
+
         val fullExecPath = when{
             File(item.exec).isAbsolute -> {
                 item.exec
@@ -233,23 +235,29 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
             }
         }
 
+        val usePython = !Utils.isShellScript(File(fullExecPath))
+
 
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+            try {
+                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
 
-            if (success) {
-                Timber.d("Process Success".uppercase())
-                autoPieNotification.sendNotification("Command Success", "${item.name} $currentLink")
+                if (success) {
+                    Timber.d("Process Success".uppercase())
+                    autoPieNotification.sendNotification("Command Success", "${item.name} $currentLink")
 
-            } else {
-                Timber.d("Process FAILED".uppercase())
-                autoPieNotification.sendNotification("Command Failed", "${item.name} $currentLink")
+                } else {
+                    Timber.d("Process FAILED".uppercase())
+                    autoPieNotification.sendNotification("Command Failed", "${item.name} $currentLink")
+                }
+
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+            }catch (e: Exception){
+                Timber.e(e)
             }
-
-            main.dispatchEvent(ViewModelEvent.CommandCompleted)
 
 
             //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
@@ -315,7 +323,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                     }
                 }
 
-                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                val usePython = !Utils.isShellScript(File(fullExecPath))
+
+                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
 
                 if (success) {
                     Timber.d("Process Success".uppercase())
@@ -367,7 +377,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                         }
                     }
 
-                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                    val usePython = !Utils.isShellScript(File(fullExecPath))
+
+                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -438,7 +450,9 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                     }
                 }
 
-                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path)
+                val usePython = !Utils.isShellScript(File(fullExecPath))
+
+                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
 
                 if (success) {
                     Timber.d("Process Success".uppercase())

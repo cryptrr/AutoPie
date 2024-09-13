@@ -57,29 +57,25 @@ class ProcessManagerService {
         }
 
 
-        fun runCommand4(exec: String, command: String, cwd: String) : Boolean {
+        fun runCommand4(exec: String, command: String, cwd: String, usePython: Boolean = true) : Boolean {
             try {
 
                 if(shell?.isAlive() != true) initShell()
 
                 val checkEnvResult = shell?.run("cd ${cwd}")
 
-                //Log.d("running", shell.isRunning().toString())
                 Timber.d(checkEnvResult?.output())
 
-                Timber.d("python3.9 $exec $command")
+                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
 
+                Timber.d(fullCommand)
 
-                //val result = shell.run("python3.9 ${Environment.getExternalStorageDirectory().absolutePath + "/puta.py"}")
-                val result = shell!!.run("python3.9 ${exec} $command")
+                val result = shell!!.run(fullCommand)
 
                 val output = result.output()
 
                 Timber.d(output)
 
-                val regex = Regex(AutoPieConstants.AUTOPIE_SHELL_RESULT_REGEX)
-
-                val AUTOPIE_OUTPUT = regex.find(output)?.groups?.get(1)?.value
 
                 return result.isSuccess
 
@@ -92,7 +88,7 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShare(exec: String, command: String, cwd: String): Boolean {
+        fun runCommandForShare(exec: String, command: String, cwd: String, usePython: Boolean = true): Boolean {
 
             try {
 
@@ -100,19 +96,17 @@ class ProcessManagerService {
 
                 shell!!.run("cd ${cwd}")
 
-                Timber.d("python3.9 $exec $command")
+                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
 
-                val result = shell!!.run("python3.9 ${exec} $command")
+                Timber.d(fullCommand)
+
+                val result = shell!!.run(fullCommand)
 
                 Timber.d("Exit Code ${result.exitCode}")
 
                 val output = result.output()
 
                 Timber.d(output)
-
-                val regex = Regex(AutoPieConstants.AUTOPIE_SHELL_RESULT_REGEX)
-
-                val AUTOPIE_OUTPUT = regex.find(output)?.groups?.get(1)?.value
 
                 //shell?.shutdown()
 

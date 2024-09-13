@@ -6,6 +6,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CronCommandModel
+import com.autosec.pie.utils.Utils
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,8 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
                     command.exec
                 }
             }
+            val usePython = !Utils.isShellScript(File(fullExecPath))
+
 
             if(command.extras?.isNotEmpty() == true){
                 for(extra in command.extras){
@@ -46,7 +49,7 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
                 }
             }
 
-            ProcessManagerService.runCommand4(fullExecPath, finalCommand, command.path)
+            ProcessManagerService.runCommand4(fullExecPath, finalCommand, command.path, usePython)
 
             return Result.success()
         } catch (e: Exception) {

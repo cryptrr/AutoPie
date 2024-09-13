@@ -11,6 +11,7 @@ import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -196,12 +197,15 @@ class FileObserverJobService : JobService() {
                             }
                         }
 
+                        val usePython = !Utils.isShellScript(File(fullExecPath))
+
+
 
                         //Checking if file passes selectors list
                         if (regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
                             val execSuccess =
-                                ProcessManagerService.runCommand4(fullExecPath, resultString, path)
+                                ProcessManagerService.runCommand4(fullExecPath, resultString, path,usePython)
 
                             if (deleteSourceFile && execSuccess) {
                                 ProcessManagerService.deleteFile(fullFilepath)
