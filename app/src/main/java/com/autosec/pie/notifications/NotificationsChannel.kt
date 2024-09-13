@@ -52,7 +52,7 @@ class AutoPieNotification(val context: Application){
             context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val file = File("/storage/emulated/0/AutoSec/logs/autopie.log")
+        val file = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie.log")
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
         val openFileIntent = Intent(Intent.ACTION_VIEW).apply {
