@@ -59,6 +59,7 @@ class ForegroundService : Service() {
         val notification = Notification.Builder(this, "foreground_channel")
             .setContentTitle("AutoPie Running")
             .setSmallIcon(R.mipmap.ic_launcher)
+
             .build()
 
         startForeground(50, notification)

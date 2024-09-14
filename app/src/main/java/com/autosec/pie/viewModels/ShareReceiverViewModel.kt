@@ -1,10 +1,12 @@
 package com.autosec.pie.viewModels
 
 import android.app.Application
+import android.content.Intent
 import android.os.Environment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandExtra
@@ -14,6 +16,7 @@ import com.autosec.pie.data.CommandType
 import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
+import com.autosec.pie.services.ForegroundService
 import com.autosec.pie.services.ProcessManagerService
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.isValidUrl
@@ -23,15 +26,18 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
 
-class ShareReceiverViewModel(application: Application) : AndroidViewModel(application) {
+class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(application1) {
 
     val main: MainViewModel by inject(MainViewModel::class.java)
+
+
 
     var shareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
     var filteredShareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
@@ -489,6 +495,28 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         }
 
+    }
+
+    fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, onComplete: () -> Unit){
+        viewModelScope.launch {
+            try {
+                val commandJson = Gson().toJson(card)
+                val fileUrisJson = Gson().toJson(fileUris)
+
+                val intent = Intent(application1, ForegroundService::class.java).apply {
+                    putExtra("command", commandJson)
+                    putExtra("currentLink", currentLink)
+                    putExtra("fileUris", fileUrisJson)
+                }
+
+                startForegroundService(application1, intent)
+
+                onComplete()
+
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
     }
 
 
