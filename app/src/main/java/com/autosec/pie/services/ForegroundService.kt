@@ -14,8 +14,11 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
+import timber.log.Timber
 
 class ForegroundService : Service() {
 
@@ -27,7 +30,13 @@ class ForegroundService : Service() {
         shareReceiverViewModel.viewModelScope.launch {
             shareReceiverViewModel.main.eventFlow.collect{
                 when(it){
-                    is ViewModelEvent.CommandCompleted -> stopForeground(STOP_FOREGROUND_REMOVE)
+                    is ViewModelEvent.CommandCompleted -> {
+                        try {
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
+                    }
                     else -> {}
                 }
             }
@@ -77,7 +86,9 @@ class ForegroundService : Service() {
             }
 
 
-            shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs)
+            CoroutineScope(Dispatchers.IO).launch {
+                shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs)
+            }
 
         }
 

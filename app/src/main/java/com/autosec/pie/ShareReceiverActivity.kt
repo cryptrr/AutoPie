@@ -338,23 +338,27 @@ fun ShareCard(
             .combinedClickable(
                 onClick = {
                     Timber.d("CLICK DETECTED")
-                    shareReceiverViewModel.viewModelScope.launch {
+                    shareReceiverViewModel.main.viewModelScope.launch {
 
-                        val commandJson = Gson().toJson(card)
-                        val fileUrisJson = Gson().toJson(fileUris)
+                       try {
+                           val commandJson = Gson().toJson(card)
+                           val fileUrisJson = Gson().toJson(fileUris)
 
-                        val intent = Intent(context, ForegroundService::class.java).apply {
-                            putExtra("command", commandJson)
-                            putExtra("currentLink", currentLink)
-                            putExtra("fileUris", fileUrisJson)
-                        }
+                           val intent = Intent(context, ForegroundService::class.java).apply {
+                               putExtra("command", commandJson)
+                               putExtra("currentLink", currentLink)
+                               putExtra("fileUris", fileUrisJson)
+                           }
 
-                        startForegroundService(context, intent)
+                           startForegroundService(context, intent)
 
-                        //shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
-                        isLoading = true
-                        delay(900)
-                        activity?.finish()
+                           //shareReceiverViewModel.runShareCommand(card, currentLink, fileUris)
+                           isLoading = true
+                           delay(900)
+                           activity?.finish()
+                       }catch (e: Exception){
+                           Timber.e(e)
+                       }
                     }
                 },
                 onLongClick = {

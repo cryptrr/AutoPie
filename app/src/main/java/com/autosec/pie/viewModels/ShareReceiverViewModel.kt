@@ -255,7 +255,10 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                 }
 
                 main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+
             }catch (e: Exception){
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
                 Timber.e(e)
             }
 
@@ -279,86 +282,33 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         viewModelScope.launch(Dispatchers.IO) {
 
-            if (item.command.contains("{INPUT_FILES}")) {
+            try {
+                if (item.command.contains("{INPUT_FILES}")) {
 
-                Timber.d("Multiple Input files detected")
+                    Timber.d("Multiple Input files detected")
 
-                var replacedString = item.command
-                    .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
-                    .replace("''", "'")
-                    .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
-
-
-                //Handling extras
-
-                if(commandExtraInputs.isEmpty()){
-                    for(extra in item.extras ?: emptyList()){
-                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.default}'")
-                    }
-                }else{
-                    for(extra in commandExtraInputs){
-                        replacedString = replacedString.replace("{${extra.name}}", "'${extra.value}'")
-                    }
-                }
+                    var replacedString = item.command
+                        .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
+                        .replace("''", "'")
+                        .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
 
-                Timber.d("Replaced String $replacedString")
-
-                val resultString = "\"${replacedString}\""
-
-                val execFilePath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
-
-                val fullExecPath = when{
-                    File(item.exec).isAbsolute -> {
-                        item.exec
-                    }
-                    File(execFilePath).exists() -> {
-                        //For packages installed inside autosec/bin
-                        execFilePath
-                    }
-                    else -> {
-                        //Base case fallback to terminal installed packages such as busybox packages.
-                        item.exec
-                    }
-                }
-
-                val usePython = !Utils.isShellScript(File(fullExecPath))
-
-                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
-
-                if (success) {
-                    Timber.d("Process Success".uppercase())
-                    autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
-
-                } else {
-                    Timber.d("Process FAILED".uppercase())
-                    autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
-                }
-
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
-
-                //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
-
-            } else {
-
-                Timber.d("Single input file")
-
-
-                currentItems.map { path ->
-                    var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+                    //Handling extras
 
                     if(commandExtraInputs.isEmpty()){
                         for(extra in item.extras ?: emptyList()){
-                            resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
+                            replacedString = replacedString.replace("{${extra.name}}", "'${extra.default}'")
                         }
                     }else{
                         for(extra in commandExtraInputs){
-                            resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
+                            replacedString = replacedString.replace("{${extra.name}}", "'${extra.value}'")
                         }
                     }
 
-                    Timber.d("Replaced String $resultString")
+
+                    Timber.d("Replaced String $replacedString")
+
+                    val resultString = "\"${replacedString}\""
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -389,15 +339,72 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
                         Timber.d("Process FAILED".uppercase())
                         autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
                     }
+
+                    main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+                    //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
+
+                } else {
+
+                    Timber.d("Single input file")
+
+
+                    currentItems.map { path ->
+                        var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+
+                        if(commandExtraInputs.isEmpty()){
+                            for(extra in item.extras ?: emptyList()){
+                                resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
+                            }
+                        }else{
+                            for(extra in commandExtraInputs){
+                                resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
+                            }
+                        }
+
+                        Timber.d("Replaced String $resultString")
+
+                        val execFilePath =
+                            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                        val fullExecPath = when{
+                            File(item.exec).isAbsolute -> {
+                                item.exec
+                            }
+                            File(execFilePath).exists() -> {
+                                //For packages installed inside autosec/bin
+                                execFilePath
+                            }
+                            else -> {
+                                //Base case fallback to terminal installed packages such as busybox packages.
+                                item.exec
+                            }
+                        }
+
+                        val usePython = !Utils.isShellScript(File(fullExecPath))
+
+                        val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+
+                        if (success) {
+                            Timber.d("Process Success".uppercase())
+                            autoPieNotification.sendNotification("Command Success", "${item.name} $fileUris")
+
+                        } else {
+                            Timber.d("Process FAILED".uppercase())
+                            autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
+                        }
+                    }
+
+                    main.dispatchEvent(ViewModelEvent.CommandCompleted)
+
+
+                    //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
+
                 }
-
+            }catch (e: Exception){
                 main.dispatchEvent(ViewModelEvent.CommandCompleted)
-
-
-                //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
-
+                Timber.e(e)
             }
-
 
         }
 
@@ -417,62 +424,67 @@ class ShareReceiverViewModel(application: Application) : AndroidViewModel(applic
 
         viewModelScope.launch(Dispatchers.IO) {
 
-            val startTime = System.currentTimeMillis()
+            try {
+                val startTime = System.currentTimeMillis()
 
 
-            currentItems.map { path ->
-                var resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+                currentItems.map { path ->
+                    var resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
 
-                if(commandExtraInputs.isEmpty()){
-                    for(extra in item.extras ?: emptyList()){
-                        resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
+                    if(commandExtraInputs.isEmpty()){
+                        for(extra in item.extras ?: emptyList()){
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
+                        }
+                    }else{
+                        for(extra in commandExtraInputs){
+                            resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
+                        }
                     }
-                }else{
-                    for(extra in commandExtraInputs){
-                        resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
+
+                    val execFilePath =
+                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                    val fullExecPath = when{
+                        File(item.exec).isAbsolute -> {
+                            item.exec
+                        }
+                        File(execFilePath).exists() -> {
+                            //For packages installed inside autosec/bin
+                            execFilePath
+                        }
+                        else -> {
+                            //Base case fallback to terminal installed packages such as busybox packages.
+                            item.exec
+                        }
+                    }
+
+                    val usePython = !Utils.isShellScript(File(fullExecPath))
+
+                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+
+                    if (success) {
+                        Timber.d("Process Success".uppercase())
+                        //autoPieNotification.sendNotification("Command Success", "${item.name} $inputDir")
+
+                        if (item.deleteSourceFile == true) {
+                            ProcessManagerService.deleteFile(path.absolutePath)
+                        }
+
+                    } else {
+                        Timber.d("Process FAILED".uppercase())
+                        //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
                     }
                 }
 
-                val execFilePath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
 
-                val fullExecPath = when{
-                    File(item.exec).isAbsolute -> {
-                        item.exec
-                    }
-                    File(execFilePath).exists() -> {
-                        //For packages installed inside autosec/bin
-                        execFilePath
-                    }
-                    else -> {
-                        //Base case fallback to terminal installed packages such as busybox packages.
-                        item.exec
-                    }
-                }
+                val endTime = System.currentTimeMillis()
 
-                val usePython = !Utils.isShellScript(File(fullExecPath))
-
-                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
-
-                if (success) {
-                    Timber.d("Process Success".uppercase())
-                    //autoPieNotification.sendNotification("Command Success", "${item.name} $inputDir")
-
-                    if (item.deleteSourceFile == true) {
-                        ProcessManagerService.deleteFile(path.absolutePath)
-                    }
-
-                } else {
-                    Timber.d("Process FAILED".uppercase())
-                    //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
-                }
+                Timber.d("Time Elapsed: ${endTime - startTime}")
+            }catch (e:Exception){
+                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                Timber.e(e)
             }
-
-            main.dispatchEvent(ViewModelEvent.CommandCompleted)
-
-            val endTime = System.currentTimeMillis()
-
-            Timber.d("Time Elapsed: ${endTime - startTime}")
 
 
         }
