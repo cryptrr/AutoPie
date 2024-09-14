@@ -5,6 +5,8 @@ class AutoPieConstants {
         const val AUTOPIE_INIT_ARCHIVE_URL = "https://github.com/cryptrr/AutoPie/releases/download/v0.09-beta/autopie-init-0.03.tar.xz"
         const val AUTOPIE_EMPTY_INIT_ARCHIVE_URL = "https://github.com/cryptrr/AutoPie/releases/download/v0.09.2-beta/autopie-empty-init-0.1.tar.xz"
         const val AUTOPIE_SHELL_RESULT_REGEX = "<AUTOPIE_RESULT>(.*?)<AUTOPIE_RESULT/>"
+        const val PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID = "110"
+        const val PROCESS_COMMAND_NOTIFICATION_CHANNEL_ID = "100"
     }
 }
 

@@ -15,6 +15,7 @@ import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.services.CronJobWorker
 import com.autosec.pie.services.CronService
 import com.autosec.pie.services.FileObserverJobService
+import com.autosec.pie.services.ProcessBroadcastReceiver
 import com.autosec.pie.services.ScreenStateReceiver
 import com.autosec.pie.viewModels.MainViewModel
 import org.koin.android.ext.koin.androidContext
@@ -47,6 +48,7 @@ class MyApplication : Application() {
         scheduleJob()
         scheduleChron()
         startScreenStateReceiver()
+        startNotificationReceiver()
 
 
         AutoPieCoreService.extractTarXzFromAssets(this@MyApplication)
@@ -80,6 +82,12 @@ class MyApplication : Application() {
         filter.addAction(Intent.ACTION_SCREEN_ON)
         filter.addAction(Intent.ACTION_SCREEN_OFF)
         registerReceiver(screenStateReceiver, filter)
+    }
+
+    private fun startNotificationReceiver(){
+        val receiver = ProcessBroadcastReceiver()
+        val filter = IntentFilter("${this.packageName}.SHOW_NOTIFICATION")
+        registerReceiver(receiver, filter)
     }
 
     private fun initAutosec(){

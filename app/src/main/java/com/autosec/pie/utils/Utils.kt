@@ -1,5 +1,6 @@
 package com.autosec.pie.utils
 
+import android.content.Intent
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -50,6 +51,10 @@ class Utils{
             return firstLine.startsWith("#!") && (firstLine.contains("bash") || firstLine.contains("sh"))
         }
     }
+}
+
+fun Intent.getIntExtraOrNull(key: String): Int? {
+    return if (hasExtra(key)) getIntExtra(key, -1) else null
 }
 
 class Debouncer(

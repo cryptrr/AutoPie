@@ -1,8 +1,12 @@
 CUSTOM_DIR="$1"
+PACKAGE_NAME="$2"
 
 echo "FILES DIR : $CUSTOM_DIR"
 
-export PATH=$PATH:$CUSTOM_DIR/build/usr/bin
+export ANDROID_PACKAGE_NAME=$PACKAGE_NAME
+
+export PATH=$CUSTOM_DIR/build/usr/bin:$PATH
+
 if [ ! -z "$LD_LIBRARY_PATH" ] ; then
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:"
 fi

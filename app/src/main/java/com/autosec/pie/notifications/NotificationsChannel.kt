@@ -20,13 +20,25 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.autosec.pie.MainActivity
 import com.autosec.pie.R
+import com.autosec.pie.data.AutoPieConstants
+import com.autosec.pie.utils.getIntExtraOrNull
 import timber.log.Timber
 import java.io.File
 
-class AutoPieNotification(val context: Application){
+class AutoPieNotification(val context: Application) {
 
     fun createNotificationChannel() {
-        val channelId = "100"
+        try {
+            createCommandNotificationChannel()
+            createCommandBroadcastNotificationChannel()
+        }
+        catch (e:Exception){
+            Timber.e(e)
+        }
+    }
+
+    private fun createCommandNotificationChannel() {
+        val channelId = AutoPieConstants.PROCESS_COMMAND_NOTIFICATION_CHANNEL_ID
         val channelName = "autopie_main"
         val channelDescription = "Command Notifications"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
@@ -39,8 +51,22 @@ class AutoPieNotification(val context: Application){
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun sendNotification(contentTitle: String, contentText: String, ) {
-        val channelId = "100"
+    private fun createCommandBroadcastNotificationChannel() {
+        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+        val channelName = "autopie_command_broadcasts"
+        val channelDescription = "Command Broadcasts"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescription
+        }
+
+        val notificationManager: NotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    fun sendNotification(contentTitle: String, contentText: String) {
+        val channelId = AutoPieConstants.PROCESS_COMMAND_NOTIFICATION_CHANNEL_ID
         val notificationId = System.currentTimeMillis().toInt()
 
         Timber.d("Sending notification")
@@ -94,6 +120,104 @@ class AutoPieNotification(val context: Application){
                 return
             }
             notify(notificationId, builder.build())
+        }
+    }
+
+    fun sendBroadcastNotification(intent: Intent, context: Context) {
+        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+
+        val notificationId = intent.getStringExtra("id")?.toInt()
+        val title = intent.getStringExtra("title")
+        val description = intent.getStringExtra("description")
+
+        val total_progress: Int? = try {
+            intent.getIntExtraOrNull("total_progress")
+        } catch (e: Exception) {
+            null
+        }
+        val current_progress: Int? = try {
+            intent.getIntExtraOrNull("current_progress")
+        } catch (e: Exception) {
+            null
+        }
+
+        //Timber.d("Sending notification")
+
+        val fileIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            fileIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val file = File("/storage/emulated/0/AutoSec/logs/autopie.log")
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+
+        val openFileIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "text/plain")  // Adjust MIME type
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION  // Grant permission to the app
+        }
+
+        val pendingButtonIntent: PendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            openFileIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        var builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSilent(true)
+            .setContentTitle(title)
+            .setContentText(description)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .addAction(
+                R.mipmap.ic_launcher,
+                "Open Logs",
+                pendingButtonIntent
+            )
+
+        if (total_progress == 0) {
+            builder = builder
+                .setProgress(0, 0, true)
+        }
+
+        if (total_progress != null && current_progress != null) {
+            builder = builder
+                .setProgress(total_progress, current_progress, false)
+        }
+
+        // Show the notification
+        with(NotificationManagerCompat.from(context)) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+
+                //requestNotificationPermission()
+
+                Timber.d("Notification permission not granted")
+
+                return
+            }
+
+            notify(notificationId!!, builder.build())
+        }
+    }
+
+    fun cancelNotification(intent: Intent, context: Context) {
+        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+
+        val notificationId = intent.getStringExtra("id")?.toInt() ?: return
+
+        with(NotificationManagerCompat.from(context)) {
+            cancel(notificationId)
         }
     }
 
