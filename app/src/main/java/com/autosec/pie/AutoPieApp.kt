@@ -86,12 +86,15 @@ class MyApplication : Application() {
 
     private fun startNotificationReceiver(){
         val receiver = ProcessBroadcastReceiver()
-        val filter = IntentFilter("${this.packageName}.SHOW_NOTIFICATION")
+        val filter = IntentFilter().apply {
+            addAction("${this@MyApplication.packageName}.SHOW_NOTIFICATION")
+            addAction("${this@MyApplication.packageName}.CANCEL_NOTIFICATION")
+            addAction("${this@MyApplication.packageName}.CANCEL_PROCESS")
+        }
         registerReceiver(receiver, filter)
     }
 
     private fun initAutosec(){
-
         AutoPieCoreService.initAutosec()
     }
 
