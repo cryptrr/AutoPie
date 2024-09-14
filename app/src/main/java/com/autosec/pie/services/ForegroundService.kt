@@ -3,9 +3,11 @@ package com.autosec.pie.services
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.R
 import com.autosec.pie.data.CommandExtraInput
@@ -16,6 +18,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -25,6 +28,10 @@ class ForegroundService : Service() {
     private val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
 
     private var notificationManager: NotificationManager? = null
+
+    private val processId = (100000..999999).random()
+
+    private var currentJob : Job? = null
 
     init {
         shareReceiverViewModel.viewModelScope.launch {
@@ -37,6 +44,17 @@ class ForegroundService : Service() {
                             Timber.e(e)
                         }
                     }
+                    is ViewModelEvent.CancelProcess -> {
+                        if(it.processId == processId){
+                            Timber.d("Canceling process $processId")
+                            try {
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                //currentJob?.cancel()
+                            }catch (e: Exception){
+                                Timber.e(e)
+                            }
+                        }
+                    }
                     else -> {}
                 }
             }
@@ -47,22 +65,32 @@ class ForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         // Create a notification channel for API 26+
-        val channel = NotificationChannel(
-            "foreground_channel",
-            "Foreground Service",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        val manager = getSystemService(NotificationManager::class.java)
-        notificationManager = manager
 
-        manager.createNotificationChannel(channel)
-        val notification = Notification.Builder(this, "foreground_channel")
+
+        val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
+            action = "${this@ForegroundService.packageName}.CANCEL_PROCESS"
+            putExtra("processId", processId)
+        }
+
+        val pendingButtonIntent: PendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+
+        val notification = NotificationCompat.Builder(this, "foreground_channel")
             .setContentTitle("AutoPie Running")
             .setSmallIcon(R.mipmap.ic_launcher)
-
+            .addAction(
+                R.mipmap.ic_launcher,
+                "Cancel",
+                pendingButtonIntent
+            )
             .build()
 
-        startForeground(50, notification)
+        startForeground(processId, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -102,7 +130,7 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        notificationManager?.cancel(50)
+        notificationManager?.cancel(processId)
         stopForeground(STOP_FOREGROUND_REMOVE)
     }
 }

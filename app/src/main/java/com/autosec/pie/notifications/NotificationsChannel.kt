@@ -31,10 +31,22 @@ class AutoPieNotification(val context: Application) {
         try {
             createCommandNotificationChannel()
             createCommandBroadcastNotificationChannel()
+            createForegroundChannel()
         }
         catch (e:Exception){
             Timber.e(e)
         }
+    }
+
+    private fun createForegroundChannel(){
+        val channel = NotificationChannel(
+            "foreground_channel",
+            "Foreground Service",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        val notificationManager: NotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun createCommandNotificationChannel() {

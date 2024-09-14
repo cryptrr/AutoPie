@@ -1,9 +1,13 @@
 package com.autosec.pie.services
 
 import android.app.Application
+import android.app.Service.STOP_FOREGROUND_REMOVE
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.AutoPieConstants
 import com.autosec.pie.data.AutoPieStrings
+import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.viewModels.MainViewModel
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +22,25 @@ import java.io.InputStreamReader
 class ProcessManagerService {
     companion object {
 
+        val main: MainViewModel by inject(MainViewModel::class.java)
+
         private val activity: Application by inject(Context::class.java)
 
 
         private var shell : Shell? = null
+
+        init {
+            main.viewModelScope.launch {
+                main.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.CancelProcess -> {
+
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
 
 
         private fun initShell(){
