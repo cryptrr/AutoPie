@@ -27,6 +27,12 @@ import java.io.File
 
 class AutoPieNotification(val context: Application) {
 
+    companion object{
+        const val FOREGROUND_CHANNEL = "foreground_channel"
+        const val MAIN_CHANNEL = "autopie_main"
+        const val BROADCASTS_CHANNEL = "autopie_command_broadcasts"
+    }
+
     fun createNotificationChannel() {
         try {
             createCommandNotificationChannel()
@@ -40,9 +46,9 @@ class AutoPieNotification(val context: Application) {
 
     private fun createForegroundChannel(){
         val channel = NotificationChannel(
-            "foreground_channel",
+            FOREGROUND_CHANNEL,
             "Foreground Service",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_DEFAULT
         )
         val notificationManager: NotificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -50,8 +56,8 @@ class AutoPieNotification(val context: Application) {
     }
 
     private fun createCommandNotificationChannel() {
-        val channelId = AutoPieConstants.PROCESS_COMMAND_NOTIFICATION_CHANNEL_ID
-        val channelName = "autopie_main"
+        val channelId = MAIN_CHANNEL
+        val channelName = "AutoPie main"
         val channelDescription = "Command Notifications"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
         val channel = NotificationChannel(channelId, channelName, importance).apply {
@@ -64,8 +70,8 @@ class AutoPieNotification(val context: Application) {
     }
 
     private fun createCommandBroadcastNotificationChannel() {
-        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
-        val channelName = "autopie_command_broadcasts"
+        val channelId = BROADCASTS_CHANNEL
+        val channelName = "Process broadcasts channel"
         val channelDescription = "Command Broadcasts"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
         val channel = NotificationChannel(channelId, channelName, importance).apply {
@@ -78,7 +84,7 @@ class AutoPieNotification(val context: Application) {
     }
 
     fun sendNotification(contentTitle: String, contentText: String) {
-        val channelId = AutoPieConstants.PROCESS_COMMAND_NOTIFICATION_CHANNEL_ID
+        val channelId = MAIN_CHANNEL
         val notificationId = System.currentTimeMillis().toInt()
 
         Timber.d("Sending notification")
@@ -136,7 +142,7 @@ class AutoPieNotification(val context: Application) {
     }
 
     fun sendBroadcastNotification(intent: Intent, context: Context) {
-        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+        val channelId = BROADCASTS_CHANNEL
 
         val notificationId = intent.getStringExtra("id")?.toInt()
         val title = intent.getStringExtra("title")
@@ -224,7 +230,7 @@ class AutoPieNotification(val context: Application) {
     }
 
     fun cancelNotification(intent: Intent, context: Context) {
-        val channelId = AutoPieConstants.PROCESS_BROADCAST_NOTIFICATION_CHANNEL_ID
+        val channelId = BROADCASTS_CHANNEL
 
         val notificationId = intent.getStringExtra("id")?.toInt() ?: return
 

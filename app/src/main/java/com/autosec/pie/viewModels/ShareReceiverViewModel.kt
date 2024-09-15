@@ -169,7 +169,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     }
 
 
-    fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList())  {
+    fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
 
 
         Timber.d(item.toString())
@@ -180,14 +180,14 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         when {
             inputDir?.isDirectory == true -> {
-                runShareCommandForDirectory(item,inputDir, commandExtraInputs)
+                runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId)
             }
             fileUris.isNotEmpty() -> {
-                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs)
+                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
             }
 
             currentLink.isValidUrl() -> {
-                runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs)
+                runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
             }
 
             !currentLink.isNullOrBlank() -> {
@@ -205,7 +205,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         item: CommandModel,
         currentLink: String,
         fileUris: List<String>,
-        commandExtraInputs: List<CommandExtraInput> = emptyList()
+        commandExtraInputs: List<CommandExtraInput> = emptyList(),
+        processId: Int
     ) {
 
         Timber.d("runShareCommandForUrl")
@@ -240,7 +241,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
+                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
 
                 if (success) {
                     Timber.d("Process Success".uppercase())
@@ -270,7 +271,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         item: CommandModel,
         currentLink: String?,
         fileUris: List<String>,
-        commandExtraInputs: List<CommandExtraInput> = emptyList()
+        commandExtraInputs: List<CommandExtraInput> = emptyList(),
+        processId: Int
     ) {
 
 
@@ -314,7 +316,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -359,7 +361,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                         val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                        val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
+                        val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
 
                         if (success) {
                             Timber.d("Process Success".uppercase())
@@ -389,7 +391,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     private fun runShareCommandForDirectory(
         item: CommandModel,
         inputDir: File,
-        commandExtraInputs: List<CommandExtraInput> = emptyList()
+        commandExtraInputs: List<CommandExtraInput> = emptyList(),
+        processId: Int
     ) {
 
 
@@ -427,7 +430,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())

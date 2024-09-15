@@ -13,6 +13,7 @@ import com.autosec.pie.R
 import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -29,9 +30,7 @@ class ForegroundService : Service() {
 
     private var notificationManager: NotificationManager? = null
 
-    private val processId = (100000..999999).random()
-
-    private var currentJob : Job? = null
+    private var processId : Int? = null
 
     init {
         shareReceiverViewModel.viewModelScope.launch {
@@ -53,6 +52,8 @@ class ForegroundService : Service() {
                             }catch (e: Exception){
                                 Timber.e(e)
                             }
+                        }else{
+                            Timber.d("Process Ids not same. $processId != ${it.processId}")
                         }
                     }
                     else -> {}
@@ -65,6 +66,10 @@ class ForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         // Create a notification channel for API 26+
+
+        processId = (100000..999999).random()
+
+        Timber.d("ForegroundService created with processId: $processId")
 
 
         val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
@@ -80,9 +85,10 @@ class ForegroundService : Service() {
         )
 
 
-        val notification = NotificationCompat.Builder(this, "foreground_channel")
+        val notification = NotificationCompat.Builder(this, AutoPieNotification.FOREGROUND_CHANNEL)
             .setContentTitle("AutoPie Running")
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setOngoing(true)
             .addAction(
                 R.mipmap.ic_launcher,
                 "Cancel",
@@ -90,38 +96,39 @@ class ForegroundService : Service() {
             )
             .build()
 
-        startForeground(processId, notification)
+        startForeground(processId!!, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         intent?.let {
-            val commandString = it.getStringExtra("command")
-            val currentLink = it.getStringExtra("currentLink")
-            val fileUrisString = it.getStringExtra("fileUris")
-            val commandExtraInputsString = it.getStringExtra("commandExtraInputs")
-
-            val listType = object : TypeToken<List<String>>() {}.type
-            val commandExtraInputListType = object : TypeToken<List<CommandExtraInput>>() {}.type
-
-            val command: CommandModel = Gson().fromJson(commandString, CommandModel::class.java)
-
-            val fileUris: List<String> = Gson().fromJson(fileUrisString, listType)
-
-            val commandExtraInputs: List<CommandExtraInput> = try {
-                Gson().fromJson(commandExtraInputsString, commandExtraInputListType)
-            }catch (e: Exception){
-                emptyList()
-            }
-
 
             CoroutineScope(Dispatchers.IO).launch {
-                shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs)
+
+                val commandString = it.getStringExtra("command")
+                val currentLink = it.getStringExtra("currentLink")
+                val fileUrisString = it.getStringExtra("fileUris")
+                val commandExtraInputsString = it.getStringExtra("commandExtraInputs")
+
+                val listType = object : TypeToken<List<String>>() {}.type
+                val commandExtraInputListType = object : TypeToken<List<CommandExtraInput>>() {}.type
+
+                val command: CommandModel = Gson().fromJson(commandString, CommandModel::class.java)
+
+                val fileUris: List<String> = Gson().fromJson(fileUrisString, listType)
+
+                val commandExtraInputs: List<CommandExtraInput> = try {
+                    Gson().fromJson(commandExtraInputsString, commandExtraInputListType)
+                }catch (e: Exception){
+                    emptyList()
+                }
+
+                shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId!!)
             }
 
         }
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -130,7 +137,9 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        notificationManager?.cancel(processId)
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        processId?.let{
+            notificationManager?.cancel(it)
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
     }
 }

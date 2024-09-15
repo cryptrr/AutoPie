@@ -33,11 +33,32 @@ class ProcessManagerService {
 
         private var shell : Shell? = null
 
+        private var shells = HashMap<Int, Shell>()
+
         init {
             main.viewModelScope.launch {
                 main.eventFlow.collect{
                     when(it){
                         is ViewModelEvent.CancelProcess -> {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                Timber.d("Received processId in event: ${it.processId}")
+                                Timber.d("Shells List: ${shells.keys}")
+
+                                val runningShell = shells[it.processId]
+
+                                if(runningShell != null) {
+                                    runningShell.interrupt()
+
+                                    Timber.d("Process terminated: ${it.processId}")
+                                    shells.remove(it.processId)
+                                }
+                                else{
+                                    Timber.d("processId not match")
+
+                                }
+
+                                Timber.d("Shells List After: ${shells.keys}")
+                            }
 
                         }
                         else -> {}
@@ -192,8 +213,6 @@ class ProcessManagerService {
 
                 return result.isSuccess
 
-
-
             } catch (e: Exception) {
                 Timber.e(e.toString())
             }
@@ -202,11 +221,14 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShareWithEnv(commandObject: CommandModel,exec: String, command: String, cwd: String, commandExtraInputs: List<CommandExtraInput>, usePython: Boolean = true): Boolean {
+        fun runCommandForShareWithEnv(commandObject: CommandModel,exec: String, command: String, cwd: String, commandExtraInputs: List<CommandExtraInput>,processId: Int, usePython: Boolean = true): Boolean {
 
             try {
 
                 val shell = getShell()
+
+                Timber.d("Received processId in Command Start: $processId")
+                shells.set(processId, shell)
 
                 shell.run("cd ${cwd}")
 
@@ -238,6 +260,7 @@ class ProcessManagerService {
                 Timber.d("Command Run: ${result.details.command}")
 
                 shell.shutdown()
+                shells.remove(processId)
 
                 return result.isSuccess
 

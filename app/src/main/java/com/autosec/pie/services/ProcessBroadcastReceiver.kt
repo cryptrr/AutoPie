@@ -20,7 +20,7 @@ class ProcessBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        //Timber.d("Intent Received: $intent")
+        Timber.d("Intent Received: $intent")
 
 
         when(action){
