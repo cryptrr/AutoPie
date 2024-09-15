@@ -54,7 +54,6 @@ class ProcessManagerService {
                                 }
                                 else{
                                     Timber.d("processId not match")
-
                                 }
 
                                 Timber.d("Shells List After: ${shells.keys}")
