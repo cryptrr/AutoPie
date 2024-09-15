@@ -43,13 +43,7 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
             val usePython = !Utils.isShellScript(File(fullExecPath))
 
 
-            if(command.extras?.isNotEmpty() == true){
-                for(extra in command.extras){
-                    finalCommand = finalCommand.replace("{${extra.name}}", "'${extra.default}'")
-                }
-            }
-
-            ProcessManagerService.runCommand4(fullExecPath, finalCommand, command.path, usePython)
+            ProcessManagerService.runCommandWithEnv(command ,fullExecPath, finalCommand, command.path, usePython)
 
             return Result.success()
         } catch (e: Exception) {

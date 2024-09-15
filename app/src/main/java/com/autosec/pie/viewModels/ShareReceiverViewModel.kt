@@ -211,17 +211,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         Timber.d("runShareCommandForUrl")
 
 
-        var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
 
-        if(commandExtraInputs.isEmpty()){
-            for(extra in item.extras ?: emptyList()){
-                resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
-            }
-        }else{
-            for(extra in commandExtraInputs){
-                resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
-            }
-        }
 
         val execFilePath =
             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -249,7 +240,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
 
                 if (success) {
                     Timber.d("Process Success".uppercase())
@@ -293,23 +284,11 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     Timber.d("Multiple Input files detected")
 
-                    var replacedString = item.command
+                    val replacedString = item.command
                         .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
                         .replace("''", "'")
                         .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
-
-                    //Handling extras
-
-                    if(commandExtraInputs.isEmpty()){
-                        for(extra in item.extras ?: emptyList()){
-                            replacedString = replacedString.replace("{${extra.name}}", "'${extra.default}'")
-                        }
-                    }else{
-                        for(extra in commandExtraInputs){
-                            replacedString = replacedString.replace("{${extra.name}}", "'${extra.value}'")
-                        }
-                    }
 
 
                     Timber.d("Replaced String $replacedString")
@@ -335,7 +314,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -356,17 +335,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
 
                     currentItems.map { path ->
-                        var resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+                        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
 
-                        if(commandExtraInputs.isEmpty()){
-                            for(extra in item.extras ?: emptyList()){
-                                resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
-                            }
-                        }else{
-                            for(extra in commandExtraInputs){
-                                resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
-                            }
-                        }
 
                         Timber.d("Replaced String $resultString")
 
@@ -389,7 +359,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                         val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                        val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+                        val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
 
                         if (success) {
                             Timber.d("Process Success".uppercase())
@@ -435,17 +405,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
 
                 currentItems.map { path ->
-                    var resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+                    val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
 
-                    if(commandExtraInputs.isEmpty()){
-                        for(extra in item.extras ?: emptyList()){
-                            resultString = resultString.replace("{${extra.name}}", "'${extra.default}'")
-                        }
-                    }else{
-                        for(extra in commandExtraInputs){
-                            resultString = resultString.replace("{${extra.name}}", "'${extra.value}'")
-                        }
-                    }
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -466,7 +427,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShare(fullExecPath, resultString, item.path, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())

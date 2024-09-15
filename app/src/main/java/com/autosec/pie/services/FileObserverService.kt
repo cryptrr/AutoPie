@@ -10,9 +10,13 @@ import android.os.Environment
 import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
+import com.autosec.pie.data.CommandModel
+import com.autosec.pie.data.CommandType
+import com.autosec.pie.data.CronCommandModel
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.MainViewModel
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -96,8 +100,10 @@ class FileObserverJobService : JobService() {
 
                 Timber.d("Starting $key observer for $directoryPath")
 
+                val commandModel: CommandModel = Gson().fromJson(value, CommandModel::class.java)
+
                 val fileObserver =
-                    DirectoryFileObserver(directoryPath, exec, command, selectors, deleteSourceFile)
+                    DirectoryFileObserver(commandModel, directoryPath, exec, command, selectors, deleteSourceFile)
                 fileObservers.add(fileObserver)
                 fileObserver.startWatching()
             }
@@ -118,6 +124,7 @@ class FileObserverJobService : JobService() {
     }
 
     class DirectoryFileObserver(
+        private val commandModel: CommandModel,
         private val path: String,
         private val exec: String,
         private val command: String,
@@ -205,7 +212,7 @@ class FileObserverJobService : JobService() {
                         if (regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
                             val execSuccess =
-                                ProcessManagerService.runCommand4(fullExecPath, resultString, path,usePython)
+                                ProcessManagerService.runCommandWithEnv(commandModel,fullExecPath, resultString, path,usePython)
 
                             if (deleteSourceFile && execSuccess) {
                                 ProcessManagerService.deleteFile(fullFilepath)

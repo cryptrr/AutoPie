@@ -16,15 +16,15 @@ data class ShareItemModel(
 )
 
 data class CommandModel(
-    val type: CommandType,
-    val name: String,
-    val path: String,
-    val command: String,
-    val exec: String,
-    val deleteSourceFile: Boolean? = false,
+    override val type: CommandType,
+    override val name: String,
+    override val path: String,
+    override val command: String,
+    override val exec: String,
+    override val deleteSourceFile: Boolean? = false,
     val extrasRequired : Boolean? = false,
-    val extras: List<CommandExtra>? = null
-)
+    override val extras: List<CommandExtra>? = null
+) : CommandInterface
 
 interface CommandInterface {
     val type: CommandType

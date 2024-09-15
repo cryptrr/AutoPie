@@ -6,6 +6,10 @@ import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.AutoPieConstants
 import com.autosec.pie.data.AutoPieStrings
+import com.autosec.pie.data.CommandExtra
+import com.autosec.pie.data.CommandExtraInput
+import com.autosec.pie.data.CommandInterface
+import com.autosec.pie.data.CommandModel
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.MainViewModel
 import com.jaredrummler.ktsh.Shell
@@ -60,6 +64,23 @@ class ProcessManagerService {
 
         }
 
+        private fun getShell() : Shell {
+            val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            val shell = Shell(
+                shellPath,
+            )
+
+            Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+
+            val setEnvResult =
+                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+
+            return shell
+
+        }
+
         fun checkShell(): Boolean {
             try{
                 val shellPath = File(activity.filesDir, "sh").absolutePath
@@ -110,6 +131,43 @@ class ProcessManagerService {
 
         }
 
+        fun runCommandWithEnv(commandObject: CommandInterface,exec: String, command: String, cwd: String, usePython: Boolean = true) : Boolean {
+            try {
+
+                val shell = getShell()
+
+                for(extra in commandObject.extras ?: emptyList()){
+                    Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
+                    shell.run("export ${extra.name}=${extra.default}")
+                }
+
+                val checkEnvResult = shell.run("cd ${cwd}")
+
+                Timber.d(checkEnvResult.output())
+
+                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+
+                Timber.d(fullCommand)
+
+                val result = shell.run(fullCommand)
+
+                val output = result.output()
+
+                Timber.d(output)
+
+                shell.shutdown()
+
+                return result.isSuccess
+
+
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+            }
+
+            return false
+
+        }
+
         fun runCommandForShare(exec: String, command: String, cwd: String, usePython: Boolean = true): Boolean {
 
             try {
@@ -131,6 +189,55 @@ class ProcessManagerService {
                 Timber.d(output)
 
                 //shell?.shutdown()
+
+                return result.isSuccess
+
+
+
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+            }
+
+            return false
+
+        }
+
+        fun runCommandForShareWithEnv(commandObject: CommandModel,exec: String, command: String, cwd: String, commandExtraInputs: List<CommandExtraInput>, usePython: Boolean = true): Boolean {
+
+            try {
+
+                val shell = getShell()
+
+                shell.run("cd ${cwd}")
+
+                //TODO: There might be some udaipp here. There are multiple extras
+                if(commandExtraInputs.isEmpty()){
+                    for(extra in commandObject.extras ?: emptyList()){
+                        Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
+                        shell.run("export ${extra.name}=${extra.default}")
+                    }
+                }else{
+                    for(extra in commandExtraInputs){
+                        Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
+                        shell.run("export ${extra.name}=${extra.value}")
+                    }
+                }
+
+                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+
+                Timber.d(fullCommand)
+
+                val result = shell.run(fullCommand)
+
+                Timber.d("Exit Code ${result.exitCode}")
+
+                val output = result.output()
+
+                Timber.d(output)
+
+                Timber.d("Command Run: ${result.details.command}")
+
+                shell.shutdown()
 
                 return result.isSuccess
 
