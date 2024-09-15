@@ -137,8 +137,8 @@ class ProcessManagerService {
                 val shell = getShell()
 
                 for(extra in commandObject.extras ?: emptyList()){
-                    Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-                    shell.run("export ${extra.name}=${extra.default}")
+                    Timber.d("Setting extra to defaults: ${extra.name}='${extra.default}'")
+                    shell.run("export ${extra.name}='${extra.default}'")
                 }
 
                 val checkEnvResult = shell.run("cd ${cwd}")
@@ -214,12 +214,12 @@ class ProcessManagerService {
                 if(commandExtraInputs.isEmpty()){
                     for(extra in commandObject.extras ?: emptyList()){
                         Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-                        shell.run("export ${extra.name}=${extra.default}")
+                        shell.run("export ${extra.name}='${extra.default}'")
                     }
                 }else{
                     for(extra in commandExtraInputs){
                         Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
-                        shell.run("export ${extra.name}=${extra.value}")
+                        shell.run("export ${extra.name}='${extra.value}'")
                     }
                 }
 
