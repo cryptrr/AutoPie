@@ -30,7 +30,9 @@ class ForegroundService : Service() {
 
     private var notificationManager: NotificationManager? = null
 
-    private var processId : Int? = null
+    private var processIds : List<Int> = emptyList()
+
+    private var foregroundServiceId : Int? = null
 
     init {
         shareReceiverViewModel.viewModelScope.launch {
@@ -38,22 +40,31 @@ class ForegroundService : Service() {
                 when(it){
                     is ViewModelEvent.CommandCompleted -> {
                         try {
-                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            //Remove from the current running processIds list
+                            processIds = processIds.filter {item -> item !=  it.processId}
+
+                            Timber.d("ProcessIds at completion of command: $processIds")
+
+                            //Close if no processes remain in the list
+                            if(processIds.isEmpty()){
+                                Timber.d("All processed completed")
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                            }
                         }catch (e: Exception){
                             Timber.e(e)
                         }
                     }
                     is ViewModelEvent.CancelProcess -> {
-                        if(it.processId == processId){
-                            Timber.d("Canceling process $processId")
+                        if(processIds.contains(it.processId)){
+                            Timber.d("Canceling process ${it.processId}")
                             try {
-                                stopForeground(STOP_FOREGROUND_REMOVE)
+
                                 //currentJob?.cancel()
                             }catch (e: Exception){
                                 Timber.e(e)
                             }
                         }else{
-                            Timber.d("Process Ids not same. $processId != ${it.processId}")
+                            Timber.d("Process Ids not same.")
                         }
                     }
                     else -> {}
@@ -67,14 +78,15 @@ class ForegroundService : Service() {
         super.onCreate()
         // Create a notification channel for API 26+
 
-        processId = (100000..999999).random()
+        val foregroundServiceId = (100000..999999).random()
 
-        Timber.d("ForegroundService created with processId: $processId")
+
+        Timber.d("ForegroundService created with id: $foregroundServiceId")
 
 
         val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
             action = "${this@ForegroundService.packageName}.CANCEL_PROCESS"
-            putExtra("processId", processId)
+            putExtra("processId", foregroundServiceId)
         }
 
         val pendingButtonIntent: PendingIntent = PendingIntent.getBroadcast(
@@ -96,7 +108,7 @@ class ForegroundService : Service() {
             )
             .build()
 
-        startForeground(processId!!, notification)
+        startForeground(foregroundServiceId, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -104,6 +116,12 @@ class ForegroundService : Service() {
         intent?.let {
 
             CoroutineScope(Dispatchers.IO).launch {
+
+                val processId = (100000..999999).random()
+
+                processIds = processIds + processId
+
+                Timber.d("ProcessIds at starting command: $processIds")
 
                 val commandString = it.getStringExtra("command")
                 val currentLink = it.getStringExtra("currentLink")
@@ -123,7 +141,7 @@ class ForegroundService : Service() {
                     emptyList()
                 }
 
-                shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId!!)
+                shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId)
             }
 
         }
@@ -137,7 +155,7 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        processId?.let{
+        foregroundServiceId?.let{
             notificationManager?.cancel(it)
             stopForeground(STOP_FOREGROUND_REMOVE)
         }

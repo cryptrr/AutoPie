@@ -197,6 +197,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             else -> {}
         }
 
+        currentExtrasDetails.value = null
+
 
     }
 
@@ -252,11 +254,11 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     autoPieNotification.sendNotification("Command Failed", "${item.name} $currentLink")
                 }
 
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
 
             }catch (e: Exception){
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                 Timber.e(e)
             }
 
@@ -327,7 +329,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         autoPieNotification.sendNotification("Command Failed", "${item.name} $fileUris")
                     }
 
-                    main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                    main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
                     //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
 
@@ -373,14 +375,14 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         }
                     }
 
-                    main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                    main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
 
                     //main.dispatchEvent(ViewModelEvent.CloseShareReceiverSheet)
 
                 }
             }catch (e: Exception){
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                 Timber.e(e)
             }
 
@@ -446,13 +448,13 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     }
                 }
 
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
                 val endTime = System.currentTimeMillis()
 
                 Timber.d("Time Elapsed: ${endTime - startTime}")
             }catch (e:Exception){
-                main.dispatchEvent(ViewModelEvent.CommandCompleted)
+                main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                 Timber.e(e)
             }
 
