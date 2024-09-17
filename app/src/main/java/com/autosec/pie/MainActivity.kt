@@ -43,11 +43,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,8 +70,11 @@ import com.autosec.pie.screens.SettingsScreen
 import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.MainViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
 
@@ -102,11 +105,38 @@ class MainActivity : ComponentActivity() {
             val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
             val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
-            val editCommandBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
-                if(it == SheetValue.Hidden) mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
-                it != SheetValue.Hidden
+            val editCommandScope = rememberCoroutineScope()
+
+
+
+            val editCommandBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = { state ->
+                state != SheetValue.Hidden
             })
+
+
             val editCommandBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+            //STUPID BOTTOMSHEETSTATE NEVER GOES TO HIDDEN AFTER OPENED
+            //HAHA GET REKT, JETPACK COMPOSE BOTTOMSHEETSTATE!
+            LaunchedEffect(key1 = editCommandBottomSheetOpen, editCommandBottomSheet.targetValue) {
+                var showInfoJob : Job? = null
+
+                if(editCommandBottomSheet.targetValue == SheetValue.Hidden) {
+                    editCommandScope.launch {
+                        delay(500L)
+                        if(!editCommandBottomSheetOpen.value){
+                            showInfoJob?.cancel().also {
+                                Timber.d("showInfoJob canceled")
+                            }
+                        }
+                    }
+                    showInfoJob = editCommandScope.launch {
+                        delay(600L)
+                        mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
+                    }
+                }
+            }
+
 
             val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -250,7 +280,11 @@ class MainActivity : ComponentActivity() {
                                                         .fillMaxHeight()
                                                         .clip(RoundedCornerShape(100))
                                                         .width(3.dp)
-                                                        .background(MaterialTheme.colorScheme.onPrimary.copy(0.06f))
+                                                        .background(
+                                                            MaterialTheme.colorScheme.onPrimary.copy(
+                                                                0.06f
+                                                            )
+                                                        )
                                                 )
                                                 Spacer(
                                                     modifier = Modifier
