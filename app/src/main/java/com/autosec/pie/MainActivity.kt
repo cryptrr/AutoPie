@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
             val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
                 it != SheetValue.Hidden
             })
-            val openBottomSheet = rememberSaveable { mutableStateOf(false) }
+            val addShareBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
 
             val commandsSearchBottomSheetState = rememberModalBottomSheetState(true)
             val commandsSearchBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
@@ -125,6 +125,25 @@ class MainActivity : ComponentActivity() {
                     editCommandScope.launch {
                         delay(500L)
                         if(!editCommandBottomSheetOpen.value){
+                            showInfoJob?.cancel().also {
+                                Timber.d("showInfoJob canceled")
+                            }
+                        }
+                    }
+                    showInfoJob = editCommandScope.launch {
+                        delay(600L)
+                        mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
+                    }
+                }
+            }
+
+            LaunchedEffect(key1 = addShareBottomSheetStateOpen, addShareBottomSheetState.targetValue) {
+                var showInfoJob : Job? = null
+
+                if(addShareBottomSheetState.targetValue == SheetValue.Hidden) {
+                    editCommandScope.launch {
+                        delay(500L)
+                        if(!addShareBottomSheetStateOpen.value){
                             showInfoJob?.cancel().also {
                                 Timber.d("showInfoJob canceled")
                             }
@@ -246,7 +265,7 @@ class MainActivity : ComponentActivity() {
                                                             indication = null
                                                         ) {
                                                             mainViewModel.viewModelScope.launch {
-                                                                openBottomSheet.value = true
+                                                                addShareBottomSheetStateOpen.value = true
                                                                 //addShareBottomSheetState.show()
                                                             }
                                                         }
@@ -403,10 +422,10 @@ class MainActivity : ComponentActivity() {
                     )
 
 
-                    if (openBottomSheet.value) {
+                    if (addShareBottomSheetStateOpen.value) {
                         AddShareCommandBottomSheet(
                             state = addShareBottomSheetState,
-                            open = openBottomSheet
+                            open = addShareBottomSheetStateOpen
                         )
                     }
                     if (commandsSearchBottomSheetStateOpen.value) {

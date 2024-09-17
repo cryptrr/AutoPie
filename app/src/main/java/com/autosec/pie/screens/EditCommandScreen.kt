@@ -37,7 +37,11 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +58,8 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.CommandExtraElement
 import com.autosec.pie.elements.GenericFormSwitch
 import com.autosec.pie.elements.GenericTextFormField
+import com.autosec.pie.elements.YesNoDialog
+import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
@@ -138,6 +144,10 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
     //val extrasElements = remember{ mutableStateOf<List<String>>(emptyList()) }
     val extrasElements = viewModel.commandExtras
+
+    var showDeleteDialog by remember {
+        mutableStateOf(false)
+    }
 
 
     fun addExtra() {
@@ -303,12 +313,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 shape = RoundedCornerShape(20),
                 contentPadding = PaddingValues(vertical = 10.dp),
                 onClick = {
-                    viewModel.viewModelScope.launch {
-                        viewModel.deleteCommand(key = commandKey)
-                        delay(500L)
-                        viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                        open.value = false
-                    }
+                    showDeleteDialog = true
                 },
 
                 ) {
@@ -377,6 +382,26 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             }
         }
+
+        YesNoDialog(
+            showDialog = showDeleteDialog,
+            title = "Are you sure you want to delete this command",
+            subtitle = "This operation is not reversible.",
+            onYesClicked = {
+                viewModel.viewModelScope.launch {
+                    viewModel.deleteCommand(key = commandKey)
+                    delay(500L)
+                    viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                    open.value = false
+                }
+            },
+            onNoClicked = {
+                showDeleteDialog = false
+            },
+            onDismissRequest = {
+                showDeleteDialog = false
+            }
+        )
 
     }
 }
