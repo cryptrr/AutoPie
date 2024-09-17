@@ -25,6 +25,9 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 
 class FileObserverJobService : JobService() {
 
@@ -187,10 +190,13 @@ class FileObserverJobService : JobService() {
                         //val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
                         val resultString = "\"${command}\""
 
+                        val parsedPath = Path(fileName)
+
                         val inputParsedData = mutableListOf<InputParsedData>().also {
                             it.add(InputParsedData(name = "INPUT_FILE", value = "'${fileName}'"))
-                            it.add(InputParsedData(name = "FILENAME", value = "'${fileName}'".split("/").last().replace("'", "")))
-                            it.add(InputParsedData(name = "FILE_EXT", value = "'${fileName}'".split("/").last().split(".").last().replace("'", "")))
+                            it.add(InputParsedData(name = "FILENAME", value = parsedPath.fileName.toString()))
+                            it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
+                            it.add(InputParsedData(name = "FILENAME_NO_EXT", value = parsedPath.nameWithoutExtension))
                             it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                         }
 
@@ -214,7 +220,6 @@ class FileObserverJobService : JobService() {
                         }
 
                         val usePython = !Utils.isShellScript(File(fullExecPath))
-
 
 
                         //Checking if file passes selectors list

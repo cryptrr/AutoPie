@@ -34,6 +34,10 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
 import java.net.URL
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 
 class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(application1) {
 
@@ -304,27 +308,21 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     Timber.d("Multiple Input files detected")
 
-//                    val replacedString = item.command
-//                        .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
-//                        .replace("''", "'")
-//                        .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
-
 
                     val replacedString = item.command
 
                     val inputFiles = currentItems.joinToString(" "){joined ->  "\'$joined\'" }.replace("''", "'")
 
-                    Timber.d("THIS IS INPUT FILES: $inputFiles")
+                    val parsedPath = Path(currentItems.firstOrNull() ?: "")
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "INPUT_FILES", value = "'${inputFiles}'"))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${currentItems.firstOrNull() ?: ""}'"))
-                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last()))
-                        it.add(InputParsedData(name = "FILE_EXT", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().split(".").last().replace("'", "")))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = parsedPath.absolutePathString()))
+                        it.add(InputParsedData(name = "FILENAME", value = parsedPath.fileName.toString()))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = parsedPath.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
-
-
 
                     Timber.d("Replaced String $replacedString")
 
@@ -375,11 +373,15 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                         val replacedString = item.command
 
+                        val parsedPath = Path(path)
+
                         val inputParsedData = mutableListOf<InputParsedData>().also {
                             it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" ")}'"))
-                            it.add(InputParsedData(name = "INPUT_FILE", value = "'$path'"))
-                            it.add(InputParsedData(name = "FILENAME", value = "\'${path.split("/").last()}\'"))
-                            it.add(InputParsedData(name = "FILE_EXT", value = "'$path'".split("/").last().split(".").last().replace("'", "")))
+                            it.add(InputParsedData(name = "INPUT_FILE", value = path))
+                            it.add(InputParsedData(name = "FILE_PATH", value = parsedPath.parent.toString()))
+                            it.add(InputParsedData(name = "FILENAME", value = parsedPath.fileName.toString()))
+                            it.add(InputParsedData(name = "FILENAME_NO_EXT", value = parsedPath.nameWithoutExtension))
+                            it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
                             it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                         }
 
@@ -454,7 +456,6 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             try {
                 val startTime = System.currentTimeMillis()
 
-
                 var results = mutableListOf<Boolean>()
 
                 currentItems.map { path ->
@@ -465,9 +466,11 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" ")}'"))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${path.absolutePath}'"))
-                        it.add(InputParsedData(name = "FILENAME", value = "'${path.absolutePath}'".split("/").last().replace("'", "")))
-                        it.add(InputParsedData(name = "FILE_EXT", value = "'${path.absolutePath}'".split("/").last().split(".").last().replace("'", "")))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = path.absolutePath))
+                        it.add(InputParsedData(name = "FILENAME", value = path.name))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = path.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILE_PATH", value = (path.parent ?: "").toString()))
+                        it.add(InputParsedData(name = "FILE_EXT", value = path.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
 

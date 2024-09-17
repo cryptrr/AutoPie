@@ -85,11 +85,37 @@ class ProcessManagerService {
 
         }
 
-        private fun getShell() : Shell {
+        private fun getShell(inputParsedData: List<InputParsedData>, commandObject: CommandInterface, commandExtraInputs: List<CommandExtraInput> = emptyList()) : Shell {
             val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            val envMap = HashMap<String, String>()
+
+            for(inputData in inputParsedData){
+                //Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
+                //shell.run("export ${inputData.name}=${inputData.value}")
+                envMap[inputData.name]=inputData.value
+            }
+
+            //TODO: There might be some udaipp here. There are multiple extras
+            if(commandExtraInputs.isEmpty()){
+                for(extra in commandObject.extras ?: emptyList()){
+                    //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
+                    //shell.run("export ${extra.name}=\'${extra.default}\'")
+                    envMap[extra.name]=extra.default
+                }
+            }else{
+                for(extra in commandExtraInputs){
+                    //Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
+                    //shell.run("export ${extra.name}=\'${extra.value}\'")
+                    envMap[extra.name]=extra.value
+                }
+            }
+
+            Timber.d("ENV MAP: $envMap")
 
             val shell = Shell(
                 shellPath,
+                envMap
             )
 
             Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
@@ -155,17 +181,7 @@ class ProcessManagerService {
         fun runCommandWithEnv(commandObject: CommandInterface,exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), usePython: Boolean = true) : Boolean {
             try {
 
-                val shell = getShell()
-
-                for(inputData in inputParsedData){
-                    Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
-                    shell.run("export ${inputData.name}=${inputData.value}")
-                }
-
-                for(extra in commandObject.extras ?: emptyList()){
-                    Timber.d("Setting extra to defaults: ${extra.name}='${extra.default}'")
-                    shell.run("export ${extra.name}='${extra.default}'")
-                }
+                val shell = getShell(inputParsedData, commandObject, emptyList())
 
                 val checkEnvResult = shell.run("cd ${cwd}")
 
@@ -226,34 +242,17 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShareWithEnv(commandObject: CommandModel, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true): Boolean {
+        fun runCommandForShareWithEnv(commandObject: CommandInterface, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true): Boolean {
 
             try {
 
-                val shell = getShell()
+                val shell = getShell(inputParsedData, commandObject, commandExtraInputs)
 
                 Timber.d("Received processId in Command Start: $processId")
                 shells.set(processId, shell)
 
                 shell.run("cd ${cwd}")
 
-                for(inputData in inputParsedData){
-                    Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
-                    shell.run("export ${inputData.name}=${inputData.value}")
-                }
-
-                //TODO: There might be some udaipp here. There are multiple extras
-                if(commandExtraInputs.isEmpty()){
-                    for(extra in commandObject.extras ?: emptyList()){
-                        Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-                        shell.run("export ${extra.name}=\'${extra.default}\'")
-                    }
-                }else{
-                    for(extra in commandExtraInputs){
-                        Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
-                        shell.run("export ${extra.name}=\'${extra.value}\'")
-                    }
-                }
 
                 val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
 
