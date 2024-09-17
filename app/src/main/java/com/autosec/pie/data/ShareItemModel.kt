@@ -46,6 +46,16 @@ data class CommandExtra(
     val selectableOptions: List<String> = emptyList()
 )
 
+data class InputParsedData(
+    val id: Int = (1000..9999).random(),
+    val name: String = "",
+    val type: String = "",
+    val value: String = "",
+    val description: String = "",
+    val defaultBoolean: Boolean = true,
+    val selectableOptions: List<String> = emptyList()
+)
+
 data class CommandExtraInput(
     val name: String,
     val default: String,

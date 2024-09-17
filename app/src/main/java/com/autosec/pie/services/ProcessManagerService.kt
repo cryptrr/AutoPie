@@ -10,6 +10,7 @@ import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandInterface
 import com.autosec.pie.data.CommandModel
+import com.autosec.pie.data.InputParsedData
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.viewModels.MainViewModel
 import com.jaredrummler.ktsh.Shell
@@ -220,7 +221,7 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShareWithEnv(commandObject: CommandModel,exec: String, command: String, cwd: String, commandExtraInputs: List<CommandExtraInput>,processId: Int, usePython: Boolean = true): Boolean {
+        fun runCommandForShareWithEnv(commandObject: CommandModel, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true): Boolean {
 
             try {
 
@@ -231,11 +232,16 @@ class ProcessManagerService {
 
                 shell.run("cd ${cwd}")
 
+                for(inputData in inputParsedData){
+                    Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
+                    shell.run("export ${inputData.name}=${inputData.value}")
+                }
+
                 //TODO: There might be some udaipp here. There are multiple extras
                 if(commandExtraInputs.isEmpty()){
                     for(extra in commandObject.extras ?: emptyList()){
                         Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-                        shell.run("export ${extra.name}=${extra.default}")
+                        shell.run("export ${extra.name}=\'${extra.default}\'")
                     }
                 }else{
                     for(extra in commandExtraInputs){

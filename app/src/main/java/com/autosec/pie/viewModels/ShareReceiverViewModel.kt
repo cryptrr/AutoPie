@@ -13,6 +13,7 @@ import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
+import com.autosec.pie.data.InputParsedData
 import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
@@ -32,6 +33,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
+import java.net.URL
 
 class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(application1) {
 
@@ -214,7 +216,21 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         Timber.d("runShareCommandForUrl")
 
 
-        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+        val inputUrl = URL(currentLink)
+
+        val host = inputUrl.host
+
+        val filename = inputUrl.file
+
+        val inputParsedData = mutableListOf<InputParsedData>().also {
+            it.add(InputParsedData(name = "INPUT_FILE", value = "'$currentLink'"))
+            it.add(InputParsedData(name = "HOST", value = "'$host'"))
+            it.add(InputParsedData(name = "FILENAME", value = "'$filename'"))
+            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+        }
+
+        //val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$currentLink'")}\""
+        val resultString = "\"${item.command}\""
 
 
         val execFilePath =
@@ -243,7 +259,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
+                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
 
                 if (success) {
                     Timber.d("Process Success".uppercase())
@@ -293,6 +309,16 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         .replace("''", "'")
                         .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
+                    //val replacedString = item.command
+
+//                    val inputParsedData = mutableListOf<InputParsedData>().also {
+//                        it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" "){ joined ->  "\'$joined\'" }}'"))
+//                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${currentItems.firstOrNull() ?: ""}'"))
+//                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last()))
+//                        it.add(InputParsedData(name = "FILE_EXT", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().split(".").last()))
+//                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+//                    }
+
 
 
                     Timber.d("Replaced String $replacedString")
@@ -318,7 +344,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                        emptyList(),commandExtraInputs,processId, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -363,7 +390,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                         val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                        val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
+                        val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                            emptyList(),commandExtraInputs,processId, usePython)
 
                         if (success) {
                             Timber.d("Process Success".uppercase())
@@ -432,7 +460,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
-                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,commandExtraInputs,processId, usePython)
+                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                        emptyList(),commandExtraInputs,processId, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
