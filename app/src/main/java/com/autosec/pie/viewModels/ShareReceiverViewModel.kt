@@ -304,20 +304,25 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     Timber.d("Multiple Input files detected")
 
+//                    val replacedString = item.command
+//                        .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
+//                        .replace("''", "'")
+//                        .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
+
+
                     val replacedString = item.command
-                        .replace("{INPUT_FILES}", currentItems.joinToString(" "){ "\'$it\'" })
-                        .replace("''", "'")
-                        .replace("{INPUT_FILE}", "'${currentItems.firstOrNull() ?: ""}'")
 
-                    //val replacedString = item.command
+                    val inputFiles = currentItems.joinToString(" "){joined ->  "\'$joined\'" }.replace("''", "'")
 
-//                    val inputParsedData = mutableListOf<InputParsedData>().also {
-//                        it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" "){ joined ->  "\'$joined\'" }}'"))
-//                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${currentItems.firstOrNull() ?: ""}'"))
-//                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last()))
-//                        it.add(InputParsedData(name = "FILE_EXT", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().split(".").last()))
-//                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
-//                    }
+                    Timber.d("THIS IS INPUT FILES: $inputFiles")
+
+                    val inputParsedData = mutableListOf<InputParsedData>().also {
+                        it.add(InputParsedData(name = "INPUT_FILES", value = "'${inputFiles}'"))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${currentItems.firstOrNull() ?: ""}'"))
+                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().replace("'", "")))
+                        it.add(InputParsedData(name = "FILE_EXT", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().split(".").last().replace("'", "")))
+                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                    }
 
 
 
@@ -345,7 +350,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
                     val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                        emptyList(),commandExtraInputs,processId, usePython)
+                        inputParsedData,commandExtraInputs,processId, usePython)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -366,10 +371,23 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
 
                     currentItems.map { path ->
-                        val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+                        //val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
+
+                        val replacedString = item.command
+
+                        val inputParsedData = mutableListOf<InputParsedData>().also {
+                            it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" ")}'"))
+                            it.add(InputParsedData(name = "INPUT_FILE", value = "'$path'"))
+                            it.add(InputParsedData(name = "FILENAME", value = "'$path'".split("/").last().replace("'", "")))
+                            it.add(InputParsedData(name = "FILE_EXT", value = "'$path'".split("/").last().split(".").last().replace("'", "")))
+                            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                        }
 
 
-                        Timber.d("Replaced String $resultString")
+                        Timber.d("Replaced String $replacedString")
+
+                        val resultString = "\"${replacedString}\""
+
 
                         val execFilePath =
                             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -391,7 +409,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         val usePython = !Utils.isShellScript(File(fullExecPath))
 
                         val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                            emptyList(),commandExtraInputs,processId, usePython)
+                            inputParsedData,commandExtraInputs,processId, usePython)
 
                         if (success) {
                             Timber.d("Process Success".uppercase())
@@ -437,8 +455,21 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                 val startTime = System.currentTimeMillis()
 
 
+                var results = mutableListOf<Boolean>()
+
                 currentItems.map { path ->
-                    val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+                    //val resultString = "\"${item.command.replace("{INPUT_FILE}", path.absolutePath)}\""
+
+
+                    val resultString = "\"${item.command}\""
+
+                    val inputParsedData = mutableListOf<InputParsedData>().also {
+                        it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" ")}'"))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${path.absolutePath}'"))
+                        it.add(InputParsedData(name = "FILENAME", value = "'${path.absolutePath}'".split("/").last().replace("'", "")))
+                        it.add(InputParsedData(name = "FILE_EXT", value = "'${path.absolutePath}'".split("/").last().split(".").last().replace("'", "")))
+                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                    }
 
 
                     val execFilePath =
@@ -461,7 +492,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     val usePython = !Utils.isShellScript(File(fullExecPath))
 
                     val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                        emptyList(),commandExtraInputs,processId, usePython)
+                        inputParsedData,commandExtraInputs,processId, usePython)
+
+                    results.add(success)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -477,6 +510,12 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     }
                 }
 
+                if(results.all { it == true }) {
+                    autoPieNotification.sendNotification("Command Success", "")
+                }else{
+                    autoPieNotification.sendNotification("Some Commands Failed", "")
+                }
+
                 main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
                 val endTime = System.currentTimeMillis()
@@ -486,7 +525,6 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                 main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                 Timber.e(e)
             }
-
 
         }
 

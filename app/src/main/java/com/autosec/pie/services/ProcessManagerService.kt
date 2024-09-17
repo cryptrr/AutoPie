@@ -246,7 +246,7 @@ class ProcessManagerService {
                 }else{
                     for(extra in commandExtraInputs){
                         Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
-                        shell.run("export ${extra.name}=${extra.value}")
+                        shell.run("export ${extra.name}=\'${extra.value}\'")
                     }
                 }
 

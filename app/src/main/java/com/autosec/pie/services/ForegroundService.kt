@@ -48,7 +48,7 @@ class ForegroundService : Service() {
                             //Close if no processes remain in the list
                             if(processIds.isEmpty()){
                                 Timber.d("All processed completed")
-                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                onDestroy()
                             }
                         }catch (e: Exception){
                             Timber.e(e)
@@ -154,10 +154,8 @@ class ForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
         super.onDestroy()
-        foregroundServiceId?.let{
-            notificationManager?.cancel(it)
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        }
     }
 }
