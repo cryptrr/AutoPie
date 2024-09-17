@@ -43,7 +43,8 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
             val usePython = !Utils.isShellScript(File(fullExecPath))
 
 
-            ProcessManagerService.runCommandWithEnv(command ,fullExecPath, finalCommand, command.path, usePython)
+            ProcessManagerService.runCommandWithEnv(command ,fullExecPath, finalCommand, command.path,
+                emptyList(), usePython)
 
             return Result.success()
         } catch (e: Exception) {

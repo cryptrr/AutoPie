@@ -152,10 +152,15 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandWithEnv(commandObject: CommandInterface,exec: String, command: String, cwd: String, usePython: Boolean = true) : Boolean {
+        fun runCommandWithEnv(commandObject: CommandInterface,exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), usePython: Boolean = true) : Boolean {
             try {
 
                 val shell = getShell()
+
+                for(inputData in inputParsedData){
+                    Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
+                    shell.run("export ${inputData.name}=${inputData.value}")
+                }
 
                 for(extra in commandObject.extras ?: emptyList()){
                     Timber.d("Setting extra to defaults: ${extra.name}='${extra.default}'")

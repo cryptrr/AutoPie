@@ -319,7 +319,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "INPUT_FILES", value = "'${inputFiles}'"))
                         it.add(InputParsedData(name = "INPUT_FILE", value = "'${currentItems.firstOrNull() ?: ""}'"))
-                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().replace("'", "")))
+                        it.add(InputParsedData(name = "FILENAME", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last()))
                         it.add(InputParsedData(name = "FILE_EXT", value = "'${currentItems.firstOrNull() ?: ""}'".split("/").last().split(".").last().replace("'", "")))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
@@ -378,7 +378,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         val inputParsedData = mutableListOf<InputParsedData>().also {
                             it.add(InputParsedData(name = "INPUT_FILES", value = "'${currentItems.joinToString(" ")}'"))
                             it.add(InputParsedData(name = "INPUT_FILE", value = "'$path'"))
-                            it.add(InputParsedData(name = "FILENAME", value = "'$path'".split("/").last().replace("'", "")))
+                            it.add(InputParsedData(name = "FILENAME", value = "\'${path.split("/").last()}\'"))
                             it.add(InputParsedData(name = "FILE_EXT", value = "'$path'".split("/").last().split(".").last().replace("'", "")))
                             it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                         }

@@ -13,6 +13,7 @@ import androidx.work.Configuration
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.data.CronCommandModel
+import com.autosec.pie.data.InputParsedData
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.viewModels.MainViewModel
@@ -183,7 +184,15 @@ class FileObserverJobService : JobService() {
 
                         Timber.d("Edited Filename: $fileName")
 
-                        val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
+                        //val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
+                        val resultString = "\"${command}\""
+
+                        val inputParsedData = mutableListOf<InputParsedData>().also {
+                            it.add(InputParsedData(name = "INPUT_FILE", value = "'${fileName}'"))
+                            it.add(InputParsedData(name = "FILENAME", value = "'${fileName}'".split("/").last().replace("'", "")))
+                            it.add(InputParsedData(name = "FILE_EXT", value = "'${fileName}'".split("/").last().split(".").last().replace("'", "")))
+                            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                        }
 
                         Timber.d("Edited command $exec $resultString")
 
@@ -212,7 +221,7 @@ class FileObserverJobService : JobService() {
                         if (regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
                             val execSuccess =
-                                ProcessManagerService.runCommandWithEnv(commandModel,fullExecPath, resultString, path,usePython)
+                                ProcessManagerService.runCommandWithEnv(commandModel,fullExecPath, resultString, path,inputParsedData,usePython)
 
                             if (deleteSourceFile && execSuccess) {
                                 ProcessManagerService.deleteFile(fullFilepath)
