@@ -32,7 +32,7 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
     val command = mutableStateOf("")
     val selectors = mutableStateOf("")
     val cronInterval = mutableStateOf("")
-    val directory = mutableStateOf("${Environment.getExternalStorageDirectory().absolutePath}/")
+    val directory = mutableStateOf("")
     val deleteSource = mutableStateOf(false)
 
     var selectedICommandTypeIndex by mutableIntStateOf(0)

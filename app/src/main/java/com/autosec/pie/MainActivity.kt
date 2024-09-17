@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AppBottomBar
 import com.autosec.pie.elements.AutoPieLogo
@@ -102,6 +103,7 @@ class MainActivity : ComponentActivity() {
             val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
             val editCommandBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                if(it == SheetValue.Hidden) mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
                 it != SheetValue.Hidden
             })
             val editCommandBottomSheetOpen = rememberSaveable { mutableStateOf(false) }

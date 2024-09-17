@@ -77,7 +77,9 @@ sealed class AppNotification : Notification {
     data object DownloadedInitPackages : AppNotification()
     data object InstallingInitPackages : AppNotification()
     data object InstallingInitPackagesSuccess : AppNotification()
+    data object ShowCloseSheetInfo : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
+
 
 
     override val title = "Notification"
@@ -95,6 +97,7 @@ sealed class AppNotification : Notification {
             is DownloadedInitPackages -> "Downloading Init packages: Success"
             is InstallingInitPackages -> "Installing Init packages"
             is InstallingInitPackagesSuccess -> "Installing Init packages: Success"
+            is ShowCloseSheetInfo -> "Press the back button to close the bottom sheet."
             is UpdatesAvailable -> "Updates are available."
             else -> "An Event Occurred"
         }
