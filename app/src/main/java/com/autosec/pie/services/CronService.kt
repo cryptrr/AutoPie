@@ -2,6 +2,7 @@ package com.autosec.pie.services
 
 import android.app.Application
 import android.content.Context
+import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -72,7 +73,12 @@ class CronService {
 
                 for(cronJob in data.entries){
 
+                    //Tentative fix for cron path
+
+                    cronJob.value.path = "${Environment.getExternalStorageDirectory().absolutePath}/" + cronJob.value.path
+
                     val commandJson = Gson().toJson(cronJob.value)
+
 
                     Timber.d("Cron Command Starting: ${cronJob.key}")
 

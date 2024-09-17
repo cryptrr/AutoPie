@@ -6,7 +6,7 @@ data class CronCommandModel(
     override val type: CommandType,
     override val exec: String,
     override val name: String,
-    override val path: String,
+    override var path: String,
     override val deleteSourceFile: Boolean? = false,
     override val extras: List<CommandExtra>? = null
 ): CommandInterface

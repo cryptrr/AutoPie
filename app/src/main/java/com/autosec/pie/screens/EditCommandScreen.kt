@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -48,7 +49,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
@@ -262,10 +266,20 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            val annotatedString = buildAnnotatedString {
+                append("This is the directory in which the command will be run. \n" +
+                        "Type ")
+                withStyle(style = SpanStyle(background = MaterialTheme.colorScheme.surfaceColorAtElevation(30.dp), fontSize = 14.sp)) {
+                    append(" Download ")
+                }
+                append(" to use your download folder.")
+            }
+
             GenericTextFormField(
                 text = viewModel.directory,
                 "DIRECTORY",
-                placeholder = "directory"
+                placeholder = "directory",
+                subtitle = annotatedString
             )
 
             Spacer(modifier = Modifier.height(20.dp))

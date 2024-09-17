@@ -95,7 +95,7 @@ class FileObserverJobService : JobService() {
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
 
-                val directoryPath = value.get("path").asString
+                val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
                 val exec = value.get("exec").asString
                 val command = value.get("command").asString
                 val selectors = value.get("selectors").asJsonArray.map { it.asString }

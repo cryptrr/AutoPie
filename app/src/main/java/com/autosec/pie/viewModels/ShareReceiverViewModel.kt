@@ -91,9 +91,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
 
     fun getSharesConfig() {
-        val observerConfig = readSharesConfig()
+        val sharesConfig = readSharesConfig()
 
-        if (observerConfig == null) {
+        if (sharesConfig == null) {
             Timber.d("Observers file not available")
             main.sharesConfigAvailable = false
             return
@@ -105,12 +105,12 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         //TODO: Need to do some refactoring
 
-        for (entry in observerConfig.entrySet()) {
+        for (entry in sharesConfig.entrySet()) {
             val key = entry.key
             val value = entry.value.asJsonObject
             // Process the key-value pair
 
-            val directoryPath = value.get("path").asString
+            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
             val exec = value.get("exec").asString
             val command = value.get("command").asString
             val deleteSource = value.get("deleteSourceFile").asBoolean
