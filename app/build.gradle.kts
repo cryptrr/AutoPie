@@ -36,9 +36,13 @@ android {
             buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
             applicationIdSuffix = ".debug"
             versionNameSuffix = ".debug"
+            manifestPlaceholders["appIcon"]="@mipmap/ic_launcher_debug"
+            manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_debug_round"
         }
         release {
             isMinifyEnabled = false
+            manifestPlaceholders["appIcon"]="@mipmap/ic_launcher"
+            manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_round"
             buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
             buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
             proguardFiles(
