@@ -130,7 +130,6 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
             GenericTextFormField(
                 text = viewModel.command,
                 "Command".uppercase(),
-                maxLines = 4,
                 singleLine = false,
                 modifier = Modifier
                     .height(100.dp)

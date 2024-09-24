@@ -10,7 +10,7 @@ class AutoPieConstants {
 
 class AutoPieStrings {
     companion object {
-        const val EXTRAS_DESCRIPTION = "You can define extra command argument variables here. These can be used in the command field like {NAME_OF_EXTRA}. Which will be replaced by its value."
+        const val EXTRAS_DESCRIPTION = "You can define extra command argument variables here. These can be used in the command field like \${NAME_OF_EXTRA}. Which will be replaced by its value."
         const val EXTRAS_DESCRIPTION_TO_REPLACE = "NAME_OF_EXTRA"
         const val APP_DEVELOPER = "cryptrr (Amal Shaji)"
         const val GITHUB_URL = "https://github.com/cryptrr/AutoPie"
