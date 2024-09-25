@@ -76,6 +76,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 
 class ShareReceiverActivity : ComponentActivity() {
@@ -98,6 +100,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
         val files = mutableListOf<String>()
 
+
         when {
             Intent.ACTION_SEND_MULTIPLE == intent?.action -> {
 
@@ -105,9 +108,11 @@ class ShareReceiverActivity : ComponentActivity() {
 
                 Timber.d(sharedPaths.toString())
 
-                sharedPaths?.map {
-                    it.path.let {
-                        files.add(it!!)
+                sharedPaths?.map { sharedPath ->
+                    sharedPath.path.let {
+                        val fragment = sharedPath?.fragment
+                        val fullPath = if (fragment != null) "$it#$fragment" else it
+                        files.add(fullPath!!)
                     }
                 }
 
@@ -131,11 +136,14 @@ class ShareReceiverActivity : ComponentActivity() {
 
                 val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
 
-                Timber.d(sharedPath.toString())
+                Timber.d("ACTION_SEND PATH: $sharedPath")
+
 
                 sharedPath?.path.let {
                     if (it != null) {
-                        files.add(it)
+                        val fragment = sharedPath?.fragment
+                        val fullPath = if (fragment != null) "$it#$fragment" else it
+                        files.add(fullPath)
                     }
                 }
             }
@@ -148,7 +156,9 @@ class ShareReceiverActivity : ComponentActivity() {
 
                 sharedPath?.path.let {
                     if (it != null) {
-                        files.add(it)
+                        val fragment = sharedPath?.fragment
+                        val fullPath = if (fragment != null) "$it#$fragment" else it
+                        files.add(fullPath)
                     }
                 }
             }
