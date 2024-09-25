@@ -175,6 +175,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     Text(
         text = command.name,
+        lineHeight = 32.sp,
         fontSize = 28.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
