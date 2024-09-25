@@ -1,7 +1,9 @@
 package com.autosec.pie.screens
 
 import android.app.Activity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +40,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
+import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.EmptyItemsBadge
 import com.autosec.pie.elements.LoadingBadge
@@ -49,7 +53,11 @@ import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.ui.theme.Purple60
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
+import com.autosec.pie.viewModels.ShareReceiverViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
+import timber.log.Timber
 
 @Composable
 fun HomeScreen(innerPadding: PaddingValues) {
@@ -138,6 +146,7 @@ fun HomeScreen(innerPadding: PaddingValues) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CommandCard(
     card: CommandModel
@@ -152,15 +161,29 @@ fun CommandCard(
         CommandsListScreenViewModel::class.java
     )
 
+    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+
+
     ElevatedCard(
-        onClick = {
-            commandsListScreenViewModel.main.currentCommandKey.value = card.name
-            commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
-        },
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp),
+            .height(120.dp)
+            .combinedClickable(
+                onClick = {
+                    Timber.d("CLICK DETECTED")
+                    commandsListScreenViewModel.main.currentCommandKey.value = card.name
+                    commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
+
+                },
+                onLongClick = {
+                    Timber.d("LONG PRESS DETECTED")
+
+                    shareReceiverViewModel.currentExtrasDetails.value =
+                        Triple(true, card, ShareInputs())
+                }
+            ),
+
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
     ) {

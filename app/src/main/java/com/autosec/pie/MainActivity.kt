@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,7 @@ import com.autosec.pie.elements.SnackbarHostCustom
 import com.autosec.pie.elements.YesNoDialog
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.screens.AddShareCommandBottomSheet
+import com.autosec.pie.screens.CommandExtrasBottomSheet
 import com.autosec.pie.screens.CommandsSearchBottomSheet
 import com.autosec.pie.screens.EditCommandBottomSheet
 import com.autosec.pie.screens.HomeScreen
@@ -70,10 +72,12 @@ import com.autosec.pie.screens.SettingsScreen
 import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.viewModels.MainViewModel
+import com.autosec.pie.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
@@ -93,6 +97,8 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+            val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+
 
             val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
                 it != SheetValue.Hidden
@@ -104,6 +110,11 @@ class MainActivity : ComponentActivity() {
 
             val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
             val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+            val runCommandBottomSheetState = rememberModalBottomSheetState(true)
+            val runCommandBottomSheetStateOpen = remember {
+                derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
+            }
 
             val editCommandScope = rememberCoroutineScope()
 
@@ -445,6 +456,12 @@ class MainActivity : ComponentActivity() {
                             state = editCommandBottomSheet,
                             open = editCommandBottomSheetOpen,
                             key = mainViewModel.currentCommandKey.value
+                        )
+                    }
+                    if (runCommandBottomSheetStateOpen.value) {
+                        CommandExtrasBottomSheet(
+                            state = runCommandBottomSheetState,
+                            open = runCommandBottomSheetStateOpen,
                         )
                     }
 
