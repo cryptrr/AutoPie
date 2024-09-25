@@ -7,10 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.services.JSONService
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -89,13 +92,24 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val command = value.get("command").asString
                 val deleteSource = value.get("deleteSourceFile").asBoolean
 
+                val extrasJsonArray = value.getAsJsonArray("extras")
+
+                val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
+
+                val extras: List<CommandExtra> = try{
+                    Gson().fromJson(extrasJsonArray, extrasListType)
+                }catch(e: Exception){
+                    emptyList()
+                }
+
                 val shareObject = CommandModel(
                     name = key,
                     path = directoryPath,
                     command = command,
                     exec = exec,
                     deleteSourceFile = deleteSource,
-                    type = CommandType.SHARE
+                    type = CommandType.SHARE,
+                    extras = extras
                 )
 
                 tempList.add(shareObject)
@@ -111,13 +125,24 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val command = value.get("command").asString
                 val deleteSource = value.get("deleteSourceFile").asBoolean
 
+                val extrasJsonArray = value.getAsJsonArray("extras")
+
+                val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
+
+                val extras: List<CommandExtra> = try{
+                    Gson().fromJson(extrasJsonArray, extrasListType)
+                }catch(e: Exception){
+                    emptyList()
+                }
+
                 val shareObject = CommandModel(
                     name = key,
                     path = directoryPath,
                     command = command,
                     exec = exec,
                     deleteSourceFile = deleteSource,
-                    type = CommandType.FILE_OBSERVER
+                    type = CommandType.FILE_OBSERVER,
+                    extras = extras
                 )
 
                 tempList.add(shareObject)

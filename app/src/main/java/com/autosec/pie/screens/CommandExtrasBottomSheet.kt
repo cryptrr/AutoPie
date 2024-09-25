@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +60,7 @@ import timber.log.Timber
 fun CommandExtrasBottomSheet(
     state: SheetState,
     open: State<Boolean>,
-    parentSheetState: SheetState,
+    parentSheetState: SheetState? = null,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
@@ -72,9 +73,9 @@ fun CommandExtrasBottomSheet(
 
     LaunchedEffect(key1 = state.targetValue) {
         if (state.targetValue == SheetValue.Expanded) {
-            parentSheetState.hide()
+            parentSheetState?.hide()
         } else {
-            parentSheetState.show()
+            parentSheetState?.show()
         }
     }
 
@@ -125,7 +126,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null) {
 
     val context = LocalContext.current
 
@@ -134,8 +135,21 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
 
     val viewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
 
-    val fileUris = viewModel.currentExtrasDetails.value?.third?.fileUris
-    val currentLink = viewModel.currentExtrasDetails.value?.third?.currentLink
+    val fileUris by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.fileUris)
+    }
+    val currentLink by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.currentLink)
+    }
+
+    val extraInput = remember {
+        mutableStateOf("")
+    }
+
+    val extraInputList = remember {
+        derivedStateOf { extraInput.value.split(",") }
+    }
+
 
     var isLoading by remember {
         mutableStateOf(false)
@@ -161,6 +175,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
 
     Text(
         text = command.name,
+        lineHeight = 32.sp,
         fontSize = 28.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -172,6 +187,14 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+
+//        Timber.d("FileUris: $fileUris")
+//        Timber.d("currentLink: $currentLink")
+
+        if(fileUris == null && currentLink == null){
+
+            GenericTextFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
+        }
 
         for (extra in command.extras ?: emptyList()) {
             Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
@@ -295,13 +318,13 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState) {
 
                         val gson = Gson()
                         val commandJson = gson.toJson(command)
-                        val fileUrisJson = gson.toJson(fileUris)
+                        val fileUrisJson = gson.toJson(fileUris ?: extraInputList.value)
 
                         val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
 
                         val intent = Intent(context, ForegroundService::class.java).apply {
                             putExtra("command", commandJson)
-                            putExtra("currentLink", currentLink)
+                            putExtra("currentLink", currentLink ?: extraInput.value)
                             putExtra("fileUris", fileUrisJson)
                             putExtra("commandExtraInputs", commandExtraInputsJson)
                         }

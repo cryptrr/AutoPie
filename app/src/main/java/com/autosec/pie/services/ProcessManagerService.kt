@@ -5,6 +5,7 @@ import android.app.Service.STOP_FOREGROUND_REMOVE
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.AutoPieConstants
+import com.autosec.pie.data.AutoPieError
 import com.autosec.pie.data.AutoPieStrings
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandExtraInput
@@ -178,8 +179,36 @@ class ProcessManagerService {
 
         }
 
+        private fun checkForUnsafeCommands(commandObject: CommandInterface, command: String){
+            val unsafeCommands = listOf(
+                "rm -rf /",
+                ":\\(\\)\\{ :\\|: & \\};:",   // Fork bomb
+                "dd if=/dev/zero of=/dev/sda",
+                "chmod -R 777 /",
+                "mkfs.ext4 /dev/sda",
+                "wget .* -O \\| sh",
+                "mv /* /dev/null",
+                "echo .* > /proc/sysrq-trigger",
+                "iptables -F",
+                "killall -9 .*",
+                "reboot",
+                "shutdown -h now",
+                "ln -s /bin/busybox /dev/null",
+                "find / -exec rm -rf \\{\\} \\\\;",
+                "cp /bin/busybox /dev/sda"
+            )
+
+            for (unsafeCommand in unsafeCommands) {
+                if (command.matches(Regex(unsafeCommand))) {
+                    throw AutoPieError.UnsafeCommandException("Unsafe command detected: $command")
+                }
+            }
+        }
+
         fun runCommandWithEnv(commandObject: CommandInterface,exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), usePython: Boolean = true) : Boolean {
             try {
+
+                checkForUnsafeCommands(commandObject, command)
 
                 val shell = getShell(inputParsedData, commandObject, emptyList())
 
@@ -245,6 +274,8 @@ class ProcessManagerService {
         fun runCommandForShareWithEnv(commandObject: CommandInterface, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true): Boolean {
 
             try {
+
+                checkForUnsafeCommands(commandObject, command)
 
                 val shell = getShell(inputParsedData, commandObject, commandExtraInputs)
 
