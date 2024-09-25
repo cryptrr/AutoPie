@@ -203,9 +203,10 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             else -> {}
         }
 
-        currentExtrasDetails.value = null
-
-
+        viewModelScope.launch {
+            delay(900L)
+            currentExtrasDetails.value = null
+        }
     }
 
 

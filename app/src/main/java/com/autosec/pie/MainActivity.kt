@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
                 derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
             }
 
+
             val editCommandScope = rememberCoroutineScope()
 
 

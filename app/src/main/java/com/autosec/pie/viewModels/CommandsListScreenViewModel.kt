@@ -1,6 +1,7 @@
 package com.autosec.pie.viewModels
 
 import android.app.Application
+import android.os.Environment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -87,7 +88,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
 
-                val directoryPath = value.get("path").asString
+                val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
                 val exec = value.get("exec").asString
                 val command = value.get("command").asString
                 val deleteSource = value.get("deleteSourceFile").asBoolean
@@ -120,7 +121,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
 
-                val directoryPath = value.get("path").asString
+                val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
                 val exec = value.get("exec").asString
                 val command = value.get("command").asString
                 val deleteSource = value.get("deleteSourceFile").asBoolean
@@ -153,7 +154,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val value = entry.value.asJsonObject
                 // Process the key-value pair
 
-                val directoryPath = value.get("path").asString
+                val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
                 val exec = value.get("exec").asString
                 val command = value.get("command").asString
                 val deleteSource = value.get("deleteSourceFile").asBoolean

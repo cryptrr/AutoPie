@@ -314,26 +314,34 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                 shape = RoundedCornerShape(20),
                 //contentPadding = PaddingValues(vertical = 20.dp),
                 onClick = {
-                    viewModel.viewModelScope.launch {
+                    viewModel.main.viewModelScope.launch {
 
-                        val gson = Gson()
-                        val commandJson = gson.toJson(command)
-                        val fileUrisJson = gson.toJson(fileUris ?: extraInputList.value)
+                        try {
+                            isLoading = true
 
-                        val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
+                            val gson = Gson()
+                            val commandJson = gson.toJson(command)
+                            val fileUrisJson = gson.toJson(fileUris ?: extraInputList.value)
 
-                        val intent = Intent(context, ForegroundService::class.java).apply {
-                            putExtra("command", commandJson)
-                            putExtra("currentLink", currentLink ?: extraInput.value)
-                            putExtra("fileUris", fileUrisJson)
-                            putExtra("commandExtraInputs", commandExtraInputsJson)
+                            val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
+
+                            val intent = Intent(context, ForegroundService::class.java).apply {
+                                putExtra("command", commandJson)
+                                putExtra("currentLink", currentLink ?: extraInput.value)
+                                putExtra("fileUris", fileUrisJson)
+                                putExtra("commandExtraInputs", commandExtraInputsJson)
+                            }
+
+
+                            startForegroundService(context, intent)
+
+                            if(parentSheetState != null){
+                                delay(900)
+                                activity?.finish()
+                            }
+                        }catch (e: Exception){
+                            Timber.e(e)
                         }
-
-                        startForegroundService(context, intent)
-
-                        isLoading = true
-                        delay(900)
-                        activity?.finish()
                     }
                 },
 
