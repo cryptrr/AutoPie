@@ -56,8 +56,6 @@ Lets you run Python scripts with or without included binaries on Android.
     <img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" style="width:55%; height:auto">
 </div>
 
-### More Command Placeholders will be available later.
-
 ## Custom Defined Command Arguments for Customization.
 
 With AutoPie, you can define custom arguments called (extras) for commands.
