@@ -32,17 +32,23 @@ Lets you run Python scripts with or without included binaries on Android.
 
 ## Command Format
 
-| PLACEHOLDER   | DESCRIPTION                                                                                     |
-|---------------|-------------------------------------------------------------------------------------------------|
-| {INPUT_FILE}  | Use it to pass input file or url in the command                                                 |
-| {INPUT_FILES} | If multiple files are needed as input to the command<br/> Example : `magick combine two images` |
+| PLACEHOLDER        | DESCRIPTION                                                                                     |
+|--------------------|-------------------------------------------------------------------------------------------------|
+| ${INPUT_FILE}      | Use it to pass input file path or url in the command                                            |
+| ${INPUT_FILES}     | If multiple files are needed as input to the command<br/> Example : `magick combine two images` |
+| ${FILENAME}        | Filename without path                                                                           |
+| ${DIRECTORY}       | Parent Directory of file                                                                        |
+| ${FILENAME_NO_EXT} | Filename without path and extension                                                             |
+| ${FILE_EXT}        | File extension                                                                                  |
+| ${RAND}            | Random 4 digit number                                                                           |
+| ${HOST}            | URL host (Only available if the input is a URL)                                                 |
 
 ## Example Commands
 
-| USE                             | COMMAND                                                                                     |
-|---------------------------------|---------------------------------------------------------------------------------------------|
-| Ffmpeg Extract Audio from Video | `-i {INPUT_FILE} -b:a 192K -vn {INPUT_FILE}.mp3`                                            |
-| ImageMagick combine horizontal  | `{INPUT_FILES} +append {INPUT_FILE}.horiz.jpeg` |
+| USE                             | COMMAND                                                   |
+|---------------------------------|-----------------------------------------------------------|
+| Ffmpeg Extract Audio from Video | `-i ${INPUT_FILE} -b:a 192K -vn ${INPUT_FILE}.mp3`        |
+| ImageMagick combine horizontal  | `${INPUT_FILES} +append ${INPUT_FILE}-horiz-${RAND}.jpeg` |
 
 ###  This configuration enables you to automatically convert each screenshot you take into webp.
 
