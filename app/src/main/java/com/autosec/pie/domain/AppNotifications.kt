@@ -115,11 +115,14 @@ sealed class AppNotification : Notification {
             is InstallingPythonPackages -> true
             is FailedDownloadingArchive -> true
             is UpdatesAvailable -> true
+            is DownloadingInitPackages -> true
             else -> false
         }
     override val hasAction: Boolean
         get() = when (this) {
             is UpdatesAvailable -> true
+            is InstallingPythonPackages -> true
+            is DownloadingInitPackages -> true
             else -> false
         }
 
@@ -132,6 +135,10 @@ sealed class AppNotification : Notification {
 //                { ActionButton(ACTION_APPLICATION_DETAILS_SETTINGS, true) }
 //            }
             is InstallingPythonPackages -> {
+                { LoadingIndicator() }
+            }
+
+            is DownloadingInitPackages -> {
                 { LoadingIndicator() }
             }
 
