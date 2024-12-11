@@ -48,6 +48,7 @@ import com.autosec.pie.data.CommandModel
 import com.autosec.pie.elements.GenericTextFormField
 import com.autosec.pie.elements.OptionSelector
 import com.autosec.pie.services.ForegroundService
+import com.autosec.pie.utils.getActivity
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
@@ -69,7 +70,7 @@ fun CommandExtrasBottomSheet(
 
     val scope = rememberCoroutineScope()
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
 
     LaunchedEffect(key1 = state.targetValue) {
         if (state.targetValue == SheetValue.Expanded) {
@@ -130,7 +131,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val context = LocalContext.current
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
 
 
     val viewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)

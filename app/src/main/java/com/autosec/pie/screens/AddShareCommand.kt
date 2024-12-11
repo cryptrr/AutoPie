@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.autosec.pie.utils.getActivity
 import kotlinx.coroutines.launch
 
 
@@ -34,7 +35,7 @@ fun AddShareCommandBottomSheet(
 
     val scope = rememberCoroutineScope()
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
 
     @Composable
     fun bottomSheetContent() {

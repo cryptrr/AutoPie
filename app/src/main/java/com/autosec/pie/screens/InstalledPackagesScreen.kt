@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.data.InstalledPackageModel
+import com.autosec.pie.utils.getActivity
 import com.autosec.pie.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import org.koin.java.KoinJavaComponent.inject
@@ -60,7 +61,7 @@ fun PackageCard(
     item: InstalledPackageModel
 ) {
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
     var isLoading by remember {
         mutableStateOf(false)
     }

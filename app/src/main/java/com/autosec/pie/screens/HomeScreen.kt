@@ -52,6 +52,7 @@ import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.ui.theme.Purple60
+import com.autosec.pie.utils.getActivity
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.delay
@@ -152,7 +153,7 @@ fun CommandCard(
     card: CommandModel
 ) {
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
     var isLoading by remember {
         mutableStateOf(false)
     }

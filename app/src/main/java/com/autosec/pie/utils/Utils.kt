@@ -1,6 +1,9 @@
 package com.autosec.pie.utils
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
+import androidx.activity.ComponentActivity
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -55,6 +58,12 @@ class Utils{
 
 fun Intent.getIntExtraOrNull(key: String): Int? {
     return if (hasExtra(key)) getIntExtra(key, -1) else null
+}
+
+fun Context.getActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
 }
 
 class Debouncer(

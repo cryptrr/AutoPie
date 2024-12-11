@@ -1,6 +1,7 @@
 package com.autosec.pie
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -78,6 +79,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.net.URLDecoder
 import java.net.URLEncoder
+import com.autosec.pie.utils.getActivity
 
 
 class ShareReceiverActivity : ComponentActivity() {
@@ -195,7 +197,7 @@ fun ShareContextMenuBottomSheet(
 ) {
     val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
 
-    val activity = (LocalContext.current as? Activity)
+    val activity = LocalContext.current.getActivity()
 
 //    LaunchedEffect(currentLink, fileUris) {
 //        try {
@@ -331,8 +333,8 @@ fun ShareCard(
     sheetState: SheetState,
 ) {
 
-    val activity = (LocalContext.current as? Activity)
-    val context = LocalContext.current
+
+    val activity = LocalContext.current.getActivity()
     var isLoading by remember {
         mutableStateOf(false)
     }
@@ -352,6 +354,7 @@ fun ShareCard(
                         shareReceiverViewModel.viewModelScope.launch {
                             isLoading = true
                             delay(900)
+                            Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
                             activity?.finish()
                         }
                     }
