@@ -3,6 +3,8 @@ package com.autosec.pie.utils
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import kotlinx.coroutines.*
 import timber.log.Timber
@@ -84,6 +86,48 @@ class Utils{
         }
         fun escapeFilePath(filePath: String): String {
             return "\"$filePath\"".replace("'","")
+        }
+
+        fun getPathsFromClipData(context: Context, intent: Intent): List<String> {
+            val filePaths = mutableListOf<String>()
+
+            // Check if the intent contains ClipData
+            val clipData = intent.clipData
+            if (clipData != null) {
+                for (i in 0 until clipData.itemCount) {
+                    val item = clipData.getItemAt(i)
+                    val uri = item.uri
+                    val path = getAbsolutePathFromUri(context, uri)
+                    if (path != null) {
+                        filePaths.add(path)
+                    }
+                }
+            } else {
+                // Fallback to data URI if ClipData is not available
+                intent.data?.let { uri ->
+                    getAbsolutePathFromUri(context, uri)?.let { filePaths.add(it) }
+                }
+            }
+
+            return filePaths
+        }
+
+        fun getAbsolutePathFromUri(context: Context, uri: Uri): String? {
+            // Handle "content" scheme URIs
+            if ("content".equals(uri.scheme, ignoreCase = true)) {
+                val projection = arrayOf(MediaStore.MediaColumns.DATA)
+                context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+                        return cursor.getString(columnIndex)
+                    }
+                }
+            }
+            // Handle "file" scheme URIs
+            else if ("file".equals(uri.scheme, ignoreCase = true)) {
+                return uri.path
+            }
+            return null
         }
     }
 }

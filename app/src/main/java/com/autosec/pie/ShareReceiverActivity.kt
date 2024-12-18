@@ -1,7 +1,6 @@
 package com.autosec.pie
 
-import android.app.Activity
-import android.content.Context
+
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,7 +59,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.ShareInputs
@@ -69,20 +66,18 @@ import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.elements.AutoPieLogo
 import com.autosec.pie.elements.SearchBar
 import com.autosec.pie.screens.CommandExtrasBottomSheet
-import com.autosec.pie.services.ForegroundService
 import com.autosec.pie.ui.theme.AutoPieTheme
+import com.autosec.pie.utils.Utils.Companion.getPathsFromClipData
 import com.autosec.pie.viewModels.ShareReceiverViewModel
-import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
-import java.net.URLDecoder
-import java.net.URLEncoder
 import com.autosec.pie.utils.getActivity
 
 
 class ShareReceiverActivity : ComponentActivity() {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -108,7 +103,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
                 val sharedPaths = intent.getParcelableArrayListExtra<Uri>("extra_file_uris")
 
-                Timber.d(sharedPaths.toString())
+                Timber.d("ACTION_SEND_MULTIPLE PATH: $sharedPaths")
 
                 sharedPaths?.map { sharedPath ->
                     sharedPath.path.let {
@@ -118,25 +113,21 @@ class ShareReceiverActivity : ComponentActivity() {
                     }
                 }
 
-//                if (intent.type!!.startsWith("image/")) {
-//                    val clipData: ClipData? = intent.clipData
-//                    if (clipData != null) {
-//                        val itemCount: Int = clipData.itemCount
-//                        for (i in 0 until itemCount) {
-//                            val item: ClipData.Item = clipData.getItemAt(i)
-//                            val imageUri: Uri? = item.uri
-//                            if (imageUri != null) {
-//                                files.add(imageUri)
-//                            }
-//                        }
-//                    }
-//                }
+                val clipData = getPathsFromClipData(this.applicationContext, intent)
+
+                Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
+
+                clipData.forEach {
+                    files.add(it)
+                }
 
             }
 
             Intent.ACTION_SEND == intent?.action -> {
 
                 val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
+
+
 
                 Timber.d("ACTION_SEND PATH: $sharedPath")
 
@@ -148,13 +139,22 @@ class ShareReceiverActivity : ComponentActivity() {
                         files.add(fullPath)
                     }
                 }
+
+                val clipData = getPathsFromClipData(this.applicationContext, intent)
+
+                Timber.d("ACTION_SEND CLIP: $clipData")
+
+                clipData.forEach {
+                    files.add(it)
+                }
+
             }
 
             Intent.ACTION_VIEW == intent?.action -> {
 
                 val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
 
-                Timber.d(sharedPath.toString())
+                Timber.d("ACTION_VIEW PATH: $sharedPath")
 
                 sharedPath?.path.let {
                     if (it != null) {
@@ -162,6 +162,14 @@ class ShareReceiverActivity : ComponentActivity() {
                         val fullPath = if (fragment != null) "$it#$fragment" else it
                         files.add(fullPath)
                     }
+                }
+
+                val clipData = getPathsFromClipData(this.applicationContext, intent)
+
+                Timber.d("ACTION_VIEW CLIP: $clipData")
+
+                clipData.forEach {
+                    files.add(it)
                 }
             }
 
