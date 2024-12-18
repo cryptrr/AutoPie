@@ -113,12 +113,14 @@ class ShareReceiverActivity : ComponentActivity() {
                     }
                 }
 
-                val clipData = getPathsFromClipData(this.applicationContext, intent)
+                if(sharedPaths == null && data == null){
+                    val clipData = getPathsFromClipData(this.applicationContext, intent)
 
-                Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
+                    Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
 
-                clipData.forEach {
-                    files.add(it)
+                    clipData.forEach {
+                        files.add(it)
+                    }
                 }
 
             }
@@ -140,12 +142,14 @@ class ShareReceiverActivity : ComponentActivity() {
                     }
                 }
 
-                val clipData = getPathsFromClipData(this.applicationContext, intent)
+                if(sharedPath == null && data == null) {
+                    val clipData = getPathsFromClipData(this.applicationContext, intent)
 
-                Timber.d("ACTION_SEND CLIP: $clipData")
+                    Timber.d("ACTION_SEND CLIP: $clipData")
 
-                clipData.forEach {
-                    files.add(it)
+                    clipData.forEach {
+                        files.add(it)
+                    }
                 }
 
             }
@@ -164,12 +168,14 @@ class ShareReceiverActivity : ComponentActivity() {
                     }
                 }
 
-                val clipData = getPathsFromClipData(this.applicationContext, intent)
+                if(sharedPath == null && data == null){
+                    val clipData = getPathsFromClipData(this.applicationContext, intent)
 
-                Timber.d("ACTION_VIEW CLIP: $clipData")
+                    Timber.d("ACTION_VIEW CLIP: $clipData")
 
-                clipData.forEach {
-                    files.add(it)
+                    clipData.forEach {
+                        files.add(it)
+                    }
                 }
             }
 
