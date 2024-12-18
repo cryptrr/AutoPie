@@ -112,6 +112,9 @@ class ProcessManagerService {
                 }
             }
 
+            //Adding the command at last to get the env included result command
+            envMap["resultCommand"]=commandObject.command
+
             Timber.d("ENV MAP: $envMap")
 
             val shell = Shell(
@@ -271,7 +274,7 @@ class ProcessManagerService {
 
         }
 
-        fun runCommandForShareWithEnv(commandObject: CommandInterface, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true): Boolean {
+        fun runCommandForShareWithEnv(commandObject: CommandInterface, exec: String, command: String, cwd: String, inputParsedData: List<InputParsedData> = emptyList(), commandExtraInputs: List<CommandExtraInput>, processId: Int, usePython: Boolean = true, isShellScript: Boolean = false): Boolean {
 
             try {
 
@@ -285,9 +288,17 @@ class ProcessManagerService {
                 shell.run("cd ${cwd}")
 
 
-                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                //val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                val fullCommand = when{
+                    usePython -> "python3.9 $exec $command"
+                    isShellScript -> "sh $exec $command"
+                    else -> "$exec $command"
+                }
 
                 Timber.d(fullCommand)
+
+                Timber.d("Env dump: ${shell.environment}")
+
 
                 val result = shell.run(fullCommand)
 
@@ -298,6 +309,7 @@ class ProcessManagerService {
                 Timber.d(output)
 
                 Timber.d("Command Run: ${result.details.command}")
+
 
                 shell.shutdown()
                 shells.remove(processId)

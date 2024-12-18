@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -52,6 +54,36 @@ class Utils{
 
             // Check if the file has a shebang and is for a shell interpreter
             return firstLine.startsWith("#!") && (firstLine.contains("bash") || firstLine.contains("sh"))
+        }
+
+        fun isZipFile(file: File): Boolean {
+            if (!file.isFile) return false
+
+            // Check for .zip extension
+            if (file.extension == "zip") {
+                return true
+            }
+
+            // Check the file's magic number
+            try {
+                FileInputStream(file).use { inputStream ->
+                    val magicNumber = ByteArray(2)
+                    if (inputStream.read(magicNumber) == 2) {
+                        return magicNumber[0] == 0x50.toByte() && magicNumber[1] == 0x4B.toByte() // PK
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+
+            return false
+        }
+
+        fun isAPath(file: String): Boolean {
+            return file.contains("/")
+        }
+        fun escapeFilePath(filePath: String): String {
+            return "\"$filePath\"".replace("'","")
         }
     }
 }

@@ -312,23 +312,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                     val replacedString = item.command
 
-                    val inputFiles = currentItems.joinToString(" "){"'${it}'"}.replace("''","'")
 
-                    val parsedPath = Path(currentItems.firstOrNull() ?: "")
-
-                    val inputParsedData = mutableListOf<InputParsedData>().also {
-                        it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = "'${parsedPath.absolutePathString()}'"))
-                        it.add(InputParsedData(name = "FILENAME", value = "'${parsedPath.fileName}'"))
-                        it.add(InputParsedData(name = "DIRECTORY", value = "'${parsedPath.parent}'"))
-                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = "'${parsedPath.nameWithoutExtension}'"))
-                        it.add(InputParsedData(name = "FILE_EXT", value = "'${parsedPath.extension}'"))
-                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
-                    }
 
                     Timber.d("Replaced String $replacedString")
-
-                    val resultString = "\"${replacedString}\""
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -347,10 +333,36 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                         }
                     }
 
-                    val usePython = !Utils.isShellScript(File(fullExecPath))
+                    val isShellScript = Utils.isShellScript(File(fullExecPath))
+                    val usePython = Utils.isZipFile(File(fullExecPath))
+
+                    val inputFiles = if(usePython){
+                        currentItems.joinToString(" "){"'${it}'"}.replace("''","'")
+                    }else{
+                        currentItems.joinToString(" ")
+                    }
+
+                    val parsedPath = Path(currentItems.firstOrNull() ?: "")
+
+                    val inputParsedData = mutableListOf<InputParsedData>().also {
+                        it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "'${parsedPath.absolutePathString()}'" else parsedPath.absolutePathString()))
+                        it.add(InputParsedData(name = "FILENAME", value = if(usePython) "'${parsedPath.fileName}'" else "${parsedPath.fileName}"))
+                        it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "'${parsedPath.parent}'" else "${parsedPath.parent}"))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "'${parsedPath.nameWithoutExtension}'" else parsedPath.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "'${parsedPath.extension}'" else parsedPath.extension))
+                        it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                    }
+
+                    Timber.d("fullExecPath : $fullExecPath")
+                    Timber.d("Use Python : $usePython")
+
+                    val resultString = if(usePython) "\"${replacedString}\"" else replacedString
+
+                    Timber.d("Result Command: $resultString")
 
                     val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                        inputParsedData,commandExtraInputs,processId, usePython)
+                        inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
                     if (success) {
                         Timber.d("Process Success".uppercase())
@@ -377,22 +389,6 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
                         val parsedPath = Path(path)
 
-                        val inputParsedData = mutableListOf<InputParsedData>().also {
-                            it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString(" ")))
-                            it.add(InputParsedData(name = "INPUT_FILE", value = "'$path'"))
-                            it.add(InputParsedData(name = "DIRECTORY", value = "'${parsedPath.parent}'"))
-                            it.add(InputParsedData(name = "FILENAME", value = "'${parsedPath.fileName}'"))
-                            it.add(InputParsedData(name = "FILENAME_NO_EXT", value = "'${parsedPath.nameWithoutExtension}'"))
-                            it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
-                            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
-                        }
-
-
-                        Timber.d("Replaced String $replacedString")
-
-                        val resultString = "\"${replacedString}\""
-
-
                         val execFilePath =
                             Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
@@ -410,10 +406,26 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                             }
                         }
 
-                        val usePython = !Utils.isShellScript(File(fullExecPath))
+                        val isShellScript = Utils.isShellScript(File(fullExecPath))
+                        val usePython = Utils.isZipFile(File(fullExecPath))
+
+                        val inputParsedData = mutableListOf<InputParsedData>().also {
+                            it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString(" ")))
+                            it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "'${parsedPath.absolutePathString()}'" else parsedPath.absolutePathString()))
+                            it.add(InputParsedData(name = "FILENAME", value = if(usePython) "'${parsedPath.fileName}'" else "${parsedPath.fileName}"))
+                            it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "'${parsedPath.parent}'" else "${parsedPath.parent}"))
+                            it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "'${parsedPath.nameWithoutExtension}'" else parsedPath.nameWithoutExtension))
+                            it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "'${parsedPath.extension}'" else parsedPath.extension))
+                            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
+                        }
+
+
+                        Timber.d("Replaced String $replacedString")
+
+                        val resultString = "\"${replacedString}\""
 
                         val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                            inputParsedData,commandExtraInputs,processId, usePython)
+                            inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
                         if (success) {
                             Timber.d("Process Success".uppercase())
