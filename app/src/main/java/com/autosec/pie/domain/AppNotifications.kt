@@ -31,6 +31,13 @@ sealed class ViewModelError() : Exception(), Notification {
     object ProductNotFound : ViewModelError()
     data object CouldNotAddProduct : ViewModelError()
     data class InvalidJson(val name: String) : ViewModelError()
+    object Timeout : ViewModelError()
+    object Unauthorized : ViewModelError()
+    object Conflict : ViewModelError()
+    object UserForbidden : ViewModelError()
+    object NetworkError : ViewModelError()
+
+
 
     object Unknown : ViewModelError()
 
