@@ -157,7 +157,7 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
         execFile.value = ""
         commandName.value = ""
         selectors.value = ""
-        directory.value = "${Environment.getExternalStorageDirectory().absolutePath}/"
+        directory.value = ""
         deleteSource.value = false
         selectedICommandTypeIndex = 0
         selectedCommandType = "SHARE"

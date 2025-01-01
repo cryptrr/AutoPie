@@ -56,16 +56,20 @@ class FileObserverJobService : JobService() {
     }
 
     private fun restart(){
-        val componentName = ComponentName(this, FileObserverJobService::class.java)
-        val jobInfo = JobInfo.Builder(123, componentName)
-            .setPersisted(true) // Keep the job alive after device reboot
-            .setRequiresCharging(false)
-            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
-            .setRequiresDeviceIdle(false)
-            .build()
+        try {
+            val componentName = ComponentName(this, FileObserverJobService::class.java)
+            val jobInfo = JobInfo.Builder(123, componentName)
+                .setPersisted(true) // Keep the job alive after device reboot
+                .setRequiresCharging(false)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
+                .setRequiresDeviceIdle(false)
+                .build()
 
-        val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        jobScheduler.schedule(jobInfo)
+            val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+            jobScheduler.schedule(jobInfo)
+        }catch (e: Exception){
+            Timber.e(e)
+        }
     }
 
 
