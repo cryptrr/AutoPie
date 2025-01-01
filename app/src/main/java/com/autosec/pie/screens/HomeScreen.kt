@@ -45,6 +45,7 @@ import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.data.ShareInputs
 import com.autosec.pie.domain.ViewModelEvent
+import com.autosec.pie.domain.model.CloudCommandModel
 import com.autosec.pie.elements.EmptyItemsBadge
 import com.autosec.pie.elements.LoadingBadge
 import com.autosec.pie.elements.SearchBar
@@ -53,6 +54,7 @@ import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.ui.theme.Purple60
 import com.autosec.pie.utils.getActivity
+import com.autosec.pie.viewModels.CloudCommandsViewModel
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.delay
@@ -259,3 +261,4 @@ fun CommandCard(
         }
     }
 }
+

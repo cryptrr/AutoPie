@@ -25,8 +25,16 @@ sealed class MainRouter(): BaseRouter  {
     ) : MainRouter()
 
     data object GetCloudCommandsList : MainRouter()
+    data class SearchCloudCommands(val query: String) : MainRouter()
+    data class MoreSearchCloudCommands(val query: String, val cursor: String) : MainRouter()
+
 
     data class GetMoreCloudCommandsList(val cursor: String) : MainRouter()
+
+    data class GetPackages(val query: String) : MainRouter()
+
+
+    data class GetMorePackages(val query: String, val cursor: String) : MainRouter()
 
 
 
@@ -53,6 +61,10 @@ sealed class MainRouter(): BaseRouter  {
             is ReAuthenticate -> "/authenticate"
             is GetCloudCommandsList -> "/command/list"
             is GetMoreCloudCommandsList -> "/command/list/more"
+            is SearchCloudCommands -> "/command/search"
+            is MoreSearchCloudCommands -> "/command/search/more"
+            is GetPackages -> "/package/list"
+            is GetMorePackages -> "/package/list/more"
             else -> "/"
         }
 
@@ -65,9 +77,21 @@ sealed class MainRouter(): BaseRouter  {
 
     override val parameters: List<Pair<String, String>>?
         get() = when (this) {
-//            is ListMoreMessagesOfRoom -> listOf(
-//                Pair("cursor", this.cursor),
-//            )
+            is SearchCloudCommands -> listOf(
+                Pair("query", this.query),
+            )
+            is MoreSearchCloudCommands -> listOf(
+                Pair("query", this.query),
+                Pair("cursor", this.cursor),
+            )
+            is GetPackages  -> listOf(
+                Pair("query", this.query),
+            )
+
+            is GetMorePackages -> listOf(
+                Pair("query", this.query),
+                Pair("cursor", this.cursor),
+            )
 
             else -> null
         }

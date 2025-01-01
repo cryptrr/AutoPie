@@ -1,8 +1,10 @@
 package com.autosec.pie.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,20 +23,27 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.List
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,7 +58,14 @@ import com.autosec.pie.viewModels.CloudCommandsViewModel
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import com.autosec.pie.core.*
+import com.autosec.pie.data.CommandType
+import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.domain.model.CloudCommandModel
+import com.autosec.pie.elements.SearchBar
+import com.autosec.pie.ui.theme.GreenGrey60
+import com.autosec.pie.ui.theme.PastelPurple
+import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +99,7 @@ fun CommandsSearchBottomSheet(
                 Modifier
                     .fillMaxSize()
                     .padding(horizontal = 15.dp)){
+
 
                 CloudCommandsScreen()
 
@@ -149,6 +166,7 @@ fun CloudCommandsScreen() {
             }
 
             is Result.Success -> {
+
                 CloudCommandsList(viewModel.cloudCommandsList, viewModel)
             }
 
@@ -182,23 +200,32 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
         ) {
             item {
                 Row(
-                    modifier = Modifier.padding(vertical = 20.dp, horizontal = 15.dp)
+                    modifier = Modifier
+                        .padding(vertical = 20.dp)
                         .fillMaxWidth()
                         .padding(vertical = 0.dp)
                 ) {
                     Text(
-                        "Blocked Users",
-                        fontSize = 28.sp,
+                        text = "Explore Commands",
+                        fontSize = 33.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.1.sp
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
+                }
+            }
+
+            item {
+                SearchBar(viewModel.searchQuery){
+                    viewModel.searchCloudCommands()
                 }
             }
 
             if (cloudCommands.isEmpty()) {
                 item {
                     Box(
-                        modifier = Modifier.fillMaxWidth().height(550.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(550.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -206,14 +233,14 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                             verticalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.List,
-                                contentDescription = "Blocklist is empty",
+                                imageVector = Icons.AutoMirrored.Rounded.List,
+                                contentDescription = "No results",
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
                                 modifier = Modifier.size(80.dp)
                             )
                             Spacer(Modifier.height(15.dp))
                             Text(
-                                "Blocklist is empty",
+                                "No Results",
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 fontSize = 15.5.sp
                             )
@@ -221,8 +248,9 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                     }
                 }
             } else {
+
                 items(cloudCommands) {
-                    CommandItem(it)
+                    CloudCommandCard(card = it)
                 }
             }
 
@@ -232,44 +260,109 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CommandItem(user: CloudCommandModel) {
+fun CloudCommandCard(
+    card: CloudCommandModel
+) {
+
+    val activity = LocalContext.current.getActivity()
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
 
 
-    Row(
-        Modifier.height(75.dp).padding(vertical = 3.dp, horizontal = 20.dp).fillMaxWidth()
-            .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable {
+    val viewModel: CloudCommandsViewModel by inject(CloudCommandsViewModel::class.java)
 
-            }
+
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .combinedClickable(
+                onClick = {
+                    Timber.d("CLICK DETECTED")
+                    viewModel.selectedCommand.value = card
+                    viewModel.main.dispatchEvent(ViewModelEvent.OpenCloudCommandDetails)
+
+                }
+            ),
+
+        shape = RoundedCornerShape(15.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
     ) {
-        Box(Modifier.fillMaxHeight().aspectRatio(1F), contentAlignment = Alignment.Center) {
-//            Box(
-//                modifier = Modifier.clip(RoundedCornerShape(50)).size(35.dp)
-//            ) {
-//                Image(
-//                    painter = painter,
-//                    "User Avatar",
-//                    contentScale = ContentScale.Crop,
-//                    modifier = Modifier.fillMaxSize()
-//                )
-//            }
+
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (isLoading) {
+                CircularProgressIndicator(strokeWidth = 2.dp)
+            } else {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 10.dp, end = 10.dp)
+                        .clip(
+                            RoundedCornerShape(10.dp)
+                        )
+                        .background(
+                            when (card.type) {
+                                CommandType.SHARE -> PastelPurple
+                                CommandType.FILE_OBSERVER -> Purple10
+                                CommandType.CRON -> GreenGrey60
+                            }
+                        )
+                        .padding(horizontal = 5.dp, vertical = 3.dp)
+                ) {
+                    when (card.type) {
+                        CommandType.SHARE -> {
+                            Text(
+                                text = "SHARE",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+
+                        CommandType.FILE_OBSERVER -> {
+                            Text(
+                                text = "FILE OBSERVER",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                        CommandType.CRON -> {
+                            Text(
+                                text = "CRON",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(15.dp), verticalArrangement = Arrangement.Center
+                ) {
+                    Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "${card.packageUniqueName} ${card.command}",
+                        maxLines = 2,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                        //.basicMarquee()
+                    )
+                }
+            }
         }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Column(
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxHeight().weight(1F, fill = true)
-        ) {
-            Text(user.name, fontSize = 15.sp)
-        }
-
-//        Column(verticalArrangement = Arrangement.Center, modifier = Modifier.padding(10.dp).fillMaxHeight()) {
-//            FollowButton(Result.None)
-//        }
-
     }
 }
+
+
 

@@ -20,11 +20,12 @@ data class CloudCommandsListDto(
 
 @Serializable
 data class CloudCommandModel(
+    override val id: String,
     override val type: CommandType,
     override val name: String,
-    override val path: String,
+    override val directory: String,
     override val command: String,
-    override val exec: String,
+    override val packageUniqueName: String,
     override val deleteSourceFile: Boolean? = false,
     override val description: String,
     val extrasRequired : Boolean? = false,
@@ -32,13 +33,15 @@ data class CloudCommandModel(
 ) : CloudCommandInterface
 
 
+
 interface CloudCommandInterface {
+    val id: String
     val type: CommandType
     val name: String
-    val path: String
+    val directory: String
     val command: String
     val description: String
-    val exec: String
+    val packageUniqueName: String
     val deleteSourceFile: Boolean?
     val extras: List<CloudCommandExtra>?
 }
@@ -53,3 +56,4 @@ data class CloudCommandExtra(
     val defaultBoolean: Boolean = true,
     val selectableOptions: List<String> = emptyList()
 )
+

@@ -62,6 +62,8 @@ import com.autosec.pie.elements.SnackbarHostCustom
 import com.autosec.pie.elements.YesNoDialog
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.screens.AddShareCommandBottomSheet
+import com.autosec.pie.screens.CloudCommandDetails
+import com.autosec.pie.screens.CloudPackageDetails
 import com.autosec.pie.screens.CommandExtrasBottomSheet
 import com.autosec.pie.screens.CommandsSearchBottomSheet
 import com.autosec.pie.screens.EditCommandBottomSheet
@@ -115,6 +117,12 @@ class MainActivity : ComponentActivity() {
             val runCommandBottomSheetStateOpen = remember {
                 derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
             }
+
+            val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true)
+            val cloudCommandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+            val cloudPackageDetailsBottomSheet = rememberModalBottomSheetState(true)
+            val cloudPackageDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
 
             val editCommandScope = rememberCoroutineScope()
@@ -177,6 +185,12 @@ class MainActivity : ComponentActivity() {
                     when(it){
                         is ViewModelEvent.OpenEditCommandSheet -> {
                             editCommandBottomSheetOpen.value = true
+                        }
+                        is ViewModelEvent.OpenCloudCommandDetails -> {
+                            cloudCommandDetailsBottomSheetOpen.value = true
+                        }
+                        is ViewModelEvent.OpenCloudPackageDetails -> {
+                            cloudPackageDetailsBottomSheetOpen.value = true
                         }
                         else -> {}
                     }
@@ -463,6 +477,18 @@ class MainActivity : ComponentActivity() {
                         CommandExtrasBottomSheet(
                             state = runCommandBottomSheetState,
                             open = runCommandBottomSheetStateOpen,
+                        )
+                    }
+                    if (cloudCommandDetailsBottomSheetOpen.value) {
+                        CloudCommandDetails(
+                            state = cloudCommandDetailsBottomSheet,
+                            open = cloudCommandDetailsBottomSheetOpen,
+                        )
+                    }
+                    if (cloudPackageDetailsBottomSheetOpen.value) {
+                        CloudPackageDetails(
+                            state = cloudPackageDetailsBottomSheet,
+                            open = cloudPackageDetailsBottomSheetOpen,
                         )
                     }
 

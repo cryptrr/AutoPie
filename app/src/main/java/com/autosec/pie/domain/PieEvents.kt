@@ -4,6 +4,9 @@ sealed class ViewModelEvent {
     data object InstallingPython : ViewModelEvent()
     data object InstalledPythonSuccessfully : ViewModelEvent()
     data object OpenEditCommandSheet : ViewModelEvent()
+    data object OpenCloudCommandDetails : ViewModelEvent()
+    data object OpenCloudPackageDetails : ViewModelEvent()
+
     data object RefreshCommandsList : ViewModelEvent()
     data object ObserversConfigChanged : ViewModelEvent()
     data object SharesConfigChanged : ViewModelEvent()

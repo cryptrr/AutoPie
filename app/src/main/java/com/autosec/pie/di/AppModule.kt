@@ -7,6 +7,7 @@ import com.autosec.pie.data.apiService.HTTPClientService
 import com.autosec.pie.data.preferences.AppPreferences
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.viewModels.CloudCommandsViewModel
+import com.autosec.pie.viewModels.CloudPackagesViewModel
 import com.autosec.pie.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.viewModels.CreateCommandViewModel
 import com.autosec.pie.viewModels.EditCommandViewModel
@@ -19,6 +20,8 @@ val appModule = module {
     single<MainViewModel> { MainViewModel(get()) }
     single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
     single<CloudCommandsViewModel> { CloudCommandsViewModel() }
+    single<CloudPackagesViewModel> { CloudPackagesViewModel() }
+
     single<HTTPClientService> { AutoSecHTTPClient() }
 
     single<ApiService> { ApiServiceImpl(get()) }

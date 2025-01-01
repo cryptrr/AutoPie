@@ -55,7 +55,6 @@ fun InstalledScreen(innerPadding: PaddingValues) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PackageCard(
     item: InstalledPackageModel
