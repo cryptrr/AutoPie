@@ -364,14 +364,21 @@ fun ShareCard(
                 onClick = {
                     Timber.d("CLICK DETECTED")
 
-                    shareReceiverViewModel.onCommandClick(card, fileUris, currentLink){
-                        shareReceiverViewModel.viewModelScope.launch {
-                            isLoading = true
-                            delay(900)
-                            Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
-                            activity?.finish()
+                    if(card.extras?.any { it.type == "STRING" && it.default.isEmpty() } == true){
+                        shareReceiverViewModel.currentExtrasDetails.value =
+                            Triple(true, card, ShareInputs(currentLink, fileUris))
+                    }else{
+                        shareReceiverViewModel.onCommandClick(card, fileUris, currentLink){
+                            shareReceiverViewModel.viewModelScope.launch {
+                                isLoading = true
+                                delay(900)
+                                Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
+                                activity?.finish()
+                            }
                         }
                     }
+
+
                 },
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
