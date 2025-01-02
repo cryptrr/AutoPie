@@ -45,6 +45,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -231,6 +232,12 @@ fun ShareContextMenuBottomSheet(
         }
     }
 
+    SideEffect {
+        if(shareReceiverViewModel.shareItemsResult.isEmpty()){
+            shareReceiverViewModel.getSharesConfig()
+        }
+    }
+
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = {
         it != SheetValue.Hidden
     })
@@ -364,11 +371,11 @@ fun ShareCard(
                 onClick = {
                     Timber.d("CLICK DETECTED")
 
-                    if(card.extras?.any { it.type == "STRING" && it.default.isEmpty() } == true){
+                    if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() } == true) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
-                    }else{
-                        shareReceiverViewModel.onCommandClick(card, fileUris, currentLink){
+                    } else {
+                        shareReceiverViewModel.onCommandClick(card, fileUris, currentLink) {
                             shareReceiverViewModel.viewModelScope.launch {
                                 isLoading = true
                                 delay(900)
