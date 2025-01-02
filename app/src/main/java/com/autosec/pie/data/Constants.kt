@@ -14,6 +14,7 @@ class AutoPieStrings {
         const val EXTRAS_DESCRIPTION_TO_REPLACE = "NAME_OF_EXTRA"
         const val APP_DEVELOPER = "cryptrr (Amal Shaji)"
         const val GITHUB_URL = "https://github.com/cryptrr/AutoPie"
+        const val DISCORD_URL = "https://discord.gg/rsZ3Sr42Am"
         const val DONATE_TEXT = "Please consider donating if this app helped you. Or you can star us on Github."
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -49,9 +50,11 @@ fun SettingsHeader() {
     val appVersion = remember { "v${BuildConfig.VERSION_NAME}" }
     val appDeveloper = AutoPieStrings.APP_DEVELOPER
 
-    val donateImage = painterResource(id = R.drawable.ic_donate)
-    val donateTitle = "Donate"
-    val donateContentDesc = ""
+    val discordImage = painterResource(id = R.drawable.ic_discord)
+    val discordTitle = "Discord"
+    val discordContentDesc = ""
+    val discordUrl = AutoPieStrings.DISCORD_URL
+
 
     val githubImage = painterResource(id = R.drawable.ic_github)
     val githubTitle = "Github"
@@ -110,11 +113,8 @@ fun SettingsHeader() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
-                onClick = {
-                    scope.launch {
-                        mainViewModel.showNotification(AppNotification.FeatureWIP)
-                    }
-                },
+                onClick = { uriHandler.openUri(discordUrl) },
+
                 colors = ButtonDefaults.buttonColors(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = .12f),
@@ -127,12 +127,12 @@ fun SettingsHeader() {
                     .height(52.dp)
                     .weight(1f)
                     .semantics {
-                        contentDescription = donateContentDesc
+                        contentDescription = discordContentDesc
                     }
             ) {
-                Icon(painter = donateImage, contentDescription = null)
+                Icon(painter = discordImage, contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = donateTitle)
+                Text(text = discordTitle)
             }
             Button(
                 onClick = { uriHandler.openUri(githubUrl) },
