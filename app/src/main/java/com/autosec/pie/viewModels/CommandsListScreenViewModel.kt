@@ -187,7 +187,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     fun searchInCommands(query: String){
 
-        filteredListOfCommands = fullListOfCommands.filter { it.name.contains(query, ignoreCase = true) || it.command.contains(query, ignoreCase = true) || it.exec.contains(query, ignoreCase = true) || it.type.toString().contains(query, ignoreCase = true) }
+        filteredListOfCommands = fullListOfCommands.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
 
     }
 

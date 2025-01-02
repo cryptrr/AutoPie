@@ -192,9 +192,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 //        Timber.d("FileUris: $fileUris")
 //        Timber.d("currentLink: $currentLink")
 
-        if(fileUris == null && currentLink == null){
+        if(fileUris == null && currentLink == null && command.command.contains("INPUT_FILE")){
 
             GenericTextFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
+        }else{
+            Spacer(modifier = Modifier.height(7.dp))
         }
 
         for (extra in command.extras ?: emptyList()) {
