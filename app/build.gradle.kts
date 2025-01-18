@@ -19,8 +19,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 12
-        versionName = "\"0.11.4-beta\""
+        versionCode = 14
+        versionName = "\"0.12.0-beta\""
 
         //testInstrumentationRunner = "androidx.test.runner.CustomTestRunner"
         testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
