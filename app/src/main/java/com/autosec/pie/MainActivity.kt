@@ -118,10 +118,14 @@ class MainActivity : ComponentActivity() {
                 derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
             }
 
-            val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true)
+            val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
             val cloudCommandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
-            val cloudPackageDetailsBottomSheet = rememberModalBottomSheetState(true)
+            val cloudPackageDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
             val cloudPackageDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
 

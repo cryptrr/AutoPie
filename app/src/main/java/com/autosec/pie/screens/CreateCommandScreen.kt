@@ -191,7 +191,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     .padding(vertical = 15.dp)
                     .height(52.dp)
                     .width(75.dp),
-                enabled = viewModel.isValidCommand && viewModel.selectedCommandType == "SHARE",
+                enabled = viewModel.isValidCommand,
                 shape = RoundedCornerShape(20),
                 contentPadding = PaddingValues(vertical = 10.dp),
                 onClick = {

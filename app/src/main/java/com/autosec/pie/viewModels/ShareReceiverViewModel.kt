@@ -188,12 +188,12 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             inputDir?.isDirectory == true -> {
                 runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId)
             }
-            fileUris.isNotEmpty() -> {
-                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
-            }
-
             currentLink.isValidUrl() -> {
                 runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
+            }
+
+            fileUris.isNotEmpty() -> {
+                runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
             }
 
             !currentLink.isNullOrBlank() -> {

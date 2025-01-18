@@ -99,6 +99,8 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             delay(500L)
 
+
+            
             //Another strategy but for now.
 
             val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
@@ -222,12 +224,24 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                     }
 
                     "FILE_OBSERVER" -> {
+                        if (commandExtras.value.isNotEmpty()) {
+                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                        } else {
+                            commandObject.remove("extras")
+                        }
+
                         commandObject.add("selectors", selectorsJson)
 
                         observerCommands.add(commandName.value, commandObject)
                         //observerCommands.remove(oldCommandName.value)
                     }
                     "CRON" -> {
+                        if (commandExtras.value.isNotEmpty()) {
+                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                        } else {
+                            commandObject.remove("extras")
+                        }
+
                         commandObject.addProperty("cronInterval", cronInterval.value)
 
                         cronCommands.add(commandName.value, commandObject)

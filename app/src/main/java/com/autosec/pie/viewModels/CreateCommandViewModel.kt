@@ -93,11 +93,25 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     shareCommands.add(commandName.value, commandObject)
                 }
                 "FILE_OBSERVER" -> {
+
+                    if(commandExtras.value.isNotEmpty()){
+                        commandObject.add("extras", Gson().toJsonTree(commandExtras.value))
+                    }else{
+                        commandObject.remove("extras")
+                    }
+
                     commandObject.add("selectors", selectorsJson)
 
                     observerCommands.add(commandName.value, commandObject)
                 }
                 "CRON" -> {
+
+                    if(commandExtras.value.isNotEmpty()){
+                        commandObject.add("extras", Gson().toJsonTree(commandExtras.value))
+                    }else{
+                        commandObject.remove("extras")
+                    }
+
                     commandObject.addProperty("cronInterval", cronInterval.value)
 
                     cronCommands.add(commandName.value, commandObject)

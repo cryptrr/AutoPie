@@ -153,25 +153,7 @@ fun CloudCommandsScreen() {
 
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (state) {
-            is Result.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(27.dp)
-                    )
-                }
-            }
-
-            is Result.Success -> {
-
-                CloudCommandsList(viewModel.cloudCommandsList, viewModel)
-            }
-
-            else -> {}
-        }
+        CloudCommandsList(viewModel.cloudCommandsList, viewModel)
     }
 }
 
@@ -238,12 +220,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
                                 modifier = Modifier.size(80.dp)
                             )
-                            Spacer(Modifier.height(15.dp))
-                            Text(
-                                "No Results",
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                fontSize = 15.5.sp
-                            )
+
                         }
                     }
                 }
@@ -290,7 +267,7 @@ fun CloudCommandCard(
             ),
 
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+        colors = CardDefaults.elevatedCardColors(containerColor =  Color.Black.copy(0.13F))
     ) {
 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

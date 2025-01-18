@@ -95,6 +95,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
     implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.28.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-coil3:0.28.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")

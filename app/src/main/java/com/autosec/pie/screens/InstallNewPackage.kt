@@ -35,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -169,7 +170,7 @@ fun CloudPackageCard(
             .fillMaxWidth()
             .height(100.dp)
 
-        , shape = RoundedCornerShape(15.dp), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))) {
+        , shape = RoundedCornerShape(15.dp), colors = CardDefaults.elevatedCardColors(containerColor = Color.Black.copy(0.13F))) {
 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
             if(isLoading){
