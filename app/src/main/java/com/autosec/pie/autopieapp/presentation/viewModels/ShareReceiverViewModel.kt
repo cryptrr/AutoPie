@@ -37,6 +37,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.net.URL
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
@@ -103,6 +104,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
                 }
             }catch (e: Exception){
                 when(e){
+                    is FileNotFoundException -> {}
                     is ViewModelError.ShareConfigUnavailable -> main.showError(ViewModelError.ShareConfigUnavailable)
                     is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
                     else -> main.showError(ViewModelError.Unknown)

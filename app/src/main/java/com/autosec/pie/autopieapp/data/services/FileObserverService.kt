@@ -83,7 +83,16 @@ class FileObserverJobService : JobService() {
             Timber.d("Thread Running on: ${Thread.currentThread().name}")
 
 
-            val observerConfig = jsonService.readObserversConfig()
+            if(!main.storageManagerPermissionGranted){
+                return@launch
+            }
+
+            val observerConfig = try {
+                jsonService.readObserversConfig()
+            }catch (e: Exception){
+                Timber.e(e)
+                return@launch
+            }
 
 
             if (observerConfig == null) {

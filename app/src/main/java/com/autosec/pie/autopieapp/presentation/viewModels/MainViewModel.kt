@@ -81,6 +81,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun showError(error: ViewModelError){
+        Timber.e("Printing Error:")
         viewModelScope.launch {
             viewModelError.emit(error)
         }

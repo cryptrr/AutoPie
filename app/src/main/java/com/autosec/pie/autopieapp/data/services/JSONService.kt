@@ -55,7 +55,7 @@ class JSONServiceImpl : JsonService {
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            throw ViewModelError.InvalidShareConfig
+            throw e
         }
     }
 
@@ -89,7 +89,7 @@ class JSONServiceImpl : JsonService {
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            throw ViewModelError.InvalidObserverConfig
+            throw e
         }
     }
 
@@ -122,7 +122,7 @@ class JSONServiceImpl : JsonService {
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            throw ViewModelError.InvalidCronConfig
+            throw e
         }
     }
 

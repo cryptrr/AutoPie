@@ -57,6 +57,7 @@ sealed class ViewModelError() : Exception(), Notification {
             is ProductNotFound -> "Product Not Available"
             is CouldNotAddProduct -> "Unable to add product to history"
             is InvalidJson -> "$name Config is not valid JSON."
+            is StoragePermissionDenied -> "Storage Permission not granted."
             else -> "An Unknown Error has occurred"
         }
 

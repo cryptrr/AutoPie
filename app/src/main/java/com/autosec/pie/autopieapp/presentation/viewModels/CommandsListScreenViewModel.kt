@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okio.FileNotFoundException
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
@@ -77,10 +78,10 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                     }
                 }
             }catch (e: Exception){
+                Timber.e(e)
+
                 when(e){
-                    is ViewModelError.ShareConfigUnavailable -> main.showError(ViewModelError.ShareConfigUnavailable)
-                    is ViewModelError.CronConfigUnavailable -> main.showError(ViewModelError.CronConfigUnavailable)
-                    is ViewModelError.ObserverConfigUnavailable -> main.showError(ViewModelError.ObserverConfigUnavailable)
+                    is java.io.FileNotFoundException -> {}
                     is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
                     is ViewModelError.InvalidObserverConfig -> main.showError(ViewModelError.InvalidObserverConfig)
                     is ViewModelError.InvalidCronConfig -> main.showError(ViewModelError.InvalidCronConfig)

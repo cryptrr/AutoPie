@@ -51,10 +51,19 @@ class CronService(private val jsonService: JsonService){
 
     fun setUpChronJobs(){
 
+        if(!main.storageManagerPermissionGranted){
+            return
+        }
+
         Timber.d("Setting up cron jobs if any")
 
         CoroutineScope(Dispatchers.Default).launch {
-            val cronConfig = jsonService.readCronConfig()
+            val cronConfig = try {
+                jsonService.readCronConfig()
+            }catch (e: Exception){
+                Timber.e(e)
+                return@launch
+            }
 
             if (cronConfig == null) {
                 Timber.d("cron file not available")
