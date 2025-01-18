@@ -25,13 +25,14 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 
+
+
 class MyApplication : Application() {
 
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    private val cronService: CronService by KoinJavaComponent.inject(CronService::class.java)
 
     private val screenStateReceiver = ScreenStateReceiver()
-
-
 
 
     override fun onCreate() {
@@ -74,7 +75,7 @@ class MyApplication : Application() {
         }
     }
     private fun scheduleChron(){
-        CronService.setUpChronJobs()
+        cronService.setUpChronJobs()
     }
 
     private fun startScreenStateReceiver(){
@@ -105,3 +106,6 @@ class MyApplication : Application() {
     }
 
 }
+
+
+

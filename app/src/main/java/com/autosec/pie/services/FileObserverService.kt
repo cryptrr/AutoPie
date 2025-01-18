@@ -34,6 +34,7 @@ class FileObserverJobService : JobService() {
     private val fileObservers = mutableListOf<DirectoryFileObserver>()
 
     val main: MainViewModel by inject(MainViewModel::class.java)
+    val jsonService: JsonService by inject(JsonService::class.java)
 
     init {
         Configuration.Builder().setJobSchedulerJobIdRange(0, 1000).build()
@@ -82,7 +83,7 @@ class FileObserverJobService : JobService() {
             Timber.d("Thread Running on: ${Thread.currentThread().name}")
 
 
-            val observerConfig = JSONService.readObserversConfig()
+            val observerConfig = jsonService.readObserversConfig()
 
 
             if (observerConfig == null) {

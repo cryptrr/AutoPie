@@ -8,11 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.domain.ViewModelEvent
-import com.autosec.pie.services.JSONService
+import com.autosec.pie.services.JsonService
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -22,9 +23,10 @@ import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
-class CommandsListScreenViewModel(application: Application) : AndroidViewModel(application) {
+class CommandsListScreenViewModel(application: Application, private val jsonService: JsonService) : AndroidViewModel(application) {
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
     var fullListOfCommands by mutableStateOf<List<CommandModel>>(emptyList())
     var filteredListOfCommands by mutableStateOf<List<CommandModel>>(emptyList())
@@ -53,29 +55,29 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     suspend fun getCommandsList(){
         isLoading.value = true
         delay(500L)
-        viewModelScope.launch(Dispatchers.IO){
-            val sharesConfig = JSONService.readSharesConfig()
-            val observersConfig = JSONService.readObserversConfig()
-            val cronConfig = JSONService.readCronConfig()
+        viewModelScope.launch(dispatchers.io){
+            val sharesConfig = jsonService.readSharesConfig()
+            val observersConfig = jsonService.readObserversConfig()
+            val cronConfig = jsonService.readCronConfig()
 
             if(sharesConfig == null){
-                Timber.d("Observers file not available")
+                Timber.d("Shares file not available")
                 main.sharesConfigAvailable = false
                 return@launch
             }else{
-                main.schedulerConfigAvailable = true
+                main.sharesConfigAvailable = true
             }
 
             if(observersConfig == null){
                 Timber.d("Observers file not available")
-                main.sharesConfigAvailable = false
+                main.observerConfigAvailable = false
                 return@launch
             }else{
-                main.schedulerConfigAvailable = true
+                main.observerConfigAvailable = true
             }
             if(cronConfig == null){
                 Timber.d("Cron file not available")
-                main.sharesConfigAvailable = false
+                main.schedulerConfigAvailable = false
                 return@launch
             }else{
                 main.schedulerConfigAvailable = true
@@ -170,6 +172,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
                 tempList.add(cronObject)
             }
+
 
             withContext(Dispatchers.Main){
                 fullListOfCommands = tempList.sortedBy { it.name }

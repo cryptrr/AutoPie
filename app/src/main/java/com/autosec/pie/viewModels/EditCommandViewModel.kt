@@ -11,7 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandModel
-import com.autosec.pie.services.JSONService
+import com.autosec.pie.services.JsonService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -25,7 +25,7 @@ import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
 
-class EditCommandViewModel(application: Application) : AndroidViewModel(application) {
+class EditCommandViewModel(application: Application, private val jsonService: JsonService) : AndroidViewModel(application) {
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
@@ -64,9 +64,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch(Dispatchers.IO) {
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
-            val shareCommands = JSONService.readSharesConfig()
-            val observerCommands = JSONService.readObserversConfig()
-            val cronCommands = JSONService.readCronConfig()
+            val shareCommands = jsonService.readSharesConfig()
+            val observerCommands = jsonService.readObserversConfig()
+            val cronCommands = jsonService.readCronConfig()
 
             if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
@@ -164,9 +164,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-            val shareCommands = JSONService.readSharesConfig()
-            val observerCommands = JSONService.readObserversConfig()
-            val cronCommands = JSONService.readCronConfig()
+            val shareCommands = jsonService.readSharesConfig()
+            val observerCommands = jsonService.readObserversConfig()
+            val cronCommands = jsonService.readCronConfig()
 
 
             if (shareCommands == null || observerCommands == null || cronCommands == null) {
@@ -295,20 +295,20 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 "SHARE" -> {
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
-                    JSONService.writeSharesConfig(modifiedJsonContent)
+                    jsonService.writeSharesConfig(modifiedJsonContent)
 
                 }
 
                 "FILE_OBSERVER" -> {
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
-                    JSONService.writeObserversConfig(modifiedJsonContent)
+                    jsonService.writeObserversConfig(modifiedJsonContent)
                 }
 
                 "CRON" -> {
                     val modifiedJsonContent = gson.toJson(cronCommands)
 
-                    JSONService.writeCronConfig(modifiedJsonContent)
+                    jsonService.writeCronConfig(modifiedJsonContent)
                 }
             }
 
@@ -324,9 +324,9 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-            val shareCommands = JSONService.readSharesConfig()
-            val observerCommands = JSONService.readObserversConfig()
-            val cronCommands = JSONService.readCronConfig()
+            val shareCommands = jsonService.readSharesConfig()
+            val observerCommands = jsonService.readObserversConfig()
+            val cronCommands = jsonService.readCronConfig()
 
             if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
@@ -368,19 +368,19 @@ class EditCommandViewModel(application: Application) : AndroidViewModel(applicat
                 "SHARE" -> {
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
-                    JSONService.writeSharesConfig(modifiedJsonContent)
+                    jsonService.writeSharesConfig(modifiedJsonContent)
 
                 }
 
                 "FILE_OBSERVER" -> {
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
-                    JSONService.writeObserversConfig(modifiedJsonContent)
+                    jsonService.writeObserversConfig(modifiedJsonContent)
                 }
                 "CRON" -> {
                     val modifiedJsonContent = gson.toJson(cronCommands)
 
-                    JSONService.writeCronConfig(modifiedJsonContent)
+                    jsonService.writeCronConfig(modifiedJsonContent)
                 }
             }
 

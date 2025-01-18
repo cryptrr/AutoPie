@@ -77,6 +77,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
     fun search(query: String) {
 
+
         filteredShareItemsResult = shareItemsResult.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
 
     }
@@ -90,7 +91,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             main.sharesConfigAvailable = false
             return
         } else {
-            main.schedulerConfigAvailable = true
+            main.sharesConfigAvailable = true
         }
 
         val tempList = mutableListOf<CommandModel>()

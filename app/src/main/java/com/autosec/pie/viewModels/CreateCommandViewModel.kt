@@ -10,7 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.data.CommandExtra
-import com.autosec.pie.services.JSONService
+import com.autosec.pie.services.JsonService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
-class CreateCommandViewModel(application: Application) : AndroidViewModel(application) {
+class CreateCommandViewModel(application: Application, private val jsonService: JsonService) : AndroidViewModel(application) {
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
@@ -51,9 +51,9 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-            val shareCommands = JSONService.readSharesConfig()
-            val observerCommands = JSONService.readObserversConfig()
-            val cronCommands = JSONService.readCronConfig()
+            val shareCommands = jsonService.readSharesConfig()
+            val observerCommands = jsonService.readObserversConfig()
+            val cronCommands = jsonService.readCronConfig()
 
             if (shareCommands == null || observerCommands == null || cronCommands == null) {
                 return@launch
@@ -123,17 +123,17 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
                     val modifiedJsonContent = gson.toJson(shareCommands)
 
-                    JSONService.writeSharesConfig(modifiedJsonContent)
+                    jsonService.writeSharesConfig(modifiedJsonContent)
                 }
                 "FILE_OBSERVER" -> {
                     val modifiedJsonContent = gson.toJson(observerCommands)
 
-                    JSONService.writeObserversConfig(modifiedJsonContent)
+                    jsonService.writeObserversConfig(modifiedJsonContent)
                 }
                 "CRON" -> {
                     val modifiedJsonContent = gson.toJson(cronCommands)
 
-                    JSONService.writeCronConfig(modifiedJsonContent)
+                    jsonService.writeCronConfig(modifiedJsonContent)
                 }
             }
 

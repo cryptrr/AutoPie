@@ -22,7 +22,8 @@ android {
         versionCode = 12
         versionName = "\"0.11.4-beta\""
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner = "androidx.test.runner.CustomTestRunner"
+        testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -105,11 +106,23 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
     implementation("io.insert-koin:koin-android:3.5.6")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
+
+    //TEST IMPLS
+
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation ("io.mockk:mockk-android:1.13.16")
+    testImplementation ("io.mockk:mockk-agent:1.13.16")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    testImplementation ("io.insert-koin:koin-test:3.5.6")
+    testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
+    androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
+    androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
 }

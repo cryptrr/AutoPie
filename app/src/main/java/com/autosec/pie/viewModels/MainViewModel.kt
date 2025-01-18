@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.data.preferences.AppPreferences
 import com.autosec.pie.domain.AppNotification
 import com.autosec.pie.domain.Notification
@@ -47,12 +48,14 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     var pythonInstallationComplete by mutableStateOf(false)
 
-    var schedulerConfigAvailable by mutableStateOf(false)
     var updatesAreAvailable : Boolean? by mutableStateOf(null)
 
     var updateDetails: ReleaseInfo? by mutableStateOf(null)
 
     var sharesConfigAvailable by mutableStateOf(false)
+    var observerConfigAvailable by mutableStateOf(false)
+    var schedulerConfigAvailable by mutableStateOf(false)
+
     var installInitPackagesPrompt by mutableStateOf(false)
 
 
