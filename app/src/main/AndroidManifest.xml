@@ -99,19 +99,19 @@
             android:windowSoftInputMode="stateVisible|adjustResize">
         </activity>
         <service
-            android:name=".services.FileObserverJobService"
+            android:name=".autopieapp.data.services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
-            android:name=".services.ForegroundService"
+            android:name=".autopieapp.data.services.ForegroundService"
             android:exported="false" />
-        <receiver android:name=".services.ScreenStateReceiver"
+        <receiver android:name=".autopieapp.data.services.ScreenStateReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.SCREEN_OFF" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".services.ProcessBroadcastReceiver"
+        <receiver android:name=".autopieapp.data.services.ProcessBroadcastReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="${applicationId}.SHOW_NOTIFICATION" />

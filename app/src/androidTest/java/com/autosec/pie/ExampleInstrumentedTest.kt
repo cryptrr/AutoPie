@@ -5,10 +5,10 @@ import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.runner.AndroidJUnitRunner
-import com.autosec.pie.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.di.getTestModule
 import com.autosec.pie.di.testModule
-import com.autosec.pie.viewModels.CommandsListScreenViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

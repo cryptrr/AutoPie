@@ -28,7 +28,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import com.autosec.pie.R
-import com.autosec.pie.services.ProcessManagerService
+import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.jaredrummler.ktsh.Shell
 import com.autosec.pie.terminal.terminal.Terminal
 

@@ -2,9 +2,9 @@ package com.autosec.pie
 
 
 import android.os.Environment
-import com.autosec.pie.data.CommandCreationModel
-import com.autosec.pie.domain.ViewModelError
-import com.autosec.pie.services.FakeJSONService
+import com.autosec.pie.autopieapp.data.CommandCreationModel
+import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autosec.pie.autopieapp.data.services.FakeJSONService
 import com.autosec.pie.use_case.CreateCommand
 import com.autosec.pie.use_case.GetCommandDetails
 import com.autosec.pie.use_case.GetCommandsList
