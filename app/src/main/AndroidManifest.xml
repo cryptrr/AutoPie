@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
+
+
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -14,10 +16,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
 
-
-
     <application
         android:name=".MyApplication"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:requestLegacyExternalStorage="true"
         android:extractNativeLibs="true"
         android:allowBackup="true"
@@ -98,19 +99,19 @@
             android:windowSoftInputMode="stateVisible|adjustResize">
         </activity>
         <service
-            android:name=".services.FileObserverJobService"
+            android:name=".autopieapp.data.services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
-            android:name=".services.ForegroundService"
+            android:name=".autopieapp.data.services.ForegroundService"
             android:exported="false" />
-        <receiver android:name=".services.ScreenStateReceiver"
+        <receiver android:name=".autopieapp.data.services.ScreenStateReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.SCREEN_OFF" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".services.ProcessBroadcastReceiver"
+        <receiver android:name=".autopieapp.data.services.ProcessBroadcastReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="${applicationId}.SHOW_NOTIFICATION" />

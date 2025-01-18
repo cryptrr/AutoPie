@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("plugin.serialization") version "1.9.25"
 }
 
 android {
@@ -18,10 +19,11 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 12
-        versionName = "\"0.11.4-beta\""
+        versionCode = 14
+        versionName = "\"0.12.0-beta\""
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner = "androidx.test.runner.CustomTestRunner"
+        testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -62,7 +64,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {
@@ -89,6 +91,14 @@ dependencies {
     implementation("com.blacksquircle.ui:editorkit:2.0.0")
     implementation("com.blacksquircle.ui:language-shell:2.0.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-cio:2.3.7")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.28.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-coil3:0.28.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -96,11 +106,23 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
     implementation("io.insert-koin:koin-android:3.5.6")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
+
+    //TEST IMPLS
+
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation ("io.mockk:mockk-android:1.13.16")
+    testImplementation ("io.mockk:mockk-agent:1.13.16")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    testImplementation ("io.insert-koin:koin-test:3.5.6")
+    testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
+    androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
+    androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
 }

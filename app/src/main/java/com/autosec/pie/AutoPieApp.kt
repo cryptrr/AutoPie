@@ -10,14 +10,15 @@ import android.content.IntentFilter
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
+import com.autosec.pie.di.useCaseModule
 import com.autosec.pie.logging.FileLoggingTree
-import com.autosec.pie.services.AutoPieCoreService
-import com.autosec.pie.services.CronJobWorker
-import com.autosec.pie.services.CronService
-import com.autosec.pie.services.FileObserverJobService
-import com.autosec.pie.services.ProcessBroadcastReceiver
-import com.autosec.pie.services.ScreenStateReceiver
-import com.autosec.pie.viewModels.MainViewModel
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.data.services.CronJobWorker
+import com.autosec.pie.autopieapp.data.services.CronService
+import com.autosec.pie.autopieapp.data.services.FileObserverJobService
+import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
+import com.autosec.pie.autopieapp.data.services.ScreenStateReceiver
+import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.java.KoinJavaComponent
@@ -25,13 +26,14 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 
+
+
 class MyApplication : Application() {
 
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    private val cronService: CronService by KoinJavaComponent.inject(CronService::class.java)
 
     private val screenStateReceiver = ScreenStateReceiver()
-
-
 
 
     override fun onCreate() {
@@ -42,7 +44,7 @@ class MyApplication : Application() {
 
         startKoin {
             androidContext(this@MyApplication)
-            modules(appModule)
+            modules(appModule, useCaseModule)
         }
 
         scheduleJob()
@@ -74,7 +76,7 @@ class MyApplication : Application() {
         }
     }
     private fun scheduleChron(){
-        CronService.setUpChronJobs()
+        cronService.setUpChronJobs()
     }
 
     private fun startScreenStateReceiver(){
@@ -105,3 +107,6 @@ class MyApplication : Application() {
     }
 
 }
+
+
+

@@ -54,25 +54,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.domain.AppNotification
-import com.autosec.pie.domain.ViewModelEvent
-import com.autosec.pie.elements.AppBottomBar
-import com.autosec.pie.elements.AutoPieLogo
-import com.autosec.pie.elements.SnackbarHostCustom
-import com.autosec.pie.elements.YesNoDialog
-import com.autosec.pie.notifications.AutoPieNotification
-import com.autosec.pie.screens.AddShareCommandBottomSheet
-import com.autosec.pie.screens.CommandExtrasBottomSheet
-import com.autosec.pie.screens.CommandsSearchBottomSheet
-import com.autosec.pie.screens.EditCommandBottomSheet
-import com.autosec.pie.screens.HomeScreen
-import com.autosec.pie.screens.InstallNewPackageBottomSheet
-import com.autosec.pie.screens.InstalledScreen
-import com.autosec.pie.screens.SettingsScreen
-import com.autosec.pie.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.domain.AppNotification
+import com.autosec.pie.autopieapp.domain.ViewModelEvent
+import com.autosec.pie.autopieapp.presentation.elements.AppBottomBar
+import com.autosec.pie.autopieapp.presentation.elements.AutoPieLogo
+import com.autosec.pie.autopieapp.presentation.elements.SnackbarHostCustom
+import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
+import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
+import com.autosec.pie.autopieapp.presentation.screens.AddShareCommandBottomSheet
+import com.autosec.pie.autopieapp.presentation.screens.CloudCommandDetails
+import com.autosec.pie.autopieapp.presentation.screens.CloudPackageDetails
+import com.autosec.pie.autopieapp.presentation.screens.CommandExtrasBottomSheet
+import com.autosec.pie.autopieapp.presentation.screens.CommandsSearchBottomSheet
+import com.autosec.pie.autopieapp.presentation.screens.EditCommandBottomSheet
+import com.autosec.pie.autopieapp.presentation.screens.HomeScreen
+import com.autosec.pie.autopieapp.presentation.screens.InstallNewPackageBottomSheet
+import com.autosec.pie.autopieapp.presentation.screens.InstalledScreen
+import com.autosec.pie.autopieapp.presentation.screens.SettingsScreen
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
 import com.autosec.pie.ui.theme.AutoPieTheme
-import com.autosec.pie.viewModels.MainViewModel
-import com.autosec.pie.viewModels.ShareReceiverViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -115,6 +117,16 @@ class MainActivity : ComponentActivity() {
             val runCommandBottomSheetStateOpen = remember {
                 derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
             }
+
+            val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
+            val cloudCommandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+            val cloudPackageDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
+                it != SheetValue.Hidden
+            })
+            val cloudPackageDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
 
             val editCommandScope = rememberCoroutineScope()
@@ -177,6 +189,12 @@ class MainActivity : ComponentActivity() {
                     when(it){
                         is ViewModelEvent.OpenEditCommandSheet -> {
                             editCommandBottomSheetOpen.value = true
+                        }
+                        is ViewModelEvent.OpenCloudCommandDetails -> {
+                            cloudCommandDetailsBottomSheetOpen.value = true
+                        }
+                        is ViewModelEvent.OpenCloudPackageDetails -> {
+                            cloudPackageDetailsBottomSheetOpen.value = true
                         }
                         else -> {}
                     }
@@ -463,6 +481,18 @@ class MainActivity : ComponentActivity() {
                         CommandExtrasBottomSheet(
                             state = runCommandBottomSheetState,
                             open = runCommandBottomSheetStateOpen,
+                        )
+                    }
+                    if (cloudCommandDetailsBottomSheetOpen.value) {
+                        CloudCommandDetails(
+                            state = cloudCommandDetailsBottomSheet,
+                            open = cloudCommandDetailsBottomSheetOpen,
+                        )
+                    }
+                    if (cloudPackageDetailsBottomSheetOpen.value) {
+                        CloudPackageDetails(
+                            state = cloudPackageDetailsBottomSheet,
+                            open = cloudPackageDetailsBottomSheetOpen,
                         )
                     }
 
