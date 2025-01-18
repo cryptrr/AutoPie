@@ -28,6 +28,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 sealed class ViewModelError() : Exception(), Notification {
     object CameraPermissionDenied : ViewModelError()
+    object StoragePermissionDenied : ViewModelError()
     object ProductNotFound : ViewModelError()
     data object CouldNotAddProduct : ViewModelError()
     data class InvalidJson(val name: String) : ViewModelError()
@@ -36,6 +37,13 @@ sealed class ViewModelError() : Exception(), Notification {
     object Conflict : ViewModelError()
     object UserForbidden : ViewModelError()
     object NetworkError : ViewModelError()
+    object ShareConfigUnavailable : ViewModelError()
+    object CronConfigUnavailable : ViewModelError()
+    object ObserverConfigUnavailable : ViewModelError()
+    object InvalidShareConfig : ViewModelError()
+    object InvalidCronConfig : ViewModelError()
+    object InvalidObserverConfig : ViewModelError()
+    object CommandNotFound : ViewModelError()
 
 
 

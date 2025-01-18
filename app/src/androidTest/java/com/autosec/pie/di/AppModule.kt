@@ -29,7 +29,7 @@ val testModule = module {
     single<TestCoroutineScheduler> {  TestCoroutineScheduler() }
 
 
-    single<DispatcherProvider> { TestDispatchers(get()) }
+    single<DispatcherProvider> { com.autosec.pie.core.TestDispatchers(get()) }
 
     single<MainViewModel> { MainViewModel(get()) }
     single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
@@ -46,9 +46,9 @@ val testModule = module {
 
 
     single<ApiService> { ApiServiceImpl(get()) }
-    single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get(), get()) }
+    single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
     single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-    single<CreateCommandViewModel> { CreateCommandViewModel(get(), get()) }
+    single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
     single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
     single<AppPreferences> { AppPreferences(get()) }
     single<AutoPieNotification> { AutoPieNotification(get()) }
@@ -61,7 +61,7 @@ fun getTestModule(scheduler: TestCoroutineScheduler): Module {
         single<TestCoroutineScheduler> { scheduler }
 
 
-        single<DispatcherProvider> { TestDispatchers(get()) }
+        single<DispatcherProvider> { com.autosec.pie.core.TestDispatchers(get()) }
 
         single<MainViewModel> { MainViewModel(get()) }
         single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
@@ -78,9 +78,9 @@ fun getTestModule(scheduler: TestCoroutineScheduler): Module {
 
 
         single<ApiService> { ApiServiceImpl(get()) }
-        single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get(), get()) }
+        single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
         single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-        single<CreateCommandViewModel> { CreateCommandViewModel(get(), get()) }
+        single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
         single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
         single<AppPreferences> { AppPreferences(get()) }
         single<AutoPieNotification> { AutoPieNotification(get()) }

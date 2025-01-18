@@ -9,16 +9,19 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandExtraInput
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.data.CommandType
 import com.autosec.pie.data.InputParsedData
 import com.autosec.pie.data.ShareInputs
+import com.autosec.pie.domain.ViewModelError
 import com.autosec.pie.domain.ViewModelEvent
 import com.autosec.pie.notifications.AutoPieNotification
 import com.autosec.pie.services.ForegroundService
 import com.autosec.pie.services.ProcessManagerService
+import com.autosec.pie.use_case.AutoPieUseCases
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.isValidUrl
 import com.google.gson.Gson
@@ -29,6 +32,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -42,7 +46,8 @@ import kotlin.io.path.nameWithoutExtension
 class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(application1) {
 
     val main: MainViewModel by inject(MainViewModel::class.java)
-
+    val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
+    val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
 
     var shareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
@@ -84,55 +89,26 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
 
     fun getSharesConfig() {
-        val sharesConfig = readSharesConfig()
 
-        if (sharesConfig == null) {
-            Timber.d("Observers file not available")
-            main.sharesConfigAvailable = false
+        if(!main.storageManagerPermissionGranted){
+            main.showError(ViewModelError.StoragePermissionDenied)
             return
-        } else {
-            main.sharesConfigAvailable = true
         }
 
-        val tempList = mutableListOf<CommandModel>()
-
-        //TODO: Need to do some refactoring
-
-        for (entry in sharesConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
-
-            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val deleteSource = value.get("deleteSourceFile").asBoolean
-
-            val extrasJsonArray = value.getAsJsonArray("extras")
-
-            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
-
-            val extras: List<CommandExtra> = try{
-                Gson().fromJson(extrasJsonArray, extrasListType)
-            }catch(e: Exception){
-                emptyList()
+        viewModelScope.launch(dispatchers.io){
+            try {
+                useCases.getShareCommands().let{
+                    shareItemsResult = it
+                    filteredShareItemsResult = it
+                }
+            }catch (e: Exception){
+                when(e){
+                    is ViewModelError.ShareConfigUnavailable -> main.showError(ViewModelError.ShareConfigUnavailable)
+                    is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
+                    else -> main.showError(ViewModelError.Unknown)
+                }
             }
-
-            val shareObject = CommandModel(
-                type = CommandType.SHARE,
-                name = key,
-                path = directoryPath,
-                command = command,
-                exec = exec,
-                deleteSourceFile = deleteSource,
-                extras = extras
-            )
-
-            tempList.add(shareObject)
         }
-
-        shareItemsResult = tempList
-        filteredShareItemsResult = tempList
     }
 
     private fun readSharesConfig(): JsonObject? {

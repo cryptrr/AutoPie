@@ -9,9 +9,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.data.CommandExtra
 import com.autosec.pie.data.CommandModel
 import com.autosec.pie.services.JsonService
+import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -28,6 +30,9 @@ import timber.log.Timber
 class EditCommandViewModel(application: Application, private val jsonService: JsonService) : AndroidViewModel(application) {
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+
+    private val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
+    val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
 
     val oldCommandName = mutableStateOf("")
@@ -61,78 +66,34 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
         isLoading.value = true
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
 
-            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
-            val shareCommands = jsonService.readSharesConfig()
-            val observerCommands = jsonService.readObserversConfig()
-            val cronCommands = jsonService.readCronConfig()
+            useCases.getCommandDetails(key).let{ (commandDetails,commandModel, metadata) ->
+                withContext(dispatchers.main) {
+                    oldCommandName.value = key
+                    commandName.value = key
+                    type.value = metadata.first
+                    directory.value = commandDetails.get("path").asString
+                    execFile.value = commandDetails.get("exec").asString
+                    command.value = commandDetails.get("command").asString
+                    deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
+                    selectors.value = metadata.second
+                    cronInterval.value = try{commandDetails.get("cronInterval").asString} catch (_: Exception) {""}
 
-            if (shareCommands == null || observerCommands == null || cronCommands == null) {
-                return@launch
-            }
+                    selectedCommandType = metadata.first
 
-            var commandType = ""
+                    //Timber.d("Extras: ${commandModel?.extras}")
 
-            //TODO: Need to change this
-            val commandDetails =
-                shareCommands.getAsJsonObject(key).also { if (it != null) commandType = "SHARE" }
-                    ?: observerCommands.getAsJsonObject(
-                        key
-                    ).also { if (it != null) commandType = "FILE_OBSERVER" } ?: cronCommands.getAsJsonObject(
-                        key
-                    ).also { if (it != null) commandType = "CRON" }
+                    commandModel?.let {
+                        commandExtras.value = it.extras ?: emptyList()
+                    }
 
-
-            Timber.d("CommandDetails: $commandDetails")
-
-            if (commandDetails == null) {
-                return@launch
-            }
-
-            val selectorsFormatted = try {
-                val arr = commandDetails.get("selectors").asJsonArray
-                arr.joinToString(",")
-            } catch (e: Exception) {
-                ""
-            }
-
-            delay(500L)
-
-
-            
-            //Another strategy but for now.
-
-            val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
-
-            val data: Map<String, CommandModel> = Gson().fromJson(shareCommands, mapType)
-
-            val commandModel = data[key]
-
-            Timber.d("DATA: ${data}")
-
-
-            withContext(Dispatchers.Main) {
-                oldCommandName.value = key
-                commandName.value = key
-                type.value = commandType
-                directory.value = commandDetails.get("path").asString
-                execFile.value = commandDetails.get("exec").asString
-                command.value = commandDetails.get("command").asString
-                deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
-                selectors.value = selectorsFormatted
-                cronInterval.value = try{commandDetails.get("cronInterval").asString} catch (_: Exception) {""}
-
-                selectedCommandType = commandType
-
-                //Timber.d("Extras: ${commandModel?.extras}")
-
-                commandModel?.let {
-                    commandExtras.value = it.extras ?: emptyList()
+                    isLoading.value = false
                 }
-
-                isLoading.value = false
             }
+
+
+
         }
     }
 

@@ -26,6 +26,20 @@ data class CommandModel(
     override val extras: List<CommandExtra>? = null
 ) : CommandInterface
 
+data class CommandCreationModel(
+    val selectedCommandType: String,
+    val commandName: String,
+    val directory: String,
+    val command: String,
+    val exec: String,
+    val deleteSourceFile: Boolean? = false,
+    val cronInterval: String,
+    val selectors: String,
+    val extrasRequired : Boolean? = false,
+    val isValidCommand: Boolean,
+    val commandExtras: List<CommandExtra>
+)
+
 interface CommandInterface {
     val type: CommandType
     val name: String

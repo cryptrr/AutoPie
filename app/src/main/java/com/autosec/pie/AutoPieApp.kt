@@ -10,6 +10,7 @@ import android.content.IntentFilter
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
+import com.autosec.pie.di.useCaseModule
 import com.autosec.pie.logging.FileLoggingTree
 import com.autosec.pie.services.AutoPieCoreService
 import com.autosec.pie.services.CronJobWorker
@@ -43,7 +44,7 @@ class MyApplication : Application() {
 
         startKoin {
             androidContext(this@MyApplication)
-            modules(appModule)
+            modules(appModule, useCaseModule)
         }
 
         scheduleJob()

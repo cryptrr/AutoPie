@@ -24,13 +24,8 @@ class JSONServiceImpl : JsonService {
 
 
 
-    private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
-
     override fun readSharesConfig(): JsonObject? {
 
-        if(!mainViewModel.storageManagerPermissionGranted){
-            return null
-        }
 
         val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
 
@@ -48,23 +43,24 @@ class JSONServiceImpl : JsonService {
             val gson = Gson()
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
+            if(dataObject == null) {
+                Timber.d("Share Sheet config not available")
+                throw ViewModelError.ShareConfigUnavailable
+            }
+
             if (!dataObject.isJsonObject) {
                 Timber.d("Share Sheet config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Share"))
+                throw ViewModelError.InvalidShareConfig
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Share"))
-            return null
+            throw ViewModelError.InvalidShareConfig
         }
     }
 
     override fun readObserversConfig(): JsonObject? {
 
-        if(!mainViewModel.storageManagerPermissionGranted){
-            return null
-        }
 
         val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
 
@@ -81,24 +77,24 @@ class JSONServiceImpl : JsonService {
             val gson = Gson()
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
+            if(dataObject == null) {
+                Timber.d("Observer Sheet config not available")
+                throw ViewModelError.ObserverConfigUnavailable
+            }
+
             if (!dataObject.isJsonObject) {
                 Timber.d("Observers config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Observers"))
+                throw ViewModelError.InvalidObserverConfig
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Observers"))
-            return null
+            throw ViewModelError.InvalidObserverConfig
         }
     }
 
     override fun readCronConfig(): JsonObject? {
 
-        if(!mainViewModel.storageManagerPermissionGranted){
-            //TODO: Send notification maybe
-            return null
-        }
 
         val cronConfigPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
 
@@ -114,15 +110,19 @@ class JSONServiceImpl : JsonService {
             val gson = Gson()
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
+            if(dataObject == null) {
+                Timber.d("Cron Sheet config not available")
+                throw ViewModelError.CronConfigUnavailable
+            }
+
             if (!dataObject.isJsonObject) {
                 Timber.d("Cron config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Cron"))
+                throw ViewModelError.InvalidCronConfig
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Cron"))
-            return null
+            throw ViewModelError.InvalidCronConfig
         }
     }
 
@@ -169,9 +169,8 @@ class JSONServiceImpl : JsonService {
 
 class FakeJSONService : JsonService {
     private var inMemoryStorage = mutableMapOf<String, String>()
-    private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    //private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
-    // Constants
     private val SHARES_KEY = "shares.json"
     private val OBSERVERS_KEY = "observers.json"
     private val CRON_KEY = "cron.json"
@@ -230,11 +229,10 @@ class FakeJSONService : JsonService {
 
     override fun readSharesConfig(): JsonObject? {
 
-        mainViewModel.storageManagerPermissionGranted = true
 
-        if (!mainViewModel.storageManagerPermissionGranted) {
-            return null
-        }
+//        if (!mainViewModel.storageManagerPermissionGranted) {
+//            return null
+//        }
 
         try {
             val jsonString = inMemoryStorage[SHARES_KEY] ?: return null
@@ -247,13 +245,14 @@ class FakeJSONService : JsonService {
 
             if(dataObject == null) {
                 Timber.d("Share Sheet config not available")
-                return null
+                throw ViewModelError.ShareConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
                 Timber.d("Share Sheet config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Share"))
-                return null
+                //mainViewModel.showError(ViewModelError.InvalidJson("Share"))
+
+                throw ViewModelError.InvalidShareConfig
             }
 
             Timber.d("Json Obj: ${dataObject.asJsonObject}")
@@ -261,9 +260,8 @@ class FakeJSONService : JsonService {
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Share"))
+            throw e
 
-            return null
         }
     }
 
@@ -276,9 +274,7 @@ class FakeJSONService : JsonService {
     }
 
     override fun readObserversConfig(): JsonObject? {
-        if (!mainViewModel.storageManagerPermissionGranted) {
-            return null
-        }
+
 
         try {
             val jsonString = inMemoryStorage[OBSERVERS_KEY] ?: return null
@@ -289,21 +285,21 @@ class FakeJSONService : JsonService {
 
             if(dataObject == null) {
                 Timber.d("Observer Sheet config not available")
-                return null
+                throw ViewModelError.ObserverConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
                 Timber.d("Observer Sheet config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Observer"))
-                return null
+                throw ViewModelError.InvalidObserverConfig
+
             }
 
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Observer"))
 
-            return null
+            throw e
+
         }
     }
 
@@ -316,9 +312,9 @@ class FakeJSONService : JsonService {
     }
 
     override fun readCronConfig(): JsonObject? {
-        if (!mainViewModel.storageManagerPermissionGranted) {
-            return null
-        }
+//        if (!mainViewModel.storageManagerPermissionGranted) {
+//            return null
+//        }
 
         try {
             val jsonString = inMemoryStorage[CRON_KEY] ?: return null
@@ -329,21 +325,20 @@ class FakeJSONService : JsonService {
 
             if(dataObject == null) {
                 Timber.d("Cron Sheet config not available")
-                return null
+                throw ViewModelError.CronConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
                 Timber.d("Cron Sheet config is not valid json")
-                mainViewModel.showError(ViewModelError.InvalidJson("Cron"))
-                return null
+                throw ViewModelError.InvalidShareConfig
+
             }
 
             return dataObject.asJsonObject
         } catch (e: Exception) {
             Timber.e(e)
-            mainViewModel.showError(ViewModelError.InvalidJson("Cron"))
 
-            return null
+            throw  e
         }
     }
 
