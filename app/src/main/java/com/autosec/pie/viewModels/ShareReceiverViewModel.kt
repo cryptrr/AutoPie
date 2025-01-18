@@ -77,15 +77,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
     fun search(query: String) {
 
-        filteredShareItemsResult = shareItemsResult.filter {
-            it.name.contains(
-                query,
-                ignoreCase = true
-            ) || it.command.contains(query, ignoreCase = true) || it.exec.contains(
-                query,
-                ignoreCase = true
-            )
-        }
+        filteredShareItemsResult = shareItemsResult.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
 
     }
 
