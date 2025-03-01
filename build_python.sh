@@ -2,9 +2,9 @@ echo "Starting building Python for AutoPie"
 
 git clone "https://github.com/cryptrr/python3-android"
 
-cd python3-android
+cd python3-android || exit
 
-docker run --rm -it -v $(pwd):/python3-android -v $ANDROID_NDK_ROOT:/android-ndk:ro --env ARCH=arm64 --env ANDROID_API=27 python:3.9.0-slim /python3-android/docker-build.sh
+docker run --rm -it -v "$(pwd)":/python3-android -v "$ANDROID_NDK_ROOT":/android-ndk:ro --env ARCH=arm64 --env ANDROID_API=27 python:3.9.0-slim /python3-android/docker-build.sh
 
 #sudo chown -R $(id -u):$(id -g) build
 
@@ -18,7 +18,7 @@ mkdir copied/build/etc/ssl
 
 curl -o copied/build/etc/ssl/cert.pem "https://curl.se/ca/cacert.pem"
 
-cd copied
+cd copied || exit
 
 tar -cJf ../build-aarch64-api27.tar.xz build
 

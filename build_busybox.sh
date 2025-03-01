@@ -2,7 +2,7 @@ echo "Starting building busybox for AutoPie"
 
 git clone "https://github.com/meefik/busybox"
 
-cd busybox/contrib
+cd busybox/contrib || exit
 
 ./build.sh arm64
 

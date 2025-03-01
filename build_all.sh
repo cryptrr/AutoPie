@@ -1,4 +1,4 @@
-echo "Removing the existing prebuilt binaries"
+echo "Removing the existing built binaries"
 
 rm app/src/main/assets/build-aarch64-api27.tar.xz
 rm app/src/main/assets/busybox
