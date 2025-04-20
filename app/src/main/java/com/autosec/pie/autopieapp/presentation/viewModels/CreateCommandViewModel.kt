@@ -1,7 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.viewModels
 
 import android.app.Application
-import android.os.Environment
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -13,13 +12,7 @@ import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.CommandCreationModel
 import com.autosec.pie.autopieapp.data.CommandExtra
 import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.use_case.AutoPieUseCases
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent

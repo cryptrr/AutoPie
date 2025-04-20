@@ -31,6 +31,8 @@ import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
@@ -51,8 +53,8 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
 
-    var shareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
-    var filteredShareItemsResult by mutableStateOf<List<CommandModel>>(emptyList())
+    var shareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
+    var filteredShareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
@@ -84,7 +86,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     fun search(query: String) {
 
 
-        filteredShareItemsResult = shareItemsResult.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+        filteredShareItemsResult.update {
+            shareItemsResult.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+        }
 
     }
 
@@ -98,9 +102,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         viewModelScope.launch(dispatchers.io){
             try {
-                useCases.getShareCommands().let{
-                    shareItemsResult = it
-                    filteredShareItemsResult = it
+                useCases.getShareCommands().let{ newCommands ->
+                    shareItemsResult.update { newCommands }
+                    filteredShareItemsResult.update { newCommands }
                 }
             }catch (e: Exception){
                 when(e){
@@ -233,7 +237,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         Timber.d("Command to run: ${item.exec} $resultString")
 
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
             try {
                 val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
 
@@ -273,7 +277,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
         Timber.d("runShareCommandForFiles")
         val currentItems = fileUris
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
 
             try {
                 if (item.command.contains("{INPUT_FILES}")) {
@@ -436,7 +440,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
 
         val currentItems = inputDir.listFiles()!!
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
 
             try {
                 val startTime = System.currentTimeMillis()

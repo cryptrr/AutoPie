@@ -12,12 +12,14 @@ import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.core.DispatcherProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -31,10 +33,12 @@ class AutoPieCoreService {
     companion object {
         val activity: Application by inject(Context::class.java)
         private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
+        val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
 
         fun initAutosec() {
 
-            CoroutineScope(Dispatchers.IO).launch{
+            CoroutineScope(dispatchers.io).launch{
                 val autosecFolderExists = checkForAutoSecFolder()
                 val binFolderExists = checkForBinFolder()
 
@@ -68,7 +72,7 @@ class AutoPieCoreService {
             val binaries = listOf("busybox", "ssl_helper", "env.sh")
 
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 if (ProcessManagerService.checkShell()) {
                     Timber.d("Shellcheck: Shell is installed correctly")
@@ -137,7 +141,7 @@ class AutoPieCoreService {
                 return
             }
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 Timber.d("Starting extracting filesystem")
 
@@ -158,7 +162,7 @@ class AutoPieCoreService {
                     // Extract the files
                     var entry: TarArchiveEntry? = tarInputStream.nextTarEntry
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstallingPython)
                         mainViewModel.showNotification(AppNotification.InstallingPythonPackages)
                         //Toast.makeText(activity.applicationContext, "Please wait for python to be installed...", Toast.LENGTH_LONG).show()
@@ -181,7 +185,7 @@ class AutoPieCoreService {
 
                     ProcessManagerService.makeBinariesFolderExecutable()
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
                         mainViewModel.showNotification(AppNotification.InstallingPythonPackagesSuccess)
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
@@ -191,7 +195,7 @@ class AutoPieCoreService {
                 } catch (e: IOException) {
                     Timber.e(e)
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
                         Toast.makeText(
                             activity.applicationContext,
                             "Error installing python. Please Reinstall this app.",
@@ -287,7 +291,7 @@ class AutoPieCoreService {
             Timber.d("Downloading Init Archive")
 
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 val autoSecFolder =
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
@@ -317,7 +321,7 @@ class AutoPieCoreService {
             Timber.d("Downloading Empty Init")
 
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 val autoSecFolder =
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
@@ -393,7 +397,7 @@ class AutoPieCoreService {
             }
 
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 Timber.d("Starting extracting Init Archive")
 
@@ -411,7 +415,7 @@ class AutoPieCoreService {
                     // Extract the files
                     var entry: TarArchiveEntry? = tarInputStream.nextTarEntry
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
                         //mainViewModel.dispatchEvent(ViewModelEvent.InstallingInitArchive)
                     }
 
@@ -428,7 +432,7 @@ class AutoPieCoreService {
                         entry = tarInputStream.nextTarEntry
                     }
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.RefreshCommandsList)
 
                     }
@@ -437,7 +441,7 @@ class AutoPieCoreService {
                 } catch (e: IOException) {
                     Timber.e(e)
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(dispatchers.main).launch {
 
                         mainViewModel.showNotification(AppNotification.FailedDownloadingArchive)
                     }

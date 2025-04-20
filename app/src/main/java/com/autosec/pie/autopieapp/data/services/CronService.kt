@@ -12,6 +12,7 @@ import com.autosec.pie.autopieapp.data.CronCommandModel
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.core.DispatcherProvider
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,8 @@ class CronService(private val jsonService: JsonService){
 
 
     private val main: MainViewModel by inject(MainViewModel::class.java)
+    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
 
 
     init {
@@ -57,7 +60,7 @@ class CronService(private val jsonService: JsonService){
 
         Timber.d("Setting up cron jobs if any")
 
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(dispatchers.default).launch {
             val cronConfig = try {
                 jsonService.readCronConfig()
             }catch (e: Exception){

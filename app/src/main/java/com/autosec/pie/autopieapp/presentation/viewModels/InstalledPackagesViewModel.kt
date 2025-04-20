@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.autosec.pie.autopieapp.data.InstalledPackageModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import java.io.File
@@ -15,7 +17,7 @@ class InstalledPackagesViewModel(application: Application) : AndroidViewModel(ap
 
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
-    var installedPackages by mutableStateOf<List<InstalledPackageModel>>(emptyList())
+    var installedPackages = MutableStateFlow<List<InstalledPackageModel>>(emptyList())
 
     init {
         getPackages()
@@ -27,14 +29,16 @@ class InstalledPackagesViewModel(application: Application) : AndroidViewModel(ap
 
         val packagesModels = packages.map { InstalledPackageModel(name = it.name, path = it.path, version = "0.2.1", hasUpdate = false) }
 
-        installedPackages = packagesModels
+        installedPackages.update {
+            packagesModels
+        }
     }
 
     private fun readPackages(): List<File> {
 
-        val folderPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin"
-
         try {
+            val folderPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin"
+
             return getFilesInFolder(folderPath)
         } catch (e: Exception) {
             Timber.e(e)

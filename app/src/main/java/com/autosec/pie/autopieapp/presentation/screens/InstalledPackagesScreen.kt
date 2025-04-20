@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,14 +42,19 @@ import org.koin.java.KoinJavaComponent.inject
 fun InstalledScreen(innerPadding: PaddingValues) {
     val installedPackagesViewModel: InstalledPackagesViewModel by inject(InstalledPackagesViewModel::class.java)
 
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(15.dp)){
+    val installedPackagesState = installedPackagesViewModel.installedPackages.collectAsState()
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .padding(innerPadding)
+        .padding(15.dp)){
         LazyColumn(verticalArrangement = Arrangement.spacedBy(15.dp)){
             item {
                 Spacer(modifier = Modifier.height(15.dp))
                 Text(text = "Installed Packages", fontSize = 33.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(modifier = Modifier.height(15.dp))
             }
-            items(installedPackagesViewModel.installedPackages, key = {it.path}){ item ->
+            items(installedPackagesState.value, key = {it.path}){ item ->
                 PackageCard(item = item)
             }
         }

@@ -14,14 +14,17 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.data.CronCommandModel
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.core.DispatcherProvider
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -34,6 +37,8 @@ class FileObserverJobService : JobService() {
     private val fileObservers = mutableListOf<DirectoryFileObserver>()
 
     val main: MainViewModel by inject(MainViewModel::class.java)
+    val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
     val jsonService: JsonService by inject(JsonService::class.java)
 
     init {
@@ -78,7 +83,7 @@ class FileObserverJobService : JobService() {
 
         Timber.d("Job is starting")
 
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(dispatchers.default).launch {
 
             Timber.d("Thread Running on: ${Thread.currentThread().name}")
 
@@ -169,7 +174,7 @@ class FileObserverJobService : JobService() {
         }
 
         private fun checkFileCompletion(file: File) {
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
                 var lastSize = -1L
 
                 val regSelectors = selectors.map { it.toRegex() }

@@ -24,7 +24,6 @@ import com.autosec.pie.autopieapp.data.services.FileObserverJobService
 import com.autosec.pie.autopieapp.data.services.GithubApiService
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.data.services.ReleaseInfo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -36,6 +35,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
 
     private val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
+    private val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
+
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
@@ -103,7 +104,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun dispatchEvent(event: ViewModelEvent) {
         Timber.d("Event Fired: $event")
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(dispatchers.main) {
             when (event) {
 
                 else -> {
@@ -145,7 +146,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun checkForUpdates(){
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(dispatchers.io){
             try {
                 val latest = GithubApiService.getLatestRelease() ?: return@launch
 

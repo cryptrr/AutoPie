@@ -14,11 +14,13 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.core.DispatcherProvider
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.BufferedReader
@@ -29,6 +31,8 @@ class ProcessManagerService {
     companion object {
 
         val main: MainViewModel by inject(MainViewModel::class.java)
+        private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
 
         private val activity: Application by inject(Context::class.java)
 
@@ -42,7 +46,7 @@ class ProcessManagerService {
                 main.eventFlow.collect{
                     when(it){
                         is ViewModelEvent.CancelProcess -> {
-                            CoroutineScope(Dispatchers.IO).launch {
+                            CoroutineScope(dispatchers.io).launch {
                                 Timber.d("Received processId in event: ${it.processId}")
                                 Timber.d("Shells List: ${shells.keys}")
 
@@ -381,7 +385,7 @@ class ProcessManagerService {
 
         fun deleteFile(filePath: String) {
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 delay(20000L)
 
@@ -407,7 +411,7 @@ class ProcessManagerService {
 
             Timber.d(folderPath)
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
                 try {
 
                     val directory = File(folderPath)

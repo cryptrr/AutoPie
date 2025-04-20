@@ -11,16 +11,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.CommandExtra
-import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
-import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
@@ -121,7 +117,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 //
 //        Timber.d("NO validation error")
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
@@ -281,7 +277,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
     fun deleteCommand(key: String) {
 
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
 
             Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 

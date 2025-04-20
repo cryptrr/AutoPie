@@ -20,6 +20,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okio.FileNotFoundException
@@ -32,8 +34,8 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     private val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
-    var fullListOfCommands by mutableStateOf<List<CommandModel>>(emptyList())
-    var filteredListOfCommands by mutableStateOf<List<CommandModel>>(emptyList())
+    var fullListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
+    var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
     val commandTypeOptions = listOf("All", "Share", "Observers")
@@ -56,7 +58,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     }
 
 
-    suspend fun getCommandsList(){
+    fun getCommandsList(){
         isLoading.value = true
 
         if(!main.storageManagerPermissionGranted){
@@ -64,15 +66,20 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
             return
         }
 
-        delay(500L)
         viewModelScope.launch(dispatchers.io){
 
-            try {
-                useCases.getCommandsList().let {
-                    withContext(dispatchers.main){
-                        fullListOfCommands = it.sortedBy { it.name }
+            delay(500L)
 
-                        filteredListOfCommands = it.sortedBy { it.name }
+            try {
+                useCases.getCommandsList().let { newCommands ->
+                    withContext(dispatchers.main){
+                        fullListOfCommands.update {
+                            newCommands.sortedBy { it.name }
+                        }
+
+                        filteredListOfCommands.update {
+                            newCommands.sortedBy { it.name }
+                        }
 
                         isLoading.value = false
                     }
@@ -94,26 +101,33 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     fun searchInCommands(query: String){
 
-        filteredListOfCommands = fullListOfCommands.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+        filteredListOfCommands.update {
+            it.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+        }
 
     }
 
     fun filterOnlyShareCommands(){
 
-        filteredListOfCommands = fullListOfCommands.filter { it.type == CommandType.SHARE }
+        filteredListOfCommands.update {
+            it.filter { it.type == CommandType.SHARE }
+        }
 
     }
 
     fun filterOnlyObserverCommands(){
 
-        filteredListOfCommands = fullListOfCommands.filter { it.type == CommandType.FILE_OBSERVER }
+        filteredListOfCommands.update {
+            it.filter { it.type == CommandType.FILE_OBSERVER }
+        }
 
     }
 
     fun noFilter(){
 
-        filteredListOfCommands = fullListOfCommands
-
+        filteredListOfCommands.update {
+            fullListOfCommands.value
+        }
     }
 
 

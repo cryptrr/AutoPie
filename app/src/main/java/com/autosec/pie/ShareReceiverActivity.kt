@@ -46,6 +46,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -212,6 +213,10 @@ fun ShareContextMenuBottomSheet(
 ) {
     val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
 
+    val shareItemsResult = shareReceiverViewModel.shareItemsResult.collectAsState()
+    val filteredShareItemsResult = shareReceiverViewModel.filteredShareItemsResult.collectAsState()
+
+
     val activity = LocalContext.current.getActivity()
 
 //    LaunchedEffect(currentLink, fileUris) {
@@ -233,7 +238,7 @@ fun ShareContextMenuBottomSheet(
     }
 
     SideEffect {
-        if(shareReceiverViewModel.shareItemsResult.isEmpty()){
+        if(shareItemsResult.value.isEmpty()){
             shareReceiverViewModel.getSharesConfig()
         }
     }
@@ -308,7 +313,7 @@ fun ShareContextMenuBottomSheet(
                         }
                     }
                     items(
-                        shareReceiverViewModel.filteredShareItemsResult,
+                        filteredShareItemsResult.value,
                         key = { it.name }) { item ->
                         ShareCard(card = item, currentLink, fileUris, state)
                     }

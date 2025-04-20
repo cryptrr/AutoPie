@@ -18,19 +18,24 @@ package com.autosec.pie.terminal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.core.DispatcherProvider
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.java.KoinJavaComponent.inject
 
 class TerminalEmulatorViewModel : ViewModel() {
+
+    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
 
     fun run(
         shell: Shell,
         command: String,
         callback: (result: Shell.Command.Result) -> Unit
     ) = viewModelScope.launch {
-        val result = withContext(Dispatchers.IO) { shell.run(command) }
-        withContext(Dispatchers.Main) { callback(result) }
+        val result = withContext(dispatchers.io) { shell.run(command) }
+        withContext(dispatchers.main) { callback(result) }
     }
 }

@@ -1,7 +1,5 @@
 package com.autosec.pie.autopieapp.data.services
 
-import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -15,11 +13,10 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autosec.pie.core.DispatcherProvider
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -27,6 +24,8 @@ import timber.log.Timber
 class ForegroundService : Service() {
 
     private val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+
 
     private var notificationManager: NotificationManager? = null
 
@@ -115,7 +114,7 @@ class ForegroundService : Service() {
 
         intent?.let {
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(dispatchers.io).launch {
 
                 try {
                     val processId = (100000..999999).random()

@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +73,10 @@ fun HomeScreen(innerPadding: PaddingValues) {
 //    LaunchedEffect(key1 = Unit) {
 //        commandsListScreenViewModel.getCommandsList()
 //    }
+
+    val filteredListOfCommands = commandsListScreenViewModel.filteredListOfCommands.collectAsState()
+
+
 
     Box(
         modifier = Modifier
@@ -128,8 +133,8 @@ fun HomeScreen(innerPadding: PaddingValues) {
                     }
                 }
 
-                commandsListScreenViewModel.filteredListOfCommands.isNotEmpty() -> {
-                    items(commandsListScreenViewModel.filteredListOfCommands, key = {it.name}) { item ->
+                filteredListOfCommands.value.isNotEmpty() -> {
+                    items(filteredListOfCommands.value, key = {it.name}) { item ->
                         CommandCard(card = item)
                     }
                 }
