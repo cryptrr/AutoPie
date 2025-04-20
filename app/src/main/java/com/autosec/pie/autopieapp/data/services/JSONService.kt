@@ -169,7 +169,6 @@ class JSONServiceImpl : JsonService {
 
 class FakeJSONService : JsonService {
     private var inMemoryStorage = mutableMapOf<String, String>()
-    //private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
     private val SHARES_KEY = "shares.json"
     private val OBSERVERS_KEY = "observers.json"

@@ -20,6 +20,11 @@ import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autosec.pie.use_case.AutoPieUseCases
+import com.autosec.pie.use_case.CreateCommand
+import com.autosec.pie.use_case.GetCommandDetails
+import com.autosec.pie.use_case.GetCommandsList
+import com.autosec.pie.use_case.GetShareCommands
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -35,6 +40,17 @@ fun mockMainViewModel(app: Application): MainViewModel {
         every { storageManagerPermissionGranted } returns true
         every { showError(any()) } just Runs
         every { eventFlow } returns MutableSharedFlow()
+    }
+}
+
+val useCaseModule = module {
+    factory<AutoPieUseCases> {
+        AutoPieUseCases(
+            getCommandsList = GetCommandsList(get()),
+            getShareCommands = GetShareCommands(get()),
+            createCommand = CreateCommand(get()),
+            getCommandDetails = GetCommandDetails(get())
+        )
     }
 }
 
@@ -69,13 +85,10 @@ val testModule = module {
     single<AutoPieNotification> { AutoPieNotification(get()) }
 }
 
-fun getTestModule(scheduler: TestCoroutineScheduler): Module {
+fun getTestModule(dispatcher: TestDispatchers): Module {
     return module {
 
-
-        single<TestCoroutineScheduler> { scheduler }
-
-        single<DispatcherProvider> { TestDispatchers(get()) }
+        single<DispatcherProvider> { dispatcher }
 
         single<MainViewModel> { mockMainViewModel(get()) }
         single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }

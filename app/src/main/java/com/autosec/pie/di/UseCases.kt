@@ -16,6 +16,4 @@ val useCaseModule = module {
             getCommandDetails = GetCommandDetails(get())
         )
     }
-
-
 }

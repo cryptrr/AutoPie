@@ -21,6 +21,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +36,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
     var fullListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
+    var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
@@ -63,6 +65,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
         if(!main.storageManagerPermissionGranted){
             main.showError(ViewModelError.StoragePermissionDenied)
+            Timber.e(ViewModelError.StoragePermissionDenied)
             return
         }
 
