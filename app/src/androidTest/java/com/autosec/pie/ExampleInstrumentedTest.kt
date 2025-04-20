@@ -70,6 +70,12 @@ class AutoPieInstrumentedTests : KoinTest {
         }
     }
 
+    @Test
+    fun demo() = runTest {
+
+        assertEquals(1, 1)
+    }
+
 //    @Test
 //    fun loadConfigJSON() = runTest {
 //        val viewModel: CommandsListScreenViewModel by inject(CommandsListScreenViewModel::class.java)
