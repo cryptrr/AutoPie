@@ -14,15 +14,15 @@ android {
 
 
 
+
     defaultConfig {
         applicationId = "com.autosec.pie"
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 14
-        versionName = "\"0.12.0-beta\""
+        versionCode = 15
+        versionName = "\"0.12.1-beta\""
 
-        //testInstrumentationRunner = "androidx.test.runner.CustomTestRunner"
         testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -69,6 +69,10 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes +="META-INF/LICENSE.md"
+            excludes +="META-INF/LICENSE-notice.md"
+            excludes +="META-INF/AL2.0"
+            excludes +="META-INF/LGPL2.1"
         }
     }
 }
@@ -111,11 +115,11 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.16")
-    testImplementation ("io.mockk:mockk-android:1.13.16")
     testImplementation ("io.mockk:mockk-agent:1.13.16")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("io.mockk:mockk-android:1.13.16")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")

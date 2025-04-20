@@ -12,10 +12,5 @@ class TestApplication : Application() {
 
         Timber.plant(Timber.DebugTree())
 
-        startKoin {
-
-            androidContext(this@TestApplication)
-            modules(testModule)
-        }
     }
 }
