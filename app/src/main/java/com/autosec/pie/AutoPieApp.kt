@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.lifecycle.viewModelScope
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
@@ -19,6 +20,7 @@ import com.autosec.pie.autopieapp.data.services.FileObserverJobService
 import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
 import com.autosec.pie.autopieapp.data.services.ScreenStateReceiver
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.java.KoinJavaComponent
@@ -47,17 +49,18 @@ class MyApplication : Application() {
             modules(appModule, useCaseModule)
         }
 
-        scheduleJob()
-        scheduleChron()
-        startScreenStateReceiver()
-        startNotificationReceiver()
-
-
+        initAutosec()
         AutoPieCoreService.extractTarXzFromAssets(this@MyApplication)
         AutoPieCoreService.extractAndExecuteBinary(this@MyApplication)
 
-        initAutosec()
-        checkForUpdates()
+        mainViewModel.viewModelScope.launch {
+            scheduleJob()
+            scheduleChron()
+            startScreenStateReceiver()
+            startNotificationReceiver()
+
+            checkForUpdates()
+        }
     }
 
     private fun scheduleJob() {
