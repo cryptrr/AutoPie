@@ -98,116 +98,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
-            val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
-
-
-            val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
-                it != SheetValue.Hidden
-            })
-            val addShareBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
-
-            val commandsSearchBottomSheetState = rememberModalBottomSheetState(true)
-            val commandsSearchBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
-
-            val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
-            val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
-
-            val runCommandBottomSheetState = rememberModalBottomSheetState(true)
-            val runCommandBottomSheetStateOpen = remember {
-                derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
-            }
-
-            val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
-                it != SheetValue.Hidden
-            })
-            val cloudCommandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
-
-            val cloudPackageDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {
-                it != SheetValue.Hidden
-            })
-            val cloudPackageDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
-
-
-            val editCommandScope = rememberCoroutineScope()
-
-
-
-            val editCommandBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = { state ->
-                state != SheetValue.Hidden
-            })
-
-
-            val editCommandBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
-
-            //STUPID BOTTOMSHEETSTATE NEVER GOES TO HIDDEN AFTER OPENED
-            //HAHA GET REKT, JETPACK COMPOSE BOTTOMSHEETSTATE!
-            LaunchedEffect(key1 = editCommandBottomSheetOpen, editCommandBottomSheet.targetValue) {
-                var showInfoJob : Job? = null
-
-                if(editCommandBottomSheet.targetValue == SheetValue.Hidden) {
-                    editCommandScope.launch {
-                        delay(500L)
-                        if(!editCommandBottomSheetOpen.value){
-                            showInfoJob?.cancel().also {
-                                Timber.d("showInfoJob canceled")
-                            }
-                        }
-                    }
-                    showInfoJob = editCommandScope.launch {
-                        delay(600L)
-                        mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
-                    }
-                }
-            }
-
-            LaunchedEffect(key1 = addShareBottomSheetStateOpen, addShareBottomSheetState.targetValue) {
-                var showInfoJob : Job? = null
-
-                if(addShareBottomSheetState.targetValue == SheetValue.Hidden) {
-                    editCommandScope.launch {
-                        delay(500L)
-                        if(!addShareBottomSheetStateOpen.value){
-                            showInfoJob?.cancel().also {
-                                Timber.d("showInfoJob canceled")
-                            }
-                        }
-                    }
-                    showInfoJob = editCommandScope.launch {
-                        delay(600L)
-                        mainViewModel.showNotification(AppNotification.ShowCloseSheetInfo)
-                    }
-                }
-            }
-
+            val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
 
             val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-            LaunchedEffect(key1 = Unit) {
-
-                mainViewModel.eventFlow.collect{
-                    when(it){
-                        is ViewModelEvent.OpenEditCommandSheet -> {
-                            editCommandBottomSheetOpen.value = true
-                        }
-                        is ViewModelEvent.OpenCloudCommandDetails -> {
-                            cloudCommandDetailsBottomSheetOpen.value = true
-                        }
-                        is ViewModelEvent.OpenCloudPackageDetails -> {
-                            cloudPackageDetailsBottomSheetOpen.value = true
-                        }
-                        else -> {}
-                    }
-                }
-
-            }
-
-
-
+            val autoPieStates = rememberAutoPieStates()
 
 
             AutoPieTheme {
-                // A surface container using the 'background' color from the theme
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
 
@@ -295,7 +194,7 @@ class MainActivity : ComponentActivity() {
                                                             indication = null
                                                         ) {
                                                             mainViewModel.viewModelScope.launch {
-                                                                addShareBottomSheetStateOpen.value = true
+                                                                autoPieStates.addShareBottomSheetStateOpen.value = true
                                                                 //addShareBottomSheetState.show()
                                                             }
                                                         }
@@ -348,7 +247,7 @@ class MainActivity : ComponentActivity() {
                                                             interactionSource = remember { MutableInteractionSource() },
                                                             indication = null
                                                         ) {
-                                                            commandsSearchBottomSheetStateOpen.value =
+                                                            autoPieStates.commandsSearchBottomSheetStateOpen.value =
                                                                 true
                                                         }
                                                 ) {
@@ -377,7 +276,7 @@ class MainActivity : ComponentActivity() {
                                     1 -> {
                                         FloatingActionButton(
                                             onClick = {
-                                                installNewPackageBottomSheetOpen.value = true
+                                                autoPieStates.installNewPackageBottomSheetOpen.value = true
                                             },
                                             containerColor = MaterialTheme.colorScheme.primary
 
@@ -452,47 +351,47 @@ class MainActivity : ComponentActivity() {
                     )
 
 
-                    if (addShareBottomSheetStateOpen.value) {
+                    if (autoPieStates.addShareBottomSheetStateOpen.value) {
                         AddShareCommandBottomSheet(
-                            state = addShareBottomSheetState,
-                            open = addShareBottomSheetStateOpen
+                            state = autoPieStates.addShareBottomSheetState,
+                            open = autoPieStates.addShareBottomSheetStateOpen
                         )
                     }
-                    if (commandsSearchBottomSheetStateOpen.value) {
+                    if (autoPieStates.commandsSearchBottomSheetStateOpen.value) {
                         CommandsSearchBottomSheet(
-                            state = commandsSearchBottomSheetState,
-                            open = commandsSearchBottomSheetStateOpen
+                            state = autoPieStates.commandsSearchBottomSheetState,
+                            open = autoPieStates.commandsSearchBottomSheetStateOpen
                         )
                     }
-                    if (installNewPackageBottomSheetOpen.value) {
+                    if (autoPieStates.installNewPackageBottomSheetOpen.value) {
                         InstallNewPackageBottomSheet(
-                            state = installNewPackageBottomSheet,
-                            open = installNewPackageBottomSheetOpen
+                            state = autoPieStates.installNewPackageBottomSheet,
+                            open = autoPieStates.installNewPackageBottomSheetOpen
                         )
                     }
-                    if (editCommandBottomSheetOpen.value) {
+                    if (autoPieStates.editCommandBottomSheetOpen.value) {
                         EditCommandBottomSheet(
-                            state = editCommandBottomSheet,
-                            open = editCommandBottomSheetOpen,
+                            state = autoPieStates.editCommandBottomSheet,
+                            open = autoPieStates.editCommandBottomSheetOpen,
                             key = mainViewModel.currentCommandKey.value
                         )
                     }
-                    if (runCommandBottomSheetStateOpen.value) {
+                    if (autoPieStates.runCommandBottomSheetStateOpen.value) {
                         CommandExtrasBottomSheet(
-                            state = runCommandBottomSheetState,
-                            open = runCommandBottomSheetStateOpen,
+                            state = autoPieStates.runCommandBottomSheetState,
+                            open = autoPieStates.runCommandBottomSheetStateOpen,
                         )
                     }
-                    if (cloudCommandDetailsBottomSheetOpen.value) {
+                    if (autoPieStates.cloudCommandDetailsBottomSheetOpen.value) {
                         CloudCommandDetails(
-                            state = cloudCommandDetailsBottomSheet,
-                            open = cloudCommandDetailsBottomSheetOpen,
+                            state = autoPieStates.cloudCommandDetailsBottomSheet,
+                            open = autoPieStates.cloudCommandDetailsBottomSheetOpen,
                         )
                     }
-                    if (cloudPackageDetailsBottomSheetOpen.value) {
+                    if (autoPieStates.cloudPackageDetailsBottomSheetOpen.value) {
                         CloudPackageDetails(
-                            state = cloudPackageDetailsBottomSheet,
-                            open = cloudPackageDetailsBottomSheetOpen,
+                            state = autoPieStates.cloudPackageDetailsBottomSheet,
+                            open = autoPieStates.cloudPackageDetailsBottomSheetOpen,
                         )
                     }
 
