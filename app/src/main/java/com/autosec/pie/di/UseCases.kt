@@ -8,7 +8,7 @@ import com.autosec.pie.use_case.GetShareCommands
 import org.koin.dsl.module
 
 val useCaseModule = module {
-    factory<AutoPieUseCases> {
+    single<AutoPieUseCases> {
         AutoPieUseCases(
             getCommandsList = GetCommandsList(get()),
             getShareCommands = GetShareCommands(get()),

@@ -20,15 +20,16 @@ import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
 
     single<MainViewModel> { MainViewModel(get()) }
-    single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-    single<CloudCommandsViewModel> { CloudCommandsViewModel() }
-    single<CloudPackagesViewModel> { CloudPackagesViewModel() }
+    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+    viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+    viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
     single<HTTPClientService> { AutoSecHTTPClient() }
 
@@ -36,10 +37,10 @@ val appModule = module {
     single<CronService> { CronService(get()) }
 
     single<ApiService> { ApiServiceImpl(get()) }
-    single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
-    single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-    single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
-    single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
+    viewModel<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
+    viewModel<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
+    viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
+    viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
     single<AppPreferences> { AppPreferences(get()) }
     single<AutoPieNotification> { AutoPieNotification(get()) }
 }

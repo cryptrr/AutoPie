@@ -52,6 +52,7 @@ import com.mikepenz.markdown.compose.elements.MarkdownImage
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
@@ -67,7 +68,7 @@ fun CloudCommandDetails(
 
     val scope = rememberCoroutineScope()
 
-    val viewModel: CloudCommandsViewModel by KoinJavaComponent.inject(CloudCommandsViewModel::class.java)
+    val viewModel: CloudCommandsViewModel = koinViewModel()
 
     LaunchedEffect(key1 = key) {
         //viewModel.getCommandDetails(key)

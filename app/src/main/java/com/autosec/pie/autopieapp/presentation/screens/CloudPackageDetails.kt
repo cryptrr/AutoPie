@@ -35,12 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
@@ -56,7 +56,7 @@ fun CloudPackageDetails(
 
     val scope = rememberCoroutineScope()
 
-    val viewModel: CloudPackagesViewModel by KoinJavaComponent.inject(CloudPackagesViewModel::class.java)
+    val viewModel: CloudPackagesViewModel = koinViewModel()
 
     LaunchedEffect(key1 = key) {
         //viewModel.getCommandDetails(key)

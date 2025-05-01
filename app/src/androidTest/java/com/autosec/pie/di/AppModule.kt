@@ -1,6 +1,7 @@
 package com.autosec.pie.di
 
 import android.app.Application
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.core.TestDispatchers
 import com.autosec.pie.autopieapp.data.apiService.ApiService
@@ -32,6 +33,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -44,7 +46,7 @@ fun mockMainViewModel(app: Application): MainViewModel {
 }
 
 val useCaseModule = module {
-    factory<AutoPieUseCases> {
+    single<AutoPieUseCases> {
         AutoPieUseCases(
             getCommandsList = GetCommandsList(get()),
             getShareCommands = GetShareCommands(get()),
@@ -54,36 +56,7 @@ val useCaseModule = module {
     }
 }
 
-val testModule = module {
 
-
-    single<TestCoroutineScheduler> {  TestCoroutineScheduler() }
-
-
-    single<DispatcherProvider> { TestDispatchers(get()) }
-
-    single<MainViewModel> { mockMainViewModel(get()) }
-    single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-    single<CloudCommandsViewModel> { CloudCommandsViewModel() }
-    single<CloudPackagesViewModel> { CloudPackagesViewModel() }
-
-    single<HTTPClientService> { AutoSecHTTPClient() }
-
-
-    single<JsonService> { FakeJSONService() }
-
-    single<CronService> { CronService(get()) }
-
-
-
-    single<ApiService> { ApiServiceImpl(get()) }
-    single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
-    single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-    single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
-    single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
-    single<AppPreferences> { AppPreferences(get()) }
-    single<AutoPieNotification> { AutoPieNotification(get()) }
-}
 
 fun getTestModule(dispatcher: TestDispatchers): Module {
     return module {
@@ -91,9 +64,9 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
         single<DispatcherProvider> { dispatcher }
 
         single<MainViewModel> { mockMainViewModel(get()) }
-        single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-        single<CloudCommandsViewModel> { CloudCommandsViewModel() }
-        single<CloudPackagesViewModel> { CloudPackagesViewModel() }
+        viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+        viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+        viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
         single<HTTPClientService> { AutoSecHTTPClient() }
 
@@ -105,10 +78,10 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
 
 
         single<ApiService> { ApiServiceImpl(get()) }
-        single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
-        single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-        single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
-        single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
+        viewModel<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
+        viewModel<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
+        viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
+        viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
         single<AppPreferences> { AppPreferences(get()) }
         single<AutoPieNotification> { AutoPieNotification(get()) }
     }

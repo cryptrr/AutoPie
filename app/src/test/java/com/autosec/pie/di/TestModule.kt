@@ -20,6 +20,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewM
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -32,9 +33,9 @@ val testModule = module {
     single<DispatcherProvider> { TestDispatchers(get()) }
 
     single<MainViewModel> { MainViewModel(get()) }
-    single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-    single<CloudCommandsViewModel> { CloudCommandsViewModel() }
-    single<CloudPackagesViewModel> { CloudPackagesViewModel() }
+    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+    viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+    viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
     single<HTTPClientService> { AutoSecHTTPClient() }
 
@@ -46,10 +47,10 @@ val testModule = module {
 
 
     single<ApiService> { ApiServiceImpl(get()) }
-    single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
-    single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-    single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
-    single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
+    viewModel<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
+    viewModel<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
+    viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
+    viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
     single<AppPreferences> { AppPreferences(get()) }
     single<AutoPieNotification> { AutoPieNotification(get()) }
 }
@@ -64,9 +65,9 @@ fun getTestModule(scheduler: TestCoroutineScheduler): Module {
         single<DispatcherProvider> { TestDispatchers(get()) }
 
         single<MainViewModel> { MainViewModel(get()) }
-        single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-        single<CloudCommandsViewModel> { CloudCommandsViewModel() }
-        single<CloudPackagesViewModel> { CloudPackagesViewModel() }
+        viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+        viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+        viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
         single<HTTPClientService> { AutoSecHTTPClient() }
 
@@ -78,10 +79,10 @@ fun getTestModule(scheduler: TestCoroutineScheduler): Module {
 
 
         single<ApiService> { ApiServiceImpl(get()) }
-        single<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
-        single<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
-        single<CreateCommandViewModel> { CreateCommandViewModel(get()) }
-        single<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
+        viewModel<CommandsListScreenViewModel> { CommandsListScreenViewModel(get()) }
+        viewModel<InstalledPackagesViewModel> { InstalledPackagesViewModel(get()) }
+        viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
+        viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
         single<AppPreferences> { AppPreferences(get()) }
         single<AutoPieNotification> { AutoPieNotification(get()) }
     }

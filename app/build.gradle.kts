@@ -109,6 +109,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
     implementation("io.insert-koin:koin-android:3.5.6")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.6")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
 
     //TEST IMPLS

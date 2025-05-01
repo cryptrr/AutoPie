@@ -50,6 +50,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
@@ -114,7 +115,7 @@ fun InstallNewPackageScreen(
 
 ) {
 
-    val viewModel: CloudPackagesViewModel by inject(CloudPackagesViewModel::class.java)
+    val viewModel: CloudPackagesViewModel = koinViewModel()
 
     val state by viewModel.stateFlow.collectAsState(initial = Result.None)
 
@@ -154,7 +155,7 @@ fun CloudPackageCard(
         mutableStateOf(false)
     }
 
-    val viewModel: CloudPackagesViewModel by inject(CloudPackagesViewModel::class.java)
+    val viewModel: CloudPackagesViewModel = koinViewModel()
 
     ElevatedCard(onClick = {
         Timber.d("CLICK DETECTED")

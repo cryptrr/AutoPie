@@ -53,7 +53,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +66,7 @@ fun CommandExtrasBottomSheet(
     onExpand: () -> Unit = {}
 ) {
 
-    val viewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    val viewModel: ShareReceiverViewModel = koinViewModel()
 
     val scope = rememberCoroutineScope()
 
@@ -134,7 +134,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     val activity = LocalContext.current.getActivity()
 
 
-    val viewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    val viewModel: ShareReceiverViewModel = koinViewModel()
 
     val fileUris by remember {
         mutableStateOf(viewModel.currentExtrasDetails.value?.third?.fileUris)

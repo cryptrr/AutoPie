@@ -21,6 +21,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
@@ -55,7 +56,7 @@ data class AutoPieStates(
 fun rememberAutoPieStates(): AutoPieStates{
 
     val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
     val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
         it != SheetValue.Hidden

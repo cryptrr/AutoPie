@@ -76,6 +76,7 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import com.autosec.pie.utils.getActivity
+import org.koin.androidx.compose.koinViewModel
 
 
 class ShareReceiverActivity : ComponentActivity() {
@@ -211,7 +212,7 @@ fun ShareContextMenuBottomSheet(
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
     val shareItemsResult = shareReceiverViewModel.shareItemsResult.collectAsState()
     val filteredShareItemsResult = shareReceiverViewModel.filteredShareItemsResult.collectAsState()
@@ -365,7 +366,7 @@ fun ShareCard(
         mutableStateOf(false)
     }
 
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
     ElevatedCard(
         elevation = CardDefaults.cardElevation(0.dp),
@@ -389,8 +390,6 @@ fun ShareCard(
                             }
                         }
                     }
-
-
                 },
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")

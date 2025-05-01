@@ -66,6 +66,7 @@ import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,7 +142,7 @@ fun SearchCommands(
 fun CloudCommandsScreen() {
 
 
-    val viewModel: CloudCommandsViewModel by inject(CloudCommandsViewModel::class.java)
+    val viewModel: CloudCommandsViewModel = koinViewModel()
 
     val state by viewModel.stateFlow.collectAsState(initial = Result.None)
 
@@ -249,7 +250,7 @@ fun CloudCommandCard(
     }
 
 
-    val viewModel: CloudCommandsViewModel by inject(CloudCommandsViewModel::class.java)
+    val viewModel: CloudCommandsViewModel = koinViewModel()
 
 
     ElevatedCard(

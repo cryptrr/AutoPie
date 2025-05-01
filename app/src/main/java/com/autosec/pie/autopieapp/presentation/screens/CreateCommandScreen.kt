@@ -1,9 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
-import android.os.Environment
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,21 +37,18 @@ import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.CommandExtraElement
 import com.autosec.pie.autopieapp.presentation.elements.GenericFormSwitch
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
-import com.autosec.pie.ui.theme.PastelPurple
-import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
+import org.koin.androidx.compose.koinViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCommandScreen(open: MutableState<Boolean>) {
 
-    val viewModel: CreateCommandViewModel by KoinJavaComponent.inject(CreateCommandViewModel::class.java)
+    val viewModel: CreateCommandViewModel = koinViewModel()
 
 
     fun addExtra() {

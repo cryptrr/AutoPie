@@ -36,11 +36,12 @@ import com.autosec.pie.autopieapp.data.InstalledPackageModel
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable
 fun InstalledScreen(innerPadding: PaddingValues) {
-    val installedPackagesViewModel: InstalledPackagesViewModel by inject(InstalledPackagesViewModel::class.java)
+    val installedPackagesViewModel: InstalledPackagesViewModel = koinViewModel()
 
     val installedPackagesState = installedPackagesViewModel.installedPackages.collectAsState()
 
@@ -70,9 +71,7 @@ fun PackageCard(
     var isLoading by remember {
         mutableStateOf(false)
     }
-
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
-
+    
     ElevatedCard(onClick = {
 
 

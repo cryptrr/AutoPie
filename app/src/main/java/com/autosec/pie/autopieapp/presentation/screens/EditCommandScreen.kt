@@ -67,6 +67,7 @@ import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
 
 
@@ -82,7 +83,7 @@ fun EditCommandBottomSheet(
 
     val scope = rememberCoroutineScope()
 
-    val viewModel: EditCommandViewModel by KoinJavaComponent.inject(EditCommandViewModel::class.java)
+    val viewModel: EditCommandViewModel = koinViewModel()
 
     LaunchedEffect(key1 = key) {
         viewModel.getCommandDetails(key)
@@ -140,7 +141,7 @@ fun EditCommandBottomSheet(
 @Composable
 fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
-    val viewModel: EditCommandViewModel by KoinJavaComponent.inject(EditCommandViewModel::class.java)
+    val viewModel: EditCommandViewModel = koinViewModel()
 
     //val extrasElements = remember{ mutableStateOf<List<String>>(emptyList()) }
     val extrasElements = viewModel.commandExtras

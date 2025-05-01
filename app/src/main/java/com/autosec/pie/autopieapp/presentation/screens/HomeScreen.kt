@@ -1,6 +1,5 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
-import android.app.Activity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,12 +21,10 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,34 +38,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.data.ShareInputs
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.domain.model.CloudCommandModel
 import com.autosec.pie.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autosec.pie.autopieapp.presentation.elements.LoadingBadge
 import com.autosec.pie.autopieapp.presentation.elements.SearchBar
 import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
-import com.autosec.pie.ui.theme.Purple60
 import com.autosec.pie.utils.getActivity
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
+
 
 @Composable
 fun HomeScreen(innerPadding: PaddingValues) {
 
-    val commandsListScreenViewModel: CommandsListScreenViewModel by inject(
-        CommandsListScreenViewModel::class.java
-    )
+    val commandsListScreenViewModel: CommandsListScreenViewModel = koinViewModel()
+
+    //Timber.d("ViewModel Check Parent: CommandsListScreenViewModel : ${commandsListScreenViewModel}")
 
 //    LaunchedEffect(key1 = Unit) {
 //        commandsListScreenViewModel.getCommandsList()
@@ -165,11 +157,12 @@ fun CommandCard(
         mutableStateOf(false)
     }
 
-    val commandsListScreenViewModel: CommandsListScreenViewModel by inject(
-        CommandsListScreenViewModel::class.java
-    )
+    val commandsListScreenViewModel: CommandsListScreenViewModel = koinViewModel()
 
-    val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    //Timber.d("ViewModel Check Child: CommandsListScreenViewModel : ${commandsListScreenViewModel}")
+
+
+    val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
 
     ElevatedCard(
