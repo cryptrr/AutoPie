@@ -21,7 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material.icons.outlined.ArrowCircleRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -35,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -364,6 +369,25 @@ fun SettingsToggles() {
 
 
     Spacer(modifier = Modifier.height(20.dp))
+
+    Button(
+        onClick = { mainViewModel.startMCPServer() },
+        colors = ButtonDefaults.buttonColors(
+            contentColor = MaterialTheme.colorScheme.onTertiary,
+            disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = .12f),
+            containerColor = MaterialTheme.colorScheme.tertiary,
+            disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = .12f)
+        ),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+
+    ) {
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = "Start MCP Server")
+        Spacer(modifier = Modifier.width(8.dp))
+    }
 
 
 

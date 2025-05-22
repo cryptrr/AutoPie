@@ -383,6 +383,36 @@ class ProcessManagerService {
 
         }
 
+        fun startMCPServer(mcpExecPath: String, modulePath: String): Boolean {
+
+            Timber.d("Starting AutoPie MCP server")
+
+            try {
+
+                if(shell?.isAlive() != true) initShell()
+
+                val command = "python3.9 $mcpExecPath"
+
+                //val command = "python3.9 -c \"import pydantic\""
+
+
+                Timber.d(command)
+
+                val result = shell!!.run(command)
+
+
+                Timber.d(shell!!.isRunning().toString())
+                Timber.d(result.output())
+
+                return result.isSuccess
+
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+                return false
+            }
+
+        }
+
         fun deleteFile(filePath: String) {
 
             CoroutineScope(dispatchers.io).launch {

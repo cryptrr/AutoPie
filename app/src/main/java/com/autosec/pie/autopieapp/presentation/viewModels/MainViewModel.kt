@@ -145,6 +145,17 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         Timber.d("FileObserverJobService stopped")
     }
 
+
+    fun startMCPServer(){
+
+        val mcpPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/mcp_server"
+        val modulePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/mcp_modules"
+
+        val success = ProcessManagerService.startMCPServer(mcpPath, modulePath)
+
+        showNotification(if (success) AppNotification.MCPServerStarted else AppNotification.MCPServerStartError)
+    }
+
     fun checkForUpdates(){
         viewModelScope.launch(dispatchers.io){
             try {
