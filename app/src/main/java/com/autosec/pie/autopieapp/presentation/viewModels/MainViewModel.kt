@@ -24,10 +24,12 @@ import com.autosec.pie.autopieapp.data.services.FileObserverJobService
 import com.autosec.pie.autopieapp.data.services.GithubApiService
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.data.services.ReleaseInfo
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
@@ -56,6 +58,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var sharesConfigAvailable by mutableStateOf(false)
     var observerConfigAvailable by mutableStateOf(false)
     var schedulerConfigAvailable by mutableStateOf(false)
+    var mcpServerActive by mutableStateOf(false)
 
     var installInitPackagesPrompt by mutableStateOf(false)
 
@@ -151,10 +154,42 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         val mcpPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/mcp_server"
         val modulePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/mcp_modules"
 
-        val success = ProcessManagerService.startMCPServer(mcpPath, modulePath)
+        viewModelScope.launch(dispatchers.io){
+            try {
+                ProcessManagerService.startMCPServer(mcpPath, modulePath)
+            }
+            catch (e: Exception){
+                showNotification(AppNotification.MCPServerStartError)
+                mcpServerActive = false
+            }
+        }
 
-        showNotification(if (success) AppNotification.MCPServerStarted else AppNotification.MCPServerStartError)
+        mcpServerActive = true
+
+        viewModelScope.launch {
+            delay(1520L)
+            showNotification(AppNotification.MCPServerStarted)
+        }
+
+
     }
+
+    fun stopMCPServer(){
+        viewModelScope.launch(dispatchers.io){
+            try {
+                ProcessManagerService.stopMCPServer()
+                Timber.d("MCP Server Stopped")
+                withContext(dispatchers.main) {
+                    mcpServerActive = false
+                    showNotification(AppNotification.MCPServerStopped)
+                }
+            }
+            catch (e: Exception){
+
+                showError(ViewModelError.Unknown)
+            }
+        }
+        }
 
     fun checkForUpdates(){
         viewModelScope.launch(dispatchers.io){

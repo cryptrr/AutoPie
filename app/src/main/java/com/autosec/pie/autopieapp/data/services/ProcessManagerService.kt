@@ -15,7 +15,7 @@ import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
-import com.jaredrummler.ktsh.Shell
+import com.autosec.pie.utils.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -38,6 +38,8 @@ class ProcessManagerService {
 
 
         private var shell : Shell? = null
+
+        private var mcpShell : Shell? = null
 
         private var shells = HashMap<Int, Shell>()
 
@@ -87,6 +89,42 @@ class ProcessManagerService {
                 shell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
             Timber.d(setEnvResult?.output())
+
+        }
+
+        private fun initMCPShell() {
+            val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            mcpShell = Shell(
+                shellPath,
+            )
+
+            Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+
+            val setEnvResult =
+                mcpShell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+
+            Timber.d(setEnvResult?.output())
+
+        }
+
+        private fun getNewShell() : Shell {
+            val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            val newShell = Shell(
+                shellPath,
+            )
+
+            Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+
+            val setEnvResult =
+                newShell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+
+            Timber.d(setEnvResult?.output())
+
+            return newShell
 
         }
 
@@ -164,7 +202,7 @@ class ProcessManagerService {
 
                 Timber.d(checkEnvResult?.output())
 
-                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
 
                 Timber.d(fullCommand)
 
@@ -223,7 +261,7 @@ class ProcessManagerService {
 
                 Timber.d(checkEnvResult.output())
 
-                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
 
                 Timber.d(fullCommand)
 
@@ -254,7 +292,7 @@ class ProcessManagerService {
 
                 shell!!.run("cd ${cwd}")
 
-                val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
 
                 Timber.d(fullCommand)
 
@@ -292,9 +330,9 @@ class ProcessManagerService {
                 shell.run("cd ${cwd}")
 
 
-                //val fullCommand = if(usePython) "python3.9 $exec $command" else "sh $exec $command"
+                //val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
                 val fullCommand = when{
-                    usePython -> "python3.9 $exec $command"
+                    usePython -> "python3.10 $exec $command"
                     isShellScript -> "sh $exec $command"
                     else -> "$exec $command"
                 }
@@ -364,7 +402,7 @@ class ProcessManagerService {
 
                 if(shell?.isAlive() != true) initShell()
 
-                val command = "python3.9 -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
+                val command = "python3.10 -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
 
                 Timber.d(command)
 
@@ -383,32 +421,52 @@ class ProcessManagerService {
 
         }
 
-        fun startMCPServer(mcpExecPath: String, modulePath: String): Boolean {
+        fun startMCPServer(mcpExecPath: String, modulePath: String) {
 
             Timber.d("Starting AutoPie MCP server")
 
             try {
 
-                if(shell?.isAlive() != true) initShell()
+                initMCPShell()
 
-                val command = "python3.9 $mcpExecPath"
-
-                //val command = "python3.9 -c \"import pydantic\""
-
+                val command = "python3.10 $mcpExecPath $modulePath & echo \$! > ${activity.filesDir.absolutePath}/uvicorn.pid"
 
                 Timber.d(command)
 
-                val result = shell!!.run(command)
+                mcpShell?.addOnStdoutLineListener(object : Shell.OnLineListener{
+                    override fun onLine(line: String) {
+                        Timber.d(line)
+                    }
+                })
+
+                mcpShell?.addOnCommandResultListener(object : Shell.OnCommandResultListener{
+                    override fun onResult(result: Shell.Command.Result) {
+                        mcpShell?.interrupt()
+                    }
+                })
 
 
-                Timber.d(shell!!.isRunning().toString())
+
+                val result = mcpShell!!.run(command)
+
                 Timber.d(result.output())
-
-                return result.isSuccess
 
             } catch (e: Exception) {
                 Timber.e(e.toString())
-                return false
+            }
+
+        }
+
+        fun stopMCPServer() {
+            try {
+
+                val newMCPShell = getNewShell()
+                Timber.d("Stopping MCP server")
+                val result = newMCPShell.run("kill -9 \$(cat ${activity.filesDir.absolutePath}/uvicorn.pid) 2>/dev/null || true")
+                Timber.d(result.output())
+                mcpShell?.interrupt()
+            }catch (e: Exception){
+                Timber.e("Shell terminated")
             }
 
         }

@@ -50,7 +50,7 @@ val GreenGrey80 = Color(0xFFbadec8)
 val GreenGrey90 = Color(0xFFdcefe4)
 
 val PastelBlue = Color(0xFF719aab)
-val PastelGreen = Color(0xFF2DCC70)
+val PastelGreen = Color(0xFF88CC8D)
 val PastelRed = Color(0xFFf35858)
 val PastelYellow = Color(0xFFebab36)
 

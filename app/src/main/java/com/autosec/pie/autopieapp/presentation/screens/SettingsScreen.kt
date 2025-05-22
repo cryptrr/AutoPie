@@ -50,6 +50,7 @@ import com.autosec.pie.autopieapp.data.services.GithubApiService
 import com.autosec.pie.terminal.TerminalEmulatorActivity
 import com.autosec.pie.ui.theme.PastelYellow
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.ui.theme.PastelGreen
 import org.koin.java.KoinJavaComponent
 
 @Composable
@@ -371,11 +372,11 @@ fun SettingsToggles() {
     Spacer(modifier = Modifier.height(20.dp))
 
     Button(
-        onClick = { mainViewModel.startMCPServer() },
+        onClick = { if(mainViewModel.mcpServerActive) mainViewModel.stopMCPServer() else mainViewModel.startMCPServer() },
         colors = ButtonDefaults.buttonColors(
             contentColor = MaterialTheme.colorScheme.onTertiary,
             disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = .12f),
-            containerColor = MaterialTheme.colorScheme.tertiary,
+            containerColor = if(mainViewModel.mcpServerActive) PastelGreen else MaterialTheme.colorScheme.primary,
             disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = .12f)
         ),
         shape = RoundedCornerShape(8.dp),
@@ -385,10 +386,12 @@ fun SettingsToggles() {
 
     ) {
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Start MCP Server")
+        Text(text = if(mainViewModel.mcpServerActive) "MCP Server Running" else "Start MCP Server" )
         Spacer(modifier = Modifier.width(8.dp))
     }
 
+
+    Spacer(modifier = Modifier.height(20.dp))
 
 
     Column(

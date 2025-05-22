@@ -119,8 +119,8 @@ sealed class AppNotification : Notification {
             is ShowCloseSheetInfo -> "Press the back button to close the bottom sheet."
             is UpdatesAvailable -> "Updates are available."
             is MCPServerStopped -> "MCP Server Stopped"
-            is MCPServerStarted -> "MCP Server Started"
-            is MCPServerStartError -> "Error Starting MCP Servers"
+            is MCPServerStarted -> "MCP Server Running on localhost:8000"
+            is MCPServerStartError -> "Error Starting MCP Server"
             else -> "An Event Occurred"
         }
 
