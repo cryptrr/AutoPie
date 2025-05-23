@@ -94,7 +94,7 @@ sealed class AppNotification : Notification {
     data object InstallingInitPackages : AppNotification()
     data object InstallingInitPackagesSuccess : AppNotification()
     data object ShowCloseSheetInfo : AppNotification()
-    data object MCPServerStarted : AppNotification()
+    data class MCPServerStarted(val host: String, val port: String) : AppNotification()
     data object MCPServerStopped : AppNotification()
     data object MCPServerStartError : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
@@ -119,7 +119,7 @@ sealed class AppNotification : Notification {
             is ShowCloseSheetInfo -> "Press the back button to close the bottom sheet."
             is UpdatesAvailable -> "Updates are available."
             is MCPServerStopped -> "MCP Server Stopped"
-            is MCPServerStarted -> "MCP Server Running on localhost:8000"
+            is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
             else -> "An Event Occurred"
         }

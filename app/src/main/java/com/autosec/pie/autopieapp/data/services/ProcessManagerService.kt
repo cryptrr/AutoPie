@@ -92,11 +92,17 @@ class ProcessManagerService {
 
         }
 
-        private fun initMCPShell() {
+        private fun initMCPShell(modulePath: String, host: String, port: String) {
             val shellPath = File(activity.filesDir, "sh").absolutePath
+
+            val envMap = HashMap<String, String>()
+            envMap["MCP_SERVER_HOST"] = host
+            envMap["MCP_SERVER_PORT"] = port
+            envMap["DYNAMIC_MODULES_DIR"] = modulePath
 
             mcpShell = Shell(
                 shellPath,
+                envMap
             )
 
             Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
@@ -393,6 +399,29 @@ class ProcessManagerService {
             }
         }
 
+        fun createTerminalShell(): com.jaredrummler.ktsh.Shell? {
+
+            try {
+                val shellPath = File(activity.filesDir, "sh").absolutePath
+
+                val shell = com.jaredrummler.ktsh.Shell(
+                    shellPath,
+                )
+
+                Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+
+                shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+
+                shell.run("cd ${activity.filesDir.absolutePath}")
+
+                return shell
+            } catch (e: Exception) {
+                Timber.e(e.toString())
+
+                return null
+            }
+        }
+
 
         fun downloadFileWithPython(url: String, fullFilePath: String): Boolean {
 
@@ -421,13 +450,13 @@ class ProcessManagerService {
 
         }
 
-        fun startMCPServer(mcpExecPath: String, modulePath: String) {
+        fun startMCPServer(mcpExecPath: String, modulePath: String, host: String, port: String) {
 
             Timber.d("Starting AutoPie MCP server")
 
             try {
 
-                initMCPShell()
+                initMCPShell(modulePath, host, port)
 
                 val command = "python3.10 $mcpExecPath $modulePath & echo \$! > ${activity.filesDir.absolutePath}/uvicorn.pid"
 

@@ -153,10 +153,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
         val mcpPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/mcp_server"
         val modulePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/mcp_modules"
+        val host = "0.0.0.0"
+        val port  = "8000"
 
         viewModelScope.launch(dispatchers.io){
             try {
-                ProcessManagerService.startMCPServer(mcpPath, modulePath)
+                ProcessManagerService.startMCPServer(mcpPath, modulePath, host, port)
             }
             catch (e: Exception){
                 showNotification(AppNotification.MCPServerStartError)
@@ -168,7 +170,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
         viewModelScope.launch {
             delay(1520L)
-            showNotification(AppNotification.MCPServerStarted)
+            showNotification(AppNotification.MCPServerStarted(host, port))
         }
 
 

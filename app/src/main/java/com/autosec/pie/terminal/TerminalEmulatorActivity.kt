@@ -105,9 +105,9 @@ class TerminalEmulatorActivity : ComponentActivity(), TerminalEmulatorView {
 
     private fun setUpTerminal() {
         terminal = findViewById(R.id.terminal)
-        val customShell = ProcessManagerService.createAutoPieShell()
+        val customShell = ProcessManagerService.createTerminalShell()
         if(customShell != null){
-            //terminal.attach(customShell, this)
+            terminal.attach(customShell, this)
             applyTheme(userTheme)
         }
     }
