@@ -12,6 +12,8 @@ Lets you run Python scripts with or without included binaries on Android.
 <img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie extras config" width="47%" height="auto">
 </div>
 
+
+
 ## Installation
 
 1) Build from source yourself or get the prebuilt APK from the releases section.
@@ -21,11 +23,62 @@ Lets you run Python scripts with or without included binaries on Android.
 5) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the `autosec.tar.xz` file and extract to the `AutoSec` folder.
 6) Optional: Disable Battery Optimization for AutoPie.
 
+
 ## Usage
 
 1) Open AutoPie App
 2) There are currently two types of commands. `Share Sheet Commands`, `Folder Observer Commands` and `Cron Commands`.
 3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
+
+
+## New MCP Server
+AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
+
+The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
+
+The scripts inside this folder will be included as tools in the MCP server.
+
+You can add any kind of functionality on your phone with this by just writing a Python script.
+
+The MCP tool scripts should be in this format.
+
+```py
+import os
+from typing import Dict, Any
+from pydantic import BaseModel
+
+class CreateFileInput(BaseModel):
+    filepath: str
+    content: str
+
+
+class MCPTool:
+    path = "/create_file"
+    name = "create_text_file"
+    methods=["POST"]
+    
+    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
+        """Creates a text file with the specified content."""
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
+            
+            # Write content to file
+            with open(input.filepath, "w") as f:
+                f.write(input.content)
+            
+            return {
+                "status": "success",
+                "message": f"File '{input.filepath}' created successfully"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to create file: {str(e)}"
+            }
+
+```
+
 
 ## Troubleshooting
 * Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. And a `bin` folder with the binaries like `ffmpeg`.
