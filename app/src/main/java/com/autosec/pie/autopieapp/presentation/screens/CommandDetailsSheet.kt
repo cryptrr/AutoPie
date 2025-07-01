@@ -82,7 +82,9 @@ fun CommandDetailsSheet(
                 text = "DETAILS",
                 enabled = true,
                 onClick = {
-                    shareReceiverViewModel.main.showNotification(AppNotification.FeatureWIP)
+                    scope.launch {
+                        shareReceiverViewModel.main.showNotification(AppNotification.FeatureWIP)
+                    }
                 }
             ),
         )
@@ -123,6 +125,7 @@ fun CommandDetailsSheet(
                AutoPiePrimaryButton("RUN") {
                    shareReceiverViewModel.currentExtrasDetails.value =
                        Triple(true, card, ShareInputs())
+                   open.value = false
                }
 
            }
