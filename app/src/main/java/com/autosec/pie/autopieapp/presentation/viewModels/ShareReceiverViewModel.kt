@@ -16,6 +16,7 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.ShareInputs
+import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
@@ -52,6 +53,9 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
+    private val appPreferences: AppPreferences by inject(AppPreferences::class.java)
+
+
 
     var shareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
     var filteredShareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
@@ -84,8 +88,6 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
     }
 
     fun search(query: String) {
-
-
         filteredShareItemsResult.update {
             shareItemsResult.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
         }
@@ -99,6 +101,7 @@ class ShareReceiverViewModel(val application1: Application) : AndroidViewModel(a
             main.showError(ViewModelError.StoragePermissionDenied)
             return
         }
+
 
         viewModelScope.launch(dispatchers.io){
             try {
