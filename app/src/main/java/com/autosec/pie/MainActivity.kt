@@ -397,13 +397,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     if (autoPieStates.commandDetailsBottomSheetOpen.value) {
-                        autoPieStates.currentCommandModel.value?.let{
-                            CommandDetailsSheet(
-                                state = autoPieStates.commandDetailsBottomSheet,
-                                open = autoPieStates.commandDetailsBottomSheetOpen,
-                                card = it
-                            )
-                        }
+                        CommandDetailsSheet(
+                            state = autoPieStates.commandDetailsBottomSheet,
+                            open = autoPieStates.commandDetailsBottomSheetOpen,
+                        )
                     }
 
                 }

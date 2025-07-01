@@ -48,6 +48,7 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
+import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -194,7 +195,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
         if(fileUris == null && currentLink == null && command.command.contains("INPUT_FILE")){
 
-            GenericTextFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
+            GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
         }else{
             Spacer(modifier = Modifier.height(7.dp))
         }

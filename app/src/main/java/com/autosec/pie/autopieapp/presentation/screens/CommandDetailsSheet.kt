@@ -40,16 +40,18 @@ import org.koin.androidx.compose.koinViewModel
 fun CommandDetailsSheet(
     state: SheetState,
     open: MutableState<Boolean>,
-    card: CommandModel,
     key: String? = null,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
 
+
     val scope = rememberCoroutineScope()
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
     val createCommandViewModel: CreateCommandViewModel = koinViewModel()
+
+    val card = shareReceiverViewModel.main.currentSelectedCommand.value ?: return
 
 
     val optionsList = remember{

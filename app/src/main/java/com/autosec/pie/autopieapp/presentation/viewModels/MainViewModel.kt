@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.domain.AppNotification
@@ -44,6 +45,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val eventFlow = _eventFlow.asSharedFlow()
 
     var currentCommandKey = mutableStateOf("")
+    var currentSelectedCommand = mutableStateOf<CommandModel?>(null)
 
     var viewModelError = MutableSharedFlow<Notification?>(replay = 1)
     var appNotification = MutableSharedFlow<Notification?>(replay = 1)

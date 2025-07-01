@@ -4,8 +4,11 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -129,8 +132,82 @@ class Utils{
             }
             return null
         }
+
+        @RequiresApi(Build.VERSION_CODES.Q)
+        fun getAbsolutePathFromUri2(context: Context, uri: Uri): String? {
+            // Try MediaStore first
+            if ("content".equals(uri.scheme, ignoreCase = true)) {
+                if (isExternalStorageDocument(uri)) {
+                    val docId = DocumentsContract.getDocumentId(uri)
+                    val split = docId.split(":")
+                    val type = split[0]
+                    val relativePath = split.getOrNull(1)
+
+                    val fullPath = when (type) {
+                        "primary" -> "/storage/emulated/0/$relativePath"
+                        else -> "/storage/$type/$relativePath"
+                    }
+                    return fullPath
+                } else if (isDownloadsDocument(uri)) {
+                    val id = DocumentsContract.getDocumentId(uri)
+                    if (id.startsWith("raw:")) {
+                        return id.removePrefix("raw:")
+                    }
+                    val contentUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                    return getDataColumn(context, contentUri, "_id=?", arrayOf(id))
+                } else if (isMediaDocument(uri)) {
+                    val docId = DocumentsContract.getDocumentId(uri)
+                    val split = docId.split(":")
+                    val type = split[0]
+                    val id = split[1]
+
+                    val contentUri = when (type) {
+                        "image" -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        "video" -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                        "audio" -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                        else -> null
+                    }
+
+                    return contentUri?.let {
+                        getDataColumn(context, it, "_id=?", arrayOf(id))
+                    }
+                } else {
+                    return getDataColumn(context, uri, null, null)
+                }
+            } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+                return uri.path
+            }
+            return null
+        }
+
+        fun getDataColumn(
+            context: Context,
+            uri: Uri,
+            selection: String?,
+            selectionArgs: Array<String>?
+        ): String? {
+            val column = "_data"
+            val projection = arrayOf(column)
+            context.contentResolver.query(uri, projection, selection, selectionArgs, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndexOrThrow(column)
+                        return cursor.getString(index)
+                    }
+                }
+            return null
+        }
     }
 }
+
+fun isExternalStorageDocument(uri: Uri): Boolean =
+    "com.android.externalstorage.documents" == uri.authority
+
+fun isDownloadsDocument(uri: Uri): Boolean =
+    "com.android.providers.downloads.documents" == uri.authority
+
+fun isMediaDocument(uri: Uri): Boolean =
+    "com.android.providers.media.documents" == uri.authority
 
 fun Intent.getIntExtraOrNull(key: String): Int? {
     return if (hasExtra(key)) getIntExtra(key, -1) else null
