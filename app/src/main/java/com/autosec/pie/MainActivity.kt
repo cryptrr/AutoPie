@@ -72,6 +72,7 @@ import com.autosec.pie.autopieapp.presentation.screens.InstallNewPackageBottomSh
 import com.autosec.pie.autopieapp.presentation.screens.InstalledScreen
 import com.autosec.pie.autopieapp.presentation.screens.SettingsScreen
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.presentation.screens.CommandDetailsSheet
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
@@ -393,6 +394,16 @@ class MainActivity : ComponentActivity() {
                             state = autoPieStates.cloudPackageDetailsBottomSheet,
                             open = autoPieStates.cloudPackageDetailsBottomSheetOpen,
                         )
+                    }
+
+                    if (autoPieStates.commandDetailsBottomSheetOpen.value) {
+                        autoPieStates.currentCommandModel.value?.let{
+                            CommandDetailsSheet(
+                                state = autoPieStates.commandDetailsBottomSheet,
+                                open = autoPieStates.commandDetailsBottomSheetOpen,
+                                card = it
+                            )
+                        }
                     }
 
                 }

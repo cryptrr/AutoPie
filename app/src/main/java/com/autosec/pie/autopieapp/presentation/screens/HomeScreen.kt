@@ -172,9 +172,12 @@ fun CommandCard(
             .height(120.dp)
             .combinedClickable(
                 onClick = {
-                    Timber.d("CLICK DETECTED")
-                    commandsListScreenViewModel.main.currentCommandKey.value = card.name
-                    commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
+//                    Timber.d("CLICK DETECTED")
+//                    commandsListScreenViewModel.main.currentCommandKey.value = card.name
+//                    commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
+
+
+                    commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenCommandDetails(card))
 
                 },
                 onLongClick = {

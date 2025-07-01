@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
@@ -48,6 +50,12 @@ data class AutoPieStates(
 
     val editCommandBottomSheet: SheetState,
     val editCommandBottomSheetOpen: MutableState<Boolean>,
+
+    val commandDetailsBottomSheet: SheetState,
+    val commandDetailsBottomSheetOpen: MutableState<Boolean>,
+
+    val currentCommandModel: MutableState<CommandModel?>
+
 
 )
 
@@ -95,6 +103,12 @@ fun rememberAutoPieStates(): AutoPieStates{
 
 
     val editCommandBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+    val commandDetailsBottomSheet = rememberModalBottomSheetState(true)
+
+    val commandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+    val currentCommandModel = rememberSaveable { mutableStateOf<CommandModel?>(null) }
 
     //STUPID BOTTOMSHEETSTATE NEVER GOES TO HIDDEN AFTER OPENED
     //HAHA GET REKT, JETPACK COMPOSE BOTTOMSHEETSTATE!
@@ -145,6 +159,10 @@ fun rememberAutoPieStates(): AutoPieStates{
                 is ViewModelEvent.OpenEditCommandSheet -> {
                     editCommandBottomSheetOpen.value = true
                 }
+                is ViewModelEvent.OpenCommandDetails -> {
+                    commandDetailsBottomSheetOpen.value = true
+                    currentCommandModel.value = it.card
+                }
                 is ViewModelEvent.OpenCloudCommandDetails -> {
                     cloudCommandDetailsBottomSheetOpen.value = true
                 }
@@ -170,6 +188,9 @@ fun rememberAutoPieStates(): AutoPieStates{
         installNewPackageBottomSheetOpen = installNewPackageBottomSheetOpen,
         installNewPackageBottomSheet = installNewPackageBottomSheet,
         cloudPackageDetailsBottomSheet = cloudPackageDetailsBottomSheet,
-        cloudPackageDetailsBottomSheetOpen = cloudPackageDetailsBottomSheetOpen
+        cloudPackageDetailsBottomSheetOpen = cloudPackageDetailsBottomSheetOpen,
+        commandDetailsBottomSheet = commandDetailsBottomSheet,
+        commandDetailsBottomSheetOpen = commandDetailsBottomSheetOpen,
+        currentCommandModel = currentCommandModel
     )
 }

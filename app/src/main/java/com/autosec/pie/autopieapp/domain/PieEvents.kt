@@ -1,11 +1,14 @@
 package com.autosec.pie.autopieapp.domain
 
+import com.autosec.pie.autopieapp.data.CommandModel
+
 sealed class ViewModelEvent {
     data object InstallingPython : ViewModelEvent()
     data object InstalledPythonSuccessfully : ViewModelEvent()
     data object OpenEditCommandSheet : ViewModelEvent()
     data object OpenCloudCommandDetails : ViewModelEvent()
     data object OpenCloudPackageDetails : ViewModelEvent()
+    data class OpenCommandDetails(var card: CommandModel) : ViewModelEvent()
 
     data object RefreshCommandsList : ViewModelEvent()
     data object ObserversConfigChanged : ViewModelEvent()
