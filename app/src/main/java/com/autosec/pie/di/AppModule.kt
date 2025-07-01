@@ -27,7 +27,7 @@ val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
 
     single<MainViewModel> { MainViewModel(get()) }
-    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+    single<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
