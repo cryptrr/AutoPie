@@ -50,6 +50,7 @@ import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.AutoPiePrimaryButton
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
@@ -75,6 +76,7 @@ fun CommandDetailsSheet(
     val scope = rememberCoroutineScope()
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+    val createCommandViewModel: CreateCommandViewModel = koinViewModel()
 
 
     val optionsList = remember{
@@ -83,15 +85,23 @@ fun CommandDetailsSheet(
                 text = "EDIT",
                 enabled = true,
                 onClick = {
-                    shareReceiverViewModel.main.currentCommandKey.value = card.name
-                    shareReceiverViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
+                    scope.launch {
+                        shareReceiverViewModel.main.currentCommandKey.value = card.name
+                        shareReceiverViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
+                        open.value = false
+                    }
+
                 }
             ),
             OptionItem(
                 text = "CLONE",
                 enabled = true,
                 onClick = {
-                    shareReceiverViewModel.main.showNotification(AppNotification.FeatureWIP)
+                    scope.launch {
+                        createCommandViewModel.cloneCommand(command = card)
+                        open.value = false
+                        shareReceiverViewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                    }
                 }
             ),
 

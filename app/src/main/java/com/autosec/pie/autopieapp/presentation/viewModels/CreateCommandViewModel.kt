@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.CommandCreationModel
 import com.autosec.pie.autopieapp.data.CommandExtra
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
@@ -65,6 +66,38 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                 )
 
                 useCases.createCommand(newCommand).let{
+                    delay(1500L)
+                    clear()
+                }
+            }catch (e: Exception){
+                when(e){
+                    is ViewModelError -> main.showError(e)
+                    else -> Timber.e(e)
+                }
+            }
+        }
+    }
+
+    fun cloneCommand(command: CommandModel) {
+        viewModelScope.launch(dispatchers.io) {
+
+
+
+            try {
+                val clonedCommand = CommandCreationModel(
+                    selectedCommandType = command.type.toString(),
+                    commandName = "${command.name}:COPY",
+                    directory = command.path,
+                    command = command.command,
+                    deleteSourceFile = command.deleteSourceFile,
+                    isValidCommand = true,
+                    exec = command.exec,
+                    commandExtras = command.extras ?: emptyList(),
+                    selectors = "",
+                    cronInterval = ""
+                )
+
+                useCases.createCommand(clonedCommand).let{
                     delay(1500L)
                     clear()
                 }
