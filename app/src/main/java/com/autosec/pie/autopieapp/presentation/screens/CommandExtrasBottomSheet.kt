@@ -26,6 +26,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -61,7 +62,7 @@ import timber.log.Timber
 @Composable
 fun CommandExtrasBottomSheet(
     state: SheetState,
-    open: State<Boolean>,
+    open: MutableState<Boolean>,
     parentSheetState: SheetState? = null,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
@@ -103,7 +104,7 @@ fun CommandExtrasBottomSheet(
             ) {
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState)
+                    CommandExtraInputs(it.second, parentSheetState, open)
                 }
 
             }
@@ -128,7 +129,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null) {
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>) {
 
     val context = LocalContext.current
 
@@ -342,6 +343,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             if(parentSheetState != null){
                                 delay(900)
                                 activity?.finish()
+                            }else{
+                                delay(1500)
+                                openState.value = false
                             }
                         }catch (e: Exception){
                             Timber.e(e)

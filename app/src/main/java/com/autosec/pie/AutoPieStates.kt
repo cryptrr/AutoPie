@@ -40,7 +40,7 @@ data class AutoPieStates(
     val installNewPackageBottomSheetOpen: MutableState<Boolean>,
 
     val runCommandBottomSheetState: SheetState,
-    val runCommandBottomSheetStateOpen: State<Boolean>,
+    val runCommandBottomSheetStateOpen: MutableState<Boolean>,
 
     val cloudCommandDetailsBottomSheet: SheetState,
     val cloudCommandDetailsBottomSheetOpen: MutableState<Boolean>,
@@ -60,8 +60,12 @@ data class AutoPieStates(
 @Composable
 fun rememberAutoPieStates(): AutoPieStates{
 
+
+
     val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+
+
 
     val addShareBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
         it != SheetValue.Hidden
@@ -75,8 +79,15 @@ fun rememberAutoPieStates(): AutoPieStates{
     val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
     val runCommandBottomSheetState = rememberModalBottomSheetState(true)
+//    val runCommandBottomSheetStateOpen = remember {
+//        derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
+//    }
     val runCommandBottomSheetStateOpen = remember {
-        derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
+        runCommandBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
     }
 
     val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {

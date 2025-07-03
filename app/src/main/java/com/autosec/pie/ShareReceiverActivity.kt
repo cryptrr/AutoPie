@@ -253,7 +253,11 @@ fun ShareContextMenuBottomSheet(
 
     val extrasBottomSheetState = rememberModalBottomSheetState(true)
     val extrasBottomSheetStateOpen = remember {
-        derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
+        extrasBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
     }
 
 
