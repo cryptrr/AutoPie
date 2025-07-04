@@ -97,6 +97,7 @@ sealed class AppNotification : Notification {
     data class MCPServerStarted(val host: String, val port: String) : AppNotification()
     data object MCPServerStopped : AppNotification()
     data object MCPServerStartError : AppNotification()
+    data object CommandDeleted : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
 
 
@@ -121,6 +122,7 @@ sealed class AppNotification : Notification {
             is MCPServerStopped -> "MCP Server Stopped"
             is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
+            is CommandDeleted -> "Command Deleted"
             else -> "An Event Occurred"
         }
 

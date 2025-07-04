@@ -47,8 +47,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     var currentCommandKey = mutableStateOf("")
     var currentSelectedCommand = mutableStateOf<CommandModel?>(null)
 
-    var viewModelError = MutableSharedFlow<Notification?>(replay = 1)
-    var appNotification = MutableSharedFlow<Notification?>(replay = 1)
+    var viewModelError = MutableSharedFlow<Notification?>(replay = 0)
+    var appNotification = MutableSharedFlow<Notification?>(replay = 0)
 
 
     var pythonInstallationComplete by mutableStateOf(false)

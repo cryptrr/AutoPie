@@ -60,6 +60,7 @@ import com.autosec.pie.autopieapp.presentation.elements.GenericFormSwitch
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
@@ -393,6 +394,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     viewModel.deleteCommand(key = commandKey)
                     delay(500L)
                     viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                    viewModel.main.showNotification(AppNotification.CommandDeleted)
                     open.value = false
                 }
             },
