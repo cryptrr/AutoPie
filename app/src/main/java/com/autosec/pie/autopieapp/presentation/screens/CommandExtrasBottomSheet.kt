@@ -104,7 +104,7 @@ fun CommandExtrasBottomSheet(
             ) {
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState, open)
+                    CommandExtraInputs(it.second, parentSheetState, open, state)
                 }
 
             }
@@ -129,7 +129,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>) {
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>, sheetState: SheetState) {
 
     val context = LocalContext.current
 
@@ -343,9 +343,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             if(parentSheetState != null){
                                 delay(900)
                                 activity?.finish()
+                                viewModel.currentExtrasDetails.value = null
                             }else{
                                 delay(1500)
                                 openState.value = false
+                                viewModel.currentExtrasDetails.value = null
                             }
                         }catch (e: Exception){
                             Timber.e(e)
