@@ -313,8 +313,8 @@ fun ShareContextMenuBottomSheet(
 
                     }
                     item {
-                        SearchBar(searchQuery = shareReceiverViewModel.searchQuery) {
-                            shareReceiverViewModel.search(shareReceiverViewModel.searchQuery.value)
+                        SearchBar(searchQuery = shareReceiverViewModel.main.shareReceiverSearchQuery) {
+                            shareReceiverViewModel.search(shareReceiverViewModel.main.shareReceiverSearchQuery.value)
                         }
                     }
                     items(

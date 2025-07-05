@@ -1,5 +1,6 @@
 package com.autosec.pie.di
 
+import androidx.lifecycle.SavedStateHandle
 import com.autosec.pie.core.DefaultDispatchers
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.apiService.ApiService
@@ -27,7 +28,8 @@ val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
 
     single<MainViewModel> { MainViewModel(get()) }
-    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
+    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get(), get())}
+
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 

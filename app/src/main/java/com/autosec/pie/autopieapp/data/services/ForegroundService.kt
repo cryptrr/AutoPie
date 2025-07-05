@@ -12,19 +12,27 @@ import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
+import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.autosec.pie.core.DispatcherProvider
+import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
 class ForegroundService : Service() {
 
-    private val shareReceiverViewModel: ShareReceiverViewModel by inject(ShareReceiverViewModel::class.java)
+    private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+    val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+
+    private val autoPieNotification: AutoPieNotification by inject(
+        AutoPieNotification::class.java)
 
 
     private var notificationManager: NotificationManager? = null
@@ -34,8 +42,8 @@ class ForegroundService : Service() {
     private var foregroundServiceId : Int? = null
 
     init {
-        shareReceiverViewModel.viewModelScope.launch {
-            shareReceiverViewModel.main.eventFlow.collect{
+        mainViewModel.viewModelScope.launch {
+            mainViewModel.eventFlow.collect{
                 when(it){
                     is ViewModelEvent.CommandCompleted -> {
                         try {
@@ -141,7 +149,25 @@ class ForegroundService : Service() {
                         emptyList()
                     }
 
-                    shareReceiverViewModel.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId)
+                    useCases.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
+
+                        mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                        Timber.e(e)
+
+                    }.collect{ receipt ->
+                        if (receipt.first) {
+                            Timber.d("Process Success".uppercase())
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.second}")
+
+                        } else {
+                            Timber.d("Process FAILED".uppercase())
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.second}")
+                        }
+
+                        mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+
+                    }
+
                 }catch (e: Exception){
                     Timber.e(e)
                 }

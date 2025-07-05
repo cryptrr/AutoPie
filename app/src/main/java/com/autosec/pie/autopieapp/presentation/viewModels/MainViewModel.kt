@@ -64,6 +64,11 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     var installInitPackagesPrompt by mutableStateOf(false)
 
+    //MOVED HERE FROM SHARERECEIVERVIEWMODEL becase of State Hoisting necessity
+    var shareReceiverSearchQuery = mutableStateOf("")
+
+
+
 
     var turnOffFileObservers by mutableStateOf(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_OFF)).also { state ->
         viewModelScope.launch {
