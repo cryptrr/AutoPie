@@ -42,6 +42,7 @@ android {
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_debug_round"
         }
         release {
+            manifestPlaceholders += mapOf()
             isMinifyEnabled = false
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_round"
@@ -51,6 +52,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

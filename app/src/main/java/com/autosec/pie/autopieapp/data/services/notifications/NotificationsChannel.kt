@@ -24,6 +24,7 @@ import com.autosec.pie.autopieapp.data.AutoPieConstants
 import com.autosec.pie.utils.getIntExtraOrNull
 import timber.log.Timber
 import java.io.File
+import androidx.core.net.toUri
 
 class AutoPieNotification(val context: Application) {
 
@@ -31,6 +32,7 @@ class AutoPieNotification(val context: Application) {
         const val FOREGROUND_CHANNEL = "foreground_channel"
         const val MAIN_CHANNEL = "autopie_main"
         const val BROADCASTS_CHANNEL = "autopie_command_broadcasts"
+        const val MEDIA_CHANNEL = "autopie_media"
     }
 
     fun createNotificationChannel() {
@@ -38,6 +40,7 @@ class AutoPieNotification(val context: Application) {
             createCommandNotificationChannel()
             createCommandBroadcastNotificationChannel()
             createForegroundChannel()
+            createMediaChannel()
         }
         catch (e:Exception){
             Timber.e(e)
@@ -74,6 +77,20 @@ class AutoPieNotification(val context: Application) {
         val channelName = "Process broadcasts channel"
         val channelDescription = "Command Broadcasts"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescription
+        }
+
+        val notificationManager: NotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun createMediaChannel() {
+        val channelId = MEDIA_CHANNEL
+        val channelName = "Media Events"
+        val channelDescription = "Media broadcast"
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val channel = NotificationChannel(channelId, channelName, importance).apply {
             description = channelDescription
         }
@@ -124,6 +141,55 @@ class AutoPieNotification(val context: Application) {
                 "Open Logs",
                 pendingButtonIntent
             )
+
+        // Show the notification
+        with(NotificationManagerCompat.from(context)) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+
+                //requestNotificationPermission()
+
+                return
+            }
+            notify(notificationId, builder.build())
+        }
+    }
+
+    fun sendMediaReadyNotification(intent: Intent, context: Context) {
+        val channelId = MEDIA_CHANNEL
+
+        val notificationId = System.currentTimeMillis().toInt()
+        val title = intent.getStringExtra("title")
+        val description = intent.getStringExtra("description")
+        val mediaUrl = intent.getStringExtra("media_url") ?: "https://google.com"
+
+        Timber.d("Sending notification")
+
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, mediaUrl)
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, "Share link with")
+
+
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, shareIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSilent(false)
+            .setContentTitle(title)
+            .setContentText(description)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(false)
 
         // Show the notification
         with(NotificationManagerCompat.from(context)) {

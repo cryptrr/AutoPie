@@ -93,6 +93,7 @@ class MyApplication : Application() {
         val receiver = ProcessBroadcastReceiver()
         val filter = IntentFilter().apply {
             addAction("${this@MyApplication.packageName}.SHOW_NOTIFICATION")
+            addAction("${this@MyApplication.packageName}.PLAY_MEDIA")
             addAction("${this@MyApplication.packageName}.CANCEL_NOTIFICATION")
             addAction("${this@MyApplication.packageName}.CANCEL_PROCESS")
         }
