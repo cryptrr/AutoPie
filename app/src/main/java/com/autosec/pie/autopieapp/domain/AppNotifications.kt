@@ -37,6 +37,7 @@ sealed class ViewModelError() : Exception(), Notification {
     object Conflict : ViewModelError()
     object UserForbidden : ViewModelError()
     object NetworkError : ViewModelError()
+    object ConfigUnavailable : ViewModelError()
     object ShareConfigUnavailable : ViewModelError()
     object CronConfigUnavailable : ViewModelError()
     object ObserverConfigUnavailable : ViewModelError()

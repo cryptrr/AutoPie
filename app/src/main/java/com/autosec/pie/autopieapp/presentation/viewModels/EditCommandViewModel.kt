@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.CommandExtra
 import com.autosec.pie.autopieapp.data.services.JsonService
+import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -96,249 +97,28 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
     fun changeCommandDetails(key: String) {
 
-        Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
+        viewModelScope.launch(dispatchers.io){
+            try {
+                useCases.changeCommandDetails(key, commandExtras, oldCommandName, selectors, commandName, directory, execFile, command, deleteSource, type, cronInterval)
 
-        //isLoading.value = true
-
-        //Validate extras if exists.
-        val validationError = if (commandExtras.value.isEmpty()) {
-            false
-        } else {
-            commandExtras.value.any { it.name.isBlank() } || commandExtras.value.any { it.default.isBlank() }
-        }
-
-        Timber.d("${commandExtras.value.any { it.name.isBlank() }}")
-        Timber.d("${commandExtras.value.any { it.default.isBlank() }}")
-
-//        if (validationError) {
-//            main.showError(ViewModelError.Unknown)
-//            return
-//        }
-//
-//        Timber.d("NO validation error")
-
-        viewModelScope.launch(dispatchers.io) {
-
-            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
-
-            val shareCommands = jsonService.readSharesConfig()
-            val observerCommands = jsonService.readObserversConfig()
-            val cronCommands = jsonService.readCronConfig()
-
-
-            if (shareCommands == null || observerCommands == null || cronCommands == null) {
-                return@launch
+            }catch (e: ViewModelError){
+                main.showError(e)
+            }catch (e: Exception){
+                Timber.e(e)
             }
-
-
-            var commandType = ""
-
-            val commandObject = shareCommands.getAsJsonObject(oldCommandName.value)
-                .also { if (it != null) commandType = "SHARE" } ?: observerCommands.getAsJsonObject(
-                key
-            ).also { if (it != null) commandType = "FILE_OBSERVER" }
-            ?: cronCommands.getAsJsonObject(
-                key
-            ).also { if (it != null) commandType = "CRON" }
-
-            val selectorsJson = if (selectors.value.isNotBlank()) {
-                val jsonArray = JsonArray()
-
-                selectors.value.split(",").map { string ->
-                    jsonArray.add(JsonParser.parseString(string.trim()))
-                }
-
-                jsonArray
-            } else {
-                JsonArray()
-            }
-
-            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-
-
-            Timber.d("commandObject: $commandObject")
-
-            //Key didn't change
-            if (oldCommandName.value == commandName.value) {
-
-                Timber.d("${oldCommandName.value} == ${commandName.value}")
-
-                commandObject.addProperty("path", directory.value)
-                commandObject.addProperty("exec", execFile.value)
-                commandObject.addProperty("command", command.value)
-                commandObject.addProperty("deleteSourceFile", deleteSource.value)
-
-                when (type.value) {
-                    "SHARE" -> {
-                        if (commandExtras.value.isNotEmpty()) {
-                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        } else {
-                            commandObject.remove("extras")
-                        }
-
-                        shareCommands.add(commandName.value, commandObject)
-                        //shareCommands.remove(oldCommandName.value)
-                    }
-
-                    "FILE_OBSERVER" -> {
-                        if (commandExtras.value.isNotEmpty()) {
-                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        } else {
-                            commandObject.remove("extras")
-                        }
-
-                        commandObject.add("selectors", selectorsJson)
-
-                        observerCommands.add(commandName.value, commandObject)
-                        //observerCommands.remove(oldCommandName.value)
-                    }
-                    "CRON" -> {
-                        if (commandExtras.value.isNotEmpty()) {
-                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        } else {
-                            commandObject.remove("extras")
-                        }
-
-                        commandObject.addProperty("cronInterval", cronInterval.value)
-
-                        cronCommands.add(commandName.value, commandObject)
-                        //observerCommands.remove(oldCommandName.value)
-                    }
-                }
-
-
-            } else {
-
-                Timber.d("Command key changed")
-
-                commandObject.addProperty("path", directory.value)
-                commandObject.addProperty("exec", execFile.value)
-                commandObject.addProperty("command", command.value)
-                commandObject.addProperty("deleteSourceFile", deleteSource.value)
-
-                when (type.value) {
-                    "SHARE" -> {
-                        if (commandExtras.value.isNotEmpty()) {
-                            commandObject.add("extras", gson.toJsonTree(commandExtras.value))
-                        } else {
-                            commandObject.remove("extras")
-                        }
-
-
-                        shareCommands.add(commandName.value, commandObject)
-                        shareCommands.remove(oldCommandName.value)
-                    }
-
-                    "FILE_OBSERVER" -> {
-                        commandObject.add("selectors", selectorsJson)
-
-
-                        observerCommands.add(commandName.value, commandObject)
-                        observerCommands.remove(oldCommandName.value)
-                    }
-                    "CRON" -> {
-                        commandObject.addProperty("cronInterval", cronInterval.value)
-
-
-                        cronCommands.add(commandName.value, commandObject)
-                        cronCommands.remove(oldCommandName.value)
-                    }
-                }
-            }
-
-
-
-            when (type.value) {
-                "SHARE" -> {
-                    val modifiedJsonContent = gson.toJson(shareCommands)
-
-                    jsonService.writeSharesConfig(modifiedJsonContent)
-
-                }
-
-                "FILE_OBSERVER" -> {
-                    val modifiedJsonContent = gson.toJson(observerCommands)
-
-                    jsonService.writeObserversConfig(modifiedJsonContent)
-                }
-
-                "CRON" -> {
-                    val modifiedJsonContent = gson.toJson(cronCommands)
-
-                    jsonService.writeCronConfig(modifiedJsonContent)
-                }
-            }
-
-
         }
 
     }
 
     fun deleteCommand(key: String) {
 
-
         viewModelScope.launch(dispatchers.io) {
-
-            Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
-
-            val shareCommands = jsonService.readSharesConfig()
-            val observerCommands = jsonService.readObserversConfig()
-            val cronCommands = jsonService.readCronConfig()
-
-            if (shareCommands == null || observerCommands == null || cronCommands == null) {
-                return@launch
-            }
-
-            var commandType = ""
-
-            val commandObject = shareCommands.getAsJsonObject(oldCommandName.value)
-                .also { if (it != null) commandType = "SHARE" } ?: observerCommands.getAsJsonObject(
-                key
-            ).also { if (it != null) commandType = "FILE_OBSERVER" }
-            ?: cronCommands.getAsJsonObject(
-                key
-            ).also { if (it != null) commandType = "CRON" }
-
-
-            Timber.d("commandObject: $commandObject")
-
-            when (type.value) {
-                "SHARE" -> {
-                    shareCommands.remove(commandName.value)
-                    //shareCommands.remove(oldCommandName.value)
-                }
-
-                "FILE_OBSERVER" -> {
-                    observerCommands.remove(commandName.value)
-                    //observerCommands.remove(oldCommandName.value)
-                }
-                "CRON" -> {
-                    cronCommands.remove(commandName.value)
-                    //observerCommands.remove(oldCommandName.value)
-                }
-            }
-
-
-            val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-
-            when (type.value) {
-                "SHARE" -> {
-                    val modifiedJsonContent = gson.toJson(shareCommands)
-
-                    jsonService.writeSharesConfig(modifiedJsonContent)
-
-                }
-
-                "FILE_OBSERVER" -> {
-                    val modifiedJsonContent = gson.toJson(observerCommands)
-
-                    jsonService.writeObserversConfig(modifiedJsonContent)
-                }
-                "CRON" -> {
-                    val modifiedJsonContent = gson.toJson(cronCommands)
-
-                    jsonService.writeCronConfig(modifiedJsonContent)
-                }
+            try {
+                useCases.deleteCommand(key, commandName, oldCommandName, type)
+            }catch (e: ViewModelError){
+                main.showError(e)
+            }catch (e: Exception){
+                Timber.e(e)
             }
 
 
