@@ -66,7 +66,8 @@ class RunShareCommandForDirectory {
                     }
                 }
 
-                val usePython = !Utils.isShellScript(File(fullExecPath))
+                val isShellScript = Utils.isShellScript(File(fullExecPath))
+                val usePython = Utils.isZipFile(File(fullExecPath))
 
                 val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
                     inputParsedData,commandExtraInputs,processId, usePython)

@@ -38,9 +38,9 @@ class RunShareCommand() {
             }
 
             else -> {
+                //Handler for Raw TEXT
                 if(currentLink == null) throw ViewModelError.CommandUnknown("Input is null")
                 return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId)
-                //throw ViewModelError.CommandUnknown("Unknown Command for Input: $currentLink")
             }
         }
     }

@@ -43,7 +43,6 @@ class RunShareCommandForUrl{
             val execFilePath =
                 Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-
             val fullExecPath = when{
                 File(item.exec).isAbsolute -> {
                     item.exec
@@ -58,7 +57,8 @@ class RunShareCommandForUrl{
                 }
             }
 
-            val usePython = !Utils.isShellScript(File(fullExecPath))
+            val isShellScript = Utils.isShellScript(File(fullExecPath))
+            val usePython = Utils.isZipFile(File(fullExecPath))
 
 
             Timber.d("Command to run: ${item.exec} $resultString")

@@ -133,39 +133,6 @@ class ShareReceiverViewModel(private val application1: Application, private val 
         }
     }
 
-    private fun readSharesConfig(): JsonObject? {
-
-        val sharesFilePath =
-            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
-
-
-        try {
-            val file = File(sharesFilePath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            //Timber.d(jsonString)
-
-            // Parse the JSON string
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Share Sheet config is not valid json")
-                throw JsonParseException("Config not valid")
-            }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            Timber.e(e)
-            return null
-        }
-    }
-
-
     fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
 
 
