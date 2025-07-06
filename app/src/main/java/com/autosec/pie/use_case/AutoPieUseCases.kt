@@ -8,5 +8,6 @@ data class AutoPieUseCases (
     val runShareCommand: RunShareCommand,
     val runShareCommandForDirectory: RunShareCommandForDirectory,
     val runShareCommandForUrl : RunShareCommandForUrl,
-    val runShareCommandForFiles: RunShareCommandForFiles
+    val runShareCommandForFiles: RunShareCommandForFiles,
+    val runShareCommandForText: RunShareCommandForText
 )

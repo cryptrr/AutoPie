@@ -4,6 +4,9 @@ import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.containsValidUrl
+import com.autosec.pie.utils.extractFirstUrl
 import com.autosec.pie.utils.isValidUrl
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -27,13 +30,17 @@ class RunShareCommand() {
             currentLink.isValidUrl() -> {
                 return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
             }
-
+            currentLink.containsValidUrl() -> {
+                return useCases.runShareCommandForUrl(item, currentLink.extractFirstUrl()!!, fileUris, commandExtraInputs, processId)
+            }
             fileUris.isNotEmpty() -> {
                 return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
             }
 
             else -> {
-                throw ViewModelError.Unknown
+                if(currentLink == null) throw ViewModelError.CommandUnknown("Input is null")
+                return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId)
+                //throw ViewModelError.CommandUnknown("Unknown Command for Input: $currentLink")
             }
         }
     }

@@ -44,7 +44,7 @@ sealed class ViewModelError() : Exception(), Notification {
     object InvalidCronConfig : ViewModelError()
     object InvalidObserverConfig : ViewModelError()
     object CommandNotFound : ViewModelError()
-
+    data class CommandUnknown(override val message: String) : ViewModelError()
 
 
     object Unknown : ViewModelError()

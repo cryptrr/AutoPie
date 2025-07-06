@@ -29,7 +29,7 @@ class ForegroundService : Service() {
 
     private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
-    val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+    private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
@@ -153,6 +153,7 @@ class ForegroundService : Service() {
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                         Timber.e(e)
+                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}")
 
                     }.collect{ receipt ->
                         if (receipt.first) {
@@ -170,6 +171,9 @@ class ForegroundService : Service() {
 
                 }catch (e: Exception){
                     Timber.e(e)
+                    autoPieNotification.sendNotification("Command Failed", "${e.message}")
+                    onDestroy()
+
                 }
             }
 

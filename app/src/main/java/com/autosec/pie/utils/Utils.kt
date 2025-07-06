@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.*
@@ -197,6 +198,7 @@ class Utils{
                 }
             return null
         }
+
     }
 }
 
