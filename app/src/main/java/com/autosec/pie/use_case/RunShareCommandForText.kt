@@ -12,7 +12,7 @@ import timber.log.Timber
 import java.io.File
 import java.net.URL
 
-class RunShareCommandForText{
+class RunShareCommandForText(private val processManagerService: ProcessManagerService){
     suspend operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
 
         return flow {
@@ -49,7 +49,7 @@ class RunShareCommandForText{
             Timber.d("Command to run: ${item.exec} $resultString")
 
 
-            val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
 
             emit(Pair(success, text))
         }

@@ -34,6 +34,8 @@ class AutoPieCoreService {
         val activity: Application by inject(Context::class.java)
         private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
         val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+        private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+
 
 
         fun initAutosec() {
@@ -74,7 +76,7 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
 
-                if (ProcessManagerService.checkShell()) {
+                if (processManagerService.checkShell()) {
                     Timber.d("Shellcheck: Shell is installed correctly")
                     return@launch
                 }
@@ -183,7 +185,7 @@ class AutoPieCoreService {
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
-                    ProcessManagerService.makeBinariesFolderExecutable()
+                    processManagerService.makeBinariesFolderExecutable()
 
                     CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
@@ -303,7 +305,7 @@ class AutoPieCoreService {
                     mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
 
                     //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
-                    val isDownloaded = ProcessManagerService.downloadFileWithPython(
+                    val isDownloaded = processManagerService.downloadFileWithPython(
                         AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
                     )
@@ -329,7 +331,7 @@ class AutoPieCoreService {
 
                 if (autoSecFolder.exists()) {
 
-                    val isDownloaded = ProcessManagerService.downloadFileWithPython(
+                    val isDownloaded = processManagerService.downloadFileWithPython(
                         AutoPieConstants.AUTOPIE_EMPTY_INIT_ARCHIVE_URL,
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
                     )

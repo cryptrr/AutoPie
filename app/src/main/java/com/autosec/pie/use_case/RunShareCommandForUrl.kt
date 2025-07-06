@@ -16,7 +16,7 @@ import timber.log.Timber
 import java.io.File
 import java.net.URL
 
-class RunShareCommandForUrl{
+class RunShareCommandForUrl(private val processManagerService: ProcessManagerService){
     suspend operator fun invoke(item: CommandModel, currentLink: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
 
         return flow {
@@ -64,7 +64,7 @@ class RunShareCommandForUrl{
             Timber.d("Command to run: ${item.exec} $resultString")
 
 
-            val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
 
             emit(Pair(success, currentLink))
         }

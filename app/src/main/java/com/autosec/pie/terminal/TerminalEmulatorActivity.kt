@@ -31,6 +31,7 @@ import com.autosec.pie.R
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.jaredrummler.ktsh.Shell
 import com.autosec.pie.terminal.terminal.Terminal
+import org.koin.java.KoinJavaComponent.inject
 
 /**
  * A simple terminal emulator demo using [Shell.SH].
@@ -38,6 +39,8 @@ import com.autosec.pie.terminal.terminal.Terminal
 class TerminalEmulatorActivity : ComponentActivity(), TerminalEmulatorView {
 
     private lateinit var terminal: Terminal
+    private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+
 
     private val viewModel by lazy {
         ViewModelProvider.AndroidViewModelFactory.getInstance(application)
@@ -105,7 +108,7 @@ class TerminalEmulatorActivity : ComponentActivity(), TerminalEmulatorView {
 
     private fun setUpTerminal() {
         terminal = findViewById(R.id.terminal)
-        val customShell = ProcessManagerService.createTerminalShell()
+        val customShell = processManagerService.createTerminalShell()
         if(customShell != null){
             terminal.attach(customShell, this)
             applyTheme(userTheme)

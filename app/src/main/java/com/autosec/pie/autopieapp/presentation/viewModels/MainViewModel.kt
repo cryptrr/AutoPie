@@ -32,13 +32,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
+import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
 
 
-    private val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
-    private val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
+    private val appPreferences: AppPreferences by inject(AppPreferences::class.java)
+    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+    private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+
 
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
@@ -136,7 +139,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun clearPackagesCache(){
         viewModelScope.launch {
-            ProcessManagerService.clearPackagesCache()
+            processManagerService.clearPackagesCache()
             showNotification(AppNotification.ClearedPackageCache)
         }
     }
@@ -165,7 +168,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
         viewModelScope.launch(dispatchers.io){
             try {
-                ProcessManagerService.startMCPServer(mcpPath, modulePath, host, port)
+                processManagerService.startMCPServer(mcpPath, modulePath, host, port)
             }
             catch (e: Exception){
                 showNotification(AppNotification.MCPServerStartError)
@@ -186,7 +189,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun stopMCPServer(){
         viewModelScope.launch(dispatchers.io){
             try {
-                ProcessManagerService.stopMCPServer()
+                processManagerService.stopMCPServer()
                 Timber.d("MCP Server Stopped")
                 withContext(dispatchers.main) {
                     mcpServerActive = false

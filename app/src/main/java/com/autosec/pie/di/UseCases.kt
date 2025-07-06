@@ -22,10 +22,10 @@ val useCaseModule = module {
             createCommand = CreateCommand(get()),
             getCommandDetails = GetCommandDetails(get()),
             runShareCommand = RunShareCommand(),
-            runShareCommandForUrl = RunShareCommandForUrl(),
-            runShareCommandForFiles = RunShareCommandForFiles(),
-            runShareCommandForDirectory = RunShareCommandForDirectory(),
-            runShareCommandForText = RunShareCommandForText(),
+            runShareCommandForUrl = RunShareCommandForUrl(get()),
+            runShareCommandForFiles = RunShareCommandForFiles(get()),
+            runShareCommandForDirectory = RunShareCommandForDirectory(get()),
+            runShareCommandForText = RunShareCommandForText(get()),
             changeCommandDetails = ChangeCommandDetails(get()),
             deleteCommand = DeleteCommand(get())
         )

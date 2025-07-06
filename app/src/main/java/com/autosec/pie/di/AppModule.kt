@@ -13,6 +13,7 @@ import com.autosec.pie.autopieapp.data.services.CronService
 import com.autosec.pie.autopieapp.data.services.FakeJSONService
 import com.autosec.pie.autopieapp.data.services.JSONServiceImpl
 import com.autosec.pie.autopieapp.data.services.JsonService
+import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
@@ -28,6 +29,7 @@ val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
 
     single<MainViewModel> { MainViewModel(get()) }
+    single<ProcessManagerService> { ProcessManagerService() }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get(), get())}
 
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }

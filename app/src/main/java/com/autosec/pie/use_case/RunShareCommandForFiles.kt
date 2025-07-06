@@ -18,7 +18,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-class RunShareCommandForFiles {
+class RunShareCommandForFiles(private val processManagerService: ProcessManagerService){
     suspend operator fun invoke(
         item: CommandModel,
         currentLink: String?,
@@ -88,7 +88,7 @@ class RunShareCommandForFiles {
 
                 Timber.d("Result Command: $resultString")
 
-                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
@@ -144,7 +144,7 @@ class RunShareCommandForFiles {
 
                     val resultString = "\"${replacedString}\""
 
-                    val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 

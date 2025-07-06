@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 
-class RunShareCommandForDirectory {
+class RunShareCommandForDirectory(private val processManagerService: ProcessManagerService){
 
     suspend operator fun invoke(
         item: CommandModel,
@@ -69,7 +69,7 @@ class RunShareCommandForDirectory {
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
-                val success = ProcessManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
                     inputParsedData,commandExtraInputs,processId, usePython)
 
 
@@ -77,7 +77,7 @@ class RunShareCommandForDirectory {
                 if (success) {
 
                     if (item.deleteSourceFile == true) {
-                        ProcessManagerService.deleteFile(path.absolutePath)
+                        processManagerService.deleteFile(path.absolutePath)
                     }
 
                 } else {

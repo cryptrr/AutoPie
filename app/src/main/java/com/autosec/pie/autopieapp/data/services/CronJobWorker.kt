@@ -4,17 +4,18 @@ import android.content.Context
 import android.os.Environment
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CronCommandModel
 import com.autosec.pie.utils.Utils
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 
 class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+
+    private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+
+
     override fun doWork(): Result {
         Timber.d("Cron job fired for ${inputData.getString("command")}")
         try {
@@ -43,7 +44,7 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
             val usePython = !Utils.isShellScript(File(fullExecPath))
 
 
-            ProcessManagerService.runCommandWithEnv(
+            processManagerService.runCommandWithEnv(
                 command, fullExecPath, finalCommand, command.path,
                 emptyList(), usePython
             )

@@ -157,6 +157,8 @@ class FileObserverJobService : JobService() {
 
         //val activity: Activity by inject(Context::class.java)
 
+        private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+
         override fun onEvent(event: Int, path: String?) {
             Timber.d("Event Fired: $event")
             if (event == CREATE && path != null) {
@@ -245,7 +247,7 @@ class FileObserverJobService : JobService() {
                         if (regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
                             val execSuccess =
-                                ProcessManagerService.runCommandWithEnv(
+                                processManagerService.runCommandWithEnv(
                                     commandModel,
                                     fullExecPath,
                                     resultString,
@@ -255,7 +257,7 @@ class FileObserverJobService : JobService() {
                                 )
 
                             if (deleteSourceFile && execSuccess) {
-                                ProcessManagerService.deleteFile(fullFilepath)
+                                processManagerService.deleteFile(fullFilepath)
                             }
                         } else {
                             Timber.d("File does not match selector")
