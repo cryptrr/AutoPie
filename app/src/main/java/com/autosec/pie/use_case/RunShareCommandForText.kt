@@ -19,7 +19,7 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             Timber.d("RunShareCommandForText")
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
-                it.add(InputParsedData(name = "INPUT_TEXT", value = "'$text'"))
+                it.add(InputParsedData(name = "INPUT_TEXT", value = "\"$text\""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
@@ -49,7 +49,7 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             Timber.d("Command to run: ${item.exec} $resultString")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
             emit(Pair(success, text))
         }

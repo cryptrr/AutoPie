@@ -64,7 +64,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
                 val inputFiles = if(usePython){
-                    currentItems.joinToString(" "){"'${it}'"}.replace("''","'")
+                    currentItems.joinToString(" "){"'${it}'"}.replace("''","'").replace("'", "\'")
                 }else{
                     currentItems.joinToString(" ")
                 }
@@ -73,11 +73,11 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
-                    it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "'${parsedPath.absolutePathString()}'" else parsedPath.absolutePathString()))
-                    it.add(InputParsedData(name = "FILENAME", value = if(usePython) "'${parsedPath.fileName}'" else "${parsedPath.fileName}"))
-                    it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "'${parsedPath.parent}'" else "${parsedPath.parent}"))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "'${parsedPath.nameWithoutExtension}'" else parsedPath.nameWithoutExtension))
-                    it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "'${parsedPath.extension}'" else parsedPath.extension))
+                    it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
+                    it.add(InputParsedData(name = "FILENAME", value = if(usePython) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                    it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                    it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "\"${parsedPath.extension}\"" else parsedPath.extension))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
@@ -99,15 +99,14 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 Timber.d("Single input file")
 
-
-
-
                 currentItems.map { path ->
-                    //val resultString = "\"${item.command.replace("{INPUT_FILE}", "'$path'")}\""
 
                     val replacedString = item.command
 
                     val parsedPath = Path(path)
+
+                    Timber.d("Parsed path: $parsedPath")
+
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -130,12 +129,12 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     val usePython = Utils.isZipFile(File(fullExecPath))
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
-                        it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString(" ")))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "'${parsedPath.absolutePathString()}'" else parsedPath.absolutePathString()))
-                        it.add(InputParsedData(name = "FILENAME", value = if(usePython) "'${parsedPath.fileName}'" else "${parsedPath.fileName}"))
-                        it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "'${parsedPath.parent}'" else "${parsedPath.parent}"))
-                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "'${parsedPath.nameWithoutExtension}'" else parsedPath.nameWithoutExtension))
-                        it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "'${parsedPath.extension}'" else parsedPath.extension))
+                        it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
+                        it.add(InputParsedData(name = "FILENAME", value = if(usePython) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                        it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "\"${parsedPath.extension}\"" else parsedPath.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
 

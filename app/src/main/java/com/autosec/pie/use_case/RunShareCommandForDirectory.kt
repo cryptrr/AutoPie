@@ -30,21 +30,19 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
 
             val currentItems = inputDir.listFiles()!!
 
-            val startTime = System.currentTimeMillis()
-
 
             currentItems.map { path ->
 
                 val resultString = "\"${item.command}\""
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
-                    it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString(" ")))
-                    it.add(InputParsedData(name = "INPUT_FILE", value = "'${path.absolutePath}'"))
-                    it.add(InputParsedData(name = "FILENAME", value = "'${path.name}'"))
-                    it.add(InputParsedData(name = "DIRECTORY", value = "'${path.parent}'"))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = "'${path.nameWithoutExtension}'"))
-                    it.add(InputParsedData(name = "FILE_PATH", value = "'${(path.parent ?: "")}'"))
-                    it.add(InputParsedData(name = "FILE_EXT", value = "'${path.extension}'"))
+                    it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map{item -> "\"$item\""}.joinToString(" ")))
+                    it.add(InputParsedData(name = "INPUT_FILE", value = "\"${path.absolutePath}\""))
+                    it.add(InputParsedData(name = "FILENAME", value = "\"${path.name}\""))
+                    it.add(InputParsedData(name = "DIRECTORY", value = "\"${path.parent}\""))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = "\"${path.nameWithoutExtension}\""))
+                    it.add(InputParsedData(name = "FILE_PATH", value = "\"${(path.parent ?: "")}\""))
+                    it.add(InputParsedData(name = "FILE_EXT", value = "\"${path.extension}\""))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
@@ -70,7 +68,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
                 val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                    inputParsedData,commandExtraInputs,processId, usePython)
+                    inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
 
