@@ -24,6 +24,7 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "INPUT_TEXT", value = "\"$text\""))
                 it.add(InputParsedData(name = "INPUT_FILE", value = "\"${if(text.containsValidUrl()) text.extractFirstUrl() else ""}\""))
+                it.add(InputParsedData(name = "INPUT_URL", value = "\"${if(text.containsValidHttpUrl()) text.extractFirstUrl() else ""}\""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 

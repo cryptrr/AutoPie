@@ -31,6 +31,7 @@ class RunShareCommandForUrl(private val processManagerService: ProcessManagerSer
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "INPUT_FILE", value = "\"$currentLink\""))
+                it.add(InputParsedData(name = "INPUT_URL", value = "\"$currentLink\""))
                 it.add(InputParsedData(name = "HOST", value = "\"$host\""))
                 it.add(InputParsedData(name = "FILENAME", value = "\"$filename\""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
