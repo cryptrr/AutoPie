@@ -12,6 +12,18 @@ fun String?.containsValidUrl(): Boolean {
     return matcher.find()
 }
 
+fun String?.containsValidHttpUrl(): Boolean {
+    if (this == null) return false
+    val matcher = Patterns.WEB_URL.matcher(this)
+    while (matcher.find()) {
+        val url = matcher.group()
+        if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("www.")) {
+            return true
+        }
+    }
+    return false
+}
+
 fun String?.extractFirstUrl(): String? {
     if (this == null) return null
     val matcher = Patterns.WEB_URL.matcher(this)

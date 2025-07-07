@@ -5,6 +5,7 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.containsValidHttpUrl
 import com.autosec.pie.utils.containsValidUrl
 import com.autosec.pie.utils.extractFirstUrl
 import com.autosec.pie.utils.isValidUrl
@@ -23,17 +24,23 @@ class RunShareCommand() {
 
         val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
+        Timber.d("$currentLink, $fileUris")
+
         when {
             inputDir?.isDirectory == true -> {
+                Timber.d("directory detected")
                 return  useCases.runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId)
             }
             currentLink.isValidUrl() -> {
+                Timber.d("Is a valid url")
                 return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
             }
-            currentLink.containsValidUrl() -> {
+            currentLink.containsValidHttpUrl() -> {
+                Timber.d("valid url detected in the string")
                 return useCases.runShareCommandForUrl(item, currentLink.extractFirstUrl()!!, fileUris, commandExtraInputs, processId)
             }
             fileUris.isNotEmpty() -> {
+                Timber.d("file uris not empty")
                 return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
             }
 

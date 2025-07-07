@@ -6,6 +6,9 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.containsValidHttpUrl
+import com.autosec.pie.utils.containsValidUrl
+import com.autosec.pie.utils.extractFirstUrl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
@@ -20,6 +23,7 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "INPUT_TEXT", value = "\"$text\""))
+                it.add(InputParsedData(name = "INPUT_FILE", value = "\"${if(text.containsValidUrl()) text.extractFirstUrl() else ""}\""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
