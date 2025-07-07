@@ -200,6 +200,31 @@ class Utils{
         }
 
     }
+
+
+
+
+
+}
+
+class Throttler(
+    private val waitMs: Long,
+    private val coroutineScope: CoroutineScope = GlobalScope,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main
+) {
+    private var lastRunTime = 0L
+    private var lastJob: Job? = null
+
+    fun run(block: () -> Unit) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastRunTime >= waitMs) {
+            lastRunTime = currentTime
+            lastJob?.cancel()
+            lastJob = coroutineScope.launch(dispatcher) {
+                block()
+            }
+        }
+    }
 }
 
 fun isExternalStorageDocument(uri: Uri): Boolean =
