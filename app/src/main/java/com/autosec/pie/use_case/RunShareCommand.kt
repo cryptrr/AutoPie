@@ -35,10 +35,11 @@ class RunShareCommand() {
                 Timber.d("Is a valid url")
                 return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
             }
-            currentLink.containsValidHttpUrl() -> {
-                Timber.d("valid url detected in the string")
-                return useCases.runShareCommandForUrl(item, currentLink.extractFirstUrl()!!, fileUris, commandExtraInputs, processId)
-            }
+            //Don't need this as it will be handled by the TEXT handler and INPUT_URL be populated as ENV
+//            currentLink.containsValidHttpUrl() -> {
+//                Timber.d("valid url detected in the string")
+//                return useCases.runShareCommandForUrl(item, currentLink.extractFirstUrl()!!, fileUris, commandExtraInputs, processId)
+//            }
             fileUris.isNotEmpty() -> {
                 Timber.d("file uris not empty")
                 return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)

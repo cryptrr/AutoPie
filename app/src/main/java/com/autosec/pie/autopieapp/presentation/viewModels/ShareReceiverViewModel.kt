@@ -50,7 +50,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-class ShareReceiverViewModel(private val application1: Application, private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class ShareReceiverViewModel(private val application1: Application) : ViewModel() {
 
     companion object {
         private const val KEY_SEARCH_QUERY = "search_query"
