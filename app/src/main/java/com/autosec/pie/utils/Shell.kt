@@ -84,7 +84,7 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     private val stderrReader: StreamReader
     private var watchdog: Watchdog? = null
     private var state: State = State.Idle
-    private val process: Process
+    val process: Process
 
     init {
         try {

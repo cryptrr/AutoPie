@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import kotlin.system.exitProcess
 
 class ProcessManagerService(private val main: MainViewModel, private val dispatchers: DispatcherProvider, private val activity: Application){
 
@@ -36,7 +37,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                             val runningShell = shells[it.processId]
 
                             if (runningShell != null) {
-                                runningShell.interrupt()
+                                runningShell.process.destroyForcibly()
 
                                 Timber.d("Process terminated: ${it.processId}")
                                 shells.remove(it.processId)

@@ -62,19 +62,19 @@ class ForegroundService : Service() {
                             Timber.e(e)
                         }
                     }
-                    is ViewModelEvent.CancelProcess -> {
-                        if(processIds.contains(it.processId)){
-                            Timber.d("Canceling process ${it.processId}")
-                            try {
-
-                                //currentJob?.cancel()
-                            }catch (e: Exception){
-                                Timber.e(e)
-                            }
-                        }else{
-                            Timber.d("Process Ids not same.")
-                        }
-                    }
+//                    is ViewModelEvent.CancelProcess -> {
+//                        if(processIds.contains(it.processId)){
+//                            Timber.d("Canceling process ${it.processId}")
+//                            try {
+//
+//                                //currentJob?.cancel()
+//                            }catch (e: Exception){
+//                                Timber.e(e)
+//                            }
+//                        }else{
+//                            Timber.d("Process Ids not same.")
+//                        }
+//                    }
                     is ViewModelEvent.StopAutoPie -> {
                         Timber.d("Stopping the current AutoPie instance")
                         android.os.Process.killProcess(android.os.Process.myPid())

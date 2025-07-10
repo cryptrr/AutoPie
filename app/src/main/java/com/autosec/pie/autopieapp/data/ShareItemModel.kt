@@ -22,7 +22,6 @@ data class CommandModel(
     override val command: String,
     override val exec: String,
     override val deleteSourceFile: Boolean? = false,
-    val extrasRequired : Boolean? = false,
     override val extras: List<CommandExtra>? = null
 ) : CommandInterface
 
@@ -35,7 +34,6 @@ data class CommandCreationModel(
     val deleteSourceFile: Boolean? = false,
     val cronInterval: String,
     val selectors: String,
-    val extrasRequired : Boolean? = false,
     val isValidCommand: Boolean,
     val commandExtras: List<CommandExtra>
 )
