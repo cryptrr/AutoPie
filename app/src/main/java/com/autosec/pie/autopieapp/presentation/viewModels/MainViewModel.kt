@@ -35,14 +35,14 @@ import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
-class MainViewModel(private val application: Application) : AndroidViewModel(application) {
+class MainViewModel(
+    private val application: Application,
+    private val appPreferences: AppPreferences,
+    private val dispatchers: DispatcherProvider,
+) : AndroidViewModel(application) {
 
 
-    private val appPreferences: AppPreferences by inject(AppPreferences::class.java)
-    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
     private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
-
-
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
