@@ -153,7 +153,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     }
 
     val extraInputList = remember {
-        derivedStateOf { extraInput.value.split(",") }
+        derivedStateOf { if(extraInput.value.isNotEmpty()) extraInput.value.split(",") else emptyList() }
     }
 
 
@@ -337,6 +337,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
 
+                            Timber.d(" fileUrisJson: $fileUrisJson \n commandExtraInputsJson: $commandExtraInputsJson \n extraInputList: $extraInputList \n extraInput: $extraInput \n fileUris: $fileUris")
 
                             val intent = Intent(context, ForegroundService::class.java).apply {
                                 putExtra("command", commandJson)
