@@ -321,6 +321,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                 onClick = {
                     viewModel.main.viewModelScope.launch {
 
+                        if(isLoading){
+                            return@launch
+                        }
+
                         try {
                             isLoading = true
 

@@ -381,6 +381,10 @@ fun ShareCard(
                 onClick = {
                     Timber.d("CLICK DETECTED")
 
+                    if(isLoading){
+                        return@combinedClickable
+                    }
+
                     if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() } == true) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
