@@ -39,6 +39,13 @@ class ProcessBroadcastReceiver : BroadcastReceiver() {
                 main.dispatchEvent(ViewModelEvent.CancelProcess(processId))
 
             }
+            "${context.packageName}.STOP_AUTOPIE" -> {
+
+                Timber.d("${context.packageName}.STOP_AUTOPIE")
+
+                main.dispatchEvent(ViewModelEvent.StopAutoPie)
+
+            }
             "${context.packageName}.PLAY_MEDIA" -> {
 
                 Timber.d("${context.packageName}.PLAY_MEDIA")

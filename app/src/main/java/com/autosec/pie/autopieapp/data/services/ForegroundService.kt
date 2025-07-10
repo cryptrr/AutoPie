@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import kotlin.system.exitProcess
 
 class ForegroundService : Service() {
 
@@ -74,6 +75,11 @@ class ForegroundService : Service() {
                             Timber.d("Process Ids not same.")
                         }
                     }
+                    is ViewModelEvent.StopAutoPie -> {
+                        Timber.d("Stopping the current AutoPie instance")
+                        android.os.Process.killProcess(android.os.Process.myPid())
+                        exitProcess(0)
+                    }
                     else -> {}
                 }
             }
@@ -92,8 +98,7 @@ class ForegroundService : Service() {
 
 
         val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
-            action = "${this@ForegroundService.packageName}.CANCEL_PROCESS"
-            putExtra("processId", foregroundServiceId)
+            action = "${this@ForegroundService.packageName}.STOP_AUTOPIE"
         }
 
         val pendingButtonIntent: PendingIntent = PendingIntent.getBroadcast(
