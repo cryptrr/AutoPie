@@ -46,6 +46,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
+                val quotedCommandExtraInputs = commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
 
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -68,7 +69,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
                 val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                    inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                    inputParsedData,quotedCommandExtraInputs,processId, usePython, isShellScript)
 
 
 

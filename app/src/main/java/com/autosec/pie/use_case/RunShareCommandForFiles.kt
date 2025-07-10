@@ -81,6 +81,9 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
+                val quotedCommandExtraInputs = commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
+
+
                 Timber.d("fullExecPath : $fullExecPath")
                 Timber.d("Use Python : $usePython")
 
@@ -89,7 +92,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                 Timber.d("Result Command: $resultString")
 
                 val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                    inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                    inputParsedData,quotedCommandExtraInputs,processId, usePython, isShellScript)
 
 
                 emit(Pair(success, fileUris.toString()))
@@ -138,13 +141,14 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
 
+                    val quotedCommandExtraInputs = commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
 
                     Timber.d("Replaced String $replacedString")
 
                     val resultString = "\"${replacedString}\""
 
                     val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
-                        inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                        inputParsedData,quotedCommandExtraInputs,processId, usePython, isShellScript)
 
 
                     emit(Pair(success, path))
