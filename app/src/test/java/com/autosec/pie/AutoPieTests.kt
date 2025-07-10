@@ -2,9 +2,9 @@ package com.autosec.pie
 
 
 import android.os.Environment
+import com.autosec.pie.autopieApp.data.services.FakeJSONService
 import com.autosec.pie.autopieapp.data.CommandCreationModel
 import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.data.services.FakeJSONService
 import com.autosec.pie.use_case.CreateCommand
 import com.autosec.pie.use_case.GetCommandDetails
 import com.autosec.pie.use_case.GetCommandsList
@@ -99,11 +99,9 @@ class CommandTests : KoinTest {
         val jsonService = FakeJSONService()
         val getCommand = GetCommandDetails(jsonService)
 
-
-
         val command = getCommand("RSYNC Sync Folder")
 
-        assertEquals("ffmpeg",command.first.get("exec").asString)
+        assertEquals("rsync",command.first.get("exec").asString)
 
 
     }
@@ -117,7 +115,7 @@ class CommandTests : KoinTest {
 
         assertThrows(ViewModelError.CommandNotFound::class.java){
             runBlocking {
-                getCommand("ghgjj")
+                getCommand("non existent command")
             }
         }
     }
