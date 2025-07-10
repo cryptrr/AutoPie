@@ -1,40 +1,22 @@
 package com.autosec.pie.autopieapp.data.services
 
 import android.app.Application
-import android.app.Service.STOP_FOREGROUND_REMOVE
-import android.content.Context
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.AutoPieConstants
 import com.autosec.pie.autopieapp.data.AutoPieError
-import com.autosec.pie.autopieapp.data.AutoPieStrings
-import com.autosec.pie.autopieapp.data.CommandExtra
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandInterface
-import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.utils.Shell
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
-import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 
-class ProcessManagerService {
-
-    val main: MainViewModel by inject(MainViewModel::class.java)
-    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
-
-
-    private val activity: Application by inject(Context::class.java)
-
+class ProcessManagerService(private val main: MainViewModel, private val dispatchers: DispatcherProvider, private val activity: Application){
 
     private var shell: Shell? = null
 
@@ -240,28 +222,32 @@ class ProcessManagerService {
     }
 
     private fun checkForUnsafeCommands(commandObject: CommandInterface, command: String) {
-        val unsafeCommands = listOf(
-            "rm -rf /",
+        val unsafePatterns = listOf(
+            "rm\\s+-rf\\s+/",
             ":\\(\\)\\{ :\\|: & \\};:",   // Fork bomb
-            "dd if=/dev/zero of=/dev/sda",
-            "chmod -R 777 /",
-            "mkfs.ext4 /dev/sda",
+            "dd\\s+if=/dev/zero\\s+of=/dev/sda",
+            "chmod\\s+-R\\s+777\\s+/",
+            "mkfs\\.ext4\\s+/dev/sda",
             "wget .* -O \\| sh",
-            "mv /* /dev/null",
+            "mv\\s+/.+\\s+/dev/null",
             "echo .* > /proc/sysrq-trigger",
-            "iptables -F",
-            "killall -9 .*",
-            "reboot",
-            "shutdown -h now",
-            "ln -s /bin/busybox /dev/null",
+            "iptables\\s+-F",
+            "killall\\s+-9\\s+.*",
+            "\\breboot\\b",
+            "shutdown\\s+-h\\s+now",
+            "ln\\s+-s\\s+/bin/busybox\\s+/dev/null",
             "find / -exec rm -rf \\{\\} \\\\;",
-            "cp /bin/busybox /dev/sda"
+            "cp\\s+/bin/busybox\\s+/dev/sda"
         )
 
-        for (unsafeCommand in unsafeCommands) {
-            if (command.matches(Regex(unsafeCommand))) {
-                throw AutoPieError.UnsafeCommandException("Unsafe command detected: $command")
-            }
+        val fullCommand = "${commandObject.exec} ${command}".trim()
+
+        Timber.d("Full Command: $fullCommand")
+
+        val unsafeRegexes = unsafePatterns.map { Regex(it) }
+
+        if (unsafeRegexes.any { it.containsMatchIn(fullCommand) }) {
+            throw AutoPieError.UnsafeCommandException("Unsafe command detected: $fullCommand")
         }
     }
 
@@ -298,8 +284,13 @@ class ProcessManagerService {
             return result.isSuccess
 
 
-        } catch (e: Exception) {
+        }
+        catch(e: AutoPieError){
+            throw e
+        }
+        catch (e: Exception) {
             Timber.e(e.toString())
+
         }
 
         return false
@@ -378,7 +369,6 @@ class ProcessManagerService {
 
             Timber.d("Env dump: ${shell.environment}")
 
-
             val result = shell.run(fullCommand)
 
             Timber.d("Exit Code ${result.exitCode}")
@@ -396,12 +386,11 @@ class ProcessManagerService {
             return result.isSuccess
 
 
-        } catch (e: Exception) {
-            Timber.e(e.toString())
         }
-
-        return false
-
+        catch (e: Exception) {
+            Timber.e(e.toString())
+            throw e
+        }
     }
 
 
