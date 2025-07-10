@@ -1,5 +1,11 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autosec.pie.R
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.ShareInputs
 import com.autosec.pie.autopieapp.domain.AppNotification
@@ -52,6 +60,34 @@ fun CommandDetailsSheet(
     val createCommandViewModel: CreateCommandViewModel = koinViewModel()
 
     val card = shareReceiverViewModel.main.currentSelectedCommand.value ?: return
+
+    val context = LocalContext.current
+
+    fun pinAppShortcut(context: Context, commandId: String, shortLabel: String, longLabel: String) {
+        val shortcutManager = context.getSystemService(ShortcutManager::class.java)
+
+        if (shortcutManager.isRequestPinShortcutSupported) {
+            val shortcut = ShortcutInfo.Builder(context, commandId)
+                .setShortLabel(shortLabel)
+                .setLongLabel(longLabel)
+                .setIcon(Icon.createWithResource(context, R.mipmap.ic_launcher))
+                .setIntent(
+                    Intent(Intent.ACTION_MAIN).apply {
+                        setClassName(context, context.packageName + ".DirectCommandActivity")
+                        addCategory(Intent.CATEGORY_LAUNCHER)
+                        putExtra("commandId", commandId)
+                    }
+                )
+                .build()
+
+            val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(shortcut)
+            val successCallback = PendingIntent.getBroadcast(
+                context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE
+            )
+
+            shortcutManager.requestPinShortcut(shortcut, successCallback.intentSender)
+        }
+    }
 
 
     val optionsList = remember{
@@ -89,6 +125,16 @@ fun CommandDetailsSheet(
                     }
                 }
             ),
+            OptionItem(
+                text = "ADD TO HOME SCREEN",
+                enabled = true,
+                onClick = {
+                    scope.launch {
+                        pinAppShortcut(context = context, card.name, card.name, card.name)
+                    }
+                }
+            ),
+
         )
     }
 

@@ -24,7 +24,7 @@ class RunShareCommand() {
 
         val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
-        Timber.d("$currentLink, $fileUris")
+        Timber.d("currentLink: $currentLink, fileUris: $fileUris")
 
         when {
             inputDir?.isDirectory == true -> {
@@ -45,10 +45,12 @@ class RunShareCommand() {
                 return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
             }
 
+            //TODO: Create another handler for no inputs
+
             else -> {
                 //Handler for Raw TEXT
-                if(currentLink == null) throw ViewModelError.CommandUnknown("Input is null")
-                return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId)
+                //if(currentLink == null) throw ViewModelError.CommandUnknown("Input is null")
+                return useCases.runShareCommandForText(item, currentLink ?: "", fileUris, commandExtraInputs, processId)
             }
         }
     }

@@ -170,6 +170,31 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
+    fun selectCommandFromDirectActivity(commandId: String): Boolean{
+        val command = shareItemsResult.value.find { it.name == commandId }
+
+        if(command == null){
+            Timber.d("Command not found: $commandId")
+            return false
+        }
+
+        if (command.extras?.isNotEmpty() == true) {
+            Timber.d("Opening Extras sheet for $commandId")
+            currentExtrasDetails.value =
+                Triple(true, command, ShareInputs(null, null))
+        }else{
+            onCommandClick(command, emptyList(), null) {
+                viewModelScope.launch {
+//                    isLoading = true
+//                    delay(900)
+//                    Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
+//                    activity?.finish()
+                }
+            }
+        }
+        return true
+    }
+
 
     fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, onComplete: () -> Unit){
         viewModelScope.launch {

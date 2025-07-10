@@ -15,6 +15,11 @@
 
     </style>
 
+    <style name="AppTheme.ShareSheetActivity" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Do not set windowIsTranslucent or transparent background -->
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+
     <style name="Theme.Ktsh.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
     <style name="NoActionBar">
         <item name="windowActionBar">false</item>

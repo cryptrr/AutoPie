@@ -64,8 +64,9 @@ fun CommandExtrasBottomSheet(
     state: SheetState,
     open: MutableState<Boolean>,
     parentSheetState: SheetState? = null,
+    callerName: String = "SHARE",
     onHide: () -> Unit = {},
-    onExpand: () -> Unit = {}
+    onExpand: () -> Unit = {},
 ) {
 
     val viewModel: ShareReceiverViewModel = koinViewModel()
@@ -120,7 +121,9 @@ fun CommandExtrasBottomSheet(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         onDismissRequest = {
             scope.launch {
-                //activity?.finish()
+                if(callerName == "DIRECT_ICON"){
+                    activity?.finish()
+                }
                 viewModel.currentExtrasDetails.value = null
             }
         }
@@ -333,6 +336,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val fileUrisJson = gson.toJson(fileUris ?: extraInputList.value)
 
                             val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
+
 
                             val intent = Intent(context, ForegroundService::class.java).apply {
                                 putExtra("command", commandJson)
