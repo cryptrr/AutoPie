@@ -12,6 +12,7 @@ import com.autosec.pie.use_case.RunShareCommandForDirectory
 import com.autosec.pie.use_case.RunShareCommandForFiles
 import com.autosec.pie.use_case.RunShareCommandForText
 import com.autosec.pie.use_case.RunShareCommandForUrl
+import com.autosec.pie.use_case.RunStandaloneCommand
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -26,8 +27,10 @@ val useCaseModule = module {
             runShareCommandForFiles = RunShareCommandForFiles(get()),
             runShareCommandForDirectory = RunShareCommandForDirectory(get()),
             runShareCommandForText = RunShareCommandForText(get()),
+            runStandaloneCommand =  RunStandaloneCommand(get()),
             changeCommandDetails = ChangeCommandDetails(get()),
-            deleteCommand = DeleteCommand(get())
+            deleteCommand = DeleteCommand(get()),
+
         )
     }
 }
