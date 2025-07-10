@@ -10,7 +10,6 @@ import com.autosec.pie.autopieapp.data.apiService.HTTPClientService
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.CronService
-import com.autosec.pie.autopieapp.data.services.FakeJSONService
 import com.autosec.pie.autopieapp.data.services.JSONServiceImpl
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
@@ -28,9 +27,9 @@ import org.koin.dsl.module
 val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
 
-    single<MainViewModel> { MainViewModel(get()) }
-    single<ProcessManagerService> { ProcessManagerService() }
-    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get(), get())}
+    single<MainViewModel> { MainViewModel(get(), get(), get()) }
+    single<ProcessManagerService> { ProcessManagerService(get(), get(), get()) }
+    viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
 
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }

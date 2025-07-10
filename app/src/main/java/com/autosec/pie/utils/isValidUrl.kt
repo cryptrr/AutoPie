@@ -29,3 +29,13 @@ fun String?.extractFirstUrl(): String? {
     val matcher = Patterns.WEB_URL.matcher(this)
     return if (matcher.find()) matcher.group() else null
 }
+
+fun String?.extractAllUrls(): String? {
+    if (this == null) return null
+    val matcher = Patterns.WEB_URL.matcher(this)
+    val urls = mutableListOf<String>()
+    while (matcher.find()) {
+        urls.add(matcher.group())
+    }
+    return urls.joinToString{" "}
+}
