@@ -385,7 +385,7 @@ fun ShareCard(
                         return@combinedClickable
                     }
 
-                    if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() } == true) {
+                    if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() && it.required } == true) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
                     } else {

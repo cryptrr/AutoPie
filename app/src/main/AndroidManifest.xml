@@ -102,7 +102,7 @@
             android:name=".DirectCommandActivity"
             android:excludeFromRecents="true"
             android:label="Run from Icon"
-            android:noHistory="true"
+            android:noHistory="false"
             android:exported="true"
             android:theme="@style/ShareTheme"
             android:launchMode="singleTask"

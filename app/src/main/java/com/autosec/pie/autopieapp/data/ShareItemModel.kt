@@ -55,6 +55,7 @@ data class CommandExtra(
     val default: String = "",
     val description: String = "",
     val defaultBoolean: Boolean = true,
+    val required: Boolean = true,
     val selectableOptions: List<String> = emptyList()
 )
 
