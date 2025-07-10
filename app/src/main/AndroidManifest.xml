@@ -105,7 +105,8 @@
             android:noHistory="true"
             android:exported="true"
             android:theme="@style/ShareTheme"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.direct"
         >
         </activity>
         <service

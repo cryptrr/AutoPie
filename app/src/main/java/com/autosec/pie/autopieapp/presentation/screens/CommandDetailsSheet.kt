@@ -74,8 +74,8 @@ fun CommandDetailsSheet(
                 .setIntent(
                     Intent(Intent.ACTION_MAIN).apply {
                         setClassName(context, context.packageName + ".DirectCommandActivity")
-                        addCategory(Intent.CATEGORY_LAUNCHER)
                         putExtra("commandId", commandId)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
                 )
                 .build()
