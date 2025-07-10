@@ -19,7 +19,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
 class RunShareCommandForFiles(private val processManagerService: ProcessManagerService){
-    suspend operator fun invoke(
+    operator fun invoke(
         item: CommandModel,
         currentLink: String?,
         fileUris: List<String>,
@@ -81,7 +81,8 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val quotedCommandExtraInputs = commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
+                Timber.d(if(item.exec.contains("ssh")) "SSH does not allow quoting in host strings. But autopie needs quoting for all env vars.\nThis is a hacky fix to turn off quoting for ssh commands" else "")
+                val quotedCommandExtraInputs = if(!item.exec.contains("ssh")) commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") } else commandExtraInputs
 
 
                 Timber.d("fullExecPath : $fullExecPath")

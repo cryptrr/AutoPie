@@ -17,7 +17,7 @@ import java.io.File
 import java.net.URL
 
 class RunShareCommandForText(private val processManagerService: ProcessManagerService){
-    suspend operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
+    operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
 
         return flow {
             Timber.d("RunShareCommandForText")
@@ -32,7 +32,8 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
-            val quotedCommandExtraInputs = commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
+            Timber.d(if(item.exec.contains("ssh")) "SSH does not allow quoting in host strings. But autopie needs quoting for all env vars.\nThis is a hacky fix to turn off quoting for ssh commands" else "")
+            val quotedCommandExtraInputs = if(!item.exec.contains("ssh")) commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") } else commandExtraInputs
 
             val resultString = "\"${item.command}\""
 
