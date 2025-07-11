@@ -93,10 +93,10 @@ class DirectCommandActivity : ComponentActivity() {
                 //Get the command from the list
 
                 scope.launch {
-                    delay(250L)
+                    delay(100L)
                     if(commandId != null){
                         Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId)
+                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId, activity)
                     }
                 }
 

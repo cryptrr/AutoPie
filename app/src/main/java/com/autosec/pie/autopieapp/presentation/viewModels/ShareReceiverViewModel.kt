@@ -1,5 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.viewModels
 
+import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.os.Environment
@@ -170,32 +171,33 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun selectCommandFromDirectActivity(commandId: String): Boolean{
-        val command = shareItemsResult.value.find { it.name == commandId }
+    fun selectCommandFromDirectActivity(commandId: String, activity: Activity?): Boolean{
+        try {
+            val command = shareItemsResult.value.find { it.name == commandId }
 
-        if(command == null){
-            Timber.d("Command not found: $commandId")
-            return false
-        }
+            if(command == null){
+                Timber.d("Command not found: $commandId")
+                return false
+            }
 
-        if (command.extras?.isNotEmpty() == true) {
-            Timber.d("Opening Extras sheet for $commandId")
-            currentExtrasDetails.value =
-                Triple(true, command, ShareInputs(null, null))
-        }else{
-            onCommandClick(command, emptyList(), null) {
-                viewModelScope.launch {
-//                    isLoading = true
-//                    delay(900)
-//                    Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
-//                    activity?.finish()
-
-                    delay(1500L)
-                    currentExtrasDetails.value = null
+            if (command.extras?.isNotEmpty() == true) {
+                Timber.d("Opening Extras sheet for $commandId")
+                currentExtrasDetails.value =
+                    Triple(true, command, ShareInputs(null, null))
+            }else{
+                onCommandClick(command, emptyList(), null) {
+                    viewModelScope.launch {
+                        delay(1000L)
+                        currentExtrasDetails.value = null
+                        activity?.finish()
+                    }
                 }
             }
+            return true
+        }catch (e: Exception){
+            Timber.e(e)
+            return false
         }
-        return true
     }
 
 
