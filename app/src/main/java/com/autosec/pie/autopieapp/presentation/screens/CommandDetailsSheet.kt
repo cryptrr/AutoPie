@@ -131,6 +131,7 @@ fun CommandDetailsSheet(
                 onClick = {
                     scope.launch {
                         pinAppShortcut(context = context, card.name, card.name, card.name)
+                        open.value = false
                     }
                 }
             ),

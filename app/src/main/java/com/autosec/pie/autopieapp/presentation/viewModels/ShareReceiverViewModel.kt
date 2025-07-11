@@ -189,6 +189,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 //                    delay(900)
 //                    Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
 //                    activity?.finish()
+
+                    delay(1500L)
+                    currentExtrasDetails.value = null
                 }
             }
         }
