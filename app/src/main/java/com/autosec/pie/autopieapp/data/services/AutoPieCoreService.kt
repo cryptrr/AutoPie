@@ -437,6 +437,8 @@ class AutoPieCoreService {
                     CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.RefreshCommandsList)
 
+                        initArchiveFile.delete()
+
                     }
 
 
