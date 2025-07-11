@@ -32,15 +32,6 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
-            Timber.d(if(item.exec.contains("ssh") || item.exec.contains("rsync")) "SSH does not allow quoting in host strings. But autopie needs quoting for all env vars.\nThis is a hacky fix to turn off quoting for ssh commands" else "")
-
-            val quotedCommandExtraInputs = if(!(item.exec.contains("ssh") || item.exec.contains("rsync"))) {
-                Timber.d("Using quoted extras")
-                commandExtraInputs.map{ it.copy(value = "\"${it.value}\"") }
-            } else {
-                Timber.d("Using unquoted extras")
-                commandExtraInputs
-            }
 
             val resultString = "\"${item.command}\""
 
@@ -68,7 +59,7 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             Timber.d("Command to run: ${item.exec} $resultString")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,quotedCommandExtraInputs,processId, usePython, isShellScript)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
             emit(Pair(success, text))
         }
