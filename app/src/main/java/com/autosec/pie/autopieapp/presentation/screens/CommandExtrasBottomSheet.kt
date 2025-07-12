@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +84,7 @@ fun CommandExtrasBottomSheet(
         }
     }
 
+
     @Composable
     fun bottomSheetContent() {
         Box(
@@ -102,6 +104,7 @@ fun CommandExtrasBottomSheet(
                 Modifier
                     //.fillMaxSize()
                     .padding(horizontal = 15.dp)
+
             ) {
 
                 viewModel.currentExtrasDetails.value?.let {
@@ -179,6 +182,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         Timber.d("Extra commands list: $commandExtraInputs")
     }
 
+    val scrollState = rememberScrollState()
+
     Text(
         text = command.name,
         lineHeight = 32.sp,
@@ -189,131 +194,134 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     
     Spacer(modifier = Modifier.height(20.dp))
 
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-
-//        Timber.d("FileUris: $fileUris")
-//        Timber.d("currentLink: $currentLink")
-
-        if(fileUris == null && currentLink == null && command.command.contains("INPUT_FILE")){
-
-            GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
-        }else{
-            Spacer(modifier = Modifier.height(7.dp))
-        }
-
-        for (extra in command.extras ?: emptyList()) {
-            Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
-                when (extra.type) {
-                    "STRING" -> {
-                        val textValue = remember {
-                            mutableStateOf(extra.default)
-                        }
-
-                        LaunchedEffect(key1 = textValue.value) {
-                            addToExtraInputs(
-                                CommandExtraInput(
-                                    extra.name,
-                                    extra.default,
-                                    textValue.value,
-                                    extra.type,
-                                    extra.defaultBoolean,
-                                    extra.id,
-                                    extra.description
-                                )
-                            )
-                        }
-
-                        GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description)
-                    }
-
-                    "BOOLEAN" -> {
-                        val booleanExpanded = remember { mutableStateOf(false) }
-                        val selectedOptionForBoolean =
-                            rememberSaveable {
-                                mutableStateOf(extra.defaultBoolean.toString().uppercase())
-                            }
-                        val booleanOptions = listOf("TRUE", "FALSE")
-
-                        LaunchedEffect(key1 = selectedOptionForBoolean.value) {
-                            addToExtraInputs(
-                                CommandExtraInput(
-                                    extra.name,
-                                    extra.default,
-                                    selectedOptionForBoolean.value,
-                                    extra.type,
-                                    extra.defaultBoolean,
-                                    extra.id,
-                                    extra.description
-                                )
-                            )
-                        }
-
-                        Text(text = extra.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                        if(extra.description.isNotEmpty()){
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
+    Box(){
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.verticalScroll(scrollState).padding(bottom = 90.dp)
+        ) {
 
 
-                        OptionSelector(
-                            options = booleanOptions,
-                            selectedOption = selectedOptionForBoolean,
-                            expanded = booleanExpanded
-                        )
-                    }
+            if(fileUris == null && currentLink == null && command.command.contains("INPUT_FILE")){
 
-                    "SELECTABLE" -> {
-                        val expanded = remember { mutableStateOf(false) }
-                        val selectedOption =
-                            rememberSaveable {
+                GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
+            }else{
+                Spacer(modifier = Modifier.height(7.dp))
+            }
+
+            for (extra in command.extras ?: emptyList()) {
+                Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
+                    when (extra.type) {
+                        "STRING" -> {
+                            val textValue = remember {
                                 mutableStateOf(extra.default)
                             }
-                        val options = extra.selectableOptions
 
-                        LaunchedEffect(key1 = selectedOption.value) {
-                            addToExtraInputs(
-                                CommandExtraInput(
-                                    extra.name,
-                                    extra.default,
-                                    selectedOption.value,
-                                    extra.type,
-                                    extra.defaultBoolean,
-                                    extra.id,
-                                    extra.description
+                            LaunchedEffect(key1 = textValue.value) {
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        textValue.value,
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
                                 )
-                            )
+                            }
+
+                            GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description)
                         }
 
-                        Column {
-                            Text(
-                                text = extra.name,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                        "BOOLEAN" -> {
+                            val booleanExpanded = remember { mutableStateOf(false) }
+                            val selectedOptionForBoolean =
+                                rememberSaveable {
+                                    mutableStateOf(extra.defaultBoolean.toString().uppercase())
+                                }
+                            val booleanOptions = listOf("TRUE", "FALSE")
+
+                            LaunchedEffect(key1 = selectedOptionForBoolean.value) {
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        selectedOptionForBoolean.value,
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
+                                )
+                            }
+
+                            Text(text = extra.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                             if(extra.description.isNotEmpty()){
                                 Spacer(modifier = Modifier.height(3.dp))
                                 Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
                             }
                             Spacer(modifier = Modifier.height(10.dp))
 
+
                             OptionSelector(
-                                options = options,
-                                selectedOption = selectedOption,
-                                expanded = expanded
+                                options = booleanOptions,
+                                selectedOption = selectedOptionForBoolean,
+                                expanded = booleanExpanded
                             )
                         }
+
+                        "SELECTABLE" -> {
+                            val expanded = remember { mutableStateOf(false) }
+                            val selectedOption =
+                                rememberSaveable {
+                                    mutableStateOf(extra.default)
+                                }
+                            val options = extra.selectableOptions
+
+                            LaunchedEffect(key1 = selectedOption.value) {
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        selectedOption.value,
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = extra.name,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if(extra.description.isNotEmpty()){
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                OptionSelector(
+                                    options = options,
+                                    selectedOption = selectedOption,
+                                    expanded = expanded
+                                )
+                            }
+                        }
                     }
+
+
                 }
-
-
             }
+
         }
 
-        Row {
+
+        Row(Modifier.align(Alignment.BottomCenter)){
             Button(
                 modifier = Modifier
                     .padding(vertical = 15.dp)
@@ -390,5 +398,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             }
         }
+
+
     }
+
 }
