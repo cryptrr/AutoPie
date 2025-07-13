@@ -3,6 +3,8 @@ package com.autosec.pie.use_case
 import android.os.Environment
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.ExecAndCommand
+import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.utils.Utils
@@ -17,38 +19,39 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
         return flow {
             Timber.d("RunStandaloneCommand")
 
+            val execFilePath =
+                Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+            val (execType,fullExecPath, resultCommand) = when{
+                File(item.exec).isAbsolute -> {
+                    Timber.d("Using package absolute path")
+                    ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
+                }
+                File(execFilePath).exists() -> {
+                    Timber.d("Using autopie package")
+                    //For packages installed inside autosec/bin
+                    ExecAndCommand( ExecType.AUTOPIE_PACKAGE,execFilePath,"\"${item.command}\"")
+                }
+                else -> {
+                    //Base case fallback to terminals installed packages such as busybox packages.
+                    Timber.d("Using shell installed program")
+                    ExecAndCommand( ExecType.SHELL_INSTALLED,item.exec, item.command)
+                }
+            }
+
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
 
-            val resultString = "\"${item.command}\""
-
-            val execFilePath =
-                Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
-
-            val fullExecPath = when{
-                File(item.exec).isAbsolute -> {
-                    item.exec
-                }
-                File(execFilePath).exists() -> {
-                    //For packages installed inside autosec/bin
-                    execFilePath
-                }
-                else -> {
-                    //Base case fallback to terminal installed packages such as busybox packages.
-                    item.exec
-                }
-            }
-
             val isShellScript = Utils.isShellScript(File(fullExecPath))
             val usePython = Utils.isZipFile(File(fullExecPath))
 
 
-            Timber.d("Command to run: ${item.exec} $resultString")
+            Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
             emit(Pair(success, item.name))
         }

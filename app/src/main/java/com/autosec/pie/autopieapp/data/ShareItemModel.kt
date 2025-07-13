@@ -85,6 +85,19 @@ enum class CommandType{
     CRON
 }
 
+data class ExecAndCommand(
+    val type: ExecType,
+    val execPath: String,
+    val command: String
+
+)
+
+enum class ExecType{
+    ABSOLUTE_PATH,
+    AUTOPIE_PACKAGE,
+    SHELL_INSTALLED
+}
+
 data class InstalledPackageModel(
     val name: String,
     val path: String,

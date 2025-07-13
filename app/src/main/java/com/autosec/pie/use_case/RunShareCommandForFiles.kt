@@ -4,6 +4,8 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.ExecAndCommand
+import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
@@ -46,19 +48,24 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-                val fullExecPath = when{
+                val (execType,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
-                        item.exec
+                        Timber.d("Using package absolute path")
+                        ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
                     }
                     File(execFilePath).exists() -> {
+                        Timber.d("Using autopie package")
                         //For packages installed inside autosec/bin
-                        execFilePath
+                        ExecAndCommand( ExecType.AUTOPIE_PACKAGE,execFilePath,"\"${item.command}\"")
                     }
                     else -> {
-                        //Base case fallback to terminal installed packages such as busybox packages.
-                        item.exec
+                        //Base case fallback to terminals installed packages such as busybox packages.
+                        Timber.d("Using shell installed program")
+                        ExecAndCommand( ExecType.SHELL_INSTALLED,item.exec, item.command)
                     }
                 }
+
+                val useQuotes = execType != ExecType.SHELL_INSTALLED
 
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath))
@@ -73,22 +80,21 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
-                    it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                    it.add(InputParsedData(name = "FILENAME", value = if(usePython) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
-                    it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
-                    it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "\"${parsedPath.extension}\"" else parsedPath.extension))
+                    it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
+                    it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                    it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                    it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
                 Timber.d("fullExecPath : $fullExecPath")
                 Timber.d("Use Python : $usePython")
 
-                val resultString = if(usePython) "\"${replacedString}\"" else replacedString
 
-                Timber.d("Result Command: $resultString")
+                Timber.d("Result Command: $resultCommand")
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
@@ -111,39 +117,42 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-                    val fullExecPath = when{
+                    val (execType,fullExecPath, resultCommand) = when{
                         File(item.exec).isAbsolute -> {
-                            item.exec
+                            Timber.d("Using package absolute path")
+                            ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
                         }
                         File(execFilePath).exists() -> {
+                            Timber.d("Using autopie package")
                             //For packages installed inside autosec/bin
-                            execFilePath
+                            ExecAndCommand( ExecType.AUTOPIE_PACKAGE,execFilePath,"\"${item.command}\"")
                         }
                         else -> {
-                            //Base case fallback to terminal installed packages such as busybox packages.
-                            item.exec
+                            //Base case fallback to terminals installed packages such as busybox packages.
+                            Timber.d("Using shell installed program")
+                            ExecAndCommand( ExecType.SHELL_INSTALLED,item.exec, item.command)
                         }
                     }
 
+                    val useQuotes = execType != ExecType.SHELL_INSTALLED
                     val isShellScript = Utils.isShellScript(File(fullExecPath))
                     val usePython = Utils.isZipFile(File(fullExecPath))
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = if(usePython) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                        it.add(InputParsedData(name = "FILENAME", value = if(usePython) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
-                        it.add(InputParsedData(name = "DIRECTORY", value = if(usePython) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(usePython) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
-                        it.add(InputParsedData(name = "FILE_EXT", value =  if(usePython) "\"${parsedPath.extension}\"" else parsedPath.extension))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
+                        it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                        it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
 
 
                     Timber.d("Replaced String $replacedString")
 
-                    val resultString = "\"${replacedString}\""
 
-                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultString, item.path,
+                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
