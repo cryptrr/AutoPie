@@ -2,7 +2,7 @@ package com.autosec.pie.autopieapp.data
 
 class AutoPieConstants {
     companion object {
-        const val AUTOPIE_INIT_ARCHIVE_URL = "https://github.com/cryptrr/AutoPie/releases/download/v0.14.0-beta/autopie-init-1.3.tar.xz"
+        const val AUTOPIE_INIT_ARCHIVE_URL = "https://github.com/cryptrr/AutoPie/releases/download/v0.14.1-beta/autopie-init-1.4.tar.xz"
         const val AUTOPIE_EMPTY_INIT_ARCHIVE_URL = "https://github.com/cryptrr/AutoPie/releases/download/v0.09.2-beta/autopie-empty-init-0.1.tar.xz"
         const val AUTOPIE_SHELL_RESULT_REGEX = "<AUTOPIE_RESULT>(.*?)<AUTOPIE_RESULT/>"
     }
