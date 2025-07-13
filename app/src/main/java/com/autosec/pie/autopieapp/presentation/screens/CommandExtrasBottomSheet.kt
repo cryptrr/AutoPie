@@ -202,7 +202,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         ) {
 
 
-            if(fileUris == null && currentLink == null && command.command.contains("INPUT_FILE")){
+            if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
 
                 GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
             }else{
