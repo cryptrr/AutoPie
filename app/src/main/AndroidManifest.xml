@@ -103,7 +103,7 @@
             android:excludeFromRecents="true"
             android:label="Run from Icon"
             android:noHistory="false"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/ShareTheme"
             android:launchMode="singleTask"
             android:taskAffinity="${applicationId}.direct"
@@ -116,7 +116,7 @@
             android:name=".autopieapp.data.services.ForegroundService"
             android:exported="false" />
         <receiver android:name=".autopieapp.data.services.ScreenStateReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.SCREEN_OFF" />
