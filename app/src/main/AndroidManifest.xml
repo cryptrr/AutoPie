@@ -116,7 +116,7 @@
             android:name=".autopieapp.data.services.ForegroundService"
             android:exported="false" />
         <receiver android:name=".autopieapp.data.services.ScreenStateReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.SCREEN_OFF" />
