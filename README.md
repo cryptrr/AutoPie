@@ -1,8 +1,6 @@
 # AutoPie
 
-Create your own Commands and Run them on your Android without wasting time.
-
-Lets you run Python scripts with or without included binaries on Android.
+### Commands hub where you can define, automate and run commands without using the terminal.
 
 **AutoPie is your own power tool-kit for android.**
 
@@ -27,9 +25,14 @@ Lets you run Python scripts with or without included binaries on Android.
 ## Usage
 
 1) Open AutoPie App
-2) There are currently two types of commands. `Share Sheet Commands`, `Folder Observer Commands` and `Cron Commands`.
+2) There are currently three types of commands. `Share Sheet Commands`, `Folder Observer Commands` and `Cron Commands`.
 3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
 
+## Easiest way to add new packages
+- Open the Terminal inside AutoPie
+- Run `python3.10 -m ensurepip`
+- This installs pip in AutoPie the environment.
+- Run `pip3 install package`
 
 ## New MCP Server
 AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
@@ -89,6 +92,9 @@ class MCPTool:
 |--------------------|-------------------------------------------------------------------------------------------------|
 | ${INPUT_FILE}      | Use it to pass input file path or url in the command                                            |
 | ${INPUT_FILES}     | If multiple files are needed as input to the command<br/> Example : `magick combine two images` |
+| ${INPUT_URL}       | If the program takes a single URL                                                               |
+| ${INPUT_URLS}      | If the program takes multiple URLs                                                              |
+| ${INPUT_TEXT}      | If program takes raw TEXT as value                                                              |
 | ${FILENAME}        | Filename without path                                                                           |
 | ${DIRECTORY}       | Parent Directory of file                                                                        |
 | ${FILENAME_NO_EXT} | Filename without path and extension                                                             |
@@ -210,12 +216,6 @@ You can build the app with prebuilt binaries by opening the project with Android
 
 ## Support
 * Supports only aarch64/arm-v8 as of now. It should run on most newer phones.
-
-## Why
-
-* Makes it easier to automate and run any task.
-* Termux will be constrained in the future by Android Platform limitations.
-* Needed to find an alternative method to Termux by including a whole Python installation in the APK itself that enables us to run scripts and binaries from anywhere on the storage.
 
 
 ## Thanks To
