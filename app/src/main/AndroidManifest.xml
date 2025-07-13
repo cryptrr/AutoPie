@@ -103,7 +103,7 @@
             android:excludeFromRecents="true"
             android:label="Run from Icon"
             android:noHistory="false"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/ShareTheme"
             android:launchMode="singleTask"
             android:taskAffinity="${applicationId}.direct"
