@@ -1,6 +1,7 @@
 package com.autosec.pie.autopieapp.data.services
 
 import android.app.Application
+import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.AutoPieError
 import com.autosec.pie.autopieapp.data.CommandExtraInput
@@ -15,7 +16,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
-import kotlin.system.exitProcess
+import kotlin.io.path.Path
+import kotlin.io.path.createSymbolicLinkPointingTo
 
 class ProcessManagerService(private val main: MainViewModel, private val dispatchers: DispatcherProvider, private val activity: Application){
 
@@ -468,6 +470,86 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             return false
         }
 
+    }
+
+    fun installPip(): Boolean {
+        Timber.d("Installing pip")
+
+        try {
+            if (shell?.isAlive() != true) initShell()
+            val command =
+                "python3.10 -m ensurepip"
+            Timber.d(command)
+
+            val result = shell!!.run(command)
+            Timber.d(shell!!.isRunning().toString())
+            Timber.d(result.output())
+
+            return result.isSuccess
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            return false
+        }
+    }
+
+    fun linkPython3(): Boolean {
+        Timber.d("Linking python3.10 to python3")
+
+        try {
+
+            val targetFile = Path(activity.filesDir.absolutePath, "build/usr/bin/python3.10")
+            val symbolicLink = Path(activity.filesDir.absolutePath, "build/usr/bin/python3")
+
+            symbolicLink.createSymbolicLinkPointingTo(targetFile)
+
+            return true
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            return false
+        }
+    }
+
+
+    fun pipInstallPackage(packageName: String): Boolean {
+        Timber.d("Pip installing $packageName")
+
+        try {
+            if (shell?.isAlive() != true) initShell()
+            val command =
+                "pip3 install $packageName"
+            Timber.d(command)
+
+            val result = shell!!.run(command)
+            Timber.d(shell!!.isRunning().toString())
+            Timber.d(result.output())
+
+            return result.isSuccess
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            return false
+        }
+    }
+
+    fun listPackages(): List<File> {
+        Timber.d("List all packages installed")
+
+        try {
+            val binLocation = File(activity.filesDir, "build/bin").listFiles()
+            val usrBinLocation = File(activity.filesDir, "build/usr/bin")
+            val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+
+            val packages = listOf(
+                binLocation?.toList() ?: emptyList(),
+                usrBinLocation.listFiles()?.toList() ?: emptyList(),
+                autosecBinLocation.listFiles()?.toList() ?: emptyList()
+            ).flatten().toSet()
+
+
+            return packages.toList()
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            throw  e
+        }
     }
 
     fun startMCPServer(mcpExecPath: String, modulePath: String, host: String, port: String) {

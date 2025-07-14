@@ -41,7 +41,7 @@ import com.autosec.pie.utils.Utils
 import timber.log.Timber
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: @Composable () -> Unit = {}){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -63,6 +63,7 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
                 text.value = it
                 onValueChange(it)
             },
+            trailingIcon = trailingIcon,
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             minLines = 2,

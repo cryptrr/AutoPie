@@ -1,6 +1,7 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +63,7 @@ import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
 import com.autosec.pie.autopieapp.domain.AppNotification
+import com.autosec.pie.autopieapp.presentation.elements.PackagesListDialog
 import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
@@ -156,6 +159,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
         extrasElements.value += CommandExtra(id = Utils.getRandomNumericalId(), type = "STRING")
     }
 
+    var showPackagesDialog by remember { mutableStateOf(false) }
 
 
     Column {
@@ -229,7 +233,25 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
             GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
 
             Spacer(modifier = Modifier.height(20.dp))
-            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file")
+            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file"){
+                Box(
+                    Modifier
+                        .padding(horizontal = 5.dp)
+                        .clip(RoundedCornerShape(15.dp))
+                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
+                        .clickable {
+                            showPackagesDialog = true
+                        }
+                        .padding(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.UnfoldMore,
+                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = "Show more options",
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -407,4 +429,12 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
         )
 
     }
+    PackagesListDialog(
+        showDialog = showPackagesDialog,
+        title = "Installed Packages",
+        value= viewModel.execFile,
+        onDismissRequest = {
+            showPackagesDialog = false
+        }
+    )
 }

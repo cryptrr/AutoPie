@@ -13,7 +13,7 @@ import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import java.io.File
 
-class InstalledPackagesViewModel(application: Application) : AndroidViewModel(application) {
+class InstalledPackagesViewModel(private val application: Application) : AndroidViewModel(application) {
 
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
 
@@ -37,9 +37,18 @@ class InstalledPackagesViewModel(application: Application) : AndroidViewModel(ap
     private fun readPackages(): List<File> {
 
         try {
-            val folderPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin"
+            val binLocation = File(application.filesDir, "build/bin").listFiles()
+            val usrBinLocation = File(application.filesDir, "build/usr/bin")
+            val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 
-            return getFilesInFolder(folderPath)
+            val packages = listOf(
+                binLocation?.toList() ?: emptyList(),
+                usrBinLocation.listFiles()?.toList() ?: emptyList(),
+                autosecBinLocation.listFiles()?.toList() ?: emptyList()
+            ).flatten().toSet()
+
+
+            return packages.toList()
         } catch (e: Exception) {
             Timber.e(e)
             return emptyList()

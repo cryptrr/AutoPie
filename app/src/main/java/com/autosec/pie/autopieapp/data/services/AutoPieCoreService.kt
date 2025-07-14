@@ -191,6 +191,7 @@ class AutoPieCoreService {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
                         mainViewModel.showNotification(AppNotification.InstallingPythonPackagesSuccess)
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
+                        installOtherPackages()
                     }
 
 
@@ -339,6 +340,25 @@ class AutoPieCoreService {
                     if (isDownloaded) {
                         extractAutoSecFiles()
                     }
+                }
+            }
+        }
+
+        fun installOtherPackages() {
+
+            CoroutineScope(dispatchers.io).launch {
+
+                val autoSecFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+
+
+                if (autoSecFolder.exists()) {
+
+                    processManagerService.linkPython3()
+
+                    processManagerService.installPip()
+
+                    processManagerService.pipInstallPackage("httpx[cli]")
                 }
             }
         }
