@@ -2,6 +2,7 @@ package com.autosec.pie.autopieapp.presentation.screens
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +19,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -51,6 +55,8 @@ import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
+import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
+import com.autosec.pie.autopieapp.presentation.elements.SingleFilePicker
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -231,7 +237,21 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 )
                             }
 
-                            GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description)
+                            GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description){
+                                if(extra.name.endsWith("FILES")){
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        MultiFilePicker{
+                                            textValue.value = it.joinToString(",")
+                                        }
+                                    }
+                                }else if(extra.name.endsWith("FILE")){
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        SingleFilePicker{
+                                            textValue.value = it
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         "BOOLEAN" -> {

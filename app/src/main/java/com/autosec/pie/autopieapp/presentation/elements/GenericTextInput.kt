@@ -159,6 +159,36 @@ fun MultiFilePicker(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+fun SingleFilePicker(
+    onFilesPicked: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let{
+            val path =  Utils.getAbsolutePathFromUri2(context,uri)
+
+            if (path != null) {
+                onFilesPicked(path)
+            }
+        }
+    }
+
+    remember { launcher }
+
+    Button(onClick = { launcher.launch(arrayOf("*/*")) }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+        Icon(
+            imageVector = Icons.Rounded.FilePresent,
+            contentDescription = "File Picker",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(25.dp)
+        )
+    }
+}
+
 @Composable
 fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: AnnotatedString, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
     Column {
