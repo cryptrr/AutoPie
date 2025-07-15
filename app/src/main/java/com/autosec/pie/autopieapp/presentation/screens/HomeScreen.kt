@@ -208,6 +208,7 @@ fun CommandCard(
                                 CommandType.SHARE -> PastelPurple
                                 CommandType.FILE_OBSERVER -> Purple10
                                 CommandType.CRON -> GreenGrey60
+                                null -> PastelPurple
                             }
                         )
                         .padding(horizontal = 5.dp, vertical = 3.dp)
@@ -238,6 +239,7 @@ fun CommandCard(
                                 color = Color.Black
                             )
                         }
+                        null -> {}
                     }
                 }
                 Column(

@@ -185,7 +185,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
             GenericTextFormField(
                 text = viewModel.directory,
-                subtitle = "Provide a folder in your storage",
+                subtitle = "The folder to set as the CWD.",
                 title = "DIRECTORY",
             )
 

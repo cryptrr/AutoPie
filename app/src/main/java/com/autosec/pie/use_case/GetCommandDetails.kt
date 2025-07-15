@@ -2,6 +2,7 @@ package com.autosec.pie.use_case
 
 import com.autosec.pie.autopieapp.data.CommandCreationModel
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.google.gson.Gson
@@ -11,7 +12,7 @@ import kotlinx.coroutines.delay
 import timber.log.Timber
 
 class GetCommandDetails(private val jsonService: JsonService) {
-    suspend operator fun invoke(key: String) : Triple<JsonObject, CommandModel?, Pair<String, String>> {
+    suspend operator fun invoke(key: String) : CommandModel {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
         val shareCommands = jsonService.readSharesConfig()
         val observerCommands = jsonService.readObserversConfig()
@@ -21,37 +22,10 @@ class GetCommandDetails(private val jsonService: JsonService) {
         if (observerCommands == null) throw ViewModelError.ObserverConfigUnavailable
         if (cronCommands == null) throw ViewModelError.CronConfigUnavailable
 
-        var commandType = ""
 
-        //TODO: Need to change this abomination
-        val commandDetails =
-            shareCommands.getAsJsonObject(key).also { if (it != null) commandType = "SHARE" }
-                ?: observerCommands.getAsJsonObject(
-                    key
-                ).also { if (it != null) commandType = "FILE_OBSERVER" }
-                ?: cronCommands.getAsJsonObject(
-                    key
-                ).also { if (it != null) commandType = "CRON" }
-
-
-        Timber.d("CommandDetails: $commandDetails")
-
-        if (commandDetails == null) {
-            throw ViewModelError.CommandNotFound
-        }
-
-        val selectorsFormatted = try {
-            val arr = commandDetails.get("selectors").asJsonArray
-            arr.joinToString(",")
-        } catch (e: Exception) {
-            ""
-        }
-
-        delay(500L)
-
-
-        //TODO: Make this the new strategy
         //Another strategy but for now.
+        //TODO: Make this the new strategy for all
+
 
         val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
 
@@ -59,8 +33,17 @@ class GetCommandDetails(private val jsonService: JsonService) {
         val cronData: Map<String, CommandModel> = Gson().fromJson(cronCommands, mapType)
         val observerData: Map<String, CommandModel> = Gson().fromJson(observerCommands, mapType)
 
-        val commandModel = sharesData[key] ?: cronData[key] ?: observerData[key]
+        val (commandModel, commandType) = when {
+            sharesData[key] != null -> Pair(sharesData[key]!!, CommandType.SHARE)
+            cronData[key] != null -> Pair(cronData[key]!!, CommandType.CRON)
+            observerData[key] != null -> Pair(observerData[key]!!, CommandType.FILE_OBSERVER)
+            else -> throw ViewModelError.CommandNotFound
+        }
 
-        return Triple(commandDetails, commandModel, Pair(commandType, selectorsFormatted))
+        delay(500L)
+
+        Timber.d("commandType: $commandType")
+
+        return commandModel.copy(type = commandType, name = key)
     }
 }

@@ -45,7 +45,7 @@ class InstalledPackagesViewModel(private val application: Application) : Android
                 binLocation?.toList() ?: emptyList(),
                 usrBinLocation.listFiles()?.toList() ?: emptyList(),
                 autosecBinLocation.listFiles()?.toList() ?: emptyList()
-            ).flatten().toSet()
+            ).flatten().toSet().filter { !it.name.startsWith(".") }
 
 
             return packages.toList()

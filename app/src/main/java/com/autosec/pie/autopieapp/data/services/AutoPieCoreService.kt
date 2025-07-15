@@ -31,7 +31,7 @@ class AutoPieCoreService {
 
 
     companion object {
-        val activity: Application by inject(Context::class.java)
+        val application: Application by inject(Context::class.java)
         private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
         val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
@@ -200,7 +200,7 @@ class AutoPieCoreService {
 
                     CoroutineScope(dispatchers.main).launch {
                         Toast.makeText(
-                            activity.applicationContext,
+                            application.applicationContext,
                             "Error installing python. Please Reinstall this app.",
                             Toast.LENGTH_LONG
                         ).show()
@@ -278,7 +278,7 @@ class AutoPieCoreService {
 
             try {
                 val downloadManager =
-                    getSystemService(activity, DownloadManager::class.java) as DownloadManager
+                    getSystemService(application, DownloadManager::class.java) as DownloadManager
 
                 val downloadId = downloadManager.enqueue(request)
 
@@ -300,7 +300,7 @@ class AutoPieCoreService {
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
                 val appDataFolder =
-                    File(activity.filesDir.absolutePath)
+                    File(application.filesDir.absolutePath)
 
                 if (autoSecFolder.exists()) {
                     mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
@@ -348,11 +348,9 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
 
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                val distFolder = File(application.filesDir, "build")
 
-
-                if (autoSecFolder.exists()) {
+                if (distFolder.exists()) {
 
                     processManagerService.linkPython3()
 

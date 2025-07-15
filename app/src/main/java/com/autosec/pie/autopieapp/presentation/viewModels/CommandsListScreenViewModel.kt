@@ -52,7 +52,10 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
             main.eventFlow.collect{
                 when(it){
-                    is ViewModelEvent.RefreshCommandsList -> getCommandsList()
+                    is ViewModelEvent.RefreshCommandsList -> {
+                        searchCommandQuery.value = ""
+                        getCommandsList()
+                    }
                     else -> {}
                 }
             }

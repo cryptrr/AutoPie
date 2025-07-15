@@ -16,12 +16,14 @@ data class ShareItemModel(
 )
 
 data class CommandModel(
-    override val type: CommandType,
-    override val name: String,
+    override val type: CommandType? = null,
+    override val name: String = "",
     override val path: String,
     override val command: String,
     override val exec: String,
     override val deleteSourceFile: Boolean? = false,
+    override val selectors: List<String>? = emptyList(),
+    override val cronInterval: String? = "",
     override val extras: List<CommandExtra>? = null
 ) : CommandInterface
 
@@ -39,12 +41,14 @@ data class CommandCreationModel(
 )
 
 interface CommandInterface {
-    val type: CommandType
+    val type: CommandType?
     val name: String
     val path: String
     val command: String
     val exec: String
     val deleteSourceFile: Boolean?
+    val selectors: List<String>?
+    val cronInterval: String?
     val extras: List<CommandExtra>?
 }
 
