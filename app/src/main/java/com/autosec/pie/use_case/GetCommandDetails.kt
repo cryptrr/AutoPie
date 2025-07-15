@@ -28,7 +28,8 @@ class GetCommandDetails(private val jsonService: JsonService) {
             shareCommands.getAsJsonObject(key).also { if (it != null) commandType = "SHARE" }
                 ?: observerCommands.getAsJsonObject(
                     key
-                ).also { if (it != null) commandType = "FILE_OBSERVER" } ?: cronCommands.getAsJsonObject(
+                ).also { if (it != null) commandType = "FILE_OBSERVER" }
+                ?: cronCommands.getAsJsonObject(
                     key
                 ).also { if (it != null) commandType = "CRON" }
 
@@ -37,7 +38,6 @@ class GetCommandDetails(private val jsonService: JsonService) {
 
         if (commandDetails == null) {
             throw ViewModelError.CommandNotFound
-
         }
 
         val selectorsFormatted = try {
@@ -50,14 +50,16 @@ class GetCommandDetails(private val jsonService: JsonService) {
         delay(500L)
 
 
-
+        //TODO: Make this the new strategy
         //Another strategy but for now.
 
         val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
 
-        val data: Map<String, CommandModel> = Gson().fromJson(shareCommands, mapType)
+        val sharesData: Map<String, CommandModel> = Gson().fromJson(shareCommands, mapType)
+        val cronData: Map<String, CommandModel> = Gson().fromJson(cronCommands, mapType)
+        val observerData: Map<String, CommandModel> = Gson().fromJson(observerCommands, mapType)
 
-        val commandModel = data[key]
+        val commandModel = sharesData[key] ?: cronData[key] ?: observerData[key]
 
         return Triple(commandDetails, commandModel, Pair(commandType, selectorsFormatted))
     }
