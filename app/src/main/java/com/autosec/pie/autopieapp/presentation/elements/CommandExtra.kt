@@ -93,7 +93,7 @@ fun CommandExtraElement(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.horizontalScroll(scrollState)
         ) {
-            for (item in extrasElements.value) {
+            for (item in extrasElements.value.reversed()) {
                 key(item.id){
                     CommandExtraInputElement(item,extrasElements, onAddCommandExtra, onRemoveCommandExtra)
                 }
