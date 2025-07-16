@@ -263,7 +263,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val booleanExpanded = remember { mutableStateOf(false) }
                             val selectedOptionForBoolean =
                                 rememberSaveable {
-                                    mutableStateOf(extra.defaultBoolean.toString().uppercase())
+                                    mutableStateOf(extra.defaultBoolean.toString())
                                 }
                             val booleanOptions = listOf("TRUE", "FALSE")
 

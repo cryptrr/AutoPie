@@ -322,7 +322,7 @@ fun OptionSelector(
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween){
             Text(
-                text = selectedOption.value,
+                text = selectedOption.value.uppercase(),
                 modifier = Modifier
                     //.clip(RoundedCornerShape(15.dp))
                     .fillMaxWidth(0.7F)
@@ -347,7 +347,7 @@ fun OptionSelector(
             options.forEach { option ->
                 DropdownMenuItem(
                     onClick = {
-                        selectedOption.value = option
+                        selectedOption.value = option.toBoolean().toString()
                         expanded.value = false
                     },
                     text = { Text(option) }

@@ -357,6 +357,8 @@ class AutoPieCoreService {
 
                     processManagerService.installPip()
 
+                    //Installing the forked version of httpx that supports --cookie-file
+                    //Both these calls are necessary
                     processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
                     processManagerService.pipInstallPackage("httpx[cli]")
                 }
