@@ -220,14 +220,6 @@ fun ShareContextMenuBottomSheet(
 
     val activity = LocalContext.current.getActivity()
 
-//    LaunchedEffect(currentLink, fileUris) {
-//        try {
-//            shareReceiverViewModel.getSharesConfig()
-//        }catch (e:Exception){
-//            Timber.e(e)
-//        }
-//    }
-
 
     LaunchedEffect(key1 = currentLink, fileUris) {
         shareReceiverViewModel.main.eventFlow.collect {
