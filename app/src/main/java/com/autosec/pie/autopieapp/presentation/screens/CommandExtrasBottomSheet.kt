@@ -219,8 +219,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                 Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
                         "STRING" -> {
+
+                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD")}
+
                             val textValue = remember {
-                                mutableStateOf(extra.default)
+                                mutableStateOf(if(isPasswordField) "⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤" else "")
                             }
 
                             LaunchedEffect(key1 = textValue.value) {
@@ -237,14 +240,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 )
                             }
 
-                            GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description){
+
+                            GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
                                 if(extra.name.endsWith("FILES")){
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                         MultiFilePicker{
                                             textValue.value = it.joinToString(",")
                                         }
                                     }
-                                }else if(extra.name.endsWith("FILE")){
+                                }
+                                else if(extra.name.endsWith("FILE")){
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                         SingleFilePicker{
                                             textValue.value = it
