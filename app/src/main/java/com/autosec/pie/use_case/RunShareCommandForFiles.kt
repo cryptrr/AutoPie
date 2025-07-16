@@ -4,6 +4,7 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
@@ -27,7 +28,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
         fileUris: List<String>,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
-    ) : Flow<Pair<Boolean, String>> {
+    ) : Flow<CommandResult> {
         Timber.d("runShareCommandForFiles")
 
 
@@ -96,11 +97,11 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 Timber.d("Result Command: $resultCommand")
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, path,
+                val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
-                emit(Pair(success, fileUris.toString()))
+                emit(result)
 
 
             } else {
@@ -157,11 +158,11 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     Timber.d("Replaced String $replacedString")
 
 
-                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand,path,
+                    val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
-                    emit(Pair(success, path))
+                    emit(result)
 
                 }
 

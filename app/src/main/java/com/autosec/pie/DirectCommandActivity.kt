@@ -52,23 +52,6 @@ import org.koin.androidx.compose.koinViewModel
 
 class DirectCommandActivity : ComponentActivity() {
 
-    override fun onDestroy() {
-        Timber.d("DirectCommandActivity Destroyed")
-        super.onDestroy()
-    }
-
-    override fun onPause() {
-        Timber.d("DirectCommandActivity Paused")
-        super.onPause()
-    }
-
-    override fun onStop() {
-        Timber.d("DirectCommandActivity Stopped")
-
-        super.onStop()
-    }
-
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -135,7 +118,6 @@ class DirectCommandActivity : ComponentActivity() {
             }
         }
     }
-
 
 }
 

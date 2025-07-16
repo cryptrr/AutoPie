@@ -63,6 +63,13 @@ data class CommandExtra(
     val selectableOptions: List<String> = emptyList()
 )
 
+data class CommandResult(
+    val key: String,
+    val processId: Int,
+    val success: Boolean,
+    val output: String,
+)
+
 data class InputParsedData(
     val id: Int = (1000..9999).random(),
     val name: String = "",
@@ -108,3 +115,4 @@ data class InstalledPackageModel(
     val version: String,
     val hasUpdate: Boolean,
 )
+

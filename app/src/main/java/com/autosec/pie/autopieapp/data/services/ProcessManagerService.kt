@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.AutoPieError
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandInterface
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
@@ -395,6 +396,73 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             shells.remove(processId)
 
             return result.isSuccess
+
+
+        }
+        catch (e: Exception) {
+            Timber.e(e.toString())
+            throw e
+        }
+    }
+
+    fun runCommandForShareWithEnv2(
+        commandObject: CommandInterface,
+        exec: String,
+        command: String,
+        cwd: String,
+        inputParsedData: List<InputParsedData> = emptyList(),
+        commandExtraInputs: List<CommandExtraInput>,
+        processId: Int,
+        usePython: Boolean = true,
+        isShellScript: Boolean = false
+    ): CommandResult {
+
+        try {
+
+            checkForUnsafeCommands(commandObject, command)
+
+            val shell = getShell(inputParsedData, commandObject, commandExtraInputs)
+
+            Timber.d("Received processId in Command Start: $processId")
+            shells.set(processId, shell)
+
+            val cwdSuccess = shell.run("cd ${cwd}")
+
+            if(!cwdSuccess.isSuccess){
+                Timber.e("CWD unsuccessful ${cwdSuccess.output}")
+            }else{
+                Timber.d("current working directory is $cwd")
+            }
+
+            //val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
+            val fullCommand = when {
+                usePython -> "python3.10 $exec $command"
+                isShellScript -> "sh $exec $command"
+                else -> "$exec $command"
+            }
+
+            Timber.d("FULL COMMAND: $fullCommand")
+
+            Timber.d("Env dump: ${shell.environment}")
+
+            val result = shell.run(fullCommand)
+
+            Timber.d("Exit Code ${result.exitCode}")
+
+            val checkPwd = shell.run("pwd")
+
+
+            val output = result.output()
+
+            Timber.d(output)
+
+            Timber.d("Command Run: ${result.details.command}")
+
+
+            shell.shutdown()
+            shells.remove(processId)
+
+            return CommandResult(commandObject.name, processId,result.isSuccess, output)
 
 
         }

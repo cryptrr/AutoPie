@@ -25,6 +25,7 @@ import com.autosec.pie.utils.getIntExtraOrNull
 import timber.log.Timber
 import java.io.File
 import androidx.core.net.toUri
+import com.autosec.pie.BuildConfig
 
 class AutoPieNotification(val context: Application) {
 
@@ -100,21 +101,26 @@ class AutoPieNotification(val context: Application) {
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun sendNotification(contentTitle: String, contentText: String) {
+    fun sendNotification(contentTitle: String, contentText: String, logContents: String) {
         val channelId = MAIN_CHANNEL
         val notificationId = System.currentTimeMillis().toInt()
 
         Timber.d("Sending notification")
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val tempFile = File.createTempFile("temp_", ".log", context.cacheDir)
+        tempFile.writeText(logContents)
+
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
+
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            setClassName(context, BuildConfig.APPLICATION_ID + ".OutputViewerActivity")
+            putExtra("logFile", uri.toString())
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
+
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        val file = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie.log")
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
         val openFileIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "text/plain")  // Adjust MIME type
@@ -135,7 +141,7 @@ class AutoPieNotification(val context: Application) {
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .addAction(
                 R.mipmap.ic_launcher,
                 "Open Logs",

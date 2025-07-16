@@ -115,6 +115,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
 
     //TEST IMPLS
+    implementation("androidx.compose.ui:ui-tooling:1.8.3")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.16")
@@ -132,4 +133,5 @@ dependencies {
     testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.8.3")
 }

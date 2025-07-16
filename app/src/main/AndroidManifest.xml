@@ -109,6 +109,17 @@
             android:taskAffinity="${applicationId}.direct"
         >
         </activity>
+        <activity
+            android:name=".OutputViewerActivity"
+            android:excludeFromRecents="true"
+            android:label="View the output logs"
+            android:noHistory="false"
+            android:exported="true"
+            android:theme="@style/ShareTheme"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.direct"
+            >
+        </activity>
         <service
             android:name=".autopieapp.data.services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />

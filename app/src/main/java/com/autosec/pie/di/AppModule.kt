@@ -20,6 +20,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -30,6 +31,7 @@ val appModule = module {
     single<MainViewModel> { MainViewModel(get(), get(), get()) }
     single<ProcessManagerService> { ProcessManagerService(get(), get(), get()) }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
+    viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
 
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }

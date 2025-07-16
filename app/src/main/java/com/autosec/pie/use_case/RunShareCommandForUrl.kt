@@ -4,6 +4,7 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
@@ -19,7 +20,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
 class RunShareCommandForUrl(private val processManagerService: ProcessManagerService){
-    suspend operator fun invoke(item: CommandModel, currentLink: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
+    suspend operator fun invoke(item: CommandModel, currentLink: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
             Timber.d("runShareCommandForUrl")
@@ -72,9 +73,9 @@ class RunShareCommandForUrl(private val processManagerService: ProcessManagerSer
             Timber.d("Command to run: ${item.exec} ${resultCommand}")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
-            emit(Pair(success, currentLink))
+            emit(result)
         }
     }
 

@@ -4,6 +4,7 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
@@ -25,7 +26,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
         inputDir: File,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
-    ): Flow<Pair<Boolean, String>> {
+    ): Flow<CommandResult> {
 
         return flow {
 
@@ -78,11 +79,11 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, cwdPath,
+                val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, cwdPath,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
-                if (success) {
+                if (result.success) {
 
                     if (item.deleteSourceFile == true) {
                         processManagerService.deleteFile(path.absolutePath)
@@ -92,7 +93,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
                 }
 
-                emit(Pair(success, path.name))
+                emit(result)
 
             }
 

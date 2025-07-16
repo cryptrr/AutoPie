@@ -3,6 +3,7 @@ package com.autosec.pie.use_case
 import android.os.Environment
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
@@ -16,7 +17,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
 class RunStandaloneCommand(private val processManagerService: ProcessManagerService){
-    operator fun invoke(item: CommandModel, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
+    operator fun invoke(item: CommandModel, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
             Timber.d("RunStandaloneCommand")
@@ -56,9 +57,9 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val success = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
-            emit(Pair(success, item.name))
+            emit(success)
         }
     }
 
