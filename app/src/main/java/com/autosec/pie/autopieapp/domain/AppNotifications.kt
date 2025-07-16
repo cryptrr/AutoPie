@@ -100,10 +100,15 @@ sealed class AppNotification : Notification {
     data object MCPServerStartError : AppNotification()
     data object CommandDeleted : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
+    data class PackageUpdatesAvailable(val url: String) : AppNotification()
 
 
 
-    override val title = "Notification"
+    override val title : String
+        get() = when(this){
+            is PackageUpdatesAvailable -> "Package Updates Available"
+            else -> "Notification"
+        }
 
     override val description: String
         get() = when (this) {
@@ -120,6 +125,7 @@ sealed class AppNotification : Notification {
             is InstallingInitPackagesSuccess -> "Installing Init packages: Success"
             is ShowCloseSheetInfo -> "Press the back button to close the bottom sheet."
             is UpdatesAvailable -> "Updates are available."
+            is PackageUpdatesAvailable-> "If issues arise, try replacing your package with new version."
             is MCPServerStopped -> "MCP Server Stopped"
             is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
@@ -132,6 +138,7 @@ sealed class AppNotification : Notification {
             is InstallingPythonPackages -> BannerType.Warning
             is InstallingPythonPackagesSuccess -> BannerType.Success
             is UpdatesAvailable -> BannerType.Warning
+            is PackageUpdatesAvailable -> BannerType.Warning
             else -> BannerType.Info
         }
 
@@ -140,12 +147,14 @@ sealed class AppNotification : Notification {
             is InstallingPythonPackages -> true
             is FailedDownloadingArchive -> true
             is UpdatesAvailable -> true
+            is PackageUpdatesAvailable -> true
             is DownloadingInitPackages -> true
             else -> false
         }
     override val hasAction: Boolean
         get() = when (this) {
             is UpdatesAvailable -> true
+            is PackageUpdatesAvailable -> true
             is InstallingPythonPackages -> true
             is DownloadingInitPackages -> true
             else -> false
@@ -173,6 +182,19 @@ sealed class AppNotification : Notification {
 
                     val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
 
+
+                    NotificationButton("Update") {
+                        uriHandler.openUri(this.url)
+                        mainViewModel.clearAllBanners()
+                    }
+                }
+            }
+
+            is PackageUpdatesAvailable -> {
+                {
+                    val uriHandler = LocalUriHandler.current
+
+                    val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
 
                     NotificationButton("Update") {
                         uriHandler.openUri(this.url)

@@ -195,7 +195,6 @@ class AutoPieCoreService {
 
                     installOtherPackages()
 
-
                 } catch (e: IOException) {
                     Timber.e(e)
 
@@ -300,6 +299,10 @@ class AutoPieCoreService {
                 val autoSecFolder =
                     File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
+                val versionFile = File(autoSecFolder, "version.txt")
+
+                val versionText = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL.split("/").takeLast(2).joinToString("/")
+
                 val appDataFolder =
                     File(application.filesDir.absolutePath)
 
@@ -314,6 +317,9 @@ class AutoPieCoreService {
 
                     if (isDownloaded) {
                         mainViewModel.showNotification(AppNotification.DownloadedInitPackages)
+
+                        versionFile.writeText(versionText)
+
                         extractAutoSecFiles()
                     }
                 }
@@ -344,6 +350,7 @@ class AutoPieCoreService {
                 }
             }
         }
+
 
         fun installOtherPackages() {
 
