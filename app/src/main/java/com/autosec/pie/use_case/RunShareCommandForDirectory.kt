@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class RunShareCommandForDirectory(private val processManagerService: ProcessManagerService){
 
@@ -38,6 +40,9 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
 
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                val cwdPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                 val (execType,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
@@ -73,7 +78,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, cwdPath,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 

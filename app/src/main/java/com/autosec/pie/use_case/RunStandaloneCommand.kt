@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class RunStandaloneCommand(private val processManagerService: ProcessManagerService){
     operator fun invoke(item: CommandModel, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
@@ -21,6 +23,9 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
 
             val execFilePath =
                 Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+            val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
             val (execType,fullExecPath, resultCommand) = when{
                 File(item.exec).isAbsolute -> {
@@ -51,7 +56,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
             emit(Pair(success, item.name))
         }

@@ -358,8 +358,13 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d("Received processId in Command Start: $processId")
             shells.set(processId, shell)
 
-            shell.run("cd ${cwd}")
+            val cwdSuccess = shell.run("cd ${cwd}")
 
+            if(!cwdSuccess.isSuccess){
+                Timber.e("CWD unsuccessful ${cwdSuccess.output}")
+            }else{
+                Timber.d("current working directory is $cwd")
+            }
 
             //val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
             val fullCommand = when {
@@ -368,13 +373,16 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                 else -> "$exec $command"
             }
 
-            Timber.d(fullCommand)
+            Timber.d("FULL COMMAND: $fullCommand")
 
             Timber.d("Env dump: ${shell.environment}")
 
             val result = shell.run(fullCommand)
 
             Timber.d("Exit Code ${result.exitCode}")
+
+            val checkPwd = shell.run("pwd")
+
 
             val output = result.output()
 

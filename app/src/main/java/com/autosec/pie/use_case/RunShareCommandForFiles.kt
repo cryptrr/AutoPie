@@ -47,6 +47,8 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                 val (execType,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
@@ -94,7 +96,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 Timber.d("Result Command: $resultCommand")
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
@@ -116,6 +118,9 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                    val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                     val (execType,fullExecPath, resultCommand) = when{
                         File(item.exec).isAbsolute -> {
@@ -152,7 +157,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     Timber.d("Replaced String $replacedString")
 
 
-                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand,path,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 

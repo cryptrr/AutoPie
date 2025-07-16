@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import java.net.URL
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class RunShareCommandForUrl(private val processManagerService: ProcessManagerService){
     suspend operator fun invoke(item: CommandModel, currentLink: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
@@ -28,6 +30,8 @@ class RunShareCommandForUrl(private val processManagerService: ProcessManagerSer
             val host = inputUrl.host
 
             val filename = inputUrl.file
+
+            val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
 
             val execFilePath =
                 Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
@@ -68,7 +72,7 @@ class RunShareCommandForUrl(private val processManagerService: ProcessManagerSer
             Timber.d("Command to run: ${item.exec} ${resultCommand}")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
             emit(Pair(success, currentLink))
         }
