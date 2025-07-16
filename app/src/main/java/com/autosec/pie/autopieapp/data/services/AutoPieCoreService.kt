@@ -191,8 +191,9 @@ class AutoPieCoreService {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
                         mainViewModel.showNotification(AppNotification.InstallingPythonPackagesSuccess)
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
-                        installOtherPackages()
                     }
+
+                    installOtherPackages()
 
 
                 } catch (e: IOException) {
@@ -356,6 +357,7 @@ class AutoPieCoreService {
 
                     processManagerService.installPip()
 
+                    processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
                     processManagerService.pipInstallPackage("httpx[cli]")
                 }
             }
