@@ -1,5 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.elements
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -225,7 +226,26 @@ fun CommandExtraInputElement(
                     text = default,
                     "",
                     placeholder = "DEFAULT",
-                    isError = default.value.isBlank()
+                    isError = default.value.isBlank(),
+                    trailingIcon = if(name.value.endsWith("FILE")){
+                        {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                SingleFilePicker{
+                                    default.value = it
+                                }
+                            }
+                        }
+                    }else if(name.value.endsWith("FILES")) {
+                        {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                MultiFilePicker{
+                                    default.value = it.joinToString(",")
+                                }
+                            }
+                        }
+                    }else {
+                        null
+                    }
                 )
                 GenericTextFormField(
                     text = description,
@@ -289,11 +309,13 @@ fun OptionSelector(
 
 
     Column(
-        modifier = Modifier.border(
-            2.dp,
-            MaterialTheme.colorScheme.primary,
-            RoundedCornerShape(15.dp)
-        ).height(57.dp)
+        modifier = Modifier
+            .border(
+                2.dp,
+                MaterialTheme.colorScheme.primary,
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
             .clip(RoundedCornerShape(15.dp))
             .background(Color.Black.copy(alpha = 0.15F))
             .clickable { expanded.value = true }
@@ -306,7 +328,9 @@ fun OptionSelector(
                     .fillMaxWidth(0.7F)
                     .padding(16.dp)
             )
-            Box(Modifier.fillMaxHeight().aspectRatio(1F), contentAlignment = Alignment.Center){
+            Box(Modifier
+                .fillMaxHeight()
+                .aspectRatio(1F), contentAlignment = Alignment.Center){
                 Icon(
                     tint = MaterialTheme.colorScheme.primary,
                     imageVector = Icons.Default.UnfoldMore,
