@@ -461,7 +461,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                     text = card.name ?: "",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty()!!) 0.9F else 1F)
+                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty() == true) 0.9F else 1F)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
