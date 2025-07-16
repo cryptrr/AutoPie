@@ -223,7 +223,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD")}
 
                             val textValue = remember {
-                                mutableStateOf(if(isPasswordField) "⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤" else "")
+                                mutableStateOf(if(isPasswordField) "⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤" else extra.default)
                             }
 
                             LaunchedEffect(key1 = textValue.value) {
