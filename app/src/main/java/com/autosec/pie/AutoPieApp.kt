@@ -60,6 +60,7 @@ class MyApplication : Application() {
             startNotificationReceiver()
 
             checkForUpdates()
+            createEmptyCookieFile()
         }
     }
 
