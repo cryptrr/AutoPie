@@ -53,7 +53,6 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
             main.eventFlow.collect{
                 when(it){
                     is ViewModelEvent.RefreshCommandsList -> {
-                        searchCommandQuery.value = ""
                         getCommandsList()
                     }
                     else -> {}
@@ -85,6 +84,10 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
                         filteredListOfCommands.update {
                             newCommands.sortedBy { it.name }
+                        }
+
+                        if(searchCommandQuery.value.isNotEmpty()){
+                            searchInCommands(searchCommandQuery.value)
                         }
 
                         isLoading.value = false
