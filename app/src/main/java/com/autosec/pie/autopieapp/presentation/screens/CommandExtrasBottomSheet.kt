@@ -57,6 +57,7 @@ import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
+import com.autosec.pie.autopieapp.presentation.elements.PasswordFormField
 import com.autosec.pie.autopieapp.presentation.elements.SingleFilePicker
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
@@ -224,7 +225,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD")}
 
                             val textValue = remember {
-                                mutableStateOf(if(isPasswordField) "⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤⬤" else extra.default)
+                                mutableStateOf(extra.default)
                             }
 
                             LaunchedEffect(key1 = textValue.value) {
@@ -242,22 +243,30 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
 
 
-                            GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
-                                if(extra.name.endsWith("FILES")){
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                        MultiFilePicker{
-                                            textValue.value = it.joinToString(",")
+                            if(isPasswordField){
+                                PasswordFormField(text = textValue , title = extra.name, subtitle = extra.description)
+                            }
+                            else{
+                                GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
+                                    if(extra.name.endsWith("FILES")){
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            MultiFilePicker{
+                                                textValue.value = it.joinToString(",")
+                                            }
                                         }
                                     }
-                                }
-                                else if(extra.name.endsWith("FILE")){
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                        SingleFilePicker{
-                                            textValue.value = it
+                                    else if(extra.name.endsWith("FILE")){
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            SingleFilePicker{
+                                                textValue.value = it
+                                            }
                                         }
                                     }
                                 }
                             }
+
+
+
                         }
 
                         "BOOLEAN" -> {
