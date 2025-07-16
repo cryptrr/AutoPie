@@ -56,6 +56,7 @@ import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
+import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
 import com.autosec.pie.autopieapp.presentation.elements.SingleFilePicker
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
@@ -289,7 +290,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             Spacer(modifier = Modifier.height(10.dp))
 
 
-                            OptionSelector(
+                            OptionSelectorBoolean(
                                 options = booleanOptions,
                                 selectedOption = selectedOptionForBoolean,
                                 expanded = booleanExpanded
