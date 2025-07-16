@@ -137,7 +137,7 @@ fun OutputViewerBottomSheet(
                 viewModel.currentLogPath.value?.let {
                     Column(Modifier.clip(
                         RoundedCornerShape(15.dp)
-                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.2F)).padding(15.dp).verticalScroll(scroll)){
+                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.2F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
                         SelectionContainer {
                             Text(outputState.value)
                         }
