@@ -112,6 +112,8 @@ class CronService(private val jsonService: JsonService){
     }
 
 
+
+
     fun setUpChronJobs(){
 
         if(!main.storageManagerPermissionGranted){
@@ -143,15 +145,13 @@ class CronService(private val jsonService: JsonService){
 
             for(cronJob in data.entries){
 
-                //Tentative fix for cron path
-
-                cronJob.value.path = File(Environment.getExternalStorageDirectory().absolutePath,cronJob.value.path).absolutePath
 
                 val commandJson = Gson().toJson(cronJob.value)
 
                 Timber.d("Cron Command Starting: ${cronJob.key}")
 
                 val inputData = Data.Builder()
+                    .putString("commandKey", cronJob.key)
                     .putString("command", commandJson)
                     .build()
 
