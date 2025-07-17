@@ -7,12 +7,14 @@ import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.containsValidHttpUrl
 import com.autosec.pie.utils.containsValidUrl
 import com.autosec.pie.utils.extractAllUrls
 import com.autosec.pie.utils.extractFirstUrl
+import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
@@ -70,7 +72,10 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+
+            val result = processResult.toCommandResult(JobType.TEXT, text)
+
 
             emit(result)
         }

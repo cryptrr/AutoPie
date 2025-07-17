@@ -63,11 +63,20 @@ data class CommandExtra(
     val selectableOptions: List<String> = emptyList()
 )
 
+data class ProcessResult(
+    val key: String,
+    val processId: Int,
+    val success: Boolean,
+    val output: String,
+)
+
 data class CommandResult(
     val key: String,
     val processId: Int,
     val success: Boolean,
     val output: String,
+    val jobType: JobType,
+    val jobKey: String,
 )
 
 data class InputParsedData(
@@ -94,6 +103,16 @@ enum class CommandType{
     SHARE,
     FILE_OBSERVER,
     CRON
+}
+
+enum class JobType{
+    URL,
+    URLS,
+    FILE,
+    FILES,
+    DIRECTORY,
+    TEXT,
+    STANDALONE
 }
 
 data class ExecAndCommand(

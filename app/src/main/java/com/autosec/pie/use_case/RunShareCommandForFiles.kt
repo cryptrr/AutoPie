@@ -8,9 +8,11 @@ import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -97,9 +99,10 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 Timber.d("Result Command: $resultCommand")
 
-                val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
+                val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
+                val result = processResult.toCommandResult(JobType.FILES, fileUris.toString())
 
                 emit(result)
 
@@ -120,7 +123,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
 
-                    val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+                    val dirPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
 
 
                     val (execType,fullExecPath, resultCommand) = when{
@@ -158,9 +161,10 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     Timber.d("Replaced String $replacedString")
 
 
-                    val result = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path,
+                    val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
+                    val result = processResult.toCommandResult(JobType.FILE, path)
 
                     emit(result)
 

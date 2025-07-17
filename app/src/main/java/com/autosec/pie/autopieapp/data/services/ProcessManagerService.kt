@@ -8,6 +8,8 @@ import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandInterface
 import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
+import com.autosec.pie.autopieapp.data.ProcessResult
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
@@ -415,7 +417,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         processId: Int,
         usePython: Boolean = true,
         isShellScript: Boolean = false
-    ): CommandResult {
+    ): ProcessResult {
 
         try {
 
@@ -434,7 +436,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                 Timber.d("current working directory is $cwd")
             }
 
-            //val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
             val fullCommand = when {
                 usePython -> "python3.10 $exec $command"
                 isShellScript -> "sh $exec $command"
@@ -462,7 +463,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             shell.shutdown()
             shells.remove(processId)
 
-            return CommandResult(commandObject.name, processId,result.isSuccess, output)
+
+            return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
 
 
         }

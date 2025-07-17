@@ -1,6 +1,9 @@
 package com.autosec.pie.utils
 
 import android.util.Patterns
+import com.autosec.pie.autopieapp.data.CommandResult
+import com.autosec.pie.autopieapp.data.JobType
+import com.autosec.pie.autopieapp.data.ProcessResult
 
 fun String?.isValidUrl(): Boolean {
     return this != null && Patterns.WEB_URL.matcher(this).matches()
@@ -38,4 +41,15 @@ fun String?.extractAllUrls(): String? {
         urls.add(matcher.group())
     }
     return urls.joinToString{" "}
+}
+
+fun ProcessResult.toCommandResult(jobType: JobType,jobKey: String): CommandResult {
+    return CommandResult(
+        key = this.key,
+        processId = this.processId,
+        success = this.success,
+        output = this.output,
+        jobType = jobType,
+        jobKey = jobKey
+    )
 }

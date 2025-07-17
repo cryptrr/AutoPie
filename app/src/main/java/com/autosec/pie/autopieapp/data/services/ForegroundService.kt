@@ -163,12 +163,12 @@ class ForegroundService : Service() {
                     }.collect{ receipt ->
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.key}", logContents = receipt.output)
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}", logContents = receipt.output)
 
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.key}", logContents = receipt.output)
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}", logContents = receipt.output)
                         }
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
