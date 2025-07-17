@@ -43,6 +43,7 @@ class ForegroundService : Service() {
     private var foregroundServiceId : Int? = null
 
     init {
+        //TODO: Change
         mainViewModel.viewModelScope.launch {
             mainViewModel.eventFlow.collect{
                 when(it){

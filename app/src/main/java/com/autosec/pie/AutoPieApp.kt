@@ -77,6 +77,7 @@ class MyApplication : Application() {
         }
     }
     private fun scheduleChron(){
+        cronService.testCronJob()
         cronService.setUpChronJobs()
     }
 
