@@ -20,8 +20,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 20
-        versionName = "\"0.14.1-beta\""
+        versionCode = 21
+        versionName = "\"0.14.2-beta\""
 
         testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
         vectorDrawables {
