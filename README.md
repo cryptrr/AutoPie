@@ -34,53 +34,6 @@
 - This installs pip in AutoPie the environment.
 - Run `pip3 install package`
 
-## New MCP Server
-AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
-
-The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
-
-The scripts inside this folder will be included as tools in the MCP server.
-
-You can add any kind of functionality on your phone with this by just writing a Python script.
-
-The MCP tool scripts should be in this format.
-
-```py
-import os
-from typing import Dict, Any
-from pydantic import BaseModel
-
-class CreateFileInput(BaseModel):
-    filepath: str
-    content: str
-
-
-class MCPTool:
-    path = "/create_file"
-    name = "create_text_file"
-    methods=["POST"]
-    
-    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
-        """Creates a text file with the specified content."""
-        try:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
-            
-            # Write content to file
-            with open(input.filepath, "w") as f:
-                f.write(input.content)
-            
-            return {
-                "status": "success",
-                "message": f"File '{input.filepath}' created successfully"
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Failed to create file: {str(e)}"
-            }
-
-```
 
 
 ## Troubleshooting
@@ -134,7 +87,57 @@ Defining extra items such as options for codecs etc will look like this.
 
 ## Commands and Package Repository
 
-A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+- A package manager.
+
+- A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+
+## New MCP Server
+AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
+
+The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
+
+The scripts inside this folder will be included as tools in the MCP server.
+
+You can add any kind of functionality on your phone with this by just writing a Python script.
+
+The MCP tool scripts should be in this format.
+
+```py
+import os
+from typing import Dict, Any
+from pydantic import BaseModel
+
+class CreateFileInput(BaseModel):
+    filepath: str
+    content: str
+
+
+class MCPTool:
+    path = "/create_file"
+    name = "create_text_file"
+    methods=["POST"]
+    
+    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
+        """Creates a text file with the specified content."""
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
+            
+            # Write content to file
+            with open(input.filepath, "w") as f:
+                f.write(input.content)
+            
+            return {
+                "status": "success",
+                "message": f"File '{input.filepath}' created successfully"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to create file: {str(e)}"
+            }
+
+```
 
 ### How do I create binaries for AutoPie.
 
@@ -145,6 +148,7 @@ Using **Shiv** to package the binaries, dependencies and python files is strongl
 This is an example for how to include the `ffmpeg` binaries and libraries in a single file with shiv.
 
 A more detailed docs is in WIP.
+
 
 ```py
 
@@ -220,8 +224,8 @@ You can build the app with prebuilt binaries by opening the project with Android
 
 ## Thanks To
 
-[Jared Drummler](https://github.com/jaredrummler)
-
+[Jared Rummler](https://github.com/jaredrummler)
+[Termux](https://github.com/termux)
 
 
 
