@@ -61,7 +61,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
 
             val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
-            val jobKey = commandExtraInputs.map{it.value}.joinToString(" : ")
+            val jobKey = commandExtraInputs.filter { !(it.name.contains("PASSWORD") || it.name.contains("PASSWD")) }.map{it.value}.joinToString(" : ")
 
             val result = processResult.toCommandResult(JobType.STANDALONE, jobKey)
 
