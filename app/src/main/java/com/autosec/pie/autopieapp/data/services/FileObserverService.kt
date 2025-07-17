@@ -19,10 +19,12 @@ import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
+import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
@@ -38,6 +40,8 @@ class FileObserverJobService : JobService() {
 
     val main: MainViewModel by inject(MainViewModel::class.java)
     val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+    private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+
 
     val jsonService: JsonService by inject(JsonService::class.java)
 
@@ -88,47 +92,47 @@ class FileObserverJobService : JobService() {
             Timber.d("Thread Running on: ${Thread.currentThread().name}")
 
 
-            if(!main.storageManagerPermissionGranted){
-                return@launch
-            }
+            try {
+                if(!main.storageManagerPermissionGranted){
+                    Timber.d("Storage permission not granted to start FileObserverService")
+                    return@launch
+                }
 
-            val observerConfig = try {
-                jsonService.readObserversConfig()
+                val observerConfig = try {
+                    jsonService.readObserversConfig()
+                }catch (e: Exception){
+                    Timber.e(e)
+                    return@launch
+                }
+
+
+                if (observerConfig == null) {
+                    Timber.d("Observers file not available")
+                    main.schedulerConfigAvailable = false
+                    return@launch
+                } else {
+                    main.schedulerConfigAvailable = true
+                }
+
+
+                for (entry in observerConfig.entrySet()) {
+                    val key = entry.key
+
+                    val commandModel = useCases.getCommandDetails(key)
+                    val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, commandModel.path).absolutePath
+
+                    Timber.d("Starting $key observer for ${commandModel.path}")
+
+
+
+
+                    val fileObserver =
+                        DirectoryFileObserver(commandModel, fullPath)
+                    fileObservers.add(fileObserver)
+                    fileObserver.startWatching()
+                }
             }catch (e: Exception){
                 Timber.e(e)
-                return@launch
-            }
-
-
-            if (observerConfig == null) {
-                Timber.d("Observers file not available")
-                main.schedulerConfigAvailable = false
-                return@launch
-            } else {
-                main.schedulerConfigAvailable = true
-            }
-
-
-            for (entry in observerConfig.entrySet()) {
-                val key = entry.key
-                val value = entry.value.asJsonObject
-                // Process the key-value pair
-
-                val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-                val exec = value.get("exec").asString
-                val command = value.get("command").asString
-                val selectors = value.get("selectors").asJsonArray.map { it.asString }
-                val deleteSourceFile = value.get("deleteSourceFile").asBoolean
-
-
-                Timber.d("Starting $key observer for $directoryPath")
-
-                val commandModel: CommandModel = Gson().fromJson(value, CommandModel::class.java)
-
-                val fileObserver =
-                    DirectoryFileObserver(commandModel, directoryPath, exec, command, selectors, deleteSourceFile)
-                fileObservers.add(fileObserver)
-                fileObserver.startWatching()
             }
         }
 
@@ -148,23 +152,27 @@ class FileObserverJobService : JobService() {
 
     class DirectoryFileObserver(
         private val commandModel: CommandModel,
-        private val path: String,
-        private val exec: String,
-        private val command: String,
-        private val selectors: List<String>,
-        private val deleteSourceFile: Boolean
-    ) : FileObserver(path, CREATE) {
+        private val dirPath: String
+    ) : FileObserver(dirPath, CREATE) {
 
         //val activity: Activity by inject(Context::class.java)
 
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
 
+        private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+
+        private var processIds : List<Int> = emptyList()
+
+
         override fun onEvent(event: Int, path: String?) {
             Timber.d("Event Fired: $event")
             if (event == CREATE && path != null) {
                 Timber.d("New file created: $path")
-                checkFileCompletion(File("$path"))
-                //execCommand(File("$path"))
+                try {
+                    checkFileCompletion(File("$path"))
+                }catch (e: Exception){
+                    Timber.e(e)
+                }
             }
 
 //            if (event == MODIFY && path != null) {
@@ -176,12 +184,15 @@ class FileObserverJobService : JobService() {
         }
 
         private fun checkFileCompletion(file: File) {
+
             CoroutineScope(dispatchers.io).launch {
+
                 var lastSize = -1L
 
-                val regSelectors = selectors.map { it.toRegex() }
+                val regSelectors = commandModel.selectors?.map { it.toRegex() } ?: emptyList()
 
-                if(!regSelectors.any { file.name.matches(it) }) {
+                if((regSelectors.isNotEmpty() && !regSelectors.any { file.name.matches(it) }) || file.name.contains(".conv")) {
+                    Timber.d("File does not pass filter")
                     return@launch
                 }
 
@@ -196,67 +207,28 @@ class FileObserverJobService : JobService() {
 
                         Timber.d("File abs path " + file.absoluteFile.absolutePath)
 
-                        Timber.d("Edited abs path " + path + file.absolutePath)
+                        Timber.d("Edited abs path " + commandModel.path + file.absolutePath)
 
+                        val processId = (100000..999999).random()
+
+                        processIds = processIds + processId
 
                         //This is to prevent .pending files from causing errors.
                         val fileName =
                             if (!file.name.startsWith(".pending")) file.name else file.name.split("-")
                                 .subList(2, file.name.split("-").size).joinToString("-")
 
-                        val fullFilepath = "$path/$fileName"
+                        val fullFilepath = File(Environment.getExternalStorageDirectory().absolutePath, File(commandModel.path, fileName).absolutePath).absolutePath
 
                         Timber.d("Edited Filename: $fileName")
 
-                        //val resultString = "\"${command.replace("{INPUT_FILE}", "'$fileName'")}\""
-                        val resultString = "\"${command}\""
-
-                        val parsedPath = Path(fileName)
-
-                        val inputParsedData = mutableListOf<InputParsedData>().also {
-                            it.add(InputParsedData(name = "INPUT_FILE", value = "'${fileName}'"))
-                            it.add(InputParsedData(name = "FILENAME", value = parsedPath.fileName.toString()))
-                            it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
-                            it.add(InputParsedData(name = "FILENAME_NO_EXT", value = parsedPath.nameWithoutExtension))
-                            it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
-                        }
-
-                        Timber.d("Edited command $exec $resultString")
-
-                        val execFilePath =
-                            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + exec
-
-                        val fullExecPath = when{
-                            File(exec).isAbsolute -> {
-                                exec
-                            }
-                            File(execFilePath).exists() -> {
-                                //For packages installed inside autosec/bin
-                                execFilePath
-                            }
-                            else -> {
-                                //Base case fallback to terminal installed packages such as busybox packages.
-                                exec
-                            }
-                        }
-
-                        val usePython = !Utils.isShellScript(File(fullExecPath))
-
-
                         //Checking if file passes selectors list
-                        if (regSelectors.any { file.name.matches(it) }) {
+                        if (regSelectors.isEmpty() || regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
-                            val execSuccess =
-                                processManagerService.runCommandWithEnv(
-                                    commandModel,
-                                    fullExecPath,
-                                    resultString,
-                                    path,
-                                    inputParsedData,
-                                    usePython
-                                )
 
-                            if (deleteSourceFile && execSuccess) {
+                            val result = useCases.runShareCommandForFiles(commandModel, null, listOf(fullFilepath), emptyList(), processId).first()
+
+                            if (commandModel.deleteSourceFile == true && result.success) {
                                 processManagerService.deleteFile(fullFilepath)
                             }
                         } else {

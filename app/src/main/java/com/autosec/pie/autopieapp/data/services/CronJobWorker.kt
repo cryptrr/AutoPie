@@ -51,9 +51,8 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
                 Timber.d("ProcessIds at starting command: $processIds")
 
                 val commandKey = it.getString("commandKey")
-                val commandString = it.getString("command")
 
-                if(commandKey == null || commandString == null){
+                if(commandKey == null){
                     Timber.e("Data not received")
                     return@let
                 }

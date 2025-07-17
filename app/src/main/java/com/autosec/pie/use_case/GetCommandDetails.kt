@@ -23,8 +23,6 @@ class GetCommandDetails(private val jsonService: JsonService) {
         if (cronCommands == null) throw ViewModelError.CronConfigUnavailable
 
 
-        //Another strategy but for now.
-        //TODO: Make this the new strategy for all
 
 
         val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type

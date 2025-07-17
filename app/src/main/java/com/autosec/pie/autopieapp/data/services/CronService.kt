@@ -41,7 +41,7 @@ class CronService(private val jsonService: JsonService){
                     when(it){
                         is ViewModelEvent.CronConfigChanged -> {
                             Timber.d("Cron config changed: Restarting")
-                            setUpChronJobs()
+                            setUpCronJobs()
                         }
                         else -> {}
                     }
@@ -114,7 +114,7 @@ class CronService(private val jsonService: JsonService){
 
 
 
-    fun setUpChronJobs(){
+    fun setUpCronJobs(){
 
         if(!main.storageManagerPermissionGranted){
             return

@@ -52,7 +52,7 @@ class MyApplication : Application() {
 
         mainViewModel.viewModelScope.launch {
             scheduleJob()
-            scheduleChron()
+            scheduleCron()
             startScreenStateReceiver()
             startNotificationReceiver()
 
@@ -76,9 +76,9 @@ class MyApplication : Application() {
             jobScheduler.schedule(jobInfo)
         }
     }
-    private fun scheduleChron(){
-        cronService.testCronJob()
-        cronService.setUpChronJobs()
+    private fun scheduleCron(){
+        //cronService.testCronJob()
+        cronService.setUpCronJobs()
     }
 
     private fun startScreenStateReceiver(){

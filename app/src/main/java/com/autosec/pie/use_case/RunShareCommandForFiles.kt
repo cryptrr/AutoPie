@@ -45,7 +45,6 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                 val replacedString = item.command
 
 
-
                 Timber.d("Replaced String $replacedString")
 
                 val execFilePath =
