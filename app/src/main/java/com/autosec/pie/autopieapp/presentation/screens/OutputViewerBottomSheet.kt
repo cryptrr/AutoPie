@@ -137,9 +137,9 @@ fun OutputViewerBottomSheet(
                 viewModel.currentLogPath.value?.let {
                     Column(Modifier.clip(
                         RoundedCornerShape(15.dp)
-                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.2F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
+                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
                         SelectionContainer {
-                            Text(outputState.value)
+                            Text(outputState.value, modifier = Modifier.padding(vertical = 15.dp))
                         }
                     }
                 }
@@ -162,49 +162,4 @@ fun OutputViewerBottomSheet(
             }
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, device = "spec:width=1280px,height=2856px,dpi=480,cutout=corner")
-@Composable
-fun OutputBottomSheetPreview() {
-    val scroll = rememberScrollState()
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            //.wrapContentHeight()
-            .fillMaxHeight(0.80F)
-        ,
-        contentAlignment = Alignment.TopStart
-    )
-    {
-        Column(
-            Modifier
-                //.fillMaxSize()
-                .padding(15.dp)
-        ) {
-
-            Text(
-                text = "Shit is whack",
-                lineHeight = 32.sp,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            Column(
-                Modifier.clip(
-                    RoundedCornerShape(15.dp)
-                ).fillMaxHeight().background(Color.Black.copy(alpha = 0.2F)).padding(15.dp)
-                    .verticalScroll(scroll)
-            ) {
-                SelectionContainer {
-                    Text("RAAAAAA")
-                }
-            }
-        }
-    }
 }
