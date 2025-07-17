@@ -84,7 +84,7 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
 
         }catch (e: Exception){
             Timber.e(e)
-            autoPieNotification.sendNotification("Command Failed", command.name ,e.toString())
+            autoPieNotification.sendNotification("Command Failed", command.name ,null,e.toString())
             return Result.failure()
 
         }

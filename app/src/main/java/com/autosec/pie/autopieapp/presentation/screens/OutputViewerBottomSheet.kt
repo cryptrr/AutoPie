@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,7 @@ fun OutputViewerBottomSheet(
             ) {
 
                 Text(
-                    text = viewModel.currentLogPath.value?.split("/")?.last() ?: "",
+                    text = viewModel.currentCommandName.value,
                     lineHeight = 32.sp,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
@@ -139,7 +140,7 @@ fun OutputViewerBottomSheet(
                         RoundedCornerShape(15.dp)
                     ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
                         SelectionContainer {
-                            Text(outputState.value, modifier = Modifier.padding(vertical = 15.dp))
+                            Text(outputState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 15.dp))
                         }
                     }
                 }

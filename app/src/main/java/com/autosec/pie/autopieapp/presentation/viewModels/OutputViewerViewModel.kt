@@ -49,6 +49,7 @@ class OutputViewerViewModel(private val application1: Application) : ViewModel()
 
 
     val currentLogPath = mutableStateOf<String?>(null)
+    val currentCommandName = mutableStateOf<String>("")
 
     init {
         try {

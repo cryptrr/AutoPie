@@ -36,6 +36,7 @@ class OutputViewerActivity : ComponentActivity() {
         Timber.d(this.intent.extras.toString())
 
         val outputPath = intent.getStringExtra("logFile")
+        val commandName = intent.getStringExtra("commandName")
 
         setContent {
 
@@ -52,6 +53,7 @@ class OutputViewerActivity : ComponentActivity() {
                     if(outputPath != null){
                         Timber.d("Fetching output from $outputPath")
                         outputViewerViewModel.currentLogPath.value = outputPath
+                        outputViewerViewModel.currentCommandName.value = commandName ?: ""
                         outputViewerViewModel.getOutputFromFile(outputPath)
                     }
                 }
