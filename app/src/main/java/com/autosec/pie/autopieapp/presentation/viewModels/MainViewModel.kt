@@ -263,7 +263,8 @@ class MainViewModel(
 
                 if(installedVersionText != currentVersionText) {
                     packageUpdatesAreAvailable = true
-                    showNotification(AppNotification.PackageUpdatesAvailable(url = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL))
+                    Timber.d("Package updates available")
+                    showNotification(AppNotification.PackageUpdatesAvailable(url = AutoPieConstants.AUTOPIE_PACKAGE_UPDATES_README_URL))
                 }else{
                     Timber.d("No package updates available")
                     packageUpdatesAreAvailable = false

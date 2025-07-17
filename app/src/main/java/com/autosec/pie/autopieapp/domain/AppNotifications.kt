@@ -196,7 +196,7 @@ sealed class AppNotification : Notification {
 
                     val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
 
-                    NotificationButton("Update") {
+                    NotificationButton("Read More") {
                         uriHandler.openUri(this.url)
                         mainViewModel.clearAllBanners()
                     }
