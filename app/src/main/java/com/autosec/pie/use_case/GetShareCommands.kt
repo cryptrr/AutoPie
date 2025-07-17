@@ -1,7 +1,5 @@
 package com.autosec.pie.use_case
 
-import android.os.Environment
-import com.autosec.pie.autopieapp.data.CommandExtra
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.domain.ViewModelError
@@ -12,49 +10,20 @@ import timber.log.Timber
 
 class GetShareCommands(private val jsonService: JsonService) {
     suspend operator fun invoke(): List<CommandModel>{
+        Timber.d("GetShareCommands useCase")
         val sharesConfig = jsonService.readSharesConfig()
 
-        if (sharesConfig == null) {
-            Timber.d("Observers file not available")
+        if(sharesConfig == null){
+            Timber.d("Shares file not available")
             throw ViewModelError.ShareConfigUnavailable
         }
 
-        val tempList = mutableListOf<CommandModel>()
+        val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
 
-        //TODO: Need to do some refactoring
+        val sharesData: Map<String, CommandModel> = Gson().fromJson(sharesConfig, mapType)
 
-        for (entry in sharesConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
+        val commandsData = sharesData.entries.toMutableList().map { it.value.copy(type = CommandType.SHARE, name = it.key) }
 
-            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val deleteSource = value.get("deleteSourceFile").asBoolean
-
-            val extrasJsonArray = value.getAsJsonArray("extras")
-
-            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
-
-            val extras: List<CommandExtra> = try{
-                Gson().fromJson(extrasJsonArray, extrasListType)
-            }catch(e: Exception){
-                emptyList()
-            }
-
-            val shareObject = CommandModel(
-                type = CommandType.SHARE,
-                name = key,
-                path = directoryPath,
-                command = command,
-                exec = exec,
-                deleteSourceFile = deleteSource,
-                extras = extras
-            )
-
-            tempList.add(shareObject)
-        }
-        return tempList
+        return commandsData
     }
 }

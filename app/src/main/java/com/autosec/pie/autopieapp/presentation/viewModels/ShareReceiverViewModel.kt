@@ -148,13 +148,13 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     Timber.e(e)
 
                 }.collect{ receipt ->
-                    if (receipt.first) {
+                    if (receipt.success) {
                         Timber.d("Process Success".uppercase())
-                        autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.second}")
+                        autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, receipt.output)
 
                     } else {
                         Timber.d("Process FAILED".uppercase())
-                        autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.second}")
+                        autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, receipt.output)
                     }
 
                     main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))

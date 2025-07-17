@@ -33,97 +33,17 @@ class GetCommandsList(private val jsonService: JsonService) {
             throw ViewModelError.CronConfigUnavailable
         }
 
-        val tempList = mutableListOf<CommandModel>()
+        val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
 
-        for (entry in sharesConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
+        val sharesData: Map<String, CommandModel> = Gson().fromJson(sharesConfig, mapType)
+        val cronData: Map<String, CommandModel> = Gson().fromJson(cronConfig, mapType)
+        val observerData: Map<String, CommandModel> = Gson().fromJson(observersConfig, mapType)
 
-            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val deleteSource = value.get("deleteSourceFile").asBoolean
+        val commandsData = sharesData.entries.toMutableList().map { it.value.copy(type = CommandType.SHARE, name = it.key) } +
+                cronData.entries.toMutableList().map { it.value.copy(type = CommandType.CRON, name = it.key) } +
+                observerData.entries.toMutableList().map { it.value.copy(type = CommandType.FILE_OBSERVER, name = it.key) }
 
-            val extrasJsonArray = value.getAsJsonArray("extras")
+        return commandsData
 
-            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
-
-            val extras: List<CommandExtra> = try{
-                Gson().fromJson(extrasJsonArray, extrasListType)
-            }catch(e: Exception){
-                emptyList()
-            }
-
-            val shareObject = CommandModel(
-                name = key,
-                path = directoryPath,
-                command = command,
-                exec = exec,
-                deleteSourceFile = deleteSource,
-                type = CommandType.SHARE,
-                extras = extras
-            )
-
-            tempList.add(shareObject)
-        }
-
-        for (entry in observersConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
-
-            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val deleteSource = value.get("deleteSourceFile").asBoolean
-
-            val extrasJsonArray = value.getAsJsonArray("extras")
-
-            val extrasListType = object : TypeToken<List<CommandExtra>>() {}.type
-
-            val extras: List<CommandExtra> = try{
-                Gson().fromJson(extrasJsonArray, extrasListType)
-            }catch(e: Exception){
-                emptyList()
-            }
-
-            val shareObject = CommandModel(
-                name = key,
-                path = directoryPath,
-                command = command,
-                exec = exec,
-                deleteSourceFile = deleteSource,
-                type = CommandType.FILE_OBSERVER,
-                extras = extras
-            )
-
-            tempList.add(shareObject)
-        }
-
-        for (entry in cronConfig.entrySet()) {
-            val key = entry.key
-            val value = entry.value.asJsonObject
-            // Process the key-value pair
-
-            val directoryPath = "${Environment.getExternalStorageDirectory().absolutePath}/" + value.get("path").asString
-            val exec = value.get("exec").asString
-            val command = value.get("command").asString
-            val deleteSource = value.get("deleteSourceFile").asBoolean
-
-            val cronObject = CommandModel(
-                name = key,
-                path = directoryPath,
-                command = command,
-                exec = exec,
-                deleteSourceFile = deleteSource,
-                type = CommandType.CRON
-            )
-
-            tempList.add(cronObject)
-        }
-
-
-        return tempList
     }
 }

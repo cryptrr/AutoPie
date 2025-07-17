@@ -23,36 +23,40 @@ class ProcessBroadcastReceiver : BroadcastReceiver() {
         Timber.d("Intent Received: $intent")
 
 
-        when(action){
-            "${context.packageName}.SHOW_NOTIFICATION" -> {
-                autoPieNotification.sendBroadcastNotification(intent, context)
+        try {
+            when(action){
+                "${context.packageName}.SHOW_NOTIFICATION" -> {
+                    autoPieNotification.sendBroadcastNotification(intent, context)
+                }
+                "${context.packageName}.CANCEL_NOTIFICATION" -> {
+                    autoPieNotification.cancelNotification(intent, context)
+                }
+                "${context.packageName}.CANCEL_PROCESS" -> {
+
+                    Timber.d("${context.packageName}.CANCEL_PROCESS")
+
+                    val processId = intent.getIntExtra("processId", 0)
+
+                    main.dispatchEvent(ViewModelEvent.CancelProcess(processId))
+
+                }
+                "${context.packageName}.STOP_AUTOPIE" -> {
+
+                    Timber.d("${context.packageName}.STOP_AUTOPIE")
+
+                    main.dispatchEvent(ViewModelEvent.StopAutoPie)
+
+                }
+                "${context.packageName}.PLAY_MEDIA" -> {
+
+                    Timber.d("${context.packageName}.PLAY_MEDIA")
+
+                    autoPieNotification.sendMediaReadyNotification(intent, context)
+
+                }
             }
-            "${context.packageName}.CANCEL_NOTIFICATION" -> {
-                autoPieNotification.cancelNotification(intent, context)
-            }
-            "${context.packageName}.CANCEL_PROCESS" -> {
-
-                Timber.d("${context.packageName}.CANCEL_PROCESS")
-
-                val processId = intent.getIntExtra("processId", 0)
-
-                main.dispatchEvent(ViewModelEvent.CancelProcess(processId))
-
-            }
-            "${context.packageName}.STOP_AUTOPIE" -> {
-
-                Timber.d("${context.packageName}.STOP_AUTOPIE")
-
-                main.dispatchEvent(ViewModelEvent.StopAutoPie)
-
-            }
-            "${context.packageName}.PLAY_MEDIA" -> {
-
-                Timber.d("${context.packageName}.PLAY_MEDIA")
-
-                autoPieNotification.sendMediaReadyNotification(intent, context)
-
-            }
+        }catch (e: Exception){
+            Timber.e(e)
         }
     }
 

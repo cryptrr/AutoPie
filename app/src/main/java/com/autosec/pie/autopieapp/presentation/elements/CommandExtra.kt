@@ -1,5 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.elements
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -93,7 +94,7 @@ fun CommandExtraElement(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.horizontalScroll(scrollState)
         ) {
-            for (item in extrasElements.value) {
+            for (item in extrasElements.value.reversed()) {
                 key(item.id){
                     CommandExtraInputElement(item,extrasElements, onAddCommandExtra, onRemoveCommandExtra)
                 }
@@ -225,7 +226,26 @@ fun CommandExtraInputElement(
                     text = default,
                     "",
                     placeholder = "DEFAULT",
-                    isError = default.value.isBlank()
+                    isError = default.value.isBlank(),
+                    trailingIcon = if(name.value.endsWith("FILE")){
+                        {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                SingleFilePicker{
+                                    default.value = it
+                                }
+                            }
+                        }
+                    }else if(name.value.endsWith("FILES")) {
+                        {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                MultiFilePicker{
+                                    default.value = it.joinToString(",")
+                                }
+                            }
+                        }
+                    }else {
+                        null
+                    }
                 )
                 GenericTextFormField(
                     text = description,
@@ -281,6 +301,63 @@ fun CommandExtraInputElement(
 }
 
 @Composable
+fun OptionSelectorBoolean(
+    options: List<String>,
+    selectedOption: MutableState<String>,
+    expanded: MutableState<Boolean>
+) {
+
+
+    Column(
+        modifier = Modifier
+            .border(
+                2.dp,
+                MaterialTheme.colorScheme.primary,
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color.Black.copy(alpha = 0.15F))
+            .clickable { expanded.value = true }
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween){
+            Text(
+                text = selectedOption.value.uppercase(),
+                modifier = Modifier
+                    //.clip(RoundedCornerShape(15.dp))
+                    .fillMaxWidth(0.7F)
+                    .padding(16.dp)
+            )
+            Box(Modifier
+                .fillMaxHeight()
+                .aspectRatio(1F), contentAlignment = Alignment.Center){
+                Icon(
+                    tint = MaterialTheme.colorScheme.primary,
+                    imageVector = Icons.Default.UnfoldMore,
+                    contentDescription = "Show options",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false },
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOption.value = option.toBoolean().toString()
+                        expanded.value = false
+                    },
+                    text = { Text(option) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun OptionSelector(
     options: List<String>,
     selectedOption: MutableState<String>,
@@ -289,11 +366,13 @@ fun OptionSelector(
 
 
     Column(
-        modifier = Modifier.border(
-            2.dp,
-            MaterialTheme.colorScheme.primary,
-            RoundedCornerShape(15.dp)
-        ).height(57.dp)
+        modifier = Modifier
+            .border(
+                2.dp,
+                MaterialTheme.colorScheme.primary,
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
             .clip(RoundedCornerShape(15.dp))
             .background(Color.Black.copy(alpha = 0.15F))
             .clickable { expanded.value = true }
@@ -306,7 +385,9 @@ fun OptionSelector(
                     .fillMaxWidth(0.7F)
                     .padding(16.dp)
             )
-            Box(Modifier.fillMaxHeight().aspectRatio(1F), contentAlignment = Alignment.Center){
+            Box(Modifier
+                .fillMaxHeight()
+                .aspectRatio(1F), contentAlignment = Alignment.Center){
                 Icon(
                     tint = MaterialTheme.colorScheme.primary,
                     imageVector = Icons.Default.UnfoldMore,

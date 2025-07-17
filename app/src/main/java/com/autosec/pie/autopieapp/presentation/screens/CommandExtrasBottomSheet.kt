@@ -2,6 +2,7 @@ package com.autosec.pie.autopieapp.presentation.screens
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +19,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -51,6 +55,10 @@ import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
+import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
+import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
+import com.autosec.pie.autopieapp.presentation.elements.PasswordFormField
+import com.autosec.pie.autopieapp.presentation.elements.SingleFilePicker
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -204,7 +212,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
 
-                GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file or url here to set as \${INPUT_FILE} for the command.")
+                GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.")
             }else{
                 Spacer(modifier = Modifier.height(7.dp))
             }
@@ -213,6 +221,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                 Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
                         "STRING" -> {
+
+                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD")}
+
                             val textValue = remember {
                                 mutableStateOf(extra.default)
                             }
@@ -231,14 +242,38 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 )
                             }
 
-                            GenericTextFormField(text = textValue, title = extra.name, subtitle = extra.description)
+
+                            if(isPasswordField){
+                                PasswordFormField(text = textValue , title = extra.name, subtitle = extra.description)
+                            }
+                            else{
+                                GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
+                                    if(extra.name.endsWith("FILES")){
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            MultiFilePicker{
+                                                textValue.value = it.joinToString(",")
+                                            }
+                                        }
+                                    }
+                                    else if(extra.name.endsWith("FILE")){
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            SingleFilePicker{
+                                                textValue.value = it
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+
+
                         }
 
                         "BOOLEAN" -> {
                             val booleanExpanded = remember { mutableStateOf(false) }
                             val selectedOptionForBoolean =
                                 rememberSaveable {
-                                    mutableStateOf(extra.defaultBoolean.toString().uppercase())
+                                    mutableStateOf(extra.defaultBoolean.toString())
                                 }
                             val booleanOptions = listOf("TRUE", "FALSE")
 
@@ -264,7 +299,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             Spacer(modifier = Modifier.height(10.dp))
 
 
-                            OptionSelector(
+                            OptionSelectorBoolean(
                                 options = booleanOptions,
                                 selectedOption = selectedOptionForBoolean,
                                 expanded = booleanExpanded

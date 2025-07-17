@@ -220,14 +220,6 @@ fun ShareContextMenuBottomSheet(
 
     val activity = LocalContext.current.getActivity()
 
-//    LaunchedEffect(currentLink, fileUris) {
-//        try {
-//            shareReceiverViewModel.getSharesConfig()
-//        }catch (e:Exception){
-//            Timber.e(e)
-//        }
-//    }
-
 
     LaunchedEffect(key1 = currentLink, fileUris) {
         shareReceiverViewModel.main.eventFlow.collect {
@@ -319,7 +311,7 @@ fun ShareContextMenuBottomSheet(
                     }
                     items(
                         filteredShareItemsResult.value,
-                        key = { it.name }) { item ->
+                        key = { it.name ?: it }) { item ->
                         ShareCard(card = item, currentLink, fileUris, state)
                     }
                 }
@@ -466,10 +458,10 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         Column {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = card.name,
+                    text = card.name ?: "",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty()!!) 0.9F else 1F)
+                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty() == true) 0.9F else 1F)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))

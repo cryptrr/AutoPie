@@ -4,17 +4,22 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class RunShareCommandForDirectory(private val processManagerService: ProcessManagerService){
 
@@ -23,7 +28,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
         inputDir: File,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
-    ): Flow<Pair<Boolean, String>> {
+    ): Flow<CommandResult> {
 
         return flow {
 
@@ -38,6 +43,9 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
 
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                val cwdPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                 val (execType,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
@@ -73,11 +81,11 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, cwdPath,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
 
-                if (success) {
+                if (processResult.success) {
 
                     if (item.deleteSourceFile == true) {
                         processManagerService.deleteFile(path.absolutePath)
@@ -87,7 +95,9 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
                     //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
                 }
 
-                emit(Pair(success, path.name))
+                val result = processResult.toCommandResult(JobType.DIRECTORY, inputDir.path)
+
+                emit(result)
 
             }
 

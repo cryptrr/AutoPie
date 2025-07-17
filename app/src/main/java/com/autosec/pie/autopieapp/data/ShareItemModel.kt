@@ -16,12 +16,14 @@ data class ShareItemModel(
 )
 
 data class CommandModel(
-    override val type: CommandType,
-    override val name: String,
+    override val type: CommandType? = null,
+    override val name: String = "",
     override val path: String,
     override val command: String,
     override val exec: String,
     override val deleteSourceFile: Boolean? = false,
+    override val selectors: List<String>? = emptyList(),
+    override val cronInterval: String? = "",
     override val extras: List<CommandExtra>? = null
 ) : CommandInterface
 
@@ -39,12 +41,14 @@ data class CommandCreationModel(
 )
 
 interface CommandInterface {
-    val type: CommandType
+    val type: CommandType?
     val name: String
     val path: String
     val command: String
     val exec: String
     val deleteSourceFile: Boolean?
+    val selectors: List<String>?
+    val cronInterval: String?
     val extras: List<CommandExtra>?
 }
 
@@ -57,6 +61,22 @@ data class CommandExtra(
     val defaultBoolean: Boolean = true,
     val required: Boolean = true,
     val selectableOptions: List<String> = emptyList()
+)
+
+data class ProcessResult(
+    val key: String,
+    val processId: Int,
+    val success: Boolean,
+    val output: String,
+)
+
+data class CommandResult(
+    val key: String,
+    val processId: Int,
+    val success: Boolean,
+    val output: String,
+    val jobType: JobType,
+    val jobKey: String,
 )
 
 data class InputParsedData(
@@ -85,6 +105,16 @@ enum class CommandType{
     CRON
 }
 
+enum class JobType{
+    URL,
+    URLS,
+    FILE,
+    FILES,
+    DIRECTORY,
+    TEXT,
+    STANDALONE
+}
+
 data class ExecAndCommand(
     val type: ExecType,
     val execPath: String,
@@ -104,3 +134,4 @@ data class InstalledPackageModel(
     val version: String,
     val hasUpdate: Boolean,
 )
+

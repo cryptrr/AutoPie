@@ -8,13 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.lifecycle.viewModelScope
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
 import com.autosec.pie.di.useCaseModule
 import com.autosec.pie.logging.FileLoggingTree
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
-import com.autosec.pie.autopieapp.data.services.CronJobWorker
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.createEmptyCookieFile
 import com.autosec.pie.autopieapp.data.services.CronService
 import com.autosec.pie.autopieapp.data.services.FileObserverJobService
 import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
@@ -25,7 +23,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 
 
 
@@ -55,11 +52,12 @@ class MyApplication : Application() {
 
         mainViewModel.viewModelScope.launch {
             scheduleJob()
-            scheduleChron()
+            scheduleCron()
             startScreenStateReceiver()
             startNotificationReceiver()
 
             checkForUpdates()
+            createEmptyCookieFile()
         }
     }
 
@@ -78,8 +76,9 @@ class MyApplication : Application() {
             jobScheduler.schedule(jobInfo)
         }
     }
-    private fun scheduleChron(){
-        cronService.setUpChronJobs()
+    private fun scheduleCron(){
+        //cronService.testCronJob()
+        cronService.setUpCronJobs()
     }
 
     private fun startScreenStateReceiver(){
@@ -108,6 +107,11 @@ class MyApplication : Application() {
         if(mainViewModel.updatesAreAvailable == null){
             mainViewModel.checkForUpdates()
         }
+
+        if(mainViewModel.packageUpdatesAreAvailable == null){
+            mainViewModel.checkForPackageUpdates()
+        }
+
     }
 
 }

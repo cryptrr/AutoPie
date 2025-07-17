@@ -4,12 +4,15 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -27,7 +30,7 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
         fileUris: List<String>,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
-    ) : Flow<Pair<Boolean, String>> {
+    ) : Flow<CommandResult> {
         Timber.d("runShareCommandForFiles")
 
 
@@ -42,11 +45,12 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                 val replacedString = item.command
 
 
-
                 Timber.d("Replaced String $replacedString")
 
                 val execFilePath =
                     Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                 val (execType,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
@@ -94,11 +98,12 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                 Timber.d("Result Command: $resultCommand")
 
-                val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
                     inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
+                val result = processResult.toCommandResult(JobType.FILES, fileUris.toString())
 
-                emit(Pair(success, fileUris.toString()))
+                emit(result)
 
 
             } else {
@@ -116,6 +121,9 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
 
                     val execFilePath =
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+                    val dirPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
                     val (execType,fullExecPath, resultCommand) = when{
                         File(item.exec).isAbsolute -> {
@@ -152,11 +160,12 @@ class RunShareCommandForFiles(private val processManagerService: ProcessManagerS
                     Timber.d("Replaced String $replacedString")
 
 
-                    val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,
+                    val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
                         inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
+                    val result = processResult.toCommandResult(JobType.FILE, path)
 
-                    emit(Pair(success, path))
+                    emit(result)
 
                 }
 

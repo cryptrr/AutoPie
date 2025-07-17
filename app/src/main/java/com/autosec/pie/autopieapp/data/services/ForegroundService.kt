@@ -43,6 +43,7 @@ class ForegroundService : Service() {
     private var foregroundServiceId : Int? = null
 
     init {
+        //TODO: Change
         mainViewModel.viewModelScope.launch {
             mainViewModel.eventFlow.collect{
                 when(it){
@@ -158,16 +159,17 @@ class ForegroundService : Service() {
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                         Timber.e(e)
-                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}")
+                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command ,logContents = e.toString())
 
                     }.collect{ receipt ->
-                        if (receipt.first) {
+                        if (receipt.success) {
                             Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.second}")
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
+
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.second}")
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
                         }
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
@@ -176,7 +178,7 @@ class ForegroundService : Service() {
 
                 }catch (e: Exception){
                     Timber.e(e)
-                    autoPieNotification.sendNotification("Command Failed", "${e.message}")
+                    autoPieNotification.sendNotification("Command Failed", "" ,null,e.toString())
                     onDestroy()
 
                 }

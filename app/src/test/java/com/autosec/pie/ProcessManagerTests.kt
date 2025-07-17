@@ -59,7 +59,7 @@ class ProcessManagerTests : KoinTest {
 
         assertThrows(AutoPieError.UnsafeCommandException::class.java){
             runBlocking {
-                processManagerService.runCommandForShareWithEnv(newCommand, newCommand.exec, newCommand.command, newCommand.path, commandExtraInputs = emptyList(), processId = 51545)
+                processManagerService.runCommandForShareWithEnv2(newCommand, newCommand.exec, newCommand.command, newCommand.path, commandExtraInputs = emptyList(), processId = 51545)
             }
         }
 

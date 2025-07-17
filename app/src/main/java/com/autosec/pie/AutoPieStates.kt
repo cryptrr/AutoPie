@@ -19,6 +19,7 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -64,6 +65,7 @@ fun rememberAutoPieStates(): AutoPieStates{
 
     val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+    val outputViewerViewModel: OutputViewerViewModel = koinViewModel()
 
 
 
@@ -86,8 +88,16 @@ fun rememberAutoPieStates(): AutoPieStates{
         mutableStateOf(false)
     }
 
+    val outputBottomSheetOpen = remember {
+        mutableStateOf(false)
+    }
+
     LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
         runCommandBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
+    }
+
+    LaunchedEffect(outputViewerViewModel.currentLogPath.value) {
+        outputBottomSheetOpen.value = outputViewerViewModel.currentLogPath.value != null
     }
 
     val cloudCommandDetailsBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = {

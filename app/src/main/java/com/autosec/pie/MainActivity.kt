@@ -72,6 +72,7 @@ import com.autosec.pie.autopieapp.presentation.screens.InstallNewPackageBottomSh
 import com.autosec.pie.autopieapp.presentation.screens.InstalledScreen
 import com.autosec.pie.autopieapp.presentation.screens.SettingsScreen
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.presentation.screens.CommandDetailsSheet
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
@@ -87,6 +88,9 @@ class MainActivity : ComponentActivity() {
 
     private val autoPieNotification: AutoPieNotification by KoinJavaComponent.inject(
         AutoPieNotification::class.java)
+    private val processManagerService: ProcessManagerService by KoinJavaComponent.inject(
+        ProcessManagerService::class.java)
+
 
     @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.R)

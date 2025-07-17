@@ -1,6 +1,9 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,20 +27,28 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtra
+import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.CommandExtraElement
 import com.autosec.pie.autopieapp.presentation.elements.GenericFormSwitch
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
+import com.autosec.pie.autopieapp.presentation.elements.PackagesListDialog
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
 import kotlinx.coroutines.delay
@@ -44,11 +56,12 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCommandScreen(open: MutableState<Boolean>) {
 
     val viewModel: CreateCommandViewModel = koinViewModel()
+
+    var showPackagesDialog by remember { mutableStateOf(false) }
 
 
     fun addExtra() {
@@ -115,7 +128,25 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
             GenericTextFormField(text = viewModel.commandName, "NAME*")
 
             Spacer(modifier = Modifier.height(20.dp))
-            GenericTextFormField(text = viewModel.execFile, "PROGRAM*")
+            GenericTextFormField(text = viewModel.execFile, "PROGRAM*"){
+                Box(
+                    Modifier
+                        .padding(horizontal = 5.dp)
+                        .clip(RoundedCornerShape(15.dp))
+                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
+                        .clickable {
+                            showPackagesDialog = true
+                        }
+                        .padding(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.UnfoldMore,
+                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = "Show more options",
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -154,7 +185,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
             GenericTextFormField(
                 text = viewModel.directory,
-                subtitle = "Provide a folder in your storage",
+                subtitle = "The folder to set as the CWD.",
                 title = "DIRECTORY",
             )
 
@@ -237,4 +268,12 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
         }
 
     }
+    PackagesListDialog(
+        showDialog = showPackagesDialog,
+        title = "Installed Packages",
+        value= viewModel.execFile,
+        onDismissRequest = {
+            showPackagesDialog = false
+        }
+    )
 }

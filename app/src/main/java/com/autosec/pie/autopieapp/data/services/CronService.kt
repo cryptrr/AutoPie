@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.autosec.pie.autopieapp.data.CronCommandModel
@@ -17,10 +18,12 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class CronService(private val jsonService: JsonService){
@@ -38,7 +41,7 @@ class CronService(private val jsonService: JsonService){
                     when(it){
                         is ViewModelEvent.CronConfigChanged -> {
                             Timber.d("Cron config changed: Restarting")
-                            setUpChronJobs()
+                            setUpCronJobs()
                         }
                         else -> {}
                     }
@@ -51,8 +54,67 @@ class CronService(private val jsonService: JsonService){
 
     private val activity: Application by inject(Context::class.java)
 
+    fun testCronJob(){
 
-    fun setUpChronJobs(){
+        Timber.d("TESTING CRON JOBS")
+
+        CoroutineScope(dispatchers.default).launch{
+
+            Timber.d("DELAYING FOR 10s")
+            delay(10*1000)
+            Timber.d("OFF YOU GO")
+
+            val cronConfig = try {
+                jsonService.readCronConfig()
+            }catch (e: Exception){
+                Timber.e(e)
+                return@launch
+            }
+
+            if (cronConfig == null) {
+                Timber.d("cron file not available")
+                main.schedulerConfigAvailable = false
+                return@launch
+            } else {
+                Timber.d("cron file is available")
+                main.schedulerConfigAvailable = true
+            }
+
+            val mapType = object : TypeToken<Map<String, CronCommandModel>>() {}.type
+
+            val data: Map<String, CronCommandModel> = Gson().fromJson(cronConfig, mapType)
+
+            for(cronJob in data.entries){
+
+                val commandJson = Gson().toJson(cronJob.value)
+
+                Timber.d("Cron Command Starting: ${cronJob.key}")
+
+                val inputData = Data.Builder()
+                    .putString("commandKey", cronJob.key)
+                    .putString("command", commandJson)
+                    .build()
+
+                val timeInterval = Utils.parseTimeInterval(cronJob.value.cronInterval) ?: continue
+
+                Timber.d("Cron Interval: $timeInterval")
+
+
+                val request = OneTimeWorkRequestBuilder<CronJobWorker>()
+                    .setInputData(inputData)
+                    .build()
+
+                WorkManager.getInstance(activity).enqueue(request)
+
+            }
+        }
+
+    }
+
+
+
+
+    fun setUpCronJobs(){
 
         if(!main.storageManagerPermissionGranted){
             return
@@ -83,16 +145,13 @@ class CronService(private val jsonService: JsonService){
 
             for(cronJob in data.entries){
 
-                //Tentative fix for cron path
-
-                cronJob.value.path = "${Environment.getExternalStorageDirectory().absolutePath}/" + cronJob.value.path
 
                 val commandJson = Gson().toJson(cronJob.value)
-
 
                 Timber.d("Cron Command Starting: ${cronJob.key}")
 
                 val inputData = Data.Builder()
+                    .putString("commandKey", cronJob.key)
                     .putString("command", commandJson)
                     .build()
 

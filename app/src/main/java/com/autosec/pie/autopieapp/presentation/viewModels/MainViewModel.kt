@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.autopieapp.data.AutoPieConstants
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
@@ -34,6 +35,7 @@ import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.File
 
 class MainViewModel(
     private val application: Application,
@@ -57,6 +59,7 @@ class MainViewModel(
     var pythonInstallationComplete by mutableStateOf(false)
 
     var updatesAreAvailable : Boolean? by mutableStateOf(null)
+    var packageUpdatesAreAvailable : Boolean? by mutableStateOf(null)
 
     var updateDetails: ReleaseInfo? by mutableStateOf(null)
 
@@ -230,6 +233,44 @@ class MainViewModel(
 
                     updatesAreAvailable = false
                 }
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+    }
+
+    fun checkForPackageUpdates(){
+        viewModelScope.launch(dispatchers.io){
+            try {
+                Timber.d("Checking for package updates")
+
+                if(!storageManagerPermissionGranted){
+                    Timber.d("Storage permission not granted")
+
+                    return@launch
+                }
+
+                val autoSecFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+
+                val installedVersionText = File(autoSecFolder, "version.txt").readText()
+
+                val currentVersionText = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL.split("/").takeLast(2).joinToString("/")
+
+                Timber.d("installedVersionText: $installedVersionText , currentVersionText: $currentVersionText")
+
+                delay(3000L)
+
+                if(installedVersionText != currentVersionText) {
+                    packageUpdatesAreAvailable = true
+                    Timber.d("Package updates available")
+                    showNotification(AppNotification.PackageUpdatesAvailable(url = AutoPieConstants.AUTOPIE_PACKAGE_UPDATES_README_URL))
+                }else{
+                    Timber.d("No package updates available")
+                    packageUpdatesAreAvailable = false
+                }
+
+
             }catch (e: Exception){
                 Timber.e(e)
             }

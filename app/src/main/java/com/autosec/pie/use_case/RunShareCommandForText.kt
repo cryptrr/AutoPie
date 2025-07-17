@@ -3,29 +3,37 @@ package com.autosec.pie.use_case
 import android.os.Environment
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.ExecAndCommand
 import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.containsValidHttpUrl
 import com.autosec.pie.utils.containsValidUrl
 import com.autosec.pie.utils.extractAllUrls
 import com.autosec.pie.utils.extractFirstUrl
+import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
 import java.net.URL
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class RunShareCommandForText(private val processManagerService: ProcessManagerService){
-    operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<Pair<Boolean, String>> {
+    operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
             Timber.d("RunShareCommandForText")
 
             val execFilePath =
                 Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+
+            val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+
 
             val (execType,fullExecPath, resultCommand) = when{
                 File(item.exec).isAbsolute -> {
@@ -64,9 +72,12 @@ class RunShareCommandForText(private val processManagerService: ProcessManagerSe
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val success = processManagerService.runCommandForShareWithEnv(item, fullExecPath, resultCommand, item.path,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
 
-            emit(Pair(success, text))
+            val result = processResult.toCommandResult(JobType.TEXT, text)
+
+
+            emit(result)
         }
     }
 

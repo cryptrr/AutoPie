@@ -65,25 +65,24 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
         viewModelScope.launch(dispatchers.io) {
 
-            useCases.getCommandDetails(key).let{ (commandDetails,commandModel, metadata) ->
+            useCases.getCommandDetails(key).let{ commandModel ->
                 withContext(dispatchers.main) {
                     oldCommandName.value = key
                     commandName.value = key
-                    type.value = metadata.first
-                    directory.value = commandDetails.get("path").asString
-                    execFile.value = commandDetails.get("exec").asString
-                    command.value = commandDetails.get("command").asString
-                    deleteSource.value = commandDetails.get("deleteSourceFile").asBoolean
-                    selectors.value = metadata.second
-                    cronInterval.value = try{commandDetails.get("cronInterval").asString} catch (_: Exception) {""}
+                    //TODO: Careful
+                    type.value = commandModel.type.toString()
+                    directory.value = commandModel.path
+                    execFile.value = commandModel.exec
+                    command.value = commandModel.command
+                    deleteSource.value = commandModel.deleteSourceFile == true
+                    selectors.value = commandModel.selectors?.joinToString(",") ?: ""
+                    cronInterval.value = commandModel.cronInterval ?: ""
 
-                    selectedCommandType = metadata.first
+                    selectedCommandType = commandModel.type.toString()
 
-                    //Timber.d("Extras: ${commandModel?.extras}")
 
-                    commandModel?.let {
-                        commandExtras.value = it.extras ?: emptyList()
-                    }
+                    commandExtras.value = commandModel.extras ?: emptyList()
+
 
                     isLoading.value = false
                 }
