@@ -1,15 +1,18 @@
 # AutoPie
 
-### Commands hub where you can define, automate and run commands without using the terminal.
+### Commands hub where you can create, automate and run commands without using the terminal.
 
 **AutoPie is your own power tool-kit for android.**
 
+[Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
+
 
 <div style="display:flex;flex-direction:row;justify-content:space-between">
-<img src="https://github.com/user-attachments/assets/ee74f114-2d02-4c6f-8429-68398764c006" alt="AutoPie extras config" width="47%" height="auto">
-<img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie extras config" width="47%" height="auto">
+<img src="https://github.com/user-attachments/assets/ee74f114-2d02-4c6f-8429-68398764c006" alt="AutoPie screenshot" width="47%" height="auto">
+<img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie feature demo" width="47%" height="auto">
 </div>
 
+<video src="https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb" width="47%" height="auto"></video>
 
 
 ## Installation
@@ -18,7 +21,7 @@
 2) Install the APK and accept Play Protect Dialogs if any.
 3) Wait for the Python Binaries to get installed.
 4) Grant necessary permissions.
-5) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the `autosec.tar.xz` file and extract to the `AutoSec` folder.
+5) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the latest `autosec-init.tar.xz` file from the [releases](https://github.com/cryptrr/AutoPie/releases/) and extract to the `AutoSec` folder.
 6) Optional: Disable Battery Optimization for AutoPie.
 
 
@@ -30,57 +33,9 @@
 
 ## Easiest way to add new packages
 - Open the Terminal inside AutoPie
-- Run `python3.10 -m ensurepip`
-- This installs pip in AutoPie the environment.
+- Pip should already be installed in the AutoPie environment. Otherwise, Run `python3.10 -m ensurepip`
 - Run `pip3 install package`
 
-## New MCP Server
-AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
-
-The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
-
-The scripts inside this folder will be included as tools in the MCP server.
-
-You can add any kind of functionality on your phone with this by just writing a Python script.
-
-The MCP tool scripts should be in this format.
-
-```py
-import os
-from typing import Dict, Any
-from pydantic import BaseModel
-
-class CreateFileInput(BaseModel):
-    filepath: str
-    content: str
-
-
-class MCPTool:
-    path = "/create_file"
-    name = "create_text_file"
-    methods=["POST"]
-    
-    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
-        """Creates a text file with the specified content."""
-        try:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
-            
-            # Write content to file
-            with open(input.filepath, "w") as f:
-                f.write(input.content)
-            
-            return {
-                "status": "success",
-                "message": f"File '{input.filepath}' created successfully"
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Failed to create file: {str(e)}"
-            }
-
-```
 
 
 ## Troubleshooting
@@ -134,7 +89,58 @@ Defining extra items such as options for codecs etc will look like this.
 
 ## Commands and Package Repository
 
-A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+- A package manager.
+
+- A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+
+## New MCP Server
+AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
+
+The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
+
+The scripts inside this folder will be included as tools in the MCP server.
+
+You can add any kind of functionality on your phone with this by just writing a Python script.
+
+The MCP tool scripts should be in this format.
+
+```py
+import os
+from typing import Dict, Any
+from pydantic import BaseModel
+
+class CreateFileInput(BaseModel):
+    filepath: str
+    content: str
+
+
+class MCPTool:
+    path = "/create_file"
+    name = "create_text_file"
+    methods=["POST"]
+    
+    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
+        """Creates a text file with the specified content."""
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
+            
+            # Write content to file
+            with open(input.filepath, "w") as f:
+                f.write(input.content)
+            
+            return {
+                "status": "success",
+                "message": f"File '{input.filepath}' created successfully"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to create file: {str(e)}"
+            }
+
+```
+
 
 ### How do I create binaries for AutoPie.
 
@@ -145,6 +151,7 @@ Using **Shiv** to package the binaries, dependencies and python files is strongl
 This is an example for how to include the `ffmpeg` binaries and libraries in a single file with shiv.
 
 A more detailed docs is in WIP.
+
 
 ```py
 
@@ -220,8 +227,9 @@ You can build the app with prebuilt binaries by opening the project with Android
 
 ## Thanks To
 
-[Jared Drummler](https://github.com/jaredrummler)
+[Jared Rummler](https://github.com/jaredrummler)
 
+[Termux](https://github.com/termux)
 
 
 
