@@ -244,13 +244,11 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Anno
 }
 
 @Composable
-fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>, onChange: (Boolean) -> Unit){
+fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>,modifier: Modifier = Modifier, onChange: (Boolean) -> Unit){
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(55.dp)
+        modifier = modifier
     ) {
         Text(text, fontSize = 16.4.sp, fontWeight = FontWeight.SemiBold)
         Switch(checked = switchState.value, onCheckedChange = {

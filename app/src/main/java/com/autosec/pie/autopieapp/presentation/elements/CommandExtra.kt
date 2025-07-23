@@ -131,6 +131,10 @@ fun CommandExtraInputElement(
         mutableStateOf(command.description)
     }
 
+    val isRequired = rememberSaveable {
+        mutableStateOf(command.required)
+    }
+
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
@@ -150,7 +154,8 @@ fun CommandExtraInputElement(
             selectableOptions.value,
             description.value,
             selectedCommandType.value,
-            selectedOptionForBoolean.value
+            selectedOptionForBoolean.value,
+            isRequired.value
         )
     ) {
 
@@ -161,7 +166,8 @@ fun CommandExtraInputElement(
             default = if(command.type == "SELECTABLE") (selectableOptions.value.split(",").firstOrNull() ?: "") else default.value,
             description = description.value,
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
-            selectableOptions = selectableOptions.value.split(",")
+            selectableOptions = selectableOptions.value.split(","),
+            required = isRequired.value
         )
 
         onAddCommandExtra(commandExtra)
@@ -252,6 +258,12 @@ fun CommandExtraInputElement(
                     "",
                     placeholder = "DESCRIPTION",
                     singleLine = false,
+                )
+                GenericFormSwitch(
+                    text = "Required",
+                    switchState = isRequired,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    onChange = { isRequired.value = it }
                 )
             }
 
