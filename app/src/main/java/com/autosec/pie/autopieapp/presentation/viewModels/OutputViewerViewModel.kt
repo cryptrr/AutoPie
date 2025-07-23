@@ -67,12 +67,11 @@ class OutputViewerViewModel(private val application1: Application) : ViewModel()
     }
 
     fun getOutputFromFile(path: String){
-
         path?.let{
             viewModelScope.launch(dispatchers.io){
                 val inputStream = application1.contentResolver.openInputStream(it.toUri())
                 val contents = inputStream?.bufferedReader().use { it?.readText() }
-                Timber.d(contents)
+                //Timber.d(contents)
                 outputContent.value = contents ?: ""
             }
         }

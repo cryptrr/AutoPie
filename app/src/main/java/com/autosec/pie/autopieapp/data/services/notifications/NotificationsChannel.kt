@@ -107,8 +107,6 @@ class AutoPieNotification(val context: Application) {
         val channelId = MAIN_CHANNEL
         val notificationId = System.currentTimeMillis().toInt()
 
-        Timber.d("Sending notification")
-
         val tempFile = File.createTempFile("temp_", ".log", context.cacheDir)
         tempFile.writeText(logContents)
 
@@ -122,7 +120,7 @@ class AutoPieNotification(val context: Application) {
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, tempFile.absolutePath.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val openFileIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -132,7 +130,7 @@ class AutoPieNotification(val context: Application) {
 
         val pendingButtonIntent: PendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            tempFile.absolutePath.hashCode(),
             openFileIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -165,6 +163,9 @@ class AutoPieNotification(val context: Application) {
             }
             notify(notificationId, builder.build())
         }
+
+        Timber.d("Send notification for $contentTitle, $contentText, $tempFile")
+
     }
 
     fun sendMediaReadyNotification(intent: Intent, context: Context) {

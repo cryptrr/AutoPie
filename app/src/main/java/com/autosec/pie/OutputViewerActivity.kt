@@ -33,10 +33,11 @@ class OutputViewerActivity : ComponentActivity() {
 
 
         Timber.d(this.intent.toString())
-        Timber.d(this.intent.extras.toString())
 
         val outputPath = intent.getStringExtra("logFile")
         val commandName = intent.getStringExtra("commandName")
+
+        Timber.d("Received data - $commandName ,  $outputPath")
 
         setContent {
 
@@ -61,6 +62,7 @@ class OutputViewerActivity : ComponentActivity() {
                 onDispose {
                     Timber.d("Unsetting current command $outputPath")
                     outputViewerViewModel.currentLogPath.value = null
+                    outputViewerViewModel.currentCommandName.value = ""
                 }
             }
 
@@ -80,7 +82,6 @@ class OutputViewerActivity : ComponentActivity() {
 
 
             AutoPieTheme {
-
                 if (extrasBottomSheetStateOpen.value) {
                     OutputViewerBottomSheet(
                         state = extrasBottomSheetState,
