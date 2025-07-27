@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.widget.Space
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -206,18 +208,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.verticalScroll(scrollState).padding(bottom = 90.dp)
+            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(bottom = 90.dp)
         ) {
 
-
             if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
-
                 GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.", useRelativePaths = false)
-            }else{
-                Spacer(modifier = Modifier.height(7.dp))
             }
 
-            for (extra in command.extras ?: emptyList()) {
+
+            for(extra in command.extras ?: emptyList()) {
+
                 Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
                         "STRING" -> {
