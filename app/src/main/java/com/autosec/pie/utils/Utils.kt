@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Patterns
@@ -179,6 +180,19 @@ class Utils{
                 return uri.path
             }
             return null
+        }
+
+        @RequiresApi(Build.VERSION_CODES.Q)
+        fun getRelativePathFromUri(context: Context, uri: Uri): String? {
+            val absolutePath = getAbsolutePathFromUri2(context, uri)
+            absolutePath ?: return null
+
+            val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
+            return if (absolutePath.startsWith(externalStoragePath)) {
+                absolutePath.removePrefix("$externalStoragePath/")
+            } else {
+                null
+            }
         }
 
         fun getDataColumn(

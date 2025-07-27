@@ -155,7 +155,9 @@ fun MultiFilePicker(
     ) { uris: List<Uri> ->
         val paths = uris.mapNotNull { uri ->
             Timber.d("SELECTED FILE: $uri")
-            Utils.getAbsolutePathFromUri2(context ,uri)
+            val path = Utils.getRelativePathFromUri(context ,uri)
+            Timber.d("ABSOLUTE PATH: $path")
+            path
         }
         onFilesPicked(paths)
     }
@@ -183,10 +185,10 @@ fun SingleFilePicker(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let{
-            val path =  Utils.getAbsolutePathFromUri2(context,uri)
+            val path =  Utils.getRelativePathFromUri(context,uri)
 
-            if (path != null) {
-                onFilesPicked(path)
+            path?.let {
+                onFilesPicked(it)
             }
         }
     }

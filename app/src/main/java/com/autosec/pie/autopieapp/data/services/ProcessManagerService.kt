@@ -131,23 +131,49 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         val envMap = HashMap<String, String>()
 
         for (inputData in inputParsedData) {
-            //Timber.d("Setting Input Data to: ${inputData.name}=${inputData.value}")
-            //shell.run("export ${inputData.name}=${inputData.value}")
-            envMap[inputData.name] = inputData.value
+
+            if(inputData.name.endsWith("FILE") || inputData.name.endsWith("FOLDER")){
+                if(Path(inputData.value).isAbsolute){
+                    envMap[inputData.name] = inputData.value
+                }else{
+                    val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, inputData.value).absolutePath
+                    envMap[inputData.name] = fullPath
+                }
+            }else{
+                envMap[inputData.name] = inputData.value
+            }
         }
 
         //TODO: There might be some udaipp here. There are multiple extras
         if (commandExtraInputs.isEmpty()) {
             for (extra in commandObject.extras ?: emptyList()) {
                 //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-                //shell.run("export ${extra.name}=\'${extra.default}\'")
-                envMap[extra.name] = extra.default
+
+                //TEMP FIX for multi user envs where fully qualified paths for extras don't work
+                if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                    if(Path(extra.default).isAbsolute){
+                        envMap[extra.name] = extra.default
+                    }else{
+                        val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, extra.default).absolutePath
+                        envMap[extra.name] = fullPath
+                    }
+                }else{
+                    envMap[extra.name] = extra.default
+                }
             }
         } else {
             for (extra in commandExtraInputs) {
-                //Timber.d("Setting extra to values: ${extra.name}=${extra.value}")
-                //shell.run("export ${extra.name}=\'${extra.value}\'")
-                envMap[extra.name] = extra.value
+
+                if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                    if(Path(extra.default).isAbsolute){
+                        envMap[extra.name] = extra.value
+                    }else{
+                        val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, extra.value).absolutePath
+                        envMap[extra.name] = fullPath
+                    }
+                }else{
+                    envMap[extra.name] = extra.value
+                }
             }
         }
 
