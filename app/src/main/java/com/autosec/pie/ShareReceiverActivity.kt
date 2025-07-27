@@ -35,6 +35,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -350,7 +351,7 @@ fun ShareContextMenuBottomSheet(
 
         content = { bottomSheetContent() },
         shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        //containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
         properties = ModalBottomSheetDefaults.properties(),
         onDismissRequest = {
             scope.launch {
@@ -378,8 +379,7 @@ fun ShareCard(
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
-    ElevatedCard(
-        elevation = CardDefaults.cardElevation(0.dp),
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
@@ -415,11 +415,10 @@ fun ShareCard(
                 }
             ),
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
-                100.dp
-            )
-        )
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1F))
     ) {
 
         Column(
@@ -455,7 +454,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                 Modifier
                     .align(Alignment.TopEnd)
                     .clip(RoundedCornerShape(15.dp))
-                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
+                    //.background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
                     .clickable {
                         onExpandButtonClick()
                     }
