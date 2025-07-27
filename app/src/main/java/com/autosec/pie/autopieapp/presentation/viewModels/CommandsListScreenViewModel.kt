@@ -39,6 +39,8 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
 
+    val mostUsedPackages = MutableStateFlow<List<String>>(emptyList())
+
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
     val commandTypeOptions = listOf("All", "Share", "Observers")
 
@@ -90,6 +92,8 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                             searchInCommands(searchCommandQuery.value)
                         }
 
+                        mostUsedPackages.update { getFrequentPackages(fullListOfCommands.value) }
+
                         isLoading.value = false
                     }
                 }
@@ -114,6 +118,13 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
             fullListOfCommands.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
         }
 
+    }
+
+    fun getFrequentPackages(input: List<CommandModel>): List<String>{
+        val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
+        val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+
+        return packages
     }
 
     fun filterOnlyShareCommands(){

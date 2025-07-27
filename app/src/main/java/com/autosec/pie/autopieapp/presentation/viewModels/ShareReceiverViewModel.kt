@@ -65,6 +65,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
     var shareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
     var filteredShareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
+    val mostUsedPackages = MutableStateFlow<List<String>>(emptyList())
+
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
@@ -122,6 +124,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             search(it)
                         }
                     }
+                    mostUsedPackages.update { getFrequentPackages(shareItemsResult.value) }
                 }
             }catch (e: Exception){
                 when(e){
@@ -133,6 +136,14 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             }
         }
     }
+
+    fun getFrequentPackages(input: List<CommandModel>): List<String>{
+        val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
+        val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+
+        return packages
+    }
+
 
     fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
 

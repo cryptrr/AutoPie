@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,12 +24,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -216,6 +221,7 @@ fun ShareContextMenuBottomSheet(
 
     val shareItemsResult = shareReceiverViewModel.shareItemsResult.collectAsState()
     val filteredShareItemsResult = shareReceiverViewModel.filteredShareItemsResult.collectAsState()
+    val mostUsedPackages = shareReceiverViewModel.mostUsedPackages.collectAsState()
 
 
     val activity = LocalContext.current.getActivity()
@@ -307,6 +313,14 @@ fun ShareContextMenuBottomSheet(
                     item {
                         SearchBar(searchQuery = shareReceiverViewModel.main.shareReceiverSearchQuery) {
                             shareReceiverViewModel.search(shareReceiverViewModel.main.shareReceiverSearchQuery.value)
+                        }
+                    }
+                    item{
+                        FlowRow(Modifier.fillMaxWidth()){
+                            mostUsedPackages.value.map{
+                                AssistChip(onClick = {shareReceiverViewModel.main.shareReceiverSearchQuery.value = it;shareReceiverViewModel.search(it)}, label = { Text(it) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)))
+                                Spacer(Modifier.width(10.dp))
+                            }
                         }
                     }
                     items(
