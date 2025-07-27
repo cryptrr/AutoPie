@@ -1,0 +1,60 @@
+[versions]
+accompanistPermissions = "0.37.3"
+activityCompose = "1.10.1"
+coilNetworkOkhttp = "3.3.0"
+commonsCompress = "1.27.1"
+composeBom = "2025.07.00"
+constraintlayoutCompose = "1.1.1"
+coreKtx = "1.16.0"
+datastorePreferences = "1.1.7"
+editorkit = "2.0.0"
+gson = "2.13.1"
+koinAndroid = "3.5.6"
+kotlin = "2.2.0"
+ktorClientCore = "2.3.7"
+ktsh = "1.0.0"
+lifecycleRuntimeKtx = "2.9.2"
+material = "1.12.0"
+materialIconsExtended = "1.7.8"
+multiplatformMarkdownRendererM3 = "0.35.0"
+navigationCompose = "2.9.2"
+timber = "5.0.1"
+workRuntimeKtx = "2.10.2"
+xz = "1.10"
+
+[libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilNetworkOkhttp" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
+core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+editorkit = { module = "com.blacksquircle.ui:editorkit", version.ref = "editorkit" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroid" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCore" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientCore" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorClientCore" }
+ktsh = { module = "com.jaredrummler:ktsh", version.ref = "ktsh" }
+language-shell = { module = "com.blacksquircle.ui:language-shell", version.ref = "editorkit" }
+lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+material3 = { module = "androidx.compose.material3:material3" }
+multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatformMarkdownRendererM3" }
+multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRendererM3" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+ui = { module = "androidx.compose.ui:ui" }
+ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+xz = { module = "org.tukaani:xz", version.ref = "xz" }
+
+[plugins]
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
