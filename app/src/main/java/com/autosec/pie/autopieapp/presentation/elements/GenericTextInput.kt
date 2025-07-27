@@ -96,7 +96,7 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
 }
 
 @Composable
-fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
+fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,useRelativePaths: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
 
 
     Column {
@@ -122,7 +122,7 @@ fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String,sub
             },
             trailingIcon = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    MultiFilePicker{
+                    MultiFilePicker(useRelativePaths){
                         text.value = it.joinToString(",")
                     }
                 }
@@ -147,6 +147,7 @@ fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String,sub
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun MultiFilePicker(
+    useRelativePaths: Boolean = false,
     onFilesPicked: (List<String>) -> Unit
 ) {
     val context = LocalContext.current
@@ -155,7 +156,7 @@ fun MultiFilePicker(
     ) { uris: List<Uri> ->
         val paths = uris.mapNotNull { uri ->
             Timber.d("SELECTED FILE: $uri")
-            val path = Utils.getRelativePathFromUri(context ,uri)
+            val path = if(useRelativePaths) Utils.getRelativePathFromUri(context ,uri) else Utils.getAbsolutePathFromUri2(context ,uri)
             Timber.d("ABSOLUTE PATH: $path")
             path
         }
@@ -178,14 +179,15 @@ fun MultiFilePicker(
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun SingleFilePicker(
-    onFilesPicked: (String) -> Unit
+    useRelativePaths: Boolean = false,
+    onFilesPicked: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let{
-            val path =  Utils.getRelativePathFromUri(context,uri)
+            val path =  if(useRelativePaths) Utils.getRelativePathFromUri(context ,uri) else Utils.getAbsolutePathFromUri2(context ,uri)
 
             path?.let {
                 onFilesPicked(it)

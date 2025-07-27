@@ -212,7 +212,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
 
-                GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.")
+                GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.", useRelativePaths = false)
             }else{
                 Spacer(modifier = Modifier.height(7.dp))
             }
@@ -250,14 +250,14 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
                                     if(extra.name.endsWith("FILES")){
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            MultiFilePicker{
+                                            MultiFilePicker(useRelativePaths = false){
                                                 textValue.value = it.joinToString(",")
                                             }
                                         }
                                     }
                                     else if(extra.name.endsWith("FILE")){
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            SingleFilePicker{
+                                            SingleFilePicker(useRelativePaths = false){
                                                 textValue.value = it
                                             }
                                         }

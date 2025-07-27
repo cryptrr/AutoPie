@@ -236,7 +236,7 @@ fun CommandExtraInputElement(
                     trailingIcon = if(name.value.endsWith("FILE")){
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                SingleFilePicker{
+                                SingleFilePicker(useRelativePaths = true){
                                     default.value = it
                                 }
                             }
@@ -244,7 +244,7 @@ fun CommandExtraInputElement(
                     }else if(name.value.endsWith("FILES")) {
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                MultiFilePicker{
+                                MultiFilePicker(useRelativePaths = true){
                                     default.value = it.joinToString(",")
                                 }
                             }

@@ -131,47 +131,66 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         val envMap = HashMap<String, String>()
 
         for (inputData in inputParsedData) {
-
-            if(inputData.name.endsWith("FILE") || inputData.name.endsWith("FOLDER")){
-                if(Path(inputData.value).isAbsolute){
-                    envMap[inputData.name] = inputData.value
-                }else{
-                    val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, inputData.value).absolutePath
-                    envMap[inputData.name] = fullPath
-                }
-            }else{
-                envMap[inputData.name] = inputData.value
-            }
+            envMap[inputData.name] = inputData.value
         }
 
-        //TODO: There might be some udaipp here. There are multiple extras
+        //This is for when "Extra Inputs" are not passed in ie when the CommandExtrasBottomSheet is not opened or edited.
         if (commandExtraInputs.isEmpty()) {
             for (extra in commandObject.extras ?: emptyList()) {
                 //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
 
+                //Check if the field is not string type. Then don't do all of this shit with the file paths.
+                if(extra.type != "STRING"){
+                    envMap[extra.name] = extra.default
+                }
                 //TEMP FIX for multi user envs where fully qualified paths for extras don't work
-                if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.default
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, extra.default).absolutePath
+                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.default).absolutePath
                         envMap[extra.name] = fullPath
                     }
-                }else{
+                }
+                else if(extra.name.endsWith("FILES")){
+                    envMap[extra.name] = extra.default.split(",").map {
+                        if(Path(extra.default).isAbsolute){
+                            it
+                        }else{
+                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                        }
+                    }.joinToString(",")
+                }
+                else{
                     envMap[extra.name] = extra.default
                 }
             }
-        } else {
+        }
+        //This is when the command extra inputs are passed. That is when the CommandExtrasBottomSheet is opened, all the extras including the defaults are passed as commandExtraInputs
+        else {
             for (extra in commandExtraInputs) {
 
-                if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                if(extra.type != "STRING"){
+                    envMap[extra.name] = extra.value
+                }
+                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.value
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, extra.value).absolutePath
+                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.value).absolutePath
                         envMap[extra.name] = fullPath
                     }
-                }else{
+                }
+                else if(extra.name.endsWith("FILES")){
+                    envMap[extra.name] = extra.value.split(",").map {
+                        if(Path(extra.value).isAbsolute){
+                            it
+                        }else{
+                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                        }
+                    }.joinToString(",")
+                }
+                else{
                     envMap[extra.name] = extra.value
                 }
             }
