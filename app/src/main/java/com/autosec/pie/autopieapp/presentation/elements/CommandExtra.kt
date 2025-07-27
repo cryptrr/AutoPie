@@ -259,12 +259,14 @@ fun CommandExtraInputElement(
                     placeholder = "DESCRIPTION",
                     singleLine = false,
                 )
-                GenericFormSwitch(
-                    text = "Required",
-                    switchState = isRequired,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                    onChange = { isRequired.value = it }
-                )
+                if(default.value.isEmpty()){
+                    GenericFormSwitch(
+                        text = "Required",
+                        switchState = isRequired,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        onChange = { isRequired.value = it }
+                    )
+                }
             }
 
             "BOOLEAN" -> {
