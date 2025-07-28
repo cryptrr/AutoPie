@@ -8,7 +8,7 @@
 
 
 <div style="display:flex;flex-direction:row;justify-content:space-between">
-<img src="https://github.com/user-attachments/assets/ee74f114-2d02-4c6f-8429-68398764c006" alt="AutoPie screenshot" width="47%" height="auto">
+<img src="https://github.com/user-attachments/assets/ff9d86db-fc71-45e6-bbe6-9891ab5af35c" alt="AutoPie screenshot" width="47%" height="auto">
 <img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie feature demo" width="47%" height="auto">
 </div>
 
