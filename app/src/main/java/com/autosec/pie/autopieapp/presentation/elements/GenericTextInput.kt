@@ -96,7 +96,7 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
 }
 
 @Composable
-fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,useRelativePaths: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
+fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,useRelativePaths: Boolean = false,onValueChange: (String) -> Unit = {}){
 
 
     Column {
@@ -208,7 +208,7 @@ fun SingleFilePicker(
 }
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: AnnotatedString, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: AnnotatedString, modifier: Modifier = Modifier, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -265,7 +265,7 @@ fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>,modifier:
 
 
 @Composable
-fun PasswordFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: (@Composable (() -> Unit))? = null){
+fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, trailingIcon: (@Composable (() -> Unit))? = null){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
