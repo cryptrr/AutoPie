@@ -146,7 +146,7 @@ fun CommandHistorySheet(
                     lineHeight = 32.sp,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F)
                 )
 
 

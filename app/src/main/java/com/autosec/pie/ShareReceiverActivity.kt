@@ -481,7 +481,10 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                 text = "${card.exec} ${card.command}",
                 maxLines = 2,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F),
+                modifier = Modifier
+                    .fillMaxWidth()
             )
         }
     }
