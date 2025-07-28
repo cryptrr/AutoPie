@@ -9,11 +9,11 @@ import timber.log.Timber
 import java.time.Instant
 
 class AddCommandToHistory(private val dbService: AppDatabase){
-    operator fun invoke(item: CommandModel,currentLink: String?, fileUris: List<String>?, commandExtraInputs: List<CommandExtraInput> = emptyList(),success: Boolean, processId: Int) : Boolean {
+    operator fun invoke(command: CommandModel,currentLink: String?, fileUris: List<String>?, commandExtraInputs: List<CommandExtraInput> = emptyList(),success: Boolean, processId: Int) : Boolean {
 
         val commandHistoryEntity = CommandHistoryEntity(
             id = Instant.now().toString(),
-            commandModelId = item.name,
+            commandModelId = command.name,
             commandExtraInputs = commandExtraInputs.map { it.toEntity() },
             currentLink = currentLink,
             fileUris = fileUris,
@@ -24,6 +24,14 @@ class AddCommandToHistory(private val dbService: AppDatabase){
         dbService.commandHistoryDao().insertAll(commandHistoryEntity)
 
         Timber.d("Added the command to history")
+
+        val allHistoryOfCommand = dbService.commandHistoryDao().getAllWithName(command.name)
+
+        if(allHistoryOfCommand.size > 10){
+            Timber.d("Deleting the oldest entry since entries > 10")
+            dbService.commandHistoryDao().delete(allHistoryOfCommand.last())
+        }
+
 
         return true
 
