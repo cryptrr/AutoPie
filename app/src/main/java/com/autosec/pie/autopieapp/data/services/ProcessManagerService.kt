@@ -236,42 +236,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     }
 
 
-    fun runCommand4(
-        exec: String,
-        command: String,
-        cwd: String,
-        usePython: Boolean = true
-    ): Boolean {
-        try {
-
-            if (shell?.isAlive() != true) initShell()
-
-            val checkEnvResult = shell?.run("cd ${cwd}")
-
-            Timber.d(checkEnvResult?.output())
-
-            val fullCommand = if (usePython) "python3.10 $exec $command" else "sh $exec $command"
-
-            Timber.d(fullCommand)
-
-            val result = shell!!.run(fullCommand)
-
-            val output = result.output()
-
-            Timber.d(output)
-
-
-            return result.isSuccess
-
-
-        } catch (e: Exception) {
-            Timber.e(e.toString())
-        }
-
-        return false
-
-    }
-
     private fun checkForUnsafeCommands(commandObject: CommandInterface, command: String) {
         val unsafePatterns = listOf(
             "rm\\s+-rf\\s+/",
@@ -342,43 +306,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         catch (e: Exception) {
             Timber.e(e.toString())
 
-        }
-
-        return false
-
-    }
-
-    fun runCommandForShare(
-        exec: String,
-        command: String,
-        cwd: String,
-        usePython: Boolean = true
-    ): Boolean {
-
-        try {
-
-            if (shell?.isAlive() != true) initShell()
-
-            shell!!.run("cd ${cwd}")
-
-            val fullCommand = if (usePython) "python3.10 $exec $command" else "sh $exec $command"
-
-            Timber.d(fullCommand)
-
-            val result = shell!!.run(fullCommand)
-
-            Timber.d("Exit Code ${result.exitCode}")
-
-            val output = result.output()
-
-            Timber.d(output)
-
-            //shell?.shutdown()
-
-            return result.isSuccess
-
-        } catch (e: Exception) {
-            Timber.e(e.toString())
         }
 
         return false
@@ -519,29 +446,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         }
     }
 
-
-    fun createAutoPieShell(): Shell? {
-
-        try {
-            val shellPath = File(activity.filesDir, "sh").absolutePath
-
-            val shell = Shell(
-                shellPath,
-            )
-
-            Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-            shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
-
-            shell.run("cd ${activity.filesDir.absolutePath}")
-
-            return shell
-        } catch (e: Exception) {
-            Timber.e(e.toString())
-
-            return null
-        }
-    }
 
     fun createTerminalShell(): com.jaredrummler.ktsh.Shell? {
 
