@@ -277,7 +277,7 @@ fun CommandHistoryCard(commandHistory: CommandHistoryEntity, command: CommandMod
 
             OutlinedButtonMedium("RETRY") {
                 command?.let{
-                    //shareReceiverViewModel.onCommandClick(command, commandHistory.fileUris ?: emptyList(), commandHistory.currentLink, commandHistory.commandExtraInputs.map{it.toInputs()}, commandHistory.processId)
+                    shareReceiverViewModel.onCommandClickWithExtras(command, commandHistory.currentLink, commandHistory.fileUris ?: emptyList(), commandHistory.commandExtraInputs.map{it.toInputs()})
                 }
             }
 

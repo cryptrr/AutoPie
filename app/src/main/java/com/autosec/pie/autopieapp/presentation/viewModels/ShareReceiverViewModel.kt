@@ -234,5 +234,34 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
+    fun onCommandClickWithExtras(command: CommandModel,currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput>){
+        viewModelScope.launch {
+
+            try {
+
+                val gson = Gson()
+                val commandJson = gson.toJson(command)
+                val fileUrisJson = gson.toJson(fileUris)
+
+                val commandExtraInputsJson = gson.toJson(commandExtraInputs)
+
+                //Timber.d(" fileUrisJson: $fileUrisJson \n commandExtraInputsJson: $commandExtraInputsJson \n extraInputList: $extraInputList \n extraInput: $extraInput \n fileUris: $fileUris")
+
+                val intent = Intent(application1, ForegroundService::class.java).apply {
+                    putExtra("command", commandJson)
+                    putExtra("currentLink", currentLink)
+                    putExtra("fileUris", fileUrisJson)
+                    putExtra("commandExtraInputs", commandExtraInputsJson)
+                }
+
+
+                startForegroundService(application1, intent)
+
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+    }
+
 
 }

@@ -371,38 +371,17 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             return@launch
                         }
 
-                        try {
-                            isLoading = true
+                        isLoading = true
+                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
 
-                            val gson = Gson()
-                            val commandJson = gson.toJson(command)
-                            val fileUrisJson = gson.toJson(fileUris ?: extraInputList.value)
-
-                            val commandExtraInputsJson = gson.toJson(commandExtraInputs.value)
-
-                            Timber.d(" fileUrisJson: $fileUrisJson \n commandExtraInputsJson: $commandExtraInputsJson \n extraInputList: $extraInputList \n extraInput: $extraInput \n fileUris: $fileUris")
-
-                            val intent = Intent(context, ForegroundService::class.java).apply {
-                                putExtra("command", commandJson)
-                                putExtra("currentLink", currentLink ?: extraInput.value)
-                                putExtra("fileUris", fileUrisJson)
-                                putExtra("commandExtraInputs", commandExtraInputsJson)
-                            }
-
-
-                            startForegroundService(context, intent)
-
-                            if(parentSheetState != null){
-                                delay(900)
-                                activity?.finish()
-                                viewModel.currentExtrasDetails.value = null
-                            }else{
-                                delay(1500)
-                                openState.value = false
-                                viewModel.currentExtrasDetails.value = null
-                            }
-                        }catch (e: Exception){
-                            Timber.e(e)
+                        if(parentSheetState != null){
+                            delay(900)
+                            activity?.finish()
+                            viewModel.currentExtrasDetails.value = null
+                        }else{
+                            delay(1500)
+                            openState.value = false
+                            viewModel.currentExtrasDetails.value = null
                         }
                     }
                 },
