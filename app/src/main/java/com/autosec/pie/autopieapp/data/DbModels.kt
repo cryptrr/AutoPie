@@ -1,18 +1,17 @@
 package com.autosec.pie.autopieapp.data
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.serialization.Serializable
 
 @Entity
 data class CommandHistoryEntity(
     @PrimaryKey val id: String,
     val commandModelId: String,
     val commandExtraInputs: List<CommandExtraInputEntity>,
+    val success: Boolean,
     val currentLink: String?,
     val fileUris: List<String>?,
     val processId: Int
