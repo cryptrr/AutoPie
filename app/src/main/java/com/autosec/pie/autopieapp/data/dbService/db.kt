@@ -10,7 +10,7 @@ import androidx.room.TypeConverters
 import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.RoomTypeConverters
 
-@Database(entities = [CommandHistoryEntity::class], version = 1)
+@Database(entities = [CommandHistoryEntity::class], version = 2)
 @TypeConverters(RoomTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun commandHistoryDao(): CommandHistoryDao
@@ -28,7 +28,7 @@ interface CommandHistoryDao {
     fun findById(id: String): CommandHistoryEntity
 
     @Insert
-    fun insertAll(vararg commandHistories: CommandHistoryEntity)
+    fun insertAll(vararg commandHistory: CommandHistoryEntity)
 
     @Delete
     fun delete(commandHistory: CommandHistoryEntity)
