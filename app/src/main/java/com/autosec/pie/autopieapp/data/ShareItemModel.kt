@@ -1,5 +1,10 @@
 package com.autosec.pie.autopieapp.data
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
 data class CommandModelList(
     val items: Map<String, CommandModel>
 )
@@ -99,13 +104,13 @@ data class CommandExtraInput(
     val description: String
 )
 
-enum class CommandType{
+enum class CommandType {
     SHARE,
     FILE_OBSERVER,
     CRON
 }
 
-enum class JobType{
+enum class JobType {
     URL,
     URLS,
     FILE,
@@ -122,7 +127,7 @@ data class ExecAndCommand(
 
 )
 
-enum class ExecType{
+enum class ExecType {
     ABSOLUTE_PATH,
     AUTOPIE_PACKAGE,
     SHELL_INSTALLED

@@ -1,12 +1,15 @@
 package com.autosec.pie.di
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.room.Room
 import com.autosec.pie.core.DefaultDispatchers
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.autopieapp.data.apiService.ApiService
 import com.autosec.pie.autopieapp.data.apiService.ApiServiceImpl
 import com.autosec.pie.autopieapp.data.apiService.AutoSecHTTPClient
 import com.autosec.pie.autopieapp.data.apiService.HTTPClientService
+import com.autosec.pie.autopieapp.data.dbService.AppDatabase
+import com.autosec.pie.autopieapp.data.dbService.CommandHistoryDao
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.CronService
@@ -24,9 +27,21 @@ import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import timber.log.Timber
 
 val appModule = module {
     single<DispatcherProvider> { DefaultDispatchers() }
+    single<AppDatabase> {
+        return@single try {
+            Room.databaseBuilder(
+                get(),
+                AppDatabase::class.java, "autopie-db"
+            ).build()
+        }catch (e: Exception){
+            Timber.e(e)
+            throw e
+        }
+    }
 
     single<MainViewModel> { MainViewModel(get(), get(), get()) }
     single<ProcessManagerService> { ProcessManagerService(get(), get(), get()) }

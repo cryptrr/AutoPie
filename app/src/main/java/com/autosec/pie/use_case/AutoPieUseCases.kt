@@ -13,4 +13,5 @@ data class AutoPieUseCases (
     val runStandaloneCommand: RunStandaloneCommand,
     val changeCommandDetails: ChangeCommandDetails,
     val deleteCommand: DeleteCommand,
+    val addCommandToHistory: AddCommandToHistory
 )

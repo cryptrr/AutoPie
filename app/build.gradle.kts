@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     kotlin("plugin.serialization") version "2.2.0"
     alias(libs.plugins.compose.compiler)
+    id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+    id("androidx.room")
 }
 
 android {
@@ -12,9 +14,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-
-
-
 
     defaultConfig {
         applicationId = "com.autosec.pie"
@@ -30,7 +29,12 @@ android {
         }
     }
 
-
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 
     buildTypes {
         debug {
@@ -114,6 +118,8 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     implementation(libs.constraintlayout.compose)
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
 
     //TEST IMPLS
     implementation("androidx.compose.ui:ui-tooling:1.8.3")

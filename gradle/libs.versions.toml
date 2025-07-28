@@ -18,6 +18,8 @@ material = "1.12.0"
 materialIconsExtended = "1.7.8"
 multiplatformMarkdownRendererM3 = "0.35.0"
 navigationCompose = "2.9.2"
+roomCompiler = "2.7.2"
+roomRuntime = "2.7.2"
 timber = "5.0.1"
 workRuntimeKtx = "2.10.2"
 xz = "1.10"
@@ -49,6 +51,8 @@ material3 = { module = "androidx.compose.material3:material3" }
 multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatformMarkdownRendererM3" }
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRendererM3" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }

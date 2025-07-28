@@ -46,7 +46,7 @@ enum class ShellConstruct(
             for (line in input.lines()) {
                 if (result.lastOrNull() == Backslash) {
                     // Remove the last backlash from the last processed line.
-                    result.removeLast()
+                    result.removeAt(result.lastIndex)
                 }
 
                 if (line.trimEnd().endsWith(Backslash.open)) {
@@ -77,7 +77,7 @@ enum class ShellConstruct(
                     val endIndex = statement.indexOf(construct.end)
                     if (beginIndex != -1 && endIndex < beginIndex) {
                         if (construct == Elif || construct == Else) {
-                            if (result.lastOrNull() == If || result.lastOrNull() == Elif) result.removeLast()
+                            if (result.lastOrNull() == If || result.lastOrNull() == Elif) result.removeAt(result.lastIndex)
                         }
                         result.add(construct)
                     }

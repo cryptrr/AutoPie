@@ -30,29 +30,39 @@ class RunShareCommand() {
         when {
             inputDir?.isDirectory == true -> {
                 Timber.d("directory detected")
-                return  useCases.runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId)
+                return  useCases.runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId).also{
+                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, processId)
+                }
             }
             currentLink.isValidUrl() -> {
                 Timber.d("Is a valid url")
-                return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId)
+                return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId).also{
+                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, processId)
+                }
             }
 
             fileUris.isNotEmpty() -> {
                 Timber.d("file uris not empty")
-                return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId)
+                return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId).also{
+                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, processId)
+                }
             }
 
             currentLink?.isNotEmpty() == true -> {
                 Timber.d("text is present")
 
-                return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId)
+                return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId).also{
+                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, processId)
+                }
             }
 
             //Standalone Command Runner
             else -> {
                 Timber.d("No text or files present")
 
-                return useCases.runStandaloneCommand(item, commandExtraInputs, processId)
+                return useCases.runStandaloneCommand(item, commandExtraInputs, processId).also{
+                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, processId)
+                }
             }
         }
     }

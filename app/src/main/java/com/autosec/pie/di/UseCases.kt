@@ -1,5 +1,6 @@
 package com.autosec.pie.di
 
+import com.autosec.pie.use_case.AddCommandToHistory
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.autosec.pie.use_case.ChangeCommandDetails
 import com.autosec.pie.use_case.CreateCommand
@@ -30,7 +31,7 @@ val useCaseModule = module {
             runStandaloneCommand =  RunStandaloneCommand(get()),
             changeCommandDetails = ChangeCommandDetails(get()),
             deleteCommand = DeleteCommand(get()),
-
+            addCommandToHistory = AddCommandToHistory(get())
         )
     }
 }

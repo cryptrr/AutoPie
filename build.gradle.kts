@@ -4,4 +4,5 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.2.0" apply false
     kotlin("plugin.serialization") version "2.2.0"
     alias(libs.plugins.compose.compiler) apply false
+    id("androidx.room") version "2.7.2" apply false
 }
