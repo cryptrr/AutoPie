@@ -10,7 +10,7 @@ import androidx.room.TypeConverters
 import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.RoomTypeConverters
 
-@Database(entities = [CommandHistoryEntity::class], version = 2)
+@Database(entities = [CommandHistoryEntity::class], version = 3)
 @TypeConverters(RoomTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun commandHistoryDao(): CommandHistoryDao
@@ -23,6 +23,19 @@ interface CommandHistoryDao {
 
     @Query("SELECT * FROM CommandHistoryEntity WHERE commandModelId IS :commandName ORDER BY id DESC")
     fun getAllWithName(commandName: String): List<CommandHistoryEntity>
+
+    @Query("""
+        SELECT exec
+            FROM (
+                SELECT *
+                FROM CommandHistoryEntity
+                WHERE exec IS NOT NULL
+                ORDER BY id DESC
+            )
+        GROUP BY exec
+        LIMIT :count;
+    """)
+    fun getLatestUsedPackages(count: Int): List<String>
 
     @Query("SELECT * FROM CommandHistoryEntity WHERE id LIKE :id LIMIT 1")
     fun findById(id: String): CommandHistoryEntity

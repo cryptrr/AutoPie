@@ -26,7 +26,6 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -129,10 +128,9 @@ fun HomeScreen(innerPadding: PaddingValues) {
             }
 
             item{
-                FlowRow(Modifier.fillMaxWidth()){
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)){
                     mostUsedPackages.value.map{
                         AssistChip(onClick = {commandsListScreenViewModel.searchCommandQuery.value = it;commandsListScreenViewModel.searchInCommands(it)}, label = { Text(it) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)))
-                        Spacer(Modifier.width(10.dp))
                     }
                 }
             }

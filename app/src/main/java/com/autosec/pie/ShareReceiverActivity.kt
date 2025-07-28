@@ -317,10 +317,9 @@ fun ShareContextMenuBottomSheet(
                         }
                     }
                     item{
-                        FlowRow(Modifier.fillMaxWidth()){
+                        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)){
                             mostUsedPackages.value.map{
                                 AssistChip(onClick = {shareReceiverViewModel.main.shareReceiverSearchQuery.value = it;shareReceiverViewModel.search(it)}, label = { Text(it) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)))
-                                Spacer(Modifier.width(10.dp))
                             }
                         }
                     }

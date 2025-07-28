@@ -10,6 +10,7 @@ import com.google.gson.reflect.TypeToken
 data class CommandHistoryEntity(
     @PrimaryKey val id: String,
     val commandModelId: String,
+    val exec: String,
     val commandExtraInputs: List<CommandExtraInputEntity>,
     val success: Boolean,
     val currentLink: String?,

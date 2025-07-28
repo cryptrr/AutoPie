@@ -92,7 +92,9 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                             searchInCommands(searchCommandQuery.value)
                         }
 
-                        mostUsedPackages.update { getFrequentPackages(fullListOfCommands.value) }
+                        //mostUsedPackages.update { getFrequentPackages(fullListOfCommands.value) }
+                        setFrequentPackages(fullListOfCommands.value)
+
 
                         isLoading.value = false
                     }
@@ -120,11 +122,17 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     }
 
-    fun getFrequentPackages(input: List<CommandModel>): List<String>{
-        val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
-        val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+    fun setFrequentPackages(input: List<CommandModel>){
+        viewModelScope.launch(dispatchers.io){
+            val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
+            val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
 
-        return packages
+            val latestUsed = useCases.getLatestUsedPackages(3)
+
+            Timber.d("Latest used packages: $latestUsed")
+            mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed).toList() }
+
+        }
     }
 
     fun filterOnlyShareCommands(){

@@ -8,6 +8,7 @@ import com.autosec.pie.use_case.DeleteCommand
 import com.autosec.pie.use_case.GetCommandDetails
 import com.autosec.pie.use_case.GetCommandsList
 import com.autosec.pie.use_case.GetHistoryOfCommand
+import com.autosec.pie.use_case.GetLatestUsedPackages
 import com.autosec.pie.use_case.GetShareCommands
 import com.autosec.pie.use_case.RunShareCommand
 import com.autosec.pie.use_case.RunShareCommandForDirectory
@@ -33,7 +34,8 @@ val useCaseModule = module {
             changeCommandDetails = ChangeCommandDetails(get()),
             deleteCommand = DeleteCommand(get()),
             addCommandToHistory = AddCommandToHistory(get()),
-            getHistoryOfCommand = GetHistoryOfCommand(get())
+            getHistoryOfCommand = GetHistoryOfCommand(get()),
+            getLatestUsedPackages = GetLatestUsedPackages(get())
         )
     }
 }

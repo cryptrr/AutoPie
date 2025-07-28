@@ -18,7 +18,8 @@ class AddCommandToHistory(private val dbService: AppDatabase){
             currentLink = currentLink,
             fileUris = fileUris,
             processId = processId,
-            success = success
+            success = success,
+            exec = command.exec
         )
 
         dbService.commandHistoryDao().insertAll(commandHistoryEntity)
@@ -31,7 +32,6 @@ class AddCommandToHistory(private val dbService: AppDatabase){
             Timber.d("Deleting the oldest entry since entries > 10")
             dbService.commandHistoryDao().delete(allHistoryOfCommand.last())
         }
-
 
         return true
 
