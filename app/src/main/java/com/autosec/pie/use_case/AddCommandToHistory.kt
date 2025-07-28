@@ -9,7 +9,7 @@ import timber.log.Timber
 import java.time.Instant
 
 class AddCommandToHistory(private val dbService: AppDatabase){
-    operator fun invoke(item: CommandModel,currentLink: String?, fileUris: List<String>?, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Boolean {
+    operator fun invoke(item: CommandModel,currentLink: String?, fileUris: List<String>?, commandExtraInputs: List<CommandExtraInput> = emptyList(),success: Boolean, processId: Int) : Boolean {
 
         val commandHistoryEntity = CommandHistoryEntity(
             id = Instant.now().toString(),
@@ -17,7 +17,8 @@ class AddCommandToHistory(private val dbService: AppDatabase){
             commandExtraInputs = commandExtraInputs.map { it.toEntity() },
             currentLink = currentLink,
             fileUris = fileUris,
-            processId = processId
+            processId = processId,
+            success = success
         )
 
         dbService.commandHistoryDao().insertAll(commandHistoryEntity)

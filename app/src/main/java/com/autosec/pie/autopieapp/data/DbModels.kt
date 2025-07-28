@@ -64,3 +64,15 @@ fun CommandExtraInput.toEntity(): CommandExtraInputEntity {
         description = this.description
     )
 }
+
+fun CommandExtraInputEntity.toInputs(): CommandExtraInput {
+    return CommandExtraInput(
+        id = this.id,
+        name = this.name,
+        default = this.default,
+        value = this.value,
+        type = this.type,
+        defaultBoolean = this.defaultBoolean,
+        description = this.description
+    )
+}

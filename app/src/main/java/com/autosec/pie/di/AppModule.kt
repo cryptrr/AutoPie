@@ -18,6 +18,7 @@ import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
+import com.autosec.pie.autopieapp.presentation.viewModels.CommandHistoryViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
@@ -36,7 +37,7 @@ val appModule = module {
             Room.databaseBuilder(
                 get(),
                 AppDatabase::class.java, "autopie-db"
-            ).build()
+            ).fallbackToDestructiveMigration(true).build()
         }catch (e: Exception){
             Timber.e(e)
             throw e
@@ -47,6 +48,7 @@ val appModule = module {
     single<ProcessManagerService> { ProcessManagerService(get(), get(), get()) }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
+    viewModel<CommandHistoryViewModel> { CommandHistoryViewModel(get())}
 
     viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }

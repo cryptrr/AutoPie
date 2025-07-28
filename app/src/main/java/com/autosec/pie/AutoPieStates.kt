@@ -55,6 +55,9 @@ data class AutoPieStates(
     val commandDetailsBottomSheet: SheetState,
     val commandDetailsBottomSheetOpen: MutableState<Boolean>,
 
+    val commandHistoryBottomSheet: SheetState,
+    val commandHistoryBottomSheetOpen: MutableState<Boolean>,
+
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,6 +129,12 @@ fun rememberAutoPieStates(): AutoPieStates{
 
     val commandDetailsBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
+    val commandHistoryBottomSheet = rememberModalBottomSheetState(true,confirmValueChange = { state ->
+        state != SheetValue.Hidden
+    })
+
+    val commandHistoryBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
     //val currentCommandModel = rememberSaveable { mutableStateOf<CommandModel?>(null) }
 
     //STUPID BOTTOMSHEETSTATE NEVER GOES TO HIDDEN AFTER OPENED
@@ -182,6 +191,10 @@ fun rememberAutoPieStates(): AutoPieStates{
                     //currentCommandModel.value = it.card
                     mainViewModel.currentSelectedCommand.value = it.card
                 }
+                is ViewModelEvent.OpenCommandHistory -> {
+                    commandHistoryBottomSheetOpen.value = true
+                    mainViewModel.currentSelectedCommand.value = it.card
+                }
                 is ViewModelEvent.OpenCloudCommandDetails -> {
                     cloudCommandDetailsBottomSheetOpen.value = true
                 }
@@ -209,6 +222,8 @@ fun rememberAutoPieStates(): AutoPieStates{
         cloudPackageDetailsBottomSheet = cloudPackageDetailsBottomSheet,
         cloudPackageDetailsBottomSheetOpen = cloudPackageDetailsBottomSheetOpen,
         commandDetailsBottomSheet = commandDetailsBottomSheet,
-        commandDetailsBottomSheetOpen = commandDetailsBottomSheetOpen
+        commandDetailsBottomSheetOpen = commandDetailsBottomSheetOpen,
+        commandHistoryBottomSheet = commandHistoryBottomSheet,
+        commandHistoryBottomSheetOpen = commandHistoryBottomSheetOpen
     )
 }

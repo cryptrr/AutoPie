@@ -31,9 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.BuildConfig
 import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.ShareInputs
-import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.AutoPiePrimaryButton
 import com.autosec.pie.autopieapp.presentation.elements.OptionItem
@@ -118,11 +116,12 @@ fun CommandDetailsSheet(
             ),
 
             OptionItem(
-                text = "DETAILS",
+                text = "HISTORY",
                 enabled = true,
                 onClick = {
                     scope.launch {
-                        shareReceiverViewModel.main.showNotification(AppNotification.FeatureWIP)
+                        open.value = false
+                        shareReceiverViewModel.main.dispatchEvent(ViewModelEvent.OpenCommandHistory(card))
                     }
                 }
             ),

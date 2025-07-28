@@ -74,6 +74,7 @@ import com.autosec.pie.autopieapp.presentation.screens.SettingsScreen
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.autopieapp.presentation.screens.CommandDetailsSheet
+import com.autosec.pie.autopieapp.presentation.screens.CommandHistorySheet
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
@@ -404,6 +405,13 @@ class MainActivity : ComponentActivity() {
                         CommandDetailsSheet(
                             state = autoPieStates.commandDetailsBottomSheet,
                             open = autoPieStates.commandDetailsBottomSheetOpen,
+                        )
+                    }
+
+                    if (autoPieStates.commandHistoryBottomSheetOpen.value) {
+                        CommandHistorySheet(
+                            state = autoPieStates.commandHistoryBottomSheet,
+                            open = autoPieStates.commandHistoryBottomSheetOpen,
                         )
                     }
 

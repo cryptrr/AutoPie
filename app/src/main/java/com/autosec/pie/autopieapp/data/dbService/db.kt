@@ -21,7 +21,7 @@ interface CommandHistoryDao {
     @Query("SELECT * FROM CommandHistoryEntity")
     fun getAll(): List<CommandHistoryEntity>
 
-    @Query("SELECT * FROM CommandHistoryEntity WHERE commandModelId IS :commandName")
+    @Query("SELECT * FROM CommandHistoryEntity WHERE commandModelId IS :commandName ORDER BY id DESC")
     fun getAllWithName(commandName: String): List<CommandHistoryEntity>
 
     @Query("SELECT * FROM CommandHistoryEntity WHERE id LIKE :id LIMIT 1")

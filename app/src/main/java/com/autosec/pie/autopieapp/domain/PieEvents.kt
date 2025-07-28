@@ -9,6 +9,7 @@ sealed class ViewModelEvent {
     data object OpenCloudCommandDetails : ViewModelEvent()
     data object OpenCloudPackageDetails : ViewModelEvent()
     data class OpenCommandDetails(var card: CommandModel) : ViewModelEvent()
+    data class OpenCommandHistory(var card: CommandModel) : ViewModelEvent()
 
     data object RefreshCommandsList : ViewModelEvent()
     data object ObserversConfigChanged : ViewModelEvent()
