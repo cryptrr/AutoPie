@@ -47,8 +47,8 @@ class MyApplication : Application() {
         }
 
         initAutosec()
-        AutoPieCoreService.extractTarXzFromAssets(this@MyApplication)
-        AutoPieCoreService.extractAndExecuteBinary(this@MyApplication)
+        AutoPieCoreService.extractRequiredFilesAndMakeExec(this@MyApplication)
+        AutoPieCoreService.extractBootstrapArchive(this@MyApplication)
 
         mainViewModel.viewModelScope.launch {
             scheduleJob()
