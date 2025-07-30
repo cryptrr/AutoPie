@@ -31,7 +31,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = "build/usr/bin/bash"
+    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity)) "build/usr/bin/bash" else "sh"
 
     init {
         main.viewModelScope.launch {
