@@ -475,11 +475,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
 
     fun downloadFileWithPython(url: String, fullFilePath: String): Boolean {
-
         Timber.d("Downloading file with python")
-
         try {
-
             if (shell?.isAlive() != true) initShell()
 
             val command =
@@ -489,8 +486,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             val result = shell!!.run(command)
 
-
-            Timber.d(shell!!.isRunning().toString())
             Timber.d(result.output())
 
             return result.isSuccess
@@ -499,7 +494,28 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.e(e.toString())
             return false
         }
+    }
 
+    fun downloadFileWithWCurl(url: String, fullFilePath: String): Boolean {
+        Timber.d("Downloading file with wcurl")
+        try {
+            if (shell?.isAlive() != true) initShell()
+
+            val command =
+                "wcurl $url -o $fullFilePath"
+
+            Timber.d(command)
+
+            val result = shell!!.run(command)
+
+            Timber.d(result.output())
+
+            return result.isSuccess
+
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            return false
+        }
     }
 
     fun installPip(): Boolean {

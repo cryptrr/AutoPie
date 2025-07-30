@@ -30,6 +30,7 @@ sealed class ViewModelError() : Exception(), Notification {
     object CameraPermissionDenied : ViewModelError()
     object StoragePermissionDenied : ViewModelError()
     object ProductNotFound : ViewModelError()
+    object ErrorDownloadingInitPackages : ViewModelError()
     data object CouldNotAddProduct : ViewModelError()
     data class InvalidJson(val name: String) : ViewModelError()
     object Timeout : ViewModelError()
@@ -54,9 +55,8 @@ sealed class ViewModelError() : Exception(), Notification {
 
     override val description: String
         get() = when (this) {
-            is CameraPermissionDenied -> "App requires camera permission."
+            is ErrorDownloadingInitPackages -> "Error downloading init packages"
             is ProductNotFound -> "Product Not Available"
-            is CouldNotAddProduct -> "Unable to add product to history"
             is InvalidJson -> "$name Config is not valid JSON."
             is StoragePermissionDenied -> "Storage Permission not granted."
             else -> "An Unknown Error has occurred"

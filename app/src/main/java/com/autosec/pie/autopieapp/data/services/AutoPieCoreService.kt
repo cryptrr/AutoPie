@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.autosec.pie.autopieapp.data.AutoPieConstants
 import com.autosec.pie.autopieapp.domain.AppNotification
+import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
@@ -347,7 +348,7 @@ class AutoPieCoreService {
                     mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
 
                     //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
-                    val isDownloaded = processManagerService.downloadFileWithPython(
+                    val isDownloaded = processManagerService.downloadFileWithWCurl(
                         AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
                     )
@@ -358,6 +359,8 @@ class AutoPieCoreService {
                         versionFile.writeText(versionText)
 
                         extractAutoSecFiles()
+                    }else{
+                        mainViewModel.showError(ViewModelError.ErrorDownloadingInitPackages)
                     }
                 }
             }
@@ -376,7 +379,7 @@ class AutoPieCoreService {
 
                 if (autoSecFolder.exists()) {
 
-                    val isDownloaded = processManagerService.downloadFileWithPython(
+                    val isDownloaded = processManagerService.downloadFileWithWCurl(
                         AutoPieConstants.AUTOPIE_EMPTY_INIT_ARCHIVE_URL,
                         Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
                     )
