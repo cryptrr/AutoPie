@@ -71,11 +71,9 @@ class AutoPieCoreService {
         }
 
 
-        fun extractAndExecuteBinary(context: Application) {
-
+        fun extractRequiredFilesAndMakeExec(context: Application) {
 
             val binaries = listOf("env.sh")
-
 
             CoroutineScope(dispatchers.io).launch {
 
@@ -137,7 +135,7 @@ class AutoPieCoreService {
         }
 
 
-        fun extractTarXzFromAssets(context: Application) {
+        fun extractBootstrapArchive(context: Application) {
 
             val distFolder = File(context.filesDir, "build")
 
