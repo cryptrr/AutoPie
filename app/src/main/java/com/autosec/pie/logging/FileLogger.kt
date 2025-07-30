@@ -47,7 +47,7 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
             val logMessage = "$timestamp [${getPriorityString(priority)}] $tag: $message\n"
             appendLogToFile(logMessage)
         } catch (e: IOException) {
-            e.printStackTrace()
+            println("No permission to write to userspace log")
         }
     }
 

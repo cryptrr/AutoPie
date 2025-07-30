@@ -2,6 +2,7 @@ package com.autosec.pie.autopieapp.data.services
 
 import android.app.Application
 import android.os.Environment
+import android.system.Os
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.AutoPieError
 import com.autosec.pie.autopieapp.data.CommandExtraInput
@@ -29,6 +30,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     private var mcpShell: Shell? = null
 
     private var shells = HashMap<Int, Shell>()
+
+    private val SHELL_PATH = "sh"
 
     init {
         main.viewModelScope.launch {
@@ -63,7 +66,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
 
     private fun initShell() {
-        val shellPath = File(activity.filesDir, "sh").absolutePath
+        val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         shell = Shell(
             shellPath,
@@ -80,7 +83,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     }
 
     private fun initMCPShell(modulePath: String, host: String, port: String) {
-        val shellPath = File(activity.filesDir, "sh").absolutePath
+        val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         val envMap = HashMap<String, String>()
         envMap["MCP_SERVER_HOST"] = host
@@ -103,7 +106,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     }
 
     private fun getNewShell(): Shell {
-        val shellPath = File(activity.filesDir, "sh").absolutePath
+        val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         val newShell = Shell(
             shellPath,
@@ -126,7 +129,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         commandObject: CommandInterface,
         commandExtraInputs: List<CommandExtraInput> = emptyList()
     ): Shell {
-        val shellPath = File(activity.filesDir, "sh").absolutePath
+        val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         val envMap = HashMap<String, String>()
 
@@ -218,7 +221,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     fun checkShell(): Boolean {
         try {
-            val shellPath = File(activity.filesDir, "sh").absolutePath
+            val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
             val shell = Shell(
                 shellPath,
@@ -685,6 +688,25 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
         shell.run("chmod +x ${binLocation.absolutePath}/*")
 
+    }
+
+    fun makeBinariesExecutableInFolder(folder: File) {
+
+        Timber.d("Making the files in ${folder.absolutePath} exec")
+
+        if (!folder.exists() || !folder.isDirectory) {
+            println("Invalid folder path: ${folder.absolutePath}")
+            return
+        }
+
+        folder.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                val success = file.setExecutable(true)
+                if (!success) {
+                    println("Failed to make executable: ${file.absolutePath}")
+                }
+            }
+        }
 
     }
 

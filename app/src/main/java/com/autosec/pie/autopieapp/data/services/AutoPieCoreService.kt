@@ -5,6 +5,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.system.Os
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.autosec.pie.autopieapp.data.AutoPieConstants
@@ -22,10 +23,12 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.InputStreamReader
 
 class AutoPieCoreService {
 
@@ -155,6 +158,12 @@ class AutoPieCoreService {
 
                 var tarInputStream: TarArchiveInputStream? = null
 
+                val symlinks = mutableListOf<Pair<String?, String?>>()
+
+                val TERMUX_STAGING_PREFIX_DIR_PATH = application.filesDir.absolutePath + "/build/usr"; // Default: "/data/data/com.termux/files/usr-staging"
+                val TERMUX_PREFIX_DIR = application.filesDir.absolutePath + "/build/usr"; // Default: "/data/data/com.termux/files/usr"
+
+
                 try {
                     // Open the asset file as an InputStream
                     val inputStream: InputStream = context.assets.open(assetFilename)
@@ -171,21 +180,52 @@ class AutoPieCoreService {
                     }
 
                     while (entry != null) {
-                        val file = File(destinationPath, entry.name)
-                        if (entry.isDirectory) {
-                            file.mkdirs()
+                        //Timber.d("Entry: ${entry.name}")
+                        if (entry.name == "build/usr/SYMLINKS.txt") {
+                            Timber.d("Creating symlinks")
+                            val symlinksReader = BufferedReader(InputStreamReader(tarInputStream))
+                            var line: String?
+                            while ((symlinksReader.readLine().also { line = it }) != null) {
+                                val parts: Array<String?> =
+                                    line!!.split("←".toRegex()).dropLastWhile { it.isEmpty() }
+                                        .toTypedArray()
+                                if (parts.size != 2) throw RuntimeException("Malformed symlink line: " + line)
+                                val oldPath = parts[0]
+
+                                //Normalize the file paths. Need to strip the prefix of "./"
+                                val normalizedRelativePath = File(parts[1] ?: "").normalize().path
+                                val newPath = File(TERMUX_STAGING_PREFIX_DIR_PATH, normalizedRelativePath).absolutePath
+                                symlinks.add(Pair(oldPath, newPath))
+                            }
+
+                            entry = tarInputStream.nextTarEntry
                         } else {
-                            file.parentFile?.mkdirs()
-                            val outputStream = FileOutputStream(file)
-                            tarInputStream.copyTo(outputStream)
-                            outputStream.close()
+                            val file = File(destinationPath, entry.name)
+                            if (entry.isDirectory) {
+                                file.mkdirs()
+                            } else {
+                                file.parentFile?.mkdirs()
+                                val outputStream = FileOutputStream(file)
+                                tarInputStream.copyTo(outputStream)
+                                outputStream.close()
+                            }
+                            entry = tarInputStream.nextTarEntry
                         }
-                        entry = tarInputStream.nextTarEntry
+
+                    }
+
+                    if (symlinks.isEmpty()) throw java.lang.RuntimeException("No SYMLINKS.txt encountered")
+                    for (symlink in symlinks) {
+                        Timber.d("Applying symlink - ${symlink.first} -> ${symlink.second}")
+                        Os.symlink(symlink.first, symlink.second)
                     }
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
                     processManagerService.makeBinariesFolderExecutable()
+
+                    processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "bin"))
+                    processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "libexec"))
 
                     CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
