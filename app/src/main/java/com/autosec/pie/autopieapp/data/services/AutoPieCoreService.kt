@@ -4,7 +4,9 @@ import android.app.Application
 import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.os.UserManager
 import android.system.Os
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
@@ -74,7 +76,8 @@ class AutoPieCoreService {
 
         fun extractRequiredFilesAndMakeExec(context: Application) {
 
-            val binaries = listOf("env.sh")
+
+            val binaries = if(isPrimaryUser(context)) listOf("env.sh") else listOf("env.sh", "busybox")
 
             CoroutineScope(dispatchers.io).launch {
 
@@ -558,6 +561,11 @@ class AutoPieCoreService {
             }
         }
 
+        fun isPrimaryUser(context: Context): Boolean {
+            val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
+            Timber.d("Is Primary User: ${userManager.isSystemUser}")
+            return  userManager.isSystemUser
+        }
 
     }
 }
