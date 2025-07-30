@@ -31,7 +31,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = "sh"
+    private val SHELL_PATH = "build/usr/bin/bash"
 
     init {
         main.viewModelScope.launch {
@@ -453,7 +453,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     fun createTerminalShell(): com.jaredrummler.ktsh.Shell? {
 
         try {
-            val shellPath = File(activity.filesDir, "sh").absolutePath
+            val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
             val shell = com.jaredrummler.ktsh.Shell(
                 shellPath,
@@ -674,21 +674,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     }
 
-    fun makeBinariesFolderExecutable() {
-
-        Timber.d("Making python binary files executable")
-
-        val shellPath = File(activity.filesDir, "sh").absolutePath
-
-        val binLocation = File(activity.filesDir, "build/usr/bin")
-
-        val shell = Shell(
-            shellPath,
-        )
-
-        shell.run("chmod +x ${binLocation.absolutePath}/*")
-
-    }
 
     fun makeBinariesExecutableInFolder(folder: File) {
 

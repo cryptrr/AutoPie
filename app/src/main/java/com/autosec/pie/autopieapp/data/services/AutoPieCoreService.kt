@@ -74,7 +74,7 @@ class AutoPieCoreService {
         fun extractAndExecuteBinary(context: Application) {
 
 
-            val binaries = listOf("busybox", "ssl_helper", "env.sh")
+            val binaries = listOf("env.sh")
 
 
             CoroutineScope(dispatchers.io).launch {
@@ -222,7 +222,6 @@ class AutoPieCoreService {
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
-                    processManagerService.makeBinariesFolderExecutable()
 
                     processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "bin"))
                     processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "libexec"))

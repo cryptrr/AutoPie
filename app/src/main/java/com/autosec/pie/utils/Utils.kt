@@ -51,7 +51,7 @@ class Utils{
 
         fun isShellScript(file: File): Boolean {
             if (!file.exists() || !file.canRead()) {
-                Timber.d("File does not exist")
+                Timber.d("Not a shell script")
                 return false
             }
 
