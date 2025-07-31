@@ -113,8 +113,8 @@ sealed class AppNotification : Notification {
     override val description: String
         get() = when (this) {
             is ClearedPackageCache -> "Package Cache Cleared"
-            is InstallingPythonPackages -> "Installing Python. Don't close the app."
-            is InstallingPythonPackagesSuccess -> "Installing Python: Success"
+            is InstallingPythonPackages -> "Installing Bootstrap & Python. Don't close the app."
+            is InstallingPythonPackagesSuccess -> "Installing Bootstrap Packages: Success"
             is FeatureWIP -> "This feature is 'Work In Progress'"
             is FailedDownloadingArchive -> "Failed Downloading Bootstrap binaries. Check Internet."
             is FailedExtractingArchive -> "Failed Extracting Init Archive. Please manually download zip from github"

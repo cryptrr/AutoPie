@@ -119,7 +119,7 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
                     CircularProgressIndicator(Modifier.size(150.dp))
                     Spacer(Modifier.height(20.dp))
                     Text(
-                        text = "Please wait while installing python...",
+                        text = "Please wait while installing the bootstrap packages...",
                         color = Color.White.copy(0.7F),
                         fontSize = 15.7.sp
                     )
