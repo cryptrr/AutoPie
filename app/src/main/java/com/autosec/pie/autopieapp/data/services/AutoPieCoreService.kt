@@ -242,7 +242,7 @@ class AutoPieCoreService {
                     CoroutineScope(dispatchers.main).launch {
                         Toast.makeText(
                             application.applicationContext,
-                            "Error installing python. Please Reinstall this app.",
+                            "Error installing boostrap packages. Please Reinstall this app.",
                             Toast.LENGTH_LONG
                         ).show()
                     }
