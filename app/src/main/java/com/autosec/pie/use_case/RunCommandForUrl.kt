@@ -1,7 +1,6 @@
 package com.autosec.pie.use_case
 
 import android.os.Environment
-import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandResult
@@ -14,18 +13,17 @@ import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import java.net.URL
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-class RunShareCommandForUrl(private val processManagerService: ProcessManagerService){
+class RunCommandForUrl(private val processManagerService: ProcessManagerService){
     suspend operator fun invoke(item: CommandModel, currentLink: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
-            Timber.d("runShareCommandForUrl")
+            Timber.d("runCommandForUrl")
 
 
             val inputUrl = URL(currentLink)

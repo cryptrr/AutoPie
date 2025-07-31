@@ -1,7 +1,6 @@
 package com.autosec.pie.use_case
 
 import android.os.Environment
-import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandResult
@@ -10,18 +9,16 @@ import com.autosec.pie.autopieapp.data.ExecType
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.services.ProcessManagerService
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-class RunShareCommandForDirectory(private val processManagerService: ProcessManagerService){
+class RunCommandForDirectory(private val processManagerService: ProcessManagerService){
 
     suspend operator fun invoke(
         item: CommandModel,
@@ -32,7 +29,7 @@ class RunShareCommandForDirectory(private val processManagerService: ProcessMana
 
         return flow {
 
-            Timber.d("runShareCommandForDirectory")
+            Timber.d("runCommandForDirectory")
 
 
             val currentItems = inputDir.listFiles()!!

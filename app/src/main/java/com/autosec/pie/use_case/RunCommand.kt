@@ -10,7 +10,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 
-class RunShareCommand() {
+class RunCommand() {
     suspend operator fun invoke(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
         val inputDir = fileUris.firstOrNull()?.let { File(it) }
 
@@ -21,20 +21,20 @@ class RunShareCommand() {
         when {
             inputDir?.isDirectory == true -> {
                 Timber.d("directory detected")
-                return  useCases.runShareCommandForDirectory(item,inputDir, commandExtraInputs, processId).onEach { result ->
+                return  useCases.runCommandForDirectory(item,inputDir, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
                 }
             }
             currentLink.isValidUrl() -> {
                 Timber.d("Is a valid url")
-                return useCases.runShareCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId).onEach { result ->
+                return useCases.runCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
                 }
             }
 
             fileUris.isNotEmpty() -> {
                 Timber.d("file uris not empty")
-                return useCases.runShareCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
+                return useCases.runCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
                 }
             }
@@ -42,7 +42,7 @@ class RunShareCommand() {
             currentLink?.isNotEmpty() == true -> {
                 Timber.d("text is present")
 
-                return useCases.runShareCommandForText(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
+                return useCases.runCommandForText(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
                 }
             }

@@ -10,11 +10,11 @@ import com.autosec.pie.use_case.GetCommandsList
 import com.autosec.pie.use_case.GetHistoryOfCommand
 import com.autosec.pie.use_case.GetLatestUsedPackages
 import com.autosec.pie.use_case.GetShareCommands
-import com.autosec.pie.use_case.RunShareCommand
-import com.autosec.pie.use_case.RunShareCommandForDirectory
-import com.autosec.pie.use_case.RunShareCommandForFiles
-import com.autosec.pie.use_case.RunShareCommandForText
-import com.autosec.pie.use_case.RunShareCommandForUrl
+import com.autosec.pie.use_case.RunCommand
+import com.autosec.pie.use_case.RunCommandForDirectory
+import com.autosec.pie.use_case.RunCommandForFiles
+import com.autosec.pie.use_case.RunCommandForText
+import com.autosec.pie.use_case.RunCommandForUrl
 import com.autosec.pie.use_case.RunStandaloneCommand
 import org.koin.dsl.module
 
@@ -25,11 +25,11 @@ val useCaseModule = module {
             getShareCommands = GetShareCommands(get()),
             createCommand = CreateCommand(get()),
             getCommandDetails = GetCommandDetails(get()),
-            runShareCommand = RunShareCommand(),
-            runShareCommandForUrl = RunShareCommandForUrl(get()),
-            runShareCommandForFiles = RunShareCommandForFiles(get()),
-            runShareCommandForDirectory = RunShareCommandForDirectory(get()),
-            runShareCommandForText = RunShareCommandForText(get()),
+            runCommand = RunCommand(),
+            runCommandForUrl = RunCommandForUrl(get()),
+            runCommandForFiles = RunCommandForFiles(get()),
+            runCommandForDirectory = RunCommandForDirectory(get()),
+            runCommandForText = RunCommandForText(get()),
             runStandaloneCommand =  RunStandaloneCommand(get()),
             changeCommandDetails = ChangeCommandDetails(get()),
             deleteCommand = DeleteCommand(get()),

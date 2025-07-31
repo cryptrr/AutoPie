@@ -13,7 +13,6 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
@@ -21,7 +20,6 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import kotlin.system.exitProcess
@@ -155,7 +153,7 @@ class ForegroundService : Service() {
                         emptyList()
                     }
 
-                    useCases.runShareCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
+                    useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                         Timber.e(e)

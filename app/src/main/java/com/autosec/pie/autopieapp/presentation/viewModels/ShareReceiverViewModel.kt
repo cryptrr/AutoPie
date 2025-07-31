@@ -3,53 +3,29 @@ package com.autosec.pie.autopieapp.presentation.viewModels
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
-import android.os.Environment
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat.startForegroundService
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.autopieapp.data.CommandExtra
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.CommandType
-import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.ShareInputs
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.ForegroundService
-import com.autosec.pie.autopieapp.data.services.ProcessManagerService
 import com.autosec.pie.use_case.AutoPieUseCases
-import com.autosec.pie.utils.Utils
-import com.autosec.pie.utils.isValidUrl
 import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParseException
-import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
-import java.io.File
-import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.net.URL
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 
 class ShareReceiverViewModel(private val application1: Application) : ViewModel() {
 
@@ -159,7 +135,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
         viewModelScope.launch(dispatchers.io){
             try {
-                useCases.runShareCommand(item, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
+                useCases.runCommand(item, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
                     main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                     Timber.e(e)

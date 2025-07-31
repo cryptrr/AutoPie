@@ -11,28 +11,18 @@ import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.CommandType
-import com.autosec.pie.autopieapp.data.CronCommandModel
-import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.utils.Utils
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.use_case.AutoPieUseCases
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 
 class FileObserverJobService : JobService() {
 
@@ -226,7 +216,7 @@ class FileObserverJobService : JobService() {
                         if (regSelectors.isEmpty() || regSelectors.any { file.name.matches(it) }) {
                             Timber.d("Selector matched for file")
 
-                            val result = useCases.runShareCommandForFiles(commandModel, null, listOf(fullFilepath), emptyList(), processId).first()
+                            val result = useCases.runCommandForFiles(commandModel, null, listOf(fullFilepath), emptyList(), processId).first()
 
                             if (commandModel.deleteSourceFile == true && result.success) {
                                 processManagerService.deleteFile(fullFilepath)

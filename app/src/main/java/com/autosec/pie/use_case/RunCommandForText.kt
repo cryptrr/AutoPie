@@ -19,15 +19,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
-import java.net.URL
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-class RunShareCommandForText(private val processManagerService: ProcessManagerService){
+class RunCommandForText(private val processManagerService: ProcessManagerService){
     operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
-            Timber.d("RunShareCommandForText")
+            Timber.d("RunCommandForText")
 
             val execFilePath =
                 Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
