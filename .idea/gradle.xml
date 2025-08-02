@@ -11,6 +11,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/termux-app/app" />
+            <option value="$PROJECT_DIR$/termux-app/terminal-emulator" />
+            <option value="$PROJECT_DIR$/termux-app/terminal-view" />
           </set>
         </option>
       </GradleProjectSettings>

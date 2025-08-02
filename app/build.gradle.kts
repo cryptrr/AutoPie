@@ -84,6 +84,12 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("com.google.guava:guava:24.1-jre")
+    }
+}
+
 dependencies {
     implementation(libs.material)
     implementation(libs.timber)
@@ -120,6 +126,10 @@ dependencies {
     implementation(libs.constraintlayout.compose)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+    implementation(project(":termux-app"))
+    //implementation(project(":termux-shared"))
+    implementation(project(":terminal-view"))
+    implementation(project(":terminal-emulator"))
 
     //TEST IMPLS
     implementation("androidx.compose.ui:ui-tooling:1.8.3")

@@ -51,6 +51,8 @@ import com.autosec.pie.terminal.TerminalEmulatorActivity
 import com.autosec.pie.ui.theme.PastelYellow
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.ui.theme.PastelGreen
+import com.termux.app.TermuxActivity
+import com.termux.app.terminal.TermuxActivityRootView
 import org.koin.java.KoinJavaComponent
 
 @Composable
@@ -133,7 +135,7 @@ fun SettingsToggles() {
                 {
                     //mainViewModel.showNotification(AppNotification.FeatureWIP)
 
-                    val intent = Intent(context, TerminalEmulatorActivity::class.java)
+                    val intent = Intent(context, TermuxActivityRootView::class.java)
                     context.startActivity(intent)
                 }
         ) {
