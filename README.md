@@ -33,7 +33,7 @@
 
 ## Easiest way to add new packages
 - Open the Terminal inside AutoPie
-- Pip should already be installed in the AutoPie environment. Otherwise, Run `python3.10 -m ensurepip`
+- Pip should already be installed in the AutoPie environment. Otherwise, Run `python3 -m ensurepip`
 - Run `pip3 install package`
 
 
