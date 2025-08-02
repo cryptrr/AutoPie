@@ -287,7 +287,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             Timber.d(checkEnvResult.output())
 
-            val fullCommand = if (usePython) "python3.10 $exec $command" else "sh $exec $command"
+            val fullCommand = if (usePython) "python $exec $command" else "sh $exec $command"
 
             Timber.d(fullCommand)
 
@@ -344,9 +344,9 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                 Timber.d("current working directory is $cwd")
             }
 
-            //val fullCommand = if(usePython) "python3.10 $exec $command" else "sh $exec $command"
+            //val fullCommand = if(usePython) "python3 $exec $command" else "sh $exec $command"
             val fullCommand = when {
-                usePython -> "python3.10 $exec $command"
+                usePython -> "python $exec $command"
                 isShellScript -> "sh $exec $command"
                 else -> "$exec $command"
             }
@@ -412,7 +412,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             }
 
             val fullCommand = when {
-                usePython -> "python3.10 $exec $command"
+                usePython -> "python $exec $command"
                 isShellScript -> "sh $exec $command"
                 else -> "$exec $command"
             }
@@ -480,7 +480,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             if (shell?.isAlive() != true) initShell()
 
             val command =
-                "python3.10 -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
+                "python -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
 
             Timber.d(command)
 
@@ -524,7 +524,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         try {
             if (shell?.isAlive() != true) initShell()
             val command =
-                "python3.10 -m ensurepip"
+                "python -m ensurepip"
             Timber.d(command)
 
             val result = shell!!.run(command)
@@ -607,7 +607,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             initMCPShell(modulePath, host, port)
 
             val command =
-                "python3.10 $mcpExecPath $modulePath & echo \$! > ${activity.filesDir.absolutePath}/uvicorn.pid"
+                "python $mcpExecPath $modulePath & echo \$! > ${activity.filesDir.absolutePath}/uvicorn.pid"
 
             Timber.d(command)
 

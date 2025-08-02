@@ -17,4 +17,4 @@ export TERMINFO="$CUSTOM_DIR/build/usr/share/terminfo"
 
 export HOME="$CUSTOM_DIR"
 export PYTHONHOME="$CUSTOM_DIR/build"
-export PYTHONPATH="$CUSTOM_DIR/build/usr/lib/python3.10:$CUSTOM_DIR/build/usr/lib/python3.10/site-packages:$CUSTOM_DIR/build/usr/lib/python3.10/lib-dynload"
+export PYTHONPATH="$CUSTOM_DIR/build/usr/lib/python3.12:$CUSTOM_DIR/build/usr/lib/python3.12/site-packages:$CUSTOM_DIR/build/usr/lib/python3.12/lib-dynload"
