@@ -52,8 +52,8 @@ import com.autosec.pie.ui.theme.PastelYellow
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.ui.theme.PastelGreen
 import com.termux.app.TermuxActivity
-import com.termux.app.terminal.TermuxActivityRootView
 import org.koin.java.KoinJavaComponent
+import timber.log.Timber
 
 @Composable
 fun SettingsScreen(innerPadding: PaddingValues) {
@@ -135,8 +135,21 @@ fun SettingsToggles() {
                 {
                     //mainViewModel.showNotification(AppNotification.FeatureWIP)
 
-                    val intent = Intent(context, TermuxActivityRootView::class.java)
-                    context.startActivity(intent)
+                    try {
+                        val intent = Intent(context, TermuxActivity::class.java)
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+//                    try {
+//                        Class.forName("com.termux.app.TermuxActivity")
+//                        Timber.d( "TermuxActivity loaded fine")
+//                    } catch (e: Exception) {
+//                        Timber.e("Failed to load TermuxActivity: $e")
+//                    }
+
+
                 }
         ) {
             Text("Terminal")

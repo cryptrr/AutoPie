@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/termux-app/app" />
             <option value="$PROJECT_DIR$/termux-app/terminal-emulator" />
             <option value="$PROJECT_DIR$/termux-app/terminal-view" />
+            <option value="$PROJECT_DIR$/termux-app/termux-shared" />
           </set>
         </option>
       </GradleProjectSettings>

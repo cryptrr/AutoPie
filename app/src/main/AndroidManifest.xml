@@ -98,6 +98,13 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:windowSoftInputMode="stateVisible|adjustResize">
         </activity>
+
+        <activity
+            android:name="com.termux.app.TermuxActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:windowSoftInputMode="stateVisible|adjustResize">
+        </activity>
         <activity
             android:name=".DirectCommandActivity"
             android:excludeFromRecents="true"
