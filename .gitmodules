@@ -1,0 +1,3 @@
+[submodule "termux-app"]
+	path = termux-app
+	url = https://github.com/cryptrr/termux-app.git
