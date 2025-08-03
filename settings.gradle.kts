@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "AutoPie"
 include(":app")
+
 include(":termux-app")
 include(":termux-shared")
 include(":terminal-emulator")
