@@ -31,7 +31,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity)) "build/usr/bin/bash" else "sh"
+    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity) && activity.packageName == "com.autosec.pie") "build/usr/bin/bash" else "sh"
 
     init {
         main.viewModelScope.launch {
@@ -452,6 +452,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     fun createTerminalShell(): com.jaredrummler.ktsh.Shell? {
 
+        Timber.d("Creating shell for terminal")
         try {
             val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
