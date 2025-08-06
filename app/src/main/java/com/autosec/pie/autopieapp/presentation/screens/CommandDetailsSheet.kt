@@ -40,6 +40,7 @@ import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,28 +64,32 @@ fun CommandDetailsSheet(
     val context = LocalContext.current
 
     fun pinAppShortcut(context: Context, commandId: String, shortLabel: String, longLabel: String) {
-        val shortcutManager = context.getSystemService(ShortcutManager::class.java)
+        try {
+            val shortcutManager = context.getSystemService(ShortcutManager::class.java)
 
-        if (shortcutManager.isRequestPinShortcutSupported) {
-            val shortcut = ShortcutInfo.Builder(context, commandId)
-                .setShortLabel(shortLabel)
-                .setLongLabel(longLabel)
-                .setIcon(Icon.createWithResource(context, R.mipmap.ic_launcher))
-                .setIntent(
-                    Intent(Intent.ACTION_MAIN).apply {
-                        setClassName(context, BuildConfig.APPLICATION_ID + ".DirectCommandActivity")
-                        putExtra("commandId", commandId)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
+            if (shortcutManager.isRequestPinShortcutSupported) {
+                val shortcut = ShortcutInfo.Builder(context, commandId)
+                    .setShortLabel(shortLabel)
+                    .setLongLabel(longLabel)
+                    .setIcon(Icon.createWithResource(context, R.mipmap.ic_launcher))
+                    .setIntent(
+                        Intent(Intent.ACTION_MAIN).apply {
+                            setClassName(context, BuildConfig.APPLICATION_ID + ".DirectCommandActivity")
+                            putExtra("commandId", commandId)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                    )
+                    .build()
+
+                val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(shortcut)
+                val successCallback = PendingIntent.getBroadcast(
+                    context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE
                 )
-                .build()
 
-            val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(shortcut)
-            val successCallback = PendingIntent.getBroadcast(
-                context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE
-            )
-
-            shortcutManager.requestPinShortcut(shortcut, successCallback.intentSender)
+                shortcutManager.requestPinShortcut(shortcut, successCallback.intentSender)
+            }
+        }catch (e: Exception){
+            Timber.e(e)
         }
     }
 
