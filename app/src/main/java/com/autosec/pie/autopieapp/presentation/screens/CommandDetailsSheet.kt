@@ -146,7 +146,7 @@ fun CommandDetailsSheet(
                 }
             ),
 
-            )
+        )
     }
 
 
