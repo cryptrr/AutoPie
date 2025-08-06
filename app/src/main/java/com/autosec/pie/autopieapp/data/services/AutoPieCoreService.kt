@@ -77,7 +77,7 @@ class AutoPieCoreService {
         fun extractRequiredFilesAndMakeExec(context: Application) {
 
 
-            val binaries = if(isPrimaryUser(context)) listOf("env.sh") else listOf("env.sh", "busybox")
+            val binaries = if(isPrimaryUser(context)) listOf("env.sh", "busybox") else listOf("env.sh", "busybox")
 
             CoroutineScope(dispatchers.io).launch {
 
@@ -234,7 +234,7 @@ class AutoPieCoreService {
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
                     }
 
-                    installOtherPackages()
+                    installExtraPackages()
 
                 } catch (e: IOException) {
                     Timber.e(e)
@@ -395,7 +395,7 @@ class AutoPieCoreService {
         }
 
 
-        fun installOtherPackages() {
+        fun installExtraPackages() {
 
             CoroutineScope(dispatchers.io).launch {
 
