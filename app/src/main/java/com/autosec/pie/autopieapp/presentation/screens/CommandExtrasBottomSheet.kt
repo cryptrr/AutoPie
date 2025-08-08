@@ -222,7 +222,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     when (extra.type) {
                         "STRING" -> {
 
-                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD")}
+                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD") || extra.name.endsWith("SECRET")}
 
                             val textValue = remember {
                                 mutableStateOf(extra.default)
