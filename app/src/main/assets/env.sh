@@ -10,6 +10,8 @@ export PATH=$CUSTOM_DIR/build/usr/bin:$CUSTOM_DIR/build/bin:$PATH
 if [ ! -z "$LD_LIBRARY_PATH" ] ; then
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:"
 fi
+
+export LD_PRELOAD="$CUSTOM_DIR/build/usr/lib/libtermux-exec-ld-preload.so"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH$CUSTOM_DIR/build/usr/lib"
 export SSL_CERT_FILE="$CUSTOM_DIR/build/etc/ssl/cert.pem"
 # For ncurses
