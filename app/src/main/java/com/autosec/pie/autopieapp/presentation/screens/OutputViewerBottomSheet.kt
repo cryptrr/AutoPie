@@ -1,6 +1,7 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -65,6 +66,7 @@ fun OutputViewerBottomSheet(
     val outputState = viewModel.outputContent.collectAsState()
 
     val scroll = rememberScrollState()
+    val horizontal = rememberScrollState()
 
 
     @Composable
@@ -94,14 +96,26 @@ fun OutputViewerBottomSheet(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(17.dp))
+
+                Text(
+                    text = "Logs",
+                    lineHeight = 32.sp,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F)
+                )
+
+
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 viewModel.currentLogPath.value?.let {
                     Column(Modifier.clip(
                         RoundedCornerShape(15.dp)
-                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
+                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll).horizontalScroll(horizontal)){
                         SelectionContainer(Modifier.fillMaxWidth()){
-                            Text(outputState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 15.dp))
+                            Text(outputState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 13.5.dp))
                         }
                     }
                 }
