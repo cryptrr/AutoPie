@@ -11,7 +11,6 @@ import com.autosec.pie.autopieapp.data.apiService.HTTPClientService
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.CronService
-import com.autosec.pie.autopieapp.data.services.FakeJSONService
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
@@ -38,7 +37,11 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 fun mockMainViewModel(app: Application): MainViewModel {
-    return spyk(MainViewModel(app)) {
+    return spyk(MainViewModel(
+        app,
+        appPreferences = TODO(),
+        dispatchers = TODO()
+    )) {
         every { storageManagerPermissionGranted } returns true
         every { showError(any()) } just Runs
         every { eventFlow } returns MutableSharedFlow()
@@ -51,7 +54,18 @@ val useCaseModule = module {
             getCommandsList = GetCommandsList(get()),
             getShareCommands = GetShareCommands(get()),
             createCommand = CreateCommand(get()),
-            getCommandDetails = GetCommandDetails(get())
+            getCommandDetails = GetCommandDetails(get()),
+            runCommand = TODO(),
+            runCommandForDirectory = TODO(),
+            runCommandForUrl = TODO(),
+            runCommandForFiles = TODO(),
+            runCommandForText = TODO(),
+            runStandaloneCommand = TODO(),
+            changeCommandDetails = TODO(),
+            deleteCommand = TODO(),
+            addCommandToHistory = TODO(),
+            getHistoryOfCommand = TODO(),
+            getLatestUsedPackages = TODO()
         )
     }
 }
@@ -70,9 +84,7 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
 
         single<HTTPClientService> { AutoSecHTTPClient() }
 
-
-        single<JsonService> { FakeJSONService() }
-
+        
         single<CronService> { CronService(get()) }
 
 
