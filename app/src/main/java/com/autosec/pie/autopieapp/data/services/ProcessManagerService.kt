@@ -31,7 +31,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity) && activity.packageName == "com.autosec.pie") "build/usr/bin/bash" else "sh"
+    private val SHELL_PATH = "sh"
 
     init {
         main.viewModelScope.launch {
@@ -544,8 +544,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
         try {
 
-            val targetFile = Path(activity.filesDir.absolutePath, "build/usr/bin/python3.10")
-            val symbolicLink = Path(activity.filesDir.absolutePath, "build/usr/bin/python3")
+            val targetFile = Path(activity.filesDir.absolutePath, "usr/bin/python3.10")
+            val symbolicLink = Path(activity.filesDir.absolutePath, "usr/bin/python3")
 
             symbolicLink.createSymbolicLinkPointingTo(targetFile)
 
@@ -581,8 +581,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         Timber.d("List all packages installed")
 
         try {
-            val binLocation = File(activity.filesDir, "build/bin").listFiles()
-            val usrBinLocation = File(activity.filesDir, "build/usr/bin")
+            val binLocation = File(activity.filesDir, "bin").listFiles()
+            val usrBinLocation = File(activity.filesDir, "usr/bin")
             val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 
             val packages = listOf(

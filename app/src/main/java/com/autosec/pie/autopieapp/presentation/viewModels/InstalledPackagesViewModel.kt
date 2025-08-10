@@ -37,8 +37,8 @@ class InstalledPackagesViewModel(private val application: Application) : Android
     private fun readPackages(): List<File> {
 
         try {
-            val binLocation = File(application.filesDir, "build/bin").listFiles()
-            val usrBinLocation = File(application.filesDir, "build/usr/bin")
+            val binLocation = File(application.filesDir, "bin").listFiles()
+            val usrBinLocation = File(application.filesDir, "usr/bin")
             val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 
             val packages = listOf(
