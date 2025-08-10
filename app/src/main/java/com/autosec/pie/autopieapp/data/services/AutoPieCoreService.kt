@@ -4,7 +4,6 @@ import android.app.Application
 import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.UserManager
 import android.system.Os
@@ -14,16 +13,13 @@ import com.autosec.pie.autopieapp.data.AutoPieConstants
 import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
-import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.BufferedReader
@@ -141,29 +137,27 @@ class AutoPieCoreService {
 
         fun extractBootstrapArchive(context: Application) {
 
-            val distFolder = File(context.filesDir, "build")
+            val distFolder = File(context.filesDir, "usr")
 
             if (distFolder.exists() && distFolder.isDirectory) {
-                Timber.d("Dist folder exists")
+                Timber.d("usr folder exists")
                 return
             }
+
+            val destinationPath = context.filesDir
 
             CoroutineScope(dispatchers.io).launch {
 
                 Timber.d("Starting extracting filesystem")
 
-
-                val assetFilename = "build-aarch64-api27.tar.xz"
-
-
-                val destinationPath = context.filesDir
+                val assetFilename = "bootstrap-aarch64.tar.xz"
 
                 var tarInputStream: TarArchiveInputStream? = null
 
                 val symlinks = mutableListOf<Pair<String?, String?>>()
 
-                val TERMUX_STAGING_PREFIX_DIR_PATH = application.filesDir.absolutePath + "/build/usr"; // Default: "/data/data/com.termux/files/usr-staging"
-                val TERMUX_PREFIX_DIR = application.filesDir.absolutePath + "/build/usr"; // Default: "/data/data/com.termux/files/usr"
+                val TERMUX_STAGING_PREFIX_DIR = File(application.filesDir, "usr-staging"); // Default: "/data/data/com.termux/files/usr-staging"
+                val TERMUX_PREFIX_DIR = File(application.filesDir , "usr"); // Default: "/data/data/com.termux/files/usr"
 
 
                 try {
@@ -183,7 +177,7 @@ class AutoPieCoreService {
 
                     while (entry != null) {
                         //Timber.d("Entry: ${entry.name}")
-                        if (entry.name == "build/usr/SYMLINKS.txt") {
+                        if (entry.name == "usr/SYMLINKS.txt") {
                             Timber.d("Creating symlinks")
                             val symlinksReader = BufferedReader(InputStreamReader(tarInputStream))
                             var line: String?
@@ -196,8 +190,9 @@ class AutoPieCoreService {
 
                                 //Normalize the file paths. Need to strip the prefix of "./"
                                 val normalizedRelativePath = File(parts[1] ?: "").normalize().path
-                                val newPath = File(TERMUX_STAGING_PREFIX_DIR_PATH, normalizedRelativePath).absolutePath
+                                val newPath = File(TERMUX_PREFIX_DIR, normalizedRelativePath).absolutePath
                                 symlinks.add(Pair(oldPath, newPath))
+
                             }
 
                             entry = tarInputStream.nextTarEntry
@@ -221,6 +216,10 @@ class AutoPieCoreService {
                         Timber.d("Applying symlink - ${symlink.first} -> ${symlink.second}")
                         Os.symlink(symlink.first, symlink.second)
                     }
+
+//                    if (!TERMUX_STAGING_PREFIX_DIR.renameTo(TERMUX_PREFIX_DIR)) {
+//                        throw RuntimeException("Moving autopie prefix staging to prefix directory failed");
+//                    }
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
@@ -399,11 +398,9 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
 
-                val distFolder = File(application.filesDir, "build")
+                val distFolder = File(application.filesDir, "usr")
 
                 if (distFolder.exists()) {
-
-                    processManagerService.linkPython3()
 
                     processManagerService.installPip()
 
