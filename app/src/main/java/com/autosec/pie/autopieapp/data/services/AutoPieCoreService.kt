@@ -123,6 +123,11 @@ class AutoPieCoreService {
                             val process = Runtime.getRuntime().exec(command)
                             process.waitFor()
                         }
+                        val homeFolder = File(context.filesDir, "home")
+
+                        if(!homeFolder.exists()){
+                            homeFolder.mkdir()
+                        }
 
                     } catch (e: Exception) {
                         Timber.e(e, "Error extracting and executing binary")
@@ -223,9 +228,9 @@ class AutoPieCoreService {
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
-
                     processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "bin"))
                     processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "libexec"))
+                    processManagerService.linkBusyboxAr()
 
                     CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
@@ -402,7 +407,7 @@ class AutoPieCoreService {
 
                 if (distFolder.exists()) {
 
-                    processManagerService.installPip()
+                   // processManagerService.installPip()
 
                     //Installing the forked version of httpx that supports --cookie-file
                     //Both these calls are necessary
