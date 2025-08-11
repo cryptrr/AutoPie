@@ -127,13 +127,15 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         commandExtraInputs: List<CommandExtraInput> = emptyList()
     ): Shell {
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
+        val defaultPath = System.getenv("PATH") ?: ""
+        val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
 
         val envMap = HashMap<String, String>()
 
         envMap["HOME"] = activity.filesDir.absolutePath
         envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
-        envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin"
-        envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib"
+        envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
+        envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
         envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
 
 
@@ -457,11 +459,14 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         try {
             val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
+            val defaultPath = System.getenv("PATH") ?: ""
+            val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
+
             val envMap = HashMap<String, String>()
             envMap["HOME"] = activity.filesDir.absolutePath
             envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
-            envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin"
-            envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib"
+            envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
+            envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
             envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
 
             val shell = com.jaredrummler.ktsh.Shell(
