@@ -31,7 +31,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = "sh"
+    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity) && activity.packageName == "com.autosec.pie") "usr/bin/bash" else "sh"
 
     init {
         main.viewModelScope.launch {
@@ -115,10 +115,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
 
-        val setEnvResult =
-            newShell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
-
-        Timber.d(setEnvResult?.output())
+        //val setEnvResult = newShell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
         return newShell
 
@@ -132,6 +129,14 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         val envMap = HashMap<String, String>()
+
+        envMap["HOME"] = activity.filesDir.absolutePath
+        envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
+        envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin"
+        envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib"
+        envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
+
+
 
         for (inputData in inputParsedData) {
             envMap[inputData.name] = inputData.value
@@ -209,11 +214,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             envMap
         )
 
-        Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-
-
-        val setEnvResult =
-            shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+        //val setEnvResult = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
         return shell
 
@@ -456,13 +457,21 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         try {
             val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
+            val envMap = HashMap<String, String>()
+            envMap["HOME"] = activity.filesDir.absolutePath
+            envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
+            envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin"
+            envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib"
+            envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
+
             val shell = com.jaredrummler.ktsh.Shell(
                 shellPath,
+                envMap
             )
 
             Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
-            shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
+            //shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
             shell.run("cd ${activity.filesDir.absolutePath}")
 
@@ -539,17 +548,22 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         }
     }
 
-    fun linkPython3(): Boolean {
-        Timber.d("Linking python3.10 to python3")
+    fun linkBusyboxAr(): Boolean {
+        Timber.d("Linking busybox ar to usr/bin")
+
+        val toLink = listOf("ar", "which")
 
         try {
 
-            val targetFile = Path(activity.filesDir.absolutePath, "usr/bin/python3.10")
-            val symbolicLink = Path(activity.filesDir.absolutePath, "usr/bin/python3")
+            for(pkg in toLink){
+                val symlinkPath = File(activity.filesDir, "busybox").absolutePath
+                val symlinkPathTo = File(activity.filesDir, "usr/bin/${pkg}").absolutePath
 
-            symbolicLink.createSymbolicLinkPointingTo(targetFile)
+                Os.symlink(symlinkPath, symlinkPathTo)
+            }
 
             return true
+
         } catch (e: Exception) {
             Timber.e(e.toString())
             return false
