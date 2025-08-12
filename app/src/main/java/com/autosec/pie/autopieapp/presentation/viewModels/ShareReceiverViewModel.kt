@@ -165,7 +165,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun selectCommandFromDirectActivity(commandId: String, input: String?, activity: Activity?): Boolean{
+    fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?): Boolean{
         try {
             val command = shareItemsResult.value.find { it.name == commandId }
 
@@ -175,13 +175,18 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                 return false
             }
 
-            //commandNotFound.value = null
+            commandNotFound.value = null
 
             if (command.extras?.isNotEmpty() == true) {
                 Timber.d("Opening Extras sheet for $commandId")
                 currentExtrasDetails.value =
                     Triple(true, command, ShareInputs(input, null))
-            }else{
+            }
+            else if(callerType == "EXTERNAL_APP"){
+                currentExtrasDetails.value =
+                    Triple(true, command, ShareInputs(input, null))
+            }
+            else{
                 onCommandClick(command, emptyList(), input) {
                     viewModelScope.launch {
                         delay(1000L)

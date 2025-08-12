@@ -145,7 +145,7 @@ fun CommandExtrasBottomSheet(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         onDismissRequest = {
             scope.launch {
-                if(callerName == "DIRECT_ICON"){
+                if(callerName == "DIRECT_ICON" || callerName == "EXTERNAL_APP"){
                     activity?.finish()
                 }
                 viewModel.currentExtrasDetails.value = null

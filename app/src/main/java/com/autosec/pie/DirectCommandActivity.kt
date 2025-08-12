@@ -64,6 +64,17 @@ class DirectCommandActivity : ComponentActivity() {
 
         val commandId = intent.getStringExtra("commandId")
         val input = intent.getStringExtra("input")
+        val callerPackage = callingPackage
+            ?: referrer?.authority ?: ""
+
+        val callerType = when{
+            callerPackage.contains("launcher") -> "DIRECT_ICON"
+            callerPackage == "com.autosec.pie" -> "DIRECT_ICON"
+            else -> "EXTERNAL_APP"
+        }
+
+        Timber.d("Calling package: $callerPackage")
+
 
         setContent {
 
@@ -80,7 +91,7 @@ class DirectCommandActivity : ComponentActivity() {
                     delay(100L)
                     if(commandId != null){
                         Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input, activity)
+                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input,callerType, activity)
                     }
                 }
 
@@ -111,7 +122,7 @@ class DirectCommandActivity : ComponentActivity() {
                         state = extrasBottomSheetState,
                         open = extrasBottomSheetStateOpen,
                         state,
-                        callerName = "DIRECT_ICON"
+                        callerName = callerType
                     )
 
             }
