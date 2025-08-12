@@ -63,6 +63,7 @@ class DirectCommandActivity : ComponentActivity() {
         Timber.d(this.intent.extras.toString())
 
         val commandId = intent.getStringExtra("commandId")
+        val input = intent.getStringExtra("input")
 
         setContent {
 
@@ -79,7 +80,7 @@ class DirectCommandActivity : ComponentActivity() {
                     delay(100L)
                     if(commandId != null){
                         Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId, activity)
+                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input, activity)
                     }
                 }
 
@@ -106,14 +107,12 @@ class DirectCommandActivity : ComponentActivity() {
 
             AutoPieTheme {
 
-                if (extrasBottomSheetStateOpen.value) {
                     CommandExtrasBottomSheet(
                         state = extrasBottomSheetState,
                         open = extrasBottomSheetStateOpen,
                         state,
                         callerName = "DIRECT_ICON"
                     )
-                }
 
             }
         }

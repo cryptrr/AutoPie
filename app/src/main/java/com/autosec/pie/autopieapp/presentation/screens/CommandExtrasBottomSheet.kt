@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,6 +57,7 @@ import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
+import com.autosec.pie.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
@@ -95,6 +97,8 @@ fun CommandExtrasBottomSheet(
     }
 
 
+
+
     @Composable
     fun bottomSheetContent() {
         Box(
@@ -116,6 +120,13 @@ fun CommandExtrasBottomSheet(
                     .padding(horizontal = 15.dp)
 
             ) {
+
+
+                if(viewModel.commandNotFound.value == true){
+                    Box(Modifier.fillMaxWidth()){
+                        EmptyItemsBadge(Icons.Default.PlaylistRemove, "Command does not exist.")
+                    }
+                }
 
                 viewModel.currentExtrasDetails.value?.let {
                     CommandExtraInputs(it.second, parentSheetState, open, state)

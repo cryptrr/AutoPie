@@ -48,6 +48,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         AutoPieNotification::class.java)
 
     val currentExtrasDetails = mutableStateOf<Triple<Boolean, CommandModel, ShareInputs>?>(null)
+    val commandNotFound = mutableStateOf<Boolean?>(false)
 
     init {
         try {
@@ -164,21 +165,24 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun selectCommandFromDirectActivity(commandId: String, activity: Activity?): Boolean{
+    fun selectCommandFromDirectActivity(commandId: String, input: String?, activity: Activity?): Boolean{
         try {
             val command = shareItemsResult.value.find { it.name == commandId }
 
             if(command == null){
                 Timber.d("Command not found: $commandId")
+                commandNotFound.value = true
                 return false
             }
+
+            //commandNotFound.value = null
 
             if (command.extras?.isNotEmpty() == true) {
                 Timber.d("Opening Extras sheet for $commandId")
                 currentExtrasDetails.value =
-                    Triple(true, command, ShareInputs(null, null))
+                    Triple(true, command, ShareInputs(input, null))
             }else{
-                onCommandClick(command, emptyList(), null) {
+                onCommandClick(command, emptyList(), input) {
                     viewModelScope.launch {
                         delay(1000L)
                         currentExtrasDetails.value = null
