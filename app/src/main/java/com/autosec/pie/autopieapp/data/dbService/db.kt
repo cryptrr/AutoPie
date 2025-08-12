@@ -9,11 +9,13 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.RoomTypeConverters
+import com.autosec.pie.autopieapp.data.UserTagEntity
 
-@Database(entities = [CommandHistoryEntity::class], version = 3)
+@Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 4)
 @TypeConverters(RoomTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun commandHistoryDao(): CommandHistoryDao
+    abstract fun userTagsDao(): UserTagsDao
 }
 
 @Dao
@@ -46,3 +48,16 @@ interface CommandHistoryDao {
     @Delete
     fun delete(commandHistory: CommandHistoryEntity)
 }
+
+@Dao
+interface UserTagsDao {
+    @Query("SELECT * FROM UserTagEntity")
+    fun getAll(): List<UserTagEntity>
+
+    @Insert
+    fun insertAll(tags: List<UserTagEntity>)
+
+    @Delete
+    fun delete(tag: UserTagEntity)
+}
+

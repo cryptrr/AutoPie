@@ -1,5 +1,6 @@
 package com.autosec.pie.autopieapp.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
@@ -43,6 +44,17 @@ object RoomTypeConverters {
     }
 
     @TypeConverter
+    fun fromUserTagEntityList(value: List<UserTagEntity>?): String? {
+        return gson.toJson(value)
+    }
+
+    @TypeConverter
+    fun toUserTagEntityList(value: String?): List<UserTagEntity>? {
+        val type = object : TypeToken<List<UserTagEntity>>() {}.type
+        return gson.fromJson(value, type)
+    }
+
+    @TypeConverter
     fun fromStringList(value: List<String>?): String? {
         return gson.toJson(value)
     }
@@ -77,3 +89,12 @@ fun CommandExtraInputEntity.toInputs(): CommandExtraInput {
         description = this.description
     )
 }
+
+
+@Entity
+data class UserTagEntity(
+    @PrimaryKey val id: String,
+    @ColumnInfo(name = "created_at", defaultValue = "CURRENT_TIMESTAMP")
+    val createdAt:  String,
+    val tag: String,
+)

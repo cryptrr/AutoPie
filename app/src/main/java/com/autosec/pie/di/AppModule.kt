@@ -9,7 +9,6 @@ import com.autosec.pie.autopieapp.data.apiService.ApiServiceImpl
 import com.autosec.pie.autopieapp.data.apiService.AutoSecHTTPClient
 import com.autosec.pie.autopieapp.data.apiService.HTTPClientService
 import com.autosec.pie.autopieapp.data.dbService.AppDatabase
-import com.autosec.pie.autopieapp.data.dbService.CommandHistoryDao
 import com.autosec.pie.autopieapp.data.preferences.AppPreferences
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.CronService
