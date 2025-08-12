@@ -10,6 +10,7 @@ import androidx.room.TypeConverters
 import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.RoomTypeConverters
 import com.autosec.pie.autopieapp.data.UserTagEntity
+import kotlinx.coroutines.flow.Flow
 
 @Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 5)
 @TypeConverters(RoomTypeConverters::class)
@@ -37,7 +38,7 @@ interface CommandHistoryDao {
         GROUP BY exec
         LIMIT :count;
     """)
-    fun getLatestUsedPackages(count: Int): List<String>
+    fun getLatestUsedPackages(count: Int): Flow<List<String>>
 
     @Query("SELECT * FROM CommandHistoryEntity WHERE id LIKE :id LIMIT 1")
     fun findById(id: String): CommandHistoryEntity
@@ -52,7 +53,7 @@ interface CommandHistoryDao {
 @Dao
 interface UserTagsDao {
     @Query("SELECT * FROM UserTagEntity")
-    fun getAll(): List<UserTagEntity>
+    fun getAll(): Flow<List<UserTagEntity>>
 
     @Insert
     fun insertAll(tags: List<UserTagEntity>)

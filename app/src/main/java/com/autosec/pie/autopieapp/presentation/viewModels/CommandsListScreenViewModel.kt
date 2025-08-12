@@ -20,8 +20,17 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,7 +48,9 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
 
-    val mostUsedPackages = MutableStateFlow<List<String>>(emptyList())
+    val mostUsedPackages: StateFlow<List<String>> =
+        getFrequentPackages(fullListOfCommands)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
     val commandTypeOptions = listOf("All", "Share", "Observers")
@@ -93,7 +104,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                         }
 
                         //mostUsedPackages.update { getFrequentPackages(fullListOfCommands.value) }
-                        setFrequentPackages(fullListOfCommands.value)
+                        //setFrequentPackages(fullListOfCommands.value)
 
 
                         isLoading.value = false
@@ -122,22 +133,52 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     }
 
-    fun setFrequentPackages(input: List<CommandModel>){
-        viewModelScope.launch(dispatchers.io){
-            try {
-                val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
-                val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+//    fun setFrequentPackages(input: List<CommandModel>){
+//        viewModelScope.launch(dispatchers.io){
+//            try {
+//                val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
+//                val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+//
+//                val latestUsed = useCases.getLatestUsedPackages(3)
+//                val userTags = useCases.getUserTags().last()
+//
+//                Timber.d("User Tags: $userTags")
+//
+//                Timber.d("Latest used packages: $latestUsed")
+//                mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed ).toList() }
+//            }catch (e: Exception){
+//                Timber.e(e)
+//            }
+//
+//        }
+//    }
 
-                val latestUsed = useCases.getLatestUsedPackages(3)
-                val userTags = useCases.getUserTags()
+    fun getFrequentPackages(
+        inputFlow: StateFlow<List<CommandModel>>
+    ): Flow<List<String>> {
 
+        val latestUsedFlow = useCases.getLatestUsedPackages(3).flowOn(dispatchers.io)
 
-                Timber.d("Latest used packages: $latestUsed")
-                mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed + userTags).toList() }
-            }catch (e: Exception){
-                Timber.e(e)
-            }
+        val userTagsFlow = useCases.getUserTags()
+            .flowOn(dispatchers.io)
 
+        return combine(
+            inputFlow,
+            latestUsedFlow,
+            userTagsFlow
+        ) { input, latestUsed, userTags ->
+            val frequencyMap = input.map { it.exec }
+                .groupingBy { it }
+                .eachCount()
+
+            val packages = frequencyMap.entries
+                .sortedByDescending { it.value }
+                .map { it.key }
+                .take(7)
+
+            LinkedHashSet(
+                (packages - latestUsed.toSet()) + latestUsed + userTags
+            ).toList()
         }
     }
 

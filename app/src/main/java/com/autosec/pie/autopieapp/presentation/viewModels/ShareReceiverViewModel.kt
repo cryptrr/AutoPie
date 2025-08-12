@@ -19,8 +19,15 @@ import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
@@ -41,8 +48,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
     var shareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
     var filteredShareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
-    val mostUsedPackages = MutableStateFlow<List<String>>(emptyList())
-
+    val mostUsedPackages: StateFlow<List<String>> =
+        getFrequentPackages(shareItemsResult)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10000), emptyList())
 
     private val autoPieNotification: AutoPieNotification by inject(
         AutoPieNotification::class.java)
@@ -101,7 +109,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             search(it)
                         }
                     }
-                    setFrequentPackages(shareItemsResult.value)
+                    //setFrequentPackages(shareItemsResult.value)
                 }
             }catch (e: Exception){
                 when(e){
@@ -114,17 +122,32 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun setFrequentPackages(input: List<CommandModel>){
-        viewModelScope.launch(dispatchers.io){
-            val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
-            val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+    fun getFrequentPackages(
+        inputFlow: StateFlow<List<CommandModel>>
+    ): Flow<List<String>> {
 
-            val latestUsed = useCases.getLatestUsedPackages(3)
-            val userTags = useCases.getUserTags()
+        val latestUsedFlow = useCases.getLatestUsedPackages(3).flowOn(dispatchers.io)
 
-            Timber.d("Latest used packages: $latestUsed")
+        val userTagsFlow = useCases.getUserTags()
+            .flowOn(dispatchers.io)
 
-            mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed + userTags).toList() }
+        return combine(
+            inputFlow,
+            latestUsedFlow,
+            userTagsFlow
+        ) { input, latestUsed, userTags ->
+            val frequencyMap = input.map { it.exec }
+                .groupingBy { it }
+                .eachCount()
+
+            val packages = frequencyMap.entries
+                .sortedByDescending { it.value }
+                .map { it.key }
+                .take(7)
+
+            LinkedHashSet(
+                (packages - latestUsed.toSet()) + latestUsed + userTags
+            ).toList()
         }
     }
 
