@@ -182,6 +182,19 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
         }
     }
 
+    fun deleteUserTag(tag: String){
+        viewModelScope.launch(dispatchers.io){
+            try {
+                useCases.deleteUserTag(tag)
+            }catch (e: Exception){
+                Timber.d(e)
+                when(e){
+                    is ViewModelError.TagNotDeletable -> main.showError(ViewModelError.TagNotDeletable)
+                }
+            }
+        }
+    }
+
     fun addUserTag(tag: String){
         viewModelScope.launch(dispatchers.io){
             try {

@@ -45,6 +45,7 @@ sealed class ViewModelError() : Exception(), Notification {
     object InvalidCronConfig : ViewModelError()
     object InvalidObserverConfig : ViewModelError()
     object CommandNotFound : ViewModelError()
+    object TagNotDeletable : ViewModelError()
     data class CommandUnknown(override val message: String) : ViewModelError()
 
 
@@ -59,6 +60,7 @@ sealed class ViewModelError() : Exception(), Notification {
             is CouldNotAddProduct -> "Unable to add product to history"
             is InvalidJson -> "$name Config is not valid JSON."
             is StoragePermissionDenied -> "Storage Permission not granted."
+            is TagNotDeletable -> "This tag cannot be deleted because it is not a user defined tag."
             else -> "An Unknown Error has occurred"
         }
 

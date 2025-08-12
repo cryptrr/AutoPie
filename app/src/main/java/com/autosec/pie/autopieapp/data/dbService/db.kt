@@ -55,6 +55,9 @@ interface UserTagsDao {
     @Query("SELECT * FROM UserTagEntity")
     fun getAll(): Flow<List<UserTagEntity>>
 
+    @Query("SELECT * FROM UserTagEntity WHERE tag LIKE :name LIMIT 1")
+    fun getTagByName(name: String): UserTagEntity?
+
     @Insert
     fun insertAll(tags: List<UserTagEntity>)
 

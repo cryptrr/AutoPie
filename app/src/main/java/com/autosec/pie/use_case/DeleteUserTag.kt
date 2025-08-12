@@ -1,23 +1,21 @@
 package com.autosec.pie.use_case
 
-import com.autosec.pie.autopieapp.data.UserTagEntity
 import com.autosec.pie.autopieapp.data.dbService.AppDatabase
+import com.autosec.pie.autopieapp.domain.ViewModelError
 import timber.log.Timber
-import java.time.Instant
 
 class DeleteUserTag(private val dbService: AppDatabase){
-    operator fun invoke(tag: String) : Boolean {
+    operator fun invoke(name: String) : Boolean {
 
-        //TODO: Delete user tags
+        val tag = dbService.userTagsDao().getTagByName(name)
 
-        val userTag = UserTagEntity(
-            id = Instant.now().toString(),
-            tag = tag,
-        )
-
-        dbService.userTagsDao().delete(userTag)
-
-        Timber.d("Deleted user tag")
+        if(tag != null){
+            dbService.userTagsDao().delete(tag)
+            Timber.d("Deleted user tag: $name")
+        }else{
+            Timber.d("Tag: $name cannot be deleted because it is not a user defined tag.")
+            throw ViewModelError.TagNotDeletable
+        }
 
         return true
 

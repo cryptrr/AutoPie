@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,17 +42,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandType
 import com.autosec.pie.autopieapp.data.ShareInputs
+import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autosec.pie.autopieapp.presentation.elements.LoadingBadge
 import com.autosec.pie.autopieapp.presentation.elements.SearchBar
+import com.autosec.pie.autopieapp.presentation.elements.YesNoDialog
 import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.Purple10
@@ -58,6 +64,8 @@ import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.autosec.pie.ui.theme.PastelGreen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
@@ -76,6 +84,8 @@ fun HomeScreen(innerPadding: PaddingValues) {
     val filteredListOfCommands = commandsListScreenViewModel.filteredListOfCommands.collectAsState()
     val mostUsedPackages = commandsListScreenViewModel.mostUsedPackages.collectAsState()
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var tagToDelete by remember { mutableStateOf("") }
 
 
     Box(
@@ -130,14 +140,43 @@ fun HomeScreen(innerPadding: PaddingValues) {
 
             item{
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)){
+                    val inputChipInteractionSource = remember { MutableInteractionSource() }
+
                     mostUsedPackages.value.map{
-                        AssistChip(onClick = {commandsListScreenViewModel.searchCommandQuery.value = it;commandsListScreenViewModel.searchInCommands(it)}, label = { Text(it) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)))
+                        Box{
+                            AssistChip(
+                                label = {Text(it)},
+                                onClick = {},
+                                colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)),
+
+                            )
+                            Box(modifier = Modifier
+                                .matchParentSize()
+                                .combinedClickable (
+                                    onClick = {
+                                        //Timber.d("CLICK DETECTED")
+                                        commandsListScreenViewModel.searchCommandQuery.value = it;
+                                        commandsListScreenViewModel.searchInCommands(it)
+                                    },
+                                    onLongClick = {
+                                        Timber.d("LONG PRESS DETECTED")
+                                        showDeleteDialog = true
+                                        tagToDelete = it
+                                    },
+                                    interactionSource = inputChipInteractionSource,
+                                    indication = null,
+                                ))
+                        }
+
                     }
+
+
                     if(commandsListScreenViewModel.searchCommandQuery.value.isNotBlank() && !mostUsedPackages.value.contains(commandsListScreenViewModel.searchCommandQuery.value)){
                         AssistChip(onClick = {commandsListScreenViewModel.addUserTag(commandsListScreenViewModel.searchCommandQuery.value)}, label = { Text("Add") }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp,
                             PastelGreen
                         ))
                     }
+
                 }
             }
 
@@ -166,7 +205,29 @@ fun HomeScreen(innerPadding: PaddingValues) {
 
             }
 
+
+
         }
+
+        YesNoDialog(
+            showDialog = showDeleteDialog,
+            title = "Are you sure you want to delete the tag -- $tagToDelete",
+            subtitle = "This operation is not reversible.",
+            onYesClicked = {
+                commandsListScreenViewModel.viewModelScope.launch {
+                    commandsListScreenViewModel.deleteUserTag(tagToDelete)
+                    showDeleteDialog = false
+                }
+            },
+            onNoClicked = {
+                showDeleteDialog = false
+            },
+            onDismissRequest = {
+                showDeleteDialog = false
+            }
+        )
+
+
     }
 }
 
@@ -197,9 +258,6 @@ fun CommandCard(
             .combinedClickable(
                 onClick = {
 //                    Timber.d("CLICK DETECTED")
-//                    commandsListScreenViewModel.main.currentCommandKey.value = card.name
-//                    commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenEditCommandSheet)
-
 
                     commandsListScreenViewModel.main.dispatchEvent(ViewModelEvent.OpenCommandDetails(card))
 
