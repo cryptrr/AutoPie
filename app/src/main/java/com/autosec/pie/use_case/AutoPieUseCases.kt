@@ -15,5 +15,8 @@ data class AutoPieUseCases (
     val deleteCommand: DeleteCommand,
     val addCommandToHistory: AddCommandToHistory,
     val getHistoryOfCommand: GetHistoryOfCommand,
-    val getLatestUsedPackages: GetLatestUsedPackages
+    val getLatestUsedPackages: GetLatestUsedPackages,
+    val getUserTags: GetUserTags,
+    val addUserTag: AddUserTag,
+    val deleteUserTag: DeleteUserTag
 )

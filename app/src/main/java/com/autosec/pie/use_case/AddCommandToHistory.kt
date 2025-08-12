@@ -36,5 +36,4 @@ class AddCommandToHistory(private val dbService: AppDatabase){
         return true
 
     }
-
 }

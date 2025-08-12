@@ -124,14 +124,30 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     fun setFrequentPackages(input: List<CommandModel>){
         viewModelScope.launch(dispatchers.io){
-            val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
-            val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
+            try {
+                val frequencyMap = input.map{it.exec}.groupingBy { it }.eachCount()
+                val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
 
-            val latestUsed = useCases.getLatestUsedPackages(3)
+                val latestUsed = useCases.getLatestUsedPackages(3)
+                val userTags = useCases.getUserTags()
 
-            Timber.d("Latest used packages: $latestUsed")
-            mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed).toList() }
 
+                Timber.d("Latest used packages: $latestUsed")
+                mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed + userTags).toList() }
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+
+        }
+    }
+
+    fun addUserTag(tag: String){
+        viewModelScope.launch(dispatchers.io){
+            try {
+                useCases.addUserTag(tag)
+            }catch (e: Exception){
+                Timber.e(e)
+            }
         }
     }
 

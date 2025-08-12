@@ -120,10 +120,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             val packages = frequencyMap.entries.sortedByDescending { it.value }.map { it.key }.take(7)
 
             val latestUsed = useCases.getLatestUsedPackages(3)
+            val userTags = useCases.getUserTags()
 
             Timber.d("Latest used packages: $latestUsed")
 
-            mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed).toList() }
+            mostUsedPackages.update { LinkedHashSet((packages - latestUsed.toSet()) + latestUsed + userTags).toList() }
         }
     }
 

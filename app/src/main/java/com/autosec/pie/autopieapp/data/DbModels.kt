@@ -94,7 +94,5 @@ fun CommandExtraInputEntity.toInputs(): CommandExtraInput {
 @Entity
 data class UserTagEntity(
     @PrimaryKey val id: String,
-    @ColumnInfo(name = "created_at", defaultValue = "CURRENT_TIMESTAMP")
-    val createdAt:  String,
     val tag: String,
 )

@@ -11,7 +11,7 @@ import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.RoomTypeConverters
 import com.autosec.pie.autopieapp.data.UserTagEntity
 
-@Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 4)
+@Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 5)
 @TypeConverters(RoomTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun commandHistoryDao(): CommandHistoryDao

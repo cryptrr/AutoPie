@@ -57,6 +57,7 @@ import com.autosec.pie.ui.theme.Purple10
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autosec.pie.ui.theme.PastelGreen
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
@@ -131,6 +132,11 @@ fun HomeScreen(innerPadding: PaddingValues) {
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)){
                     mostUsedPackages.value.map{
                         AssistChip(onClick = {commandsListScreenViewModel.searchCommandQuery.value = it;commandsListScreenViewModel.searchInCommands(it)}, label = { Text(it) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2F)))
+                    }
+                    if(commandsListScreenViewModel.searchCommandQuery.value.isNotBlank() && !mostUsedPackages.value.contains(commandsListScreenViewModel.searchCommandQuery.value)){
+                        AssistChip(onClick = {commandsListScreenViewModel.addUserTag(commandsListScreenViewModel.searchCommandQuery.value)}, label = { Text("Add") }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)), border = BorderStroke(1.dp,
+                            PastelGreen
+                        ))
                     }
                 }
             }
