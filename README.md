@@ -64,6 +64,40 @@
 | Ffmpeg Extract Audio from Video | `-i ${INPUT_FILE} -b:a 192K -vn ${INPUT_FILE}.mp3`        |
 | ImageMagick combine horizontal  | `${INPUT_FILES} +append ${INPUT_FILE}-horiz-${RAND}.jpeg` |
 
+
+## Start AutoPie Commands from your app.
+
+AutoPie supports starting **command dialogs** from other apps through intents. Other apps **cannot** directly run commands without user prompt.
+
+Extend the functionality of your apps by adding `RunCommandButton()`.
+
+```kt
+@Composable
+fun RunCommandButton(){
+    val context = LocalContext.current
+    val intent = Intent(Intent.ACTION_MAIN).apply {
+        setClassName(context, "com.autosec.pie" + ".DirectCommandActivity")
+        component = ComponentName(
+            "com.autosec.pie", // target app package
+            "com.autosec.pie.DirectCommandActivity" // full class name
+        )
+        putExtra("commandId", "YT-DLP Generic Downloader")
+        putExtra("input", "https://www.youtube.com/watch?v=7N74-JBHk3g")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+
+    Button(onClick = {
+        try {
+            context.startActivity(intent)
+        }catch (e: Exception){
+            Log.e("ERROR",e.toString())
+        }
+    }) {
+        Text("Run Command")
+    }
+}
+```
+
 ###  This configuration enables you to automatically convert each screenshot you take into webp.
 
 <div style="display:flex; flex-direction:row; width:100%; justify-content:center; align-items:center">
