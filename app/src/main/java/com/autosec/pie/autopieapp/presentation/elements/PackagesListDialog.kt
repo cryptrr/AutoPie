@@ -47,6 +47,7 @@ fun PackagesListDialog(
     onDismissRequest: () -> Unit
 ) {
 
+    //TODO: add key of command name for viewmodel
     val installedPackagesViewModel: InstalledPackagesViewModel = koinViewModel()
 
     val installedPackagesState = installedPackagesViewModel.filteredPackages.collectAsState()
