@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.*
@@ -18,6 +17,10 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 class Utils{
     companion object{
@@ -212,6 +215,41 @@ class Utils{
                 }
             return null
         }
+
+
+        fun timeAgo(instantString: String, zone: ZoneId = ZoneId.systemDefault()): String {
+            val inputInstant = Instant.parse(instantString)
+            val nowInstant = Instant.now()
+
+            val diffSeconds = ChronoUnit.SECONDS.between(inputInstant, nowInstant)
+
+            if (diffSeconds < 0) return "in the future"
+
+            return when {
+                diffSeconds < 60 -> "$diffSeconds second${if (diffSeconds != 1L) "s" else ""} ago"
+                diffSeconds < 3600 -> {
+                    val minutes = diffSeconds / 60
+                    "$minutes minute${if (minutes != 1L) "s" else ""} ago"
+                }
+                diffSeconds < 86400 -> {
+                    val hours = diffSeconds / 3600
+                    "$hours hour${if (hours != 1L) "s" else ""} ago"
+                }
+                diffSeconds < 2592000 -> { // ~30 days
+                    val days = diffSeconds / 86400
+                    "$days day${if (days != 1L) "s" else ""} ago"
+                }
+                diffSeconds < 31536000 -> { // ~365 days
+                    val months = diffSeconds / 2592000
+                    "$months month${if (months != 1L) "s" else ""} ago"
+                }
+                else -> {
+                    val years = diffSeconds / 31536000
+                    "$years year${if (years != 1L) "s" else ""} ago"
+                }
+            }
+        }
+
 
     }
 

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -79,6 +80,7 @@ import com.autosec.pie.ui.theme.GreenGrey60
 import com.autosec.pie.ui.theme.PastelPurple
 import com.autosec.pie.ui.theme.PastelRed
 import com.autosec.pie.ui.theme.Purple10
+import com.autosec.pie.utils.Utils
 import com.autosec.pie.utils.getActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -120,6 +122,7 @@ fun CommandHistorySheet(
             modifier = Modifier
                 .fillMaxWidth()
                 //.height(700.dp)
+                .heightIn(max = 700.dp, min = 100.dp)
                 .wrapContentHeight(),
             contentAlignment = Alignment.TopStart
             //.windowInsetsPadding(WindowInsets.navigationBars)
@@ -269,7 +272,7 @@ fun CommandHistoryCard(commandHistory: CommandHistoryEntity, command: CommandMod
         Column {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = commandHistory.id,
+                    text = Utils.timeAgo(commandHistory.id),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.fillMaxWidth(if (commandHistory.commandExtraInputs.isNotEmpty()) 0.9F else 1F)
