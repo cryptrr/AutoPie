@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SearchBar(searchQuery: MutableState<String>, doSearch: () -> Unit){
+fun SearchBar(searchQuery: MutableState<String>,placeholder: String, doSearch: () -> Unit){
 
     val focusManager = LocalFocusManager.current
 
@@ -40,7 +40,7 @@ fun SearchBar(searchQuery: MutableState<String>, doSearch: () -> Unit){
         },
         colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
         //label = { Text("Search") },
-        placeholder = { Text("Search your commands") },
+        placeholder = { Text(placeholder) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(

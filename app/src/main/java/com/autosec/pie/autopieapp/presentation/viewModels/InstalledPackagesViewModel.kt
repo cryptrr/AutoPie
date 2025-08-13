@@ -19,6 +19,10 @@ class InstalledPackagesViewModel(private val application: Application) : Android
 
     var installedPackages = MutableStateFlow<List<InstalledPackageModel>>(emptyList())
 
+    var filteredPackages = MutableStateFlow<List<InstalledPackageModel>>(emptyList())
+
+    var searchQuery = mutableStateOf("")
+
     init {
         getPackages()
     }
@@ -32,6 +36,19 @@ class InstalledPackagesViewModel(private val application: Application) : Android
         installedPackages.update {
             packagesModels
         }
+        filteredPackages.update {
+            packagesModels
+        }
+    }
+
+    fun search(query: String) {
+
+        Timber.d("Searching ${query}")
+
+        filteredPackages.update {
+            installedPackages.value.filter { it.name.contains(query.trim(), ignoreCase = true) }
+        }
+
     }
 
     private fun readPackages(): List<File> {

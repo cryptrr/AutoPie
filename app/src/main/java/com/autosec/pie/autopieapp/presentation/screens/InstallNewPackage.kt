@@ -133,7 +133,7 @@ fun InstallNewPackageScreen(
                 Spacer(modifier = Modifier.height(15.dp))
             }
             item{
-                SearchBar(viewModel.searchQuery){
+                SearchBar(viewModel.searchQuery, "Search packages"){
                     viewModel.getPackages()
                 }
             }

@@ -167,7 +167,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 
     LaunchedEffect(key1 = isAtBottom) {
         if (isAtBottom) {
-            Timber.d ( "Reached bottom of BlockedUsersList" )
+            Timber.d ( "Reached bottom" )
 
             viewModel.getMoreCloudCommands()
 
@@ -198,7 +198,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             }
 
             item {
-                SearchBar(viewModel.searchQuery){
+                SearchBar(viewModel.searchQuery,"Search your commands"){
                     viewModel.searchCloudCommands()
                 }
             }

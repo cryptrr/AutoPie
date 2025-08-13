@@ -133,7 +133,7 @@ fun HomeScreen(innerPadding: PaddingValues) {
 
 
             item {
-                SearchBar(searchQuery = commandsListScreenViewModel.searchCommandQuery) {
+                SearchBar(searchQuery = commandsListScreenViewModel.searchCommandQuery, "Search your commands") {
                     commandsListScreenViewModel.searchInCommands(commandsListScreenViewModel.searchCommandQuery.value)
                 }
             }

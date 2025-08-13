@@ -1,5 +1,6 @@
 package com.autosec.pie.autopieapp.presentation.elements
 
+import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +49,8 @@ fun PackagesListDialog(
 
     val installedPackagesViewModel: InstalledPackagesViewModel = koinViewModel()
 
-    val installedPackagesState = installedPackagesViewModel.installedPackages.collectAsState()
+    val installedPackagesState = installedPackagesViewModel.filteredPackages.collectAsState()
+
     if (showDialog) {
         Dialog(onDismissRequest = { onDismissRequest() }, DialogProperties()) {
             Box(modifier = Modifier.height(500.dp)) {
@@ -56,20 +59,32 @@ fun PackagesListDialog(
                     color = MaterialTheme.colorScheme.surface,
 
                 ) {
+
                     LazyColumn(
                         Modifier
                         .padding(horizontal = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
+
+                        item{
+                            Spacer(Modifier.height(10.dp))
+                        }
+
                         item {
-                            Spacer(modifier = Modifier.height(17.dp))
-                            Text(text = "Select", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            Spacer(modifier = Modifier.height(7.dp))
+                            SearchBar(searchQuery = installedPackagesViewModel.searchQuery, "Search your packages") {
+                                installedPackagesViewModel.search(installedPackagesViewModel.searchQuery.value)
+                            }
                         }
                         items(installedPackagesState.value, key = { it.path }) { item ->
                             PackageCardSmall(item = item,value, onDismissRequest)
                         }
+
+                        item{
+                            Spacer(Modifier.height(10.dp))
+                        }
                     }
+
+
                 }
             }
         }

@@ -312,7 +312,7 @@ fun ShareContextMenuBottomSheet(
 
                     }
                     item {
-                        SearchBar(searchQuery = shareReceiverViewModel.main.shareReceiverSearchQuery) {
+                        SearchBar(searchQuery = shareReceiverViewModel.main.shareReceiverSearchQuery, "Search your commands") {
                             shareReceiverViewModel.search(shareReceiverViewModel.main.shareReceiverSearchQuery.value)
                         }
                     }
