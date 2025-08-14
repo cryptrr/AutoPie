@@ -71,7 +71,7 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId, usePython, isShellScript)
 
             val result = processResult.toCommandResult(JobType.TEXT, text)
 

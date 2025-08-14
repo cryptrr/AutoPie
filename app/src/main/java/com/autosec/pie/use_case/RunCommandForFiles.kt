@@ -96,7 +96,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 Timber.d("Result Command: $resultCommand")
 
                 val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
-                    inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                    inputParsedData,commandExtraInputs,fileUris.toString(),processId, usePython, isShellScript)
 
                 val result = processResult.toCommandResult(JobType.FILES, fileUris.toString())
 
@@ -158,7 +158,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
 
                     val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
-                        inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                        inputParsedData,commandExtraInputs,fileUris.toString(),processId, usePython, isShellScript)
 
                     val result = processResult.toCommandResult(JobType.FILE, path)
 

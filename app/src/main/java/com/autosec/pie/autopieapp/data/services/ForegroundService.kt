@@ -125,8 +125,8 @@ class ForegroundService : Service() {
 //                            it.command.name, "", it.command, it.processId, log = it.logFile,
 //                        )
 
-                        autoPieNotification.sendNotification(
-                            it.command.name, "", it.command, it.processId,
+                        autoPieNotification.sendBroadcastNotification(
+                            it.command.name, it.input, it.command, it.processId,
                             logFile = it.logFile,
                         )
 
@@ -219,25 +219,25 @@ class ForegroundService : Service() {
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
                         //TODO: Change processId to real and don't clear notif
-                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , (10000..99999).random(), logsFile.absolutePath)
+                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , logsFile.absolutePath)
 
                     }.collect{ receipt ->
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, (10000..99999).random(), logsFile.absolutePath)
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
 
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, (10000..99999).random(), logsFile.absolutePath)
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         }
                     }
 
                 }catch (e: Exception){
                     Timber.e(e)
-                    autoPieNotification.sendNotification("Command Failed", "" ,null, (10000..99999).random(), logsFile!!.absolutePath)
+                    autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath)
                     mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))
                     onDestroy()
 

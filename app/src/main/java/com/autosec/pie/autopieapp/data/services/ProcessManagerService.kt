@@ -438,6 +438,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         cwd: String,
         inputParsedData: List<InputParsedData> = emptyList(),
         commandExtraInputs: List<CommandExtraInput>,
+        rawInput: String,
         processId: Int,
         usePython: Boolean = true,
         isShellScript: Boolean = false
@@ -451,7 +452,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             val logWriter = BufferedWriter(FileWriter(logFile, true))
             Timber.d("Logs written to ${logFile.absolutePath}")
 
-            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath))
+            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput))
 
             checkForUnsafeCommands(commandObject, command)
 

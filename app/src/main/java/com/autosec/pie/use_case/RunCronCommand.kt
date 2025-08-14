@@ -59,7 +59,7 @@ class RunCronCommand(private val processManagerService: ProcessManagerService){
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, usePython, isShellScript)
 
             val jobKey = commandExtraInputs.map{it.value}.joinToString(" : ")
 

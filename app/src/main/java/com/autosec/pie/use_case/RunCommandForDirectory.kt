@@ -79,7 +79,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                 }
 
                 val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, cwdPath,
-                    inputParsedData,commandExtraInputs,processId, usePython, isShellScript)
+                    inputParsedData,commandExtraInputs,inputDir.absolutePath,processId, usePython, isShellScript)
 
 
                 if (processResult.success) {
