@@ -393,6 +393,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             delay(900)
                             return@launch
                         }else if(callerName == "EXTERNAL_APP"){
+                            //IS EXTERNAL_APP and async
                             delay(900)
                             val result = Intent().apply {
                                 putExtra("status", "running")
@@ -400,13 +401,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                             activity?.setResult(RESULT_OK, result)
                             activity?.finish()
+                            viewModel.currentExtrasDetails.value = null
                         }
 
                         if(parentSheetState != null){
+                            //When this activity is opened from share receiver
                             delay(900)
                             activity?.finish()
                             viewModel.currentExtrasDetails.value = null
                         }else{
+                            //when this activity is opened from the app itself.
                             delay(1500)
                             openState.value = false
                             viewModel.currentExtrasDetails.value = null
