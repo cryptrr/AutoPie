@@ -390,9 +390,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
 
                         if(callerName == "EXTERNAL_APP" && !isAsync){
-                            //viewModel.currentExtrasDetails.value = null
+                            delay(900)
                             return@launch
                         }else if(callerName == "EXTERNAL_APP"){
+                            delay(900)
                             val result = Intent().apply {
                                 putExtra("status", "running")
                                 putExtra("processId", processId)
