@@ -65,6 +65,7 @@ class DirectCommandActivity : ComponentActivity() {
 
         val commandId = intent.getStringExtra("commandId")
         val input = intent.getStringExtra("input")
+        val isAsync = intent.getBooleanExtra("async", true)
         val callerPackage = callingPackage
             ?: referrer?.authority ?: ""
 
@@ -155,7 +156,8 @@ class DirectCommandActivity : ComponentActivity() {
                         state = extrasBottomSheetState,
                         open = extrasBottomSheetStateOpen,
                         state,
-                        callerName = callerType
+                        callerName = callerType,
+                        isAsync = isAsync
                     )
 
             }

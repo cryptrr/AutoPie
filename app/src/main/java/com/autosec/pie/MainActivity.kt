@@ -386,6 +386,7 @@ class MainActivity : ComponentActivity() {
                         CommandExtrasBottomSheet(
                             state = autoPieStates.runCommandBottomSheetState,
                             open = autoPieStates.runCommandBottomSheetStateOpen,
+                            isAsync = true
                         )
                     }
                     if (autoPieStates.cloudCommandDetailsBottomSheetOpen.value) {

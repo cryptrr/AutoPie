@@ -250,7 +250,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun onCommandClickWithExtras(command: CommandModel,currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput>){
+    fun onCommandClickWithExtras(command: CommandModel,currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput>, processId: Int? = null){
         viewModelScope.launch {
 
             try {
@@ -268,6 +268,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     putExtra("currentLink", currentLink)
                     putExtra("fileUris", fileUrisJson)
                     putExtra("commandExtraInputs", commandExtraInputsJson)
+                    putExtra("processId", processId)
                 }
 
 

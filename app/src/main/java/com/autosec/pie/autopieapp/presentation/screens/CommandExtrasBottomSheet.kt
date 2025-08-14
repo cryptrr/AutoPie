@@ -1,6 +1,7 @@
 package com.autosec.pie.autopieapp.presentation.screens
 
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Build
 import android.widget.Space
@@ -78,6 +79,7 @@ fun CommandExtrasBottomSheet(
     open: MutableState<Boolean>,
     parentSheetState: SheetState? = null,
     callerName: String = "SHARE",
+    isAsync: Boolean,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {},
 ) {
@@ -129,7 +131,7 @@ fun CommandExtrasBottomSheet(
                 }
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState, open, state, callerName
+                    CommandExtraInputs(it.second, parentSheetState, open, state, callerName, isAsync
                     )
                 }
 
@@ -157,7 +159,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>, sheetState: SheetState, callerName: String) {
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>,sheetState: SheetState, callerName: String,isAsync: Boolean,) {
 
     val context = LocalContext.current
 
@@ -384,11 +386,19 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         }
 
                         isLoading = true
-                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
+                        val processId = (100000..999999).random()
+                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
 
-                        if(callerName == "EXTERNAL_APP"){
+                        if(callerName == "EXTERNAL_APP" && !isAsync){
                             //viewModel.currentExtrasDetails.value = null
                             return@launch
+                        }else if(callerName == "EXTERNAL_APP"){
+                            val result = Intent().apply {
+                                putExtra("status", "running")
+                                putExtra("processId", processId)
+                            }
+                            activity?.setResult(RESULT_OK, result)
+                            activity?.finish()
                         }
 
                         if(parentSheetState != null){

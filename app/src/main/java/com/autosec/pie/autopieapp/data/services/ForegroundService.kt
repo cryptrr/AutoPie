@@ -37,6 +37,9 @@ class ForegroundService : Service() {
     private var notificationManager: NotificationManager? = null
 
     private var processIds : List<Int> = emptyList()
+    private var successProcessIds : List<Int> = emptyList()
+    private var failedProcessIds : List<Int> = emptyList()
+
 
     private var foregroundServiceId : Int? = null
 
@@ -47,6 +50,10 @@ class ForegroundService : Service() {
                 when(it){
                     is ViewModelEvent.CommandCompleted -> {
                         try {
+
+                            //Add it to the success list
+                            successProcessIds = successProcessIds + it.processId
+
                             //Remove from the current running processIds list
                             processIds = processIds.filter {item -> item !=  it.processId}
 
@@ -64,6 +71,10 @@ class ForegroundService : Service() {
 
                     is ViewModelEvent.CommandFailed -> {
                         try {
+
+                            //Add it to the failed list
+                            failedProcessIds = failedProcessIds + it.processId
+
                             //Remove from the current running processIds list
                             processIds = processIds.filter {item -> item !=  it.processId}
 
@@ -149,7 +160,8 @@ class ForegroundService : Service() {
                 var processId = 0
 
                 try {
-                    processId = (100000..999999).random()
+
+                    processId = it.getIntExtra("processId", (100000..999999).random())
 
                     processIds = processIds + processId
 
@@ -172,6 +184,8 @@ class ForegroundService : Service() {
                     }catch (e: Exception){
                         emptyList()
                     }
+
+                    mainViewModel.dispatchEvent(ViewModelEvent.CommandStarted(processId))
 
                     useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 

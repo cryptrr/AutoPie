@@ -30,6 +30,12 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
+    var processIds : List<Int> = emptyList()
+    var successProcessIds : List<Int> = emptyList()
+        private set
+    var failedProcessIds : List<Int> = emptyList()
+        private set
+
     init {
         main.viewModelScope.launch {
             main.eventFlow.collect {
@@ -52,7 +58,32 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
                             Timber.d("Shells List After: ${shells.keys}")
                         }
+                    }
 
+                    is ViewModelEvent.CommandStarted -> {
+                        try {
+                            //Add it to the success list
+                            processIds = processIds + it.processId
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
+                    }
+
+                    is ViewModelEvent.CommandCompleted -> {
+                        try {
+                            //Add it to the success list
+                            successProcessIds = successProcessIds + it.processId
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
+                    }
+                    is ViewModelEvent.CommandFailed -> {
+                        try {
+                            //Add it to the failed list
+                            failedProcessIds = failedProcessIds + it.processId
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
                     }
 
                     else -> {}

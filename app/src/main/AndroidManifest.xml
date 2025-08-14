@@ -169,6 +169,12 @@
             android:exported="true"
             android:grantUriPermissions="true">
         </provider>
+        <provider
+            android:name=".ProcessStatusProvider"
+            android:authorities="${applicationId}.process"
+            android:exported="true"
+            android:grantUriPermissions="true">
+        </provider>
     </application>
 
 </manifest>

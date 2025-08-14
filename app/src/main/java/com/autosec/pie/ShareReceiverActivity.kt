@@ -337,7 +337,8 @@ fun ShareContextMenuBottomSheet(
             CommandExtrasBottomSheet(
                 state = extrasBottomSheetState,
                 open = extrasBottomSheetStateOpen,
-                state
+                state,
+                isAsync = true
             )
         }
 
