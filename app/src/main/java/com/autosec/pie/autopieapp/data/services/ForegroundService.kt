@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.os.Process
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.R
@@ -15,6 +16,7 @@ import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotificatio
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.use_case.AutoPieUseCases
+import com.autosec.pie.utils.Utils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.File
 import kotlin.system.exitProcess
 
 class ForegroundService : Service() {
@@ -59,6 +62,8 @@ class ForegroundService : Service() {
 
                             Timber.d("ProcessIds at completion of command: $processIds")
 
+                            autoPieNotification.cancelNotification(it.processId)
+
                             //Close if no processes remain in the list
                             if(processIds.isEmpty()){
                                 Timber.d("All processed completed")
@@ -79,6 +84,8 @@ class ForegroundService : Service() {
                             processIds = processIds.filter {item -> item !=  it.processId}
 
                             Timber.d("ProcessIds at completion of command: $processIds")
+
+                            autoPieNotification.cancelNotification(it.processId)
 
                             //Close if no processes remain in the list
                             if(processIds.isEmpty()){
@@ -105,8 +112,24 @@ class ForegroundService : Service() {
 //                    }
                     is ViewModelEvent.StopAutoPie -> {
                         Timber.d("Stopping the current AutoPie instance")
-                        android.os.Process.killProcess(android.os.Process.myPid())
+
+                        autoPieNotification.cancelAllNotifications()
+
+                        Process.killProcess(Process.myPid())
                         exitProcess(0)
+                    }
+                    is ViewModelEvent.CommandStarted -> {
+                        Timber.d("Event: Command has started for processId: ${it.processId} with log at ${it.logFile}")
+
+//                        autoPieNotification.sendBroadcastNotification(
+//                            it.command.name, "", it.command, it.processId, log = it.logFile,
+//                        )
+
+                        autoPieNotification.sendNotification(
+                            it.command.name, "", it.command, it.processId,
+                            logFile = it.logFile,
+                        )
+
                     }
                     else -> {}
                 }
@@ -158,6 +181,8 @@ class ForegroundService : Service() {
             CoroutineScope(dispatchers.io).launch {
 
                 var processId = 0
+                var command: CommandModel? = null
+                var logsFile : File? = null
 
                 try {
 
@@ -175,7 +200,7 @@ class ForegroundService : Service() {
                     val listType = object : TypeToken<List<String>>() {}.type
                     val commandExtraInputListType = object : TypeToken<List<CommandExtraInput>>() {}.type
 
-                    val command: CommandModel = Gson().fromJson(commandString, CommandModel::class.java)
+                    command = Gson().fromJson(commandString, CommandModel::class.java)
 
                     val fileUris: List<String> = Gson().fromJson(fileUrisString, listType)
 
@@ -185,34 +210,35 @@ class ForegroundService : Service() {
                         emptyList()
                     }
 
-                    mainViewModel.dispatchEvent(ViewModelEvent.CommandStarted(processId))
+
+                    //The logs file is created with processId as its prefix in the caches directory when the command starts.
+                    logsFile = File(application.cacheDir, "${processId}.log")
 
                     useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
-                        mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
+                        mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
-                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command ,logContents = e.toString())
+                        //TODO: Change processId to real and don't clear notif
+                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , (10000..99999).random(), logsFile.absolutePath)
 
                     }.collect{ receipt ->
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
-                            mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, (10000..99999).random(), logsFile.absolutePath)
+                            mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
 
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
-                            mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, (10000..99999).random(), logsFile.absolutePath)
+                            mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         }
-
-
                     }
 
                 }catch (e: Exception){
                     Timber.e(e)
-                    autoPieNotification.sendNotification("Command Failed", "" ,null,e.toString())
-                    mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
+                    autoPieNotification.sendNotification("Command Failed", "" ,null, (10000..99999).random(), logsFile!!.absolutePath)
+                    mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))
                     onDestroy()
 
                 }

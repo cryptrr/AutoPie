@@ -18,9 +18,9 @@ sealed class ViewModelEvent {
     data object CloseShareReceiverSheet : ViewModelEvent()
     data class CancelProcess(val processId: Int) : ViewModelEvent()
     data object StopAutoPie : ViewModelEvent()
-    data class CommandStarted(val processId: Int) : ViewModelEvent()
-    data class CommandCompleted(val processId: Int) : ViewModelEvent()
-    data class CommandFailed(val processId: Int, val msg: String = "") : ViewModelEvent()
+    data class CommandStarted(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
+    data class CommandCompleted(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
+    data class CommandFailed(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
     data object AuthTokenExpired: ViewModelEvent()
 
 }

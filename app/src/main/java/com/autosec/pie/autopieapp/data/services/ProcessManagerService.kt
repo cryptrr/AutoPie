@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.AutoPieError
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandInterface
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.JobType
@@ -18,7 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.BufferedWriter
 import java.io.File
+import java.io.FileWriter
 import kotlin.io.path.Path
 import kotlin.io.path.createSymbolicLinkPointingTo
 
@@ -155,7 +158,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     private fun getShell(
         inputParsedData: List<InputParsedData>,
         commandObject: CommandInterface,
-        commandExtraInputs: List<CommandExtraInput> = emptyList()
+        commandExtraInputs: List<CommandExtraInput> = emptyList(),
+        logWriter: BufferedWriter
     ): Shell {
         val shellPath = File(activity.filesDir, "sh").absolutePath
 
@@ -237,6 +241,17 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             envMap
         )
 
+        shell.addOnStderrLineListener(object : Shell.OnLineListener {
+            override fun onLine(line: String) {
+                writeLogLine(logWriter, line)
+            }
+        }).addOnStdoutLineListener(object : Shell.OnLineListener {
+            override fun onLine(line: String) {
+                writeLogLine(logWriter, line)
+            }
+        })
+
+
         Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
 
@@ -309,7 +324,10 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             checkForUnsafeCommands(commandObject, command)
 
-            val shell = getShell(inputParsedData, commandObject, emptyList())
+            val logFile = File.createTempFile("temp_", ".log", activity.cacheDir)
+            val logWriter = BufferedWriter(FileWriter(logFile, true))
+
+            val shell = getShell(inputParsedData, commandObject, emptyList(), logWriter)
 
             val checkEnvResult = shell.run("cd ${cwd}")
 
@@ -359,7 +377,10 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             checkForUnsafeCommands(commandObject, command)
 
-            val shell = getShell(inputParsedData, commandObject, commandExtraInputs)
+            val logFile = File.createTempFile(processId.toString(), ".log", activity.cacheDir)
+            val logWriter = BufferedWriter(FileWriter(logFile, true))
+
+            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
 
             Timber.d("Received processId in Command Start: $processId")
             shells.set(processId, shell)
@@ -424,9 +445,17 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
         try {
 
+            val logFile = File(activity.cacheDir, "${processId}.log")
+            logFile.createNewFile()
+
+            val logWriter = BufferedWriter(FileWriter(logFile, true))
+            Timber.d("Logs written to ${logFile.absolutePath}")
+
+            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath))
+
             checkForUnsafeCommands(commandObject, command)
 
-            val shell = getShell(inputParsedData, commandObject, commandExtraInputs)
+            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
 
             Timber.d("Received processId in Command Start: $processId")
             shells.set(processId, shell)
@@ -717,6 +746,15 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         shell.run("chmod +x ${binLocation.absolutePath}/*")
 
 
+    }
+
+    fun writeLogLine(writer: BufferedWriter, line: String) {
+        writer.appendLine(line)
+        writer.flush() // flush immediately for streaming
+    }
+
+    fun closeLog(writer: BufferedWriter) {
+        writer.close()
     }
 
 

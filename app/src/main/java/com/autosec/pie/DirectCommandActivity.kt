@@ -106,7 +106,7 @@ class DirectCommandActivity : ComponentActivity() {
                         is ViewModelEvent.CommandFailed -> {
                             val result = Intent().apply {
                                 putExtra("status", "failed")
-                                putExtra("msg", it.msg)
+                                putExtra("logFile", it.logFile)
                                 putExtra("processId", it.processId)
                             }
                             setResult(RESULT_OK, result)

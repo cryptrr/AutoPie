@@ -34,10 +34,10 @@ class OutputViewerActivity : ComponentActivity() {
 
         Timber.d(this.intent.toString())
 
-        val outputPath = intent.getStringExtra("logFile")
+        val logPath = intent.getStringExtra("logFile")
         val commandName = intent.getStringExtra("commandName")
 
-        Timber.d("Received data - $commandName ,  $outputPath")
+        Timber.d("Received data - $commandName ,  $logPath")
 
         setContent {
 
@@ -47,22 +47,25 @@ class OutputViewerActivity : ComponentActivity() {
 
             val scope = rememberCoroutineScope()
 
-            DisposableEffect(outputPath) {
+            DisposableEffect(logPath) {
 
                 scope.launch {
                     delay(100L)
-                    if(outputPath != null){
-                        Timber.d("Fetching output from $outputPath")
-                        outputViewerViewModel.currentLogPath.value = outputPath
+                    if(logPath != null){
+                        Timber.d("Fetching output from $logPath")
+                        outputViewerViewModel.currentLogPath.value = logPath
                         outputViewerViewModel.currentCommandName.value = commandName ?: ""
-                        outputViewerViewModel.getOutputFromFile(outputPath)
+                        outputViewerViewModel.streamFile(logPath)
                     }
                 }
 
                 onDispose {
-                    Timber.d("Unsetting current command $outputPath")
+                    Timber.d("Unsetting current command $logPath")
                     outputViewerViewModel.currentLogPath.value = null
                     outputViewerViewModel.currentCommandName.value = ""
+                    //Close the read stream
+                    outputViewerViewModel.closeLogStream()
+
                 }
             }
 

@@ -33,6 +33,9 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
 import androidx.core.net.toUri
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 
 class OutputViewerViewModel(private val application1: Application) : ViewModel() {
 
@@ -45,7 +48,11 @@ class OutputViewerViewModel(private val application1: Application) : ViewModel()
 
 
 
-    var outputContent = MutableStateFlow<String>("")
+    private val _logContent = MutableStateFlow<String>("")
+    val logContent: StateFlow<String> = _logContent
+
+
+    private var logJob: Job? = null
 
 
     val currentLogPath = mutableStateOf<String?>(null)
@@ -67,15 +74,52 @@ class OutputViewerViewModel(private val application1: Application) : ViewModel()
     }
 
     fun getOutputFromFile(path: String){
+
         path?.let{
             viewModelScope.launch(dispatchers.io){
-                val inputStream = application1.contentResolver.openInputStream(it.toUri())
-                val contents = inputStream?.bufferedReader().use { it?.readText() }
-                //Timber.d(contents)
-                outputContent.value = contents ?: ""
+                try {
+                    val inputStream = application1.contentResolver.openInputStream(it.toUri())
+                    val contents = inputStream?.bufferedReader().use { it?.readText() }
+                    //Timber.d(contents)
+                    _logContent.value = contents ?: ""
+                }catch (e: Exception){
+                    Timber.e(e)
+                }
+
             }
         }
 
+    }
+
+
+    fun streamFile(path: String) {
+        Timber.d("Trying to read log at $path")
+
+        logJob?.cancel() // stop previous stream if running
+        logJob = viewModelScope.launch(dispatchers.io) {
+
+            try {
+                val file = File(path)
+                file.bufferedReader().use { reader -> // closes automatically when this block ends
+                    while (isActive) { // ensures loop stops when coroutine is cancelled
+                        val line = reader.readLine()
+                        if (line != null) {
+                            _logContent.update { it + "\n" + line }
+                        } else {
+                            delay(200)
+                        }
+                    }
+                }
+
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+    }
+
+    fun closeLogStream() {
+        logJob?.cancel()
+        logJob = null
     }
 
 

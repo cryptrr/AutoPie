@@ -250,6 +250,12 @@ class Utils{
             }
         }
 
+        fun getFileWithPrefix(dirPath: String, prefix: String): File? {
+            val dir = File(dirPath)
+            return dir.listFiles { file -> Timber.d("LOG FILES in cache: ${file.name}");file.name.startsWith(prefix) }
+                ?.firstOrNull()
+        }
+
 
     }
 

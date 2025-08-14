@@ -62,7 +62,7 @@ fun OutputViewerBottomSheet(
         }
     }
 
-    val outputState = viewModel.outputContent.collectAsState()
+    val logsState = viewModel.logContent.collectAsState()
 
     val scroll = rememberScrollState()
 
@@ -101,7 +101,7 @@ fun OutputViewerBottomSheet(
                         RoundedCornerShape(15.dp)
                     ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll)){
                         SelectionContainer(Modifier.fillMaxWidth()){
-                            Text(outputState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 15.dp))
+                            Text(logsState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 15.dp))
                         }
                     }
                 }

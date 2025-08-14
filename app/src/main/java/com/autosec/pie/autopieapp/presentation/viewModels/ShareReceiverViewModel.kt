@@ -17,6 +17,7 @@ import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.use_case.AutoPieUseCases
+import com.autosec.pie.utils.Utils
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.File
 import java.io.FileNotFoundException
 
 class ShareReceiverViewModel(private val application1: Application) : ViewModel() {
@@ -158,25 +160,27 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         Timber.d(item.toString())
         Timber.d(currentLink.toString())
 
+
         viewModelScope.launch(dispatchers.io){
             try {
+
+                val logsFile = Utils.getFileWithPrefix(application1.cacheDir.absolutePath, processId.toString()) ?: File(application1.cacheDir, "dummy")
+
                 useCases.runCommand(item, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
-                    //main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
-                    main.dispatchEvent(ViewModelEvent.CommandFailed(processId))
+                    main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     Timber.e(e)
 
                 }.collect{ receipt ->
                     if (receipt.success) {
                         Timber.d("Process Success".uppercase())
                         autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, receipt.output)
-                        main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                        main.dispatchEvent(ViewModelEvent.CommandCompleted(processId, item, logsFile.absolutePath))
                     } else {
                         Timber.d("Process FAILED".uppercase())
                         autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, receipt.output)
-                        main.dispatchEvent(ViewModelEvent.CommandFailed(processId))
+                        main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     }
-
 
                 }
             }catch (e: Exception){
