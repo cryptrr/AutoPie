@@ -14,7 +14,7 @@ import timber.log.Timber
 import java.util.concurrent.Flow
 
 class GetCommandsList(private val jsonService: JsonService) {
-    suspend operator fun invoke(): List<CommandModel>{
+    operator fun invoke(): List<CommandModel>{
         val sharesConfig = jsonService.readSharesConfig()
         val observersConfig = jsonService.readObserversConfig()
         val cronConfig = jsonService.readCronConfig()

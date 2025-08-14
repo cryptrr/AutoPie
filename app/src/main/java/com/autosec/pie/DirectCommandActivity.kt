@@ -1,5 +1,6 @@
 package com.autosec.pie
 
+import android.app.Activity
 import android.app.ComponentCaller
 import com.autosec.pie.autopieapp.domain.ViewModelError
 
@@ -76,13 +77,35 @@ class DirectCommandActivity : ComponentActivity() {
         Timber.d("Calling package: $callerPackage")
 
 
+
+
         setContent {
+
+
 
             val activity = LocalContext.current.getActivity()
 
             val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
             val scope = rememberCoroutineScope()
+
+            LaunchedEffect(Unit) {
+                shareReceiverViewModel.main.eventFlow.collect{
+                    when(it){
+                        is ViewModelEvent.CommandCompleted -> {
+                            val result = Intent().apply {
+                                putExtra("status", "ok")
+                                putExtra("output", "/path/to/file.mp4")
+                                putExtra("processId", it.processId)
+                            }
+                            setResult(Activity.RESULT_OK, result)
+                            finish()
+                        }
+
+                        else -> {}
+                    }
+                }
+            }
 
             DisposableEffect(commandId) {
                 //Get the command from the list

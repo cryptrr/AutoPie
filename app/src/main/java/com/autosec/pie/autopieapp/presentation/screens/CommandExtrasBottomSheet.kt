@@ -129,7 +129,8 @@ fun CommandExtrasBottomSheet(
                 }
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState, open, state)
+                    CommandExtraInputs(it.second, parentSheetState, open, state, callerName
+                    )
                 }
 
             }
@@ -156,7 +157,7 @@ fun CommandExtrasBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>, sheetState: SheetState) {
+fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>, sheetState: SheetState, callerName: String) {
 
     val context = LocalContext.current
 
@@ -384,6 +385,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         isLoading = true
                         viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
+
+                        if(callerName == "EXTERNAL_APP"){
+                            //viewModel.currentExtrasDetails.value = null
+                            return@launch
+                        }
 
                         if(parentSheetState != null){
                             delay(900)
