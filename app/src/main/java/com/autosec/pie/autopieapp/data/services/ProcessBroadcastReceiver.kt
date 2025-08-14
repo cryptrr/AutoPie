@@ -25,12 +25,13 @@ class ProcessBroadcastReceiver : BroadcastReceiver() {
 
         try {
             when(action){
-                "${context.packageName}.SHOW_NOTIFICATION" -> {
-                    autoPieNotification.sendBroadcastNotification(intent, context)
-                }
-                "${context.packageName}.CANCEL_NOTIFICATION" -> {
-                    autoPieNotification.cancelNotification(intent, context)
-                }
+                //TODO: These are redundant now. So slated for deletion.
+//                "${context.packageName}.SHOW_NOTIFICATION" -> {
+//                    autoPieNotification.sendBroadcastNotification(intent, context)
+//                }
+//                "${context.packageName}.CANCEL_NOTIFICATION" -> {
+//                    autoPieNotification.cancelNotification(intent, context)
+//                }
                 "${context.packageName}.CANCEL_PROCESS" -> {
 
                     Timber.d("${context.packageName}.CANCEL_PROCESS")
