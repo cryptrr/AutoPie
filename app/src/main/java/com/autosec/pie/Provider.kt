@@ -16,6 +16,8 @@ import kotlin.getValue
 
 class PackagesProvider : ContentProvider() {
 
+    val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+
     override fun query(
         uri: Uri,
         projection: Array<String>?,
@@ -24,7 +26,11 @@ class PackagesProvider : ContentProvider() {
         sortOrder: String?
     ): Cursor? {
 
-        val apps = readPackages(context!!)
+        if(context == null){
+            return null
+        }
+
+        val apps = useCases.getInstalledPackages(context!!.filesDir)
 
         val matrix = MatrixCursor(arrayOf("packageName"))
         apps.forEach { matrix.addRow(arrayOf(it)) }
@@ -102,26 +108,4 @@ class ProcessStatusProvider : ContentProvider() {
     override fun insert(uri: Uri, values: ContentValues?) = null
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?) = 0
     override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?) = 0
-}
-
-//TODO: Replace with usecase
-private fun readPackages(context: Context): List<String> {
-
-    try {
-        val binLocation = File(context.filesDir, "build/bin").listFiles()
-        val usrBinLocation = File(context.filesDir, "build/usr/bin")
-        val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
-
-        val packages = listOf(
-            binLocation?.toList() ?: emptyList(),
-            usrBinLocation.listFiles()?.toList() ?: emptyList(),
-            autosecBinLocation.listFiles()?.toList() ?: emptyList()
-        ).flatten().toSet().filter { !it.name.startsWith(".") }
-
-
-        return packages.map{it.path}.toList()
-    } catch (e: Exception) {
-        Timber.e(e)
-        return emptyList()
-    }
 }
