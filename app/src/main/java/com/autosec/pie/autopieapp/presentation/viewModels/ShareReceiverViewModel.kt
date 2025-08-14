@@ -162,20 +162,21 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             try {
                 useCases.runCommand(item, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
-                    main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                    //main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                    main.dispatchEvent(ViewModelEvent.CommandFailed(processId))
                     Timber.e(e)
 
                 }.collect{ receipt ->
                     if (receipt.success) {
                         Timber.d("Process Success".uppercase())
                         autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, receipt.output)
-
+                        main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
                     } else {
                         Timber.d("Process FAILED".uppercase())
                         autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, receipt.output)
+                        main.dispatchEvent(ViewModelEvent.CommandFailed(processId))
                     }
 
-                    main.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
                 }
             }catch (e: Exception){

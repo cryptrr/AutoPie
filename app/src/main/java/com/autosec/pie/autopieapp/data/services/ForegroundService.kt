@@ -61,6 +61,24 @@ class ForegroundService : Service() {
                             Timber.e(e)
                         }
                     }
+
+                    is ViewModelEvent.CommandFailed -> {
+                        try {
+                            //Remove from the current running processIds list
+                            processIds = processIds.filter {item -> item !=  it.processId}
+
+                            Timber.d("ProcessIds at completion of command: $processIds")
+
+                            //Close if no processes remain in the list
+                            if(processIds.isEmpty()){
+                                Timber.d("All processed completed")
+                                onDestroy()
+                            }
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
+                    }
+
 //                    is ViewModelEvent.CancelProcess -> {
 //                        if(processIds.contains(it.processId)){
 //                            Timber.d("Canceling process ${it.processId}")
@@ -128,8 +146,10 @@ class ForegroundService : Service() {
 
             CoroutineScope(dispatchers.io).launch {
 
+                var processId = 0
+
                 try {
-                    val processId = (100000..999999).random()
+                    processId = (100000..999999).random()
 
                     processIds = processIds + processId
 
@@ -155,7 +175,7 @@ class ForegroundService : Service() {
 
                     useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
-                        mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
+                        mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
                         Timber.e(e)
                         autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command ,logContents = e.toString())
 
@@ -163,20 +183,22 @@ class ForegroundService : Service() {
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
                             autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
+                            mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
                             autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logContents = receipt.output)
+                            mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
                         }
 
-                        mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId))
 
                     }
 
                 }catch (e: Exception){
                     Timber.e(e)
                     autoPieNotification.sendNotification("Command Failed", "" ,null,e.toString())
+                    mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId))
                     onDestroy()
 
                 }
