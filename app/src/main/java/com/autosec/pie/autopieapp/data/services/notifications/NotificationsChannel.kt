@@ -26,6 +26,7 @@ import timber.log.Timber
 import java.io.File
 import androidx.core.net.toUri
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.OutputViewerActivity
 import com.autosec.pie.autopieapp.data.CommandModel
 
 class AutoPieNotification(val context: Application) {
@@ -109,7 +110,7 @@ class AutoPieNotification(val context: Application) {
 
 
         val intent = Intent(Intent.ACTION_MAIN).apply {
-            setClassName(context, BuildConfig.APPLICATION_ID + ".OutputViewerActivity")
+            setClass(context, OutputViewerActivity::class.java)
             putExtra("logFile", logFile)
             putExtra("commandName", command?.name ?: "")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -171,7 +172,7 @@ class AutoPieNotification(val context: Application) {
 
 
         val intent = Intent(Intent.ACTION_MAIN).apply {
-            setClassName(context, BuildConfig.APPLICATION_ID + ".OutputViewerActivity")
+            setClass(context, OutputViewerActivity::class.java)
             putExtra("logFile", logFile)
             putExtra("commandName", command?.name ?: "")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
