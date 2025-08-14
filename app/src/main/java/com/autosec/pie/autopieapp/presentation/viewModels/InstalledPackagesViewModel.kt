@@ -7,15 +7,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.autosec.pie.autopieapp.data.InstalledPackageModel
+import com.autosec.pie.use_case.AutoPieUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.java.KoinJavaComponent
+import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
+import kotlin.getValue
 
 class InstalledPackagesViewModel(private val application: Application) : AndroidViewModel(application) {
 
     private val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+
+    val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
     var installedPackages = MutableStateFlow<List<InstalledPackageModel>>(emptyList())
 
@@ -54,18 +59,11 @@ class InstalledPackagesViewModel(private val application: Application) : Android
     private fun readPackages(): List<File> {
 
         try {
-            val binLocation = File(application.filesDir, "build/bin").listFiles()
-            val usrBinLocation = File(application.filesDir, "build/usr/bin")
-            val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 
-            val packages = listOf(
-                binLocation?.toList() ?: emptyList(),
-                usrBinLocation.listFiles()?.toList() ?: emptyList(),
-                autosecBinLocation.listFiles()?.toList() ?: emptyList()
-            ).flatten().toSet().filter { !it.name.startsWith(".") }
+            val packages = useCases.getInstalledPackages(application.filesDir)
 
+            return packages
 
-            return packages.toList()
         } catch (e: Exception) {
             Timber.e(e)
             return emptyList()
