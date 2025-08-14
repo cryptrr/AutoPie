@@ -98,7 +98,17 @@ class DirectCommandActivity : ComponentActivity() {
                                 putExtra("output", "/path/to/file.mp4")
                                 putExtra("processId", it.processId)
                             }
-                            setResult(Activity.RESULT_OK, result)
+                            setResult(RESULT_OK, result)
+                            finish()
+                        }
+
+                        is ViewModelEvent.CommandFailed -> {
+                            val result = Intent().apply {
+                                putExtra("status", "failed")
+                                putExtra("msg", it.msg)
+                                putExtra("processId", it.processId)
+                            }
+                            setResult(RESULT_OK, result)
                             finish()
                         }
 
