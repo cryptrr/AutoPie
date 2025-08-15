@@ -93,6 +93,7 @@ class DirectCommandActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 shareReceiverViewModel.main.eventFlow.collect{
                     when(it){
+                        //For asynchronous requests
                         is ViewModelEvent.CommandStarted -> {
                             if(callerType == "EXTERNAL_APP" && isAsync){
                                 delay(900)
@@ -107,6 +108,7 @@ class DirectCommandActivity : ComponentActivity() {
                             }
                         }
 
+                        //For synchronous requests
                         is ViewModelEvent.CommandCompleted -> {
                             val result = Intent().apply {
                                 putExtra("status", "ok")
