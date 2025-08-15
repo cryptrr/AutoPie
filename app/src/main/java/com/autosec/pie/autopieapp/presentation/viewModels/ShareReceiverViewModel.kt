@@ -272,6 +272,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     putExtra("currentLink", currentLink)
                     putExtra("fileUris", fileUrisJson)
                     putExtra("commandExtraInputs", commandExtraInputsJson)
+                    //Optional
                     putExtra("processId", processId)
                 }
 

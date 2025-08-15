@@ -389,19 +389,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         val processId = (100000..999999).random()
                         viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
 
-                        if(callerName == "EXTERNAL_APP" && !isAsync){
-                            delay(900)
+
+                        //Don't close the activity if intent is started with async false.
+                        //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity
+                        if(callerName == "EXTERNAL_APP"){
                             return@launch
-                        }else if(callerName == "EXTERNAL_APP"){
-                            //IS EXTERNAL_APP and async
-                            delay(900)
-                            val result = Intent().apply {
-                                putExtra("status", "running")
-                                putExtra("processId", processId)
-                            }
-                            activity?.setResult(RESULT_OK, result)
-                            activity?.finish()
-                            viewModel.currentExtrasDetails.value = null
                         }
 
                         if(parentSheetState != null){

@@ -93,11 +93,25 @@ class DirectCommandActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 shareReceiverViewModel.main.eventFlow.collect{
                     when(it){
+                        is ViewModelEvent.CommandStarted -> {
+                            if(callerType == "EXTERNAL_APP" && isAsync){
+                                delay(900)
+                                val result = Intent().apply {
+                                    putExtra("status", "running")
+                                    putExtra("processId", it.processId)
+                                    putExtra("logFile", it.logFile)
+                                }
+                                setResult(RESULT_OK, result)
+                                finish()
+                                shareReceiverViewModel.currentExtrasDetails.value = null
+                            }
+                        }
+
                         is ViewModelEvent.CommandCompleted -> {
                             val result = Intent().apply {
                                 putExtra("status", "ok")
-                                putExtra("output", "/path/to/file.mp4")
                                 putExtra("processId", it.processId)
+                                putExtra("logFile", it.logFile)
                             }
                             setResult(RESULT_OK, result)
                             finish()
@@ -106,8 +120,8 @@ class DirectCommandActivity : ComponentActivity() {
                         is ViewModelEvent.CommandFailed -> {
                             val result = Intent().apply {
                                 putExtra("status", "failed")
-                                putExtra("logFile", it.logFile)
                                 putExtra("processId", it.processId)
+                                putExtra("logFile", it.logFile)
                             }
                             setResult(RESULT_OK, result)
                             finish()
