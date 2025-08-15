@@ -157,18 +157,18 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        <provider
-            android:name=".PackagesProvider"
-            android:authorities="${applicationId}.packages"
-            android:exported="true"
-            android:grantUriPermissions="true">
-        </provider>
-        <provider
-            android:name=".CommandsProvider"
-            android:authorities="${applicationId}.commands"
-            android:exported="true"
-            android:grantUriPermissions="true">
-        </provider>
+<!--        <provider-->
+<!--            android:name=".PackagesProvider"-->
+<!--            android:authorities="${applicationId}.packages"-->
+<!--            android:exported="true"-->
+<!--            android:grantUriPermissions="true">-->
+<!--        </provider>-->
+<!--        <provider-->
+<!--            android:name=".CommandsProvider"-->
+<!--            android:authorities="${applicationId}.commands"-->
+<!--            android:exported="true"-->
+<!--            android:grantUriPermissions="true">-->
+<!--        </provider>-->
         <provider
             android:name=".ProcessStatusProvider"
             android:authorities="${applicationId}.process"
