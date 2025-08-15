@@ -110,10 +110,12 @@ class ForegroundService : Service() {
                         Timber.d("Event: Command has started for processId: ${it.processId} with log at ${it.logFile}")
 
 
-                        autoPieNotification.sendBroadcastNotification(
-                            it.command.name, it.input, it.command, it.processId,
-                            logFile = it.logFile,
-                        )
+                        if(it.jobType != JobType.STANDALONE){
+                            autoPieNotification.sendBroadcastNotification(
+                                it.command.name, it.input, it.command, it.processId,
+                                logFile = it.logFile,
+                            )
+                        }
 
                     }
                     else -> {}

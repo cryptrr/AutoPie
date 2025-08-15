@@ -73,15 +73,15 @@ class CronJobWorker(private val context: Context, workerParams: WorkerParameters
 
                        if (receipt.success) {
                            Timber.d("Process Success".uppercase())
-                           autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
-                           mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
+                           //autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                           //mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
 
                            return@runBlocking Result.success()
 
                        } else {
                            Timber.d("Process FAILED".uppercase())
-                           autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
-                           mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
+                           //autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                           //mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
 
                            return@runBlocking Result.failure()
                        }
