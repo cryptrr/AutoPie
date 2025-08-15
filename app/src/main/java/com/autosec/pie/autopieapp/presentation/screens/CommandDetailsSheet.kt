@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.DirectCommandActivity
+import com.autosec.pie.OutputViewerActivity
 import com.autosec.pie.R
 import com.autosec.pie.autopieapp.data.ShareInputs
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
@@ -72,7 +74,7 @@ fun CommandDetailsSheet(
                 .setIcon(Icon.createWithResource(context, R.mipmap.ic_launcher))
                 .setIntent(
                     Intent(Intent.ACTION_MAIN).apply {
-                        setClassName(context, BuildConfig.APPLICATION_ID + ".DirectCommandActivity")
+                        setClass(context, DirectCommandActivity::class.java)
                         putExtra("commandId", commandId)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
