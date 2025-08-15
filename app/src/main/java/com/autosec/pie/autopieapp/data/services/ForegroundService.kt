@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.autosec.pie.R
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
@@ -97,19 +98,6 @@ class ForegroundService : Service() {
                         }
                     }
 
-//                    is ViewModelEvent.CancelProcess -> {
-//                        if(processIds.contains(it.processId)){
-//                            Timber.d("Canceling process ${it.processId}")
-//                            try {
-//
-//                                //currentJob?.cancel()
-//                            }catch (e: Exception){
-//                                Timber.e(e)
-//                            }
-//                        }else{
-//                            Timber.d("Process Ids not same.")
-//                        }
-//                    }
                     is ViewModelEvent.StopAutoPie -> {
                         Timber.d("Stopping the current AutoPie instance")
 
@@ -121,9 +109,6 @@ class ForegroundService : Service() {
                     is ViewModelEvent.CommandStarted -> {
                         Timber.d("Event: Command has started for processId: ${it.processId} with log at ${it.logFile}")
 
-//                        autoPieNotification.sendBroadcastNotification(
-//                            it.command.name, "", it.command, it.processId, log = it.logFile,
-//                        )
 
                         autoPieNotification.sendBroadcastNotification(
                             it.command.name, it.input, it.command, it.processId,
@@ -218,7 +203,7 @@ class ForegroundService : Service() {
 
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
-                        //TODO: Change processId to real and don't clear notif
+
                         autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , logsFile.absolutePath)
 
                     }.collect{ receipt ->
@@ -226,7 +211,6 @@ class ForegroundService : Service() {
                             Timber.d("Process Success".uppercase())
                             autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
-
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
@@ -237,6 +221,7 @@ class ForegroundService : Service() {
 
                 }catch (e: Exception){
                     Timber.e(e)
+                    //TODO: Could change the !! operator
                     autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath)
                     mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))
                     onDestroy()

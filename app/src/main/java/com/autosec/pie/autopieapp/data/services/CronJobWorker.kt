@@ -24,7 +24,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 
-class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+class CronJobWorker(private val context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
 
     private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
@@ -42,9 +42,13 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
 
         lateinit var command : CommandModel
 
+        var logsFile : File? = null
+
+        var processId: Int? = null
+
         try {
             inputData.let {
-                val processId = (100000..999999).random()
+                processId = (100000..999999).random()
 
                 processIds = processIds + processId
 
@@ -63,17 +67,22 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
 
                    command = useCases.getCommandDetails(commandKey)
 
+                   logsFile = File(context.cacheDir, "${processId}.log")
+
                    useCases.runStandaloneCommand(command, emptyList(), processId).first().let { receipt ->
 
                        if (receipt.success) {
                            Timber.d("Process Success".uppercase())
-                           //autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}", logContents = receipt.output)
+                           autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                           mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
 
                            return@runBlocking Result.success()
 
                        } else {
                            Timber.d("Process FAILED".uppercase())
-                           //autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}", logContents = receipt.output)
+                           autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                           mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
+
                            return@runBlocking Result.failure()
                        }
 
@@ -84,7 +93,9 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
 
         }catch (e: Exception){
             Timber.e(e)
-            autoPieNotification.sendNotification("Command Failed", command.name ,null,e.toString())
+            autoPieNotification.sendNotification("Command Failed", command.name ,null, logsFile!!.absolutePath)
+            mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId!!, command, logsFile.absolutePath))
+
             return Result.failure()
 
         }
@@ -92,45 +103,4 @@ class CronJobWorker(context: Context, workerParams: WorkerParameters) : Worker(c
         return Result.failure()
     }
 
-
-
-     fun doWork2(): Result {
-        Timber.d("Cron job fired for ${inputData.getString("command")}")
-        try {
-
-            val commandString = inputData.getString("command")
-
-            val command: CronCommandModel = Gson().fromJson(commandString, CronCommandModel::class.java)
-
-            var finalCommand = command.command
-
-            val execFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + command.exec
-
-            val fullExecPath = when{
-                File(command.exec).isAbsolute -> {
-                    command.exec
-                }
-                File(execFilePath).exists() -> {
-                    //For packages installed inside autosec/bin
-                    execFilePath
-                }
-                else -> {
-                    //Base case fallback to terminal installed packages such as busybox packages.
-                    command.exec
-                }
-            }
-            val usePython = !Utils.isShellScript(File(fullExecPath))
-
-
-            processManagerService.runCommandWithEnv(
-                command, fullExecPath, finalCommand, command.path,
-                emptyList(), usePython
-            )
-
-            return Result.success()
-        } catch (e: Exception) {
-            return Result.failure()
-        }
-
-    }
 }

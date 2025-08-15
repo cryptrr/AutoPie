@@ -63,7 +63,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, JobType.STANDALONE, usePython, isShellScript)
 
             val jobKey = commandExtraInputs.filter { !(it.name.contains("PASSWORD") || it.name.contains("PASSWD")) }.map{it.value}.joinToString(" : ")
 

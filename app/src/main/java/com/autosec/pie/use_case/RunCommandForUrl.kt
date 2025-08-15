@@ -71,7 +71,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             Timber.d("Command to run: ${item.exec} ${resultCommand}")
 
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path ,inputParsedData,commandExtraInputs,currentLink,processId, usePython, isShellScript)
+            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path ,inputParsedData,commandExtraInputs,currentLink,processId, JobType.URL,usePython, isShellScript)
 
             val result = processResult.toCommandResult(JobType.URL, currentLink)
 
