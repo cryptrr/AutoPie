@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.ShareInputs
@@ -49,6 +50,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import com.autosec.pie.utils.getActivity
 import org.koin.androidx.compose.koinViewModel
+import java.io.File
 
 
 class DirectCommandActivity : ComponentActivity() {
@@ -84,7 +86,7 @@ class DirectCommandActivity : ComponentActivity() {
 
 
 
-            val activity = LocalContext.current.getActivity()
+            //val activity = LocalContext.current.getActivity()
 
             val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
@@ -95,38 +97,63 @@ class DirectCommandActivity : ComponentActivity() {
                     when(it){
                         //For asynchronous requests
                         is ViewModelEvent.CommandStarted -> {
-                            if(callerType == "EXTERNAL_APP" && isAsync){
-                                delay(900)
-                                val result = Intent().apply {
-                                    putExtra("status", "running")
-                                    putExtra("processId", it.processId)
-                                    putExtra("logFile", it.logFile)
+
+                            try {
+                                val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
+                                    File(it.logFile)
+                                )
+
+                                if(callerType == "EXTERNAL_APP" && isAsync){
+                                    delay(900)
+                                    val result = Intent().apply {
+                                        putExtra("status", "running")
+                                        putExtra("processId", it.processId)
+                                        putExtra("logFile", uri.toString())
+                                    }
+                                    setResult(RESULT_OK, result)
+                                    finish()
+                                    shareReceiverViewModel.currentExtrasDetails.value = null
                                 }
-                                setResult(RESULT_OK, result)
-                                finish()
-                                shareReceiverViewModel.currentExtrasDetails.value = null
+                            }catch (e: Exception){
+                                Timber.e(e)
                             }
                         }
 
                         //For synchronous requests
                         is ViewModelEvent.CommandCompleted -> {
-                            val result = Intent().apply {
-                                putExtra("status", "ok")
-                                putExtra("processId", it.processId)
-                                putExtra("logFile", it.logFile)
+                            try {
+                                val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
+                                    File(it.logFile)
+                                )
+
+                                val result = Intent().apply {
+                                    putExtra("status", "ok")
+                                    putExtra("processId", it.processId)
+                                    putExtra("logFile", uri.toString())
+                                }
+                                setResult(RESULT_OK, result)
+                                finish()
+                            }catch (e: Exception){
+                                Timber.e(e)
                             }
-                            setResult(RESULT_OK, result)
-                            finish()
                         }
 
                         is ViewModelEvent.CommandFailed -> {
-                            val result = Intent().apply {
-                                putExtra("status", "failed")
-                                putExtra("processId", it.processId)
-                                putExtra("logFile", it.logFile)
+                            try {
+                                val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
+                                    File(it.logFile)
+                                )
+
+                                val result = Intent().apply {
+                                    putExtra("status", "failed")
+                                    putExtra("processId", it.processId)
+                                    putExtra("logFile", uri.toString())
+                                }
+                                setResult(RESULT_OK, result)
+                                finish()
+                            }catch (e: Exception){
+                                Timber.e(e)
                             }
-                            setResult(RESULT_OK, result)
-                            finish()
                         }
 
                         else -> {}
@@ -141,7 +168,7 @@ class DirectCommandActivity : ComponentActivity() {
                     delay(100L)
                     if(commandId != null){
                         Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input,callerType, activity)
+                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input,callerType, this@DirectCommandActivity)
                     }
                 }
 
