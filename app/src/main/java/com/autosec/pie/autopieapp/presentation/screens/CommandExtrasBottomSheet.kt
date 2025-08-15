@@ -386,9 +386,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         }
 
                         isLoading = true
-                        val processId = (100000..999999).random()
-                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
 
+                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
 
                         //Don't close the activity if intent is started with async false.
                         //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity
