@@ -377,8 +377,10 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
 
             shell.shutdown()
-            shells.remove(processId)
 
+            closeLog(logWriter)
+
+            shells.remove(processId)
 
             return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
 
