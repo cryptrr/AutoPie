@@ -44,7 +44,7 @@
             android:name=".ShareReceiverActivity"
             android:excludeFromRecents="true"
             android:label="Automate With"
-            android:noHistory="true"
+            android:noHistory="false"
             android:exported="true"
             android:background= "#00ffffff"
             android:theme="@style/ShareTheme"
