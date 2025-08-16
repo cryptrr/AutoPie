@@ -47,6 +47,8 @@
             android:noHistory="false"
             android:exported="true"
             android:background= "#00ffffff"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.share"
             android:theme="@style/ShareTheme"
             >
 
