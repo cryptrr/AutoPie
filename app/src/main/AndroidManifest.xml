@@ -119,7 +119,7 @@
             android:exported="true"
             android:theme="@style/ShareTheme"
             android:launchMode="singleTask"
-            android:taskAffinity="${applicationId}.direct"
+            android:taskAffinity="${applicationId}.output"
             >
         </activity>
         <service
