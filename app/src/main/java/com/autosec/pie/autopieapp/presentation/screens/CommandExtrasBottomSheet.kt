@@ -264,14 +264,14 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
                                     if(extra.name.endsWith("FILES")){
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            MultiFilePicker(useRelativePaths = false){
+                                            MultiFilePicker(useRelativePaths = true){
                                                 textValue.value = it.joinToString(",")
                                             }
                                         }
                                     }
                                     else if(extra.name.endsWith("FILE")){
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            SingleFilePicker(useRelativePaths = false){
+                                            SingleFilePicker(useRelativePaths = true){
                                                 textValue.value = it
                                             }
                                         }
