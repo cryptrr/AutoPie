@@ -6,6 +6,11 @@
 
 [Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
 
+## Troubleshooting
+* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. And a `bin` folder with the binaries like `ffmpeg`. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application. The app will prompt you to reinstall packages.
+
+
+
 
 <div style="display:flex;flex-direction:row;justify-content:space-between">
 <img src="https://github.com/user-attachments/assets/ff9d86db-fc71-45e6-bbe6-9891ab5af35c" alt="AutoPie screenshot" width="47%" height="auto">
@@ -14,6 +19,7 @@
 
 [<video src="https://cryptrr.github.io/AutoPie/fastlane/metadata/android/en-US/autopie-feature-demo1.mp4" width="47%" height="auto"></video>
 ](https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb)
+
 
 
 ## Installation
@@ -37,10 +43,6 @@
 - Pip should already be installed in the AutoPie environment. Otherwise, Run `python3.10 -m ensurepip`
 - Run `pip3 install package`
 
-
-
-## Troubleshooting
-* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. And a `bin` folder with the binaries like `ffmpeg`.
 
 ## Command Format
 
