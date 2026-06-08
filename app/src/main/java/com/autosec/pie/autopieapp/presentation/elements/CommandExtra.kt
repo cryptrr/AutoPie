@@ -138,13 +138,17 @@ fun CommandExtraInputElement(
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
-    val options = listOf("STRING", "SELECTABLE", "BOOLEAN")
+    val options = listOf("STRING", "SELECTABLE", "BOOLEAN","SLIDER")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
     var selectedOptionForBoolean =
         rememberSaveable { mutableStateOf(command.defaultBoolean.toString()) }
     val booleanOptions = listOf("TRUE", "FALSE")
+
+    val sliderOptions = rememberSaveable {
+        mutableStateOf(command.default)
+    }
 
 
     LaunchedEffect(
@@ -163,7 +167,10 @@ fun CommandExtraInputElement(
             id = command.id,
             name = name.value,
             type = selectedCommandType.value,
-            default = if(command.type == "SELECTABLE") (selectableOptions.value.split(",").firstOrNull() ?: "") else default.value,
+            default = when{
+                command.type == "SELECTABLE" -> selectableOptions.value.split(",").firstOrNull() ?: ""
+                else -> default.value
+            },
             description = description.value,
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = selectableOptions.value.split(","),
@@ -301,6 +308,26 @@ fun CommandExtraInputElement(
                     placeholder = "OPTIONS",
                     subtitle = "Options for this field. Separate options with commas. First Option will be considered default.",
                     isError = selectableOptions.value.isBlank()
+                )
+                GenericTextFormField(
+                    text = description,
+                    "",
+                    placeholder = "DESCRIPTION",
+                    singleLine = false,
+                )
+            }
+            "SLIDER" -> {
+                GenericTextFormField(
+                    text = name,
+                    "",
+                    placeholder = "NAME",
+                )
+                GenericTextFormField(
+                    text = default,
+                    "",
+                    placeholder = "OPTIONS",
+                    subtitle = "Options for this field. Separate options with commas (FROM,DEFAULT,TO)",
+                    isError = default.value.isBlank()
                 )
                 GenericTextFormField(
                     text = description,

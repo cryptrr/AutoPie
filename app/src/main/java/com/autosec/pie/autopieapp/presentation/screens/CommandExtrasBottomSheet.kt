@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +66,7 @@ import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
 import com.autosec.pie.autopieapp.presentation.elements.PasswordFormField
 import com.autosec.pie.autopieapp.presentation.elements.SingleFilePicker
+import com.autosec.pie.autopieapp.presentation.elements.SliderSelector
 import com.autosec.pie.utils.getActivity
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -71,6 +74,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -360,6 +364,56 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     expanded = expanded
                                 )
                             }
+                        }
+                        "SLIDER" -> {
+
+                            val defaultValue = remember { extra.default.split(",").elementAtOrNull(1)?.toFloatOrNull() ?: 57F }
+                            val startValue = remember {extra.default.split(",").elementAtOrNull(0)?.toFloatOrNull() ?: 0F}
+                            val endValue = remember { extra.default.split(",").elementAtOrNull(2)?.toFloatOrNull() ?: 100F }
+
+                            //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
+
+
+                            val sliderState = remember {
+                                SliderState(
+                                    value = defaultValue
+                                    ,
+                                    valueRange = startValue..endValue,
+                                    steps = (endValue - startValue).toInt() - 1
+                                )
+                            }
+
+                            LaunchedEffect(key1 = sliderState.value) {
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        sliderState.value.toString(),
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = extra.name,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if(extra.description.isNotEmpty()){
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+                                }
+                                Text(text = "VALUE: ${sliderState.value}", fontSize = 14.sp, fontWeight = FontWeight.Normal, fontStyle = FontStyle.Italic)
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                SliderSelector(sliderState)
+
+                            }
+
                         }
                     }
 
