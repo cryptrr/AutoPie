@@ -101,13 +101,14 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
 
     private fun initShell() {
+        Timber.d("Initializing Shell")
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         shell = Shell(
             shellPath,
         )
 
-        Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
+        Timber.d("DIRECTORY: . ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
 
 
         val setEnvResult =

@@ -142,10 +142,12 @@ class AutoPieCoreService {
 
         fun extractBootstrapArchive(context: Application) {
 
-            val distFolder = File(context.filesDir, "usr")
+            Timber.d("Starting extracting Bootstrap Archive")
+
+            val distFolder = File(context.filesDir, "usr/bin")
 
             if (distFolder.exists() && distFolder.isDirectory) {
-                Timber.d("usr folder exists")
+                Timber.d("usr/bin folder exists")
                 return
             }
 
