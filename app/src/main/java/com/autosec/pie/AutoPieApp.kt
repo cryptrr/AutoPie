@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.lifecycle.viewModelScope
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.autosec.pie.di.appModule
 import com.autosec.pie.di.useCaseModule
 import com.autosec.pie.logging.FileLoggingTree
@@ -18,6 +20,10 @@ import com.autosec.pie.autopieapp.data.services.FileObserverJobService
 import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
 import com.autosec.pie.autopieapp.data.services.ScreenStateReceiver
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.termux.app.TermuxApplication
+import com.termux.app.TermuxService
+import com.termux.shared.termux.settings.preferences.TermuxAppSharedPreferences
+import com.termux.shared.termux.settings.properties.TermuxAppSharedProperties
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -38,6 +44,11 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        TermuxAppSharedProperties.init(this@MyApplication)
+        TermuxService()
+        TermuxApplication()
+
+
         Timber.plant(FileLoggingTree(this@MyApplication))
         Timber.plant(Timber.DebugTree())
 
@@ -45,6 +56,12 @@ class MyApplication : Application() {
             androidContext(this@MyApplication)
             modules(appModule, useCaseModule)
         }
+
+        val config = Configuration.Builder()
+            .build()
+
+        WorkManager.initialize(this, config)
+
 
         initAutosec()
         AutoPieCoreService.extractRequiredFilesAndMakeExec(this@MyApplication)
