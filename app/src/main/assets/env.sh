@@ -18,5 +18,6 @@ export SSL_CERT_FILE="$CUSTOM_DIR/build/etc/ssl/cert.pem"
 export TERMINFO="$CUSTOM_DIR/build/usr/share/terminfo"
 
 export HOME="$CUSTOM_DIR"
+export PREFIX="$CUSTOM_DIR/usr"
 export PYTHONHOME="$CUSTOM_DIR/build"
 export PYTHONPATH="$CUSTOM_DIR/build/usr/lib/python3.10:$CUSTOM_DIR/build/usr/lib/python3.10/site-packages:$CUSTOM_DIR/build/usr/lib/python3.10/lib-dynload"
