@@ -61,11 +61,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_20
-        targetCompatibility = JavaVersion.VERSION_20
+        isCoreLibraryDesugaringEnabled = true
+
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "20"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -82,6 +84,10 @@ android {
             excludes +="META-INF/LGPL2.1"
         }
     }
+}
+
+configurations.all {
+    exclude(group = "com.google.guava", module = "listenablefuture")
 }
 
 dependencies {
@@ -120,6 +126,14 @@ dependencies {
     implementation(libs.constraintlayout.compose)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+    implementation(project(":termux-app"))
+    implementation(project(":termux-shared"))
+    implementation(project(":terminal-view"))
+    implementation(project(":terminal-emulator"))
+
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
 
     //TEST IMPLS
     implementation("androidx.compose.ui:ui-tooling:1.8.3")
