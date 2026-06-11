@@ -142,30 +142,24 @@ class AutoPieCoreService {
 
         fun extractBootstrapArchive(context: Application) {
 
-            Timber.d("Starting extracting Bootstrap Archive")
-
-            val distFolder = File(context.filesDir, "usr/bin")
+            val distFolder = File(context.filesDir, "build")
 
             if (distFolder.exists() && distFolder.isDirectory) {
-                Timber.d("usr/bin folder exists")
+                Timber.d("Dist folder exists")
                 return
             }
-
-            val destinationPath = context.filesDir
 
             CoroutineScope(dispatchers.io).launch {
 
                 Timber.d("Starting extracting filesystem")
 
-                val assetFilename = "bootstrap-aarch64.tar.xz"
+
+                val assetFilename = "build-aarch64-api27.tar.xz"
+
+
+                val destinationPath = context.filesDir
 
                 var tarInputStream: TarArchiveInputStream? = null
-
-                val symlinks = mutableListOf<Pair<String?, String?>>()
-
-                val TERMUX_STAGING_PREFIX_DIR = File(application.filesDir, "usr-staging"); // Default: "/data/data/com.termux/files/usr-staging"
-                val TERMUX_PREFIX_DIR = File(application.filesDir , "usr"); // Default: "/data/data/com.termux/files/usr"
-
 
                 try {
                     // Open the asset file as an InputStream
@@ -183,56 +177,21 @@ class AutoPieCoreService {
                     }
 
                     while (entry != null) {
-                        //Timber.d("Entry: ${entry.name}")
-                        if (entry.name == "usr/SYMLINKS.txt") {
-                            Timber.d("Creating symlinks")
-                            val symlinksReader = BufferedReader(InputStreamReader(tarInputStream))
-                            var line: String?
-                            while ((symlinksReader.readLine().also { line = it }) != null) {
-                                val parts: Array<String?> =
-                                    line!!.split("←".toRegex()).dropLastWhile { it.isEmpty() }
-                                        .toTypedArray()
-                                if (parts.size != 2) throw RuntimeException("Malformed symlink line: " + line)
-                                val oldPath = parts[0]
-
-                                //Normalize the file paths. Need to strip the prefix of "./"
-                                val normalizedRelativePath = File(parts[1] ?: "").normalize().path
-                                val newPath = File(TERMUX_PREFIX_DIR, normalizedRelativePath).absolutePath
-                                symlinks.add(Pair(oldPath, newPath))
-
-                            }
-
-                            entry = tarInputStream.nextTarEntry
+                        val file = File(destinationPath, entry.name)
+                        if (entry.isDirectory) {
+                            file.mkdirs()
                         } else {
-                            val file = File(destinationPath, entry.name)
-                            if (entry.isDirectory) {
-                                file.mkdirs()
-                            } else {
-                                file.parentFile?.mkdirs()
-                                val outputStream = FileOutputStream(file)
-                                tarInputStream.copyTo(outputStream)
-                                outputStream.close()
-                            }
-                            entry = tarInputStream.nextTarEntry
+                            file.parentFile?.mkdirs()
+                            val outputStream = FileOutputStream(file)
+                            tarInputStream.copyTo(outputStream)
+                            outputStream.close()
                         }
-
+                        entry = tarInputStream.nextTarEntry
                     }
-
-                    if (symlinks.isEmpty()) throw java.lang.RuntimeException("No SYMLINKS.txt encountered")
-                    for (symlink in symlinks) {
-                        Timber.d("Applying symlink - ${symlink.first} -> ${symlink.second}")
-                        Os.symlink(symlink.first, symlink.second)
-                    }
-
-//                    if (!TERMUX_STAGING_PREFIX_DIR.renameTo(TERMUX_PREFIX_DIR)) {
-//                        throw RuntimeException("Moving autopie prefix staging to prefix directory failed");
-//                    }
 
                     //Make sure the binary folder files are executable. Found it necessary for some busybox binaries.
 
-                    processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "bin"))
-                    processManagerService.makeBinariesExecutableInFolder(File(TERMUX_PREFIX_DIR, "libexec"))
-                    processManagerService.linkBusyboxAr()
+                    processManagerService.makeBinariesFolderExecutable()
 
                     CoroutineScope(dispatchers.main).launch {
                         mainViewModel.dispatchEvent(ViewModelEvent.InstalledPythonSuccessfully)
@@ -240,7 +199,7 @@ class AutoPieCoreService {
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
                     }
 
-                    installExtraPackages()
+                    installOtherPackages()
 
                 } catch (e: IOException) {
                     Timber.e(e)
@@ -248,7 +207,7 @@ class AutoPieCoreService {
                     CoroutineScope(dispatchers.main).launch {
                         Toast.makeText(
                             application.applicationContext,
-                            "Error installing boostrap packages. Please Reinstall this app.",
+                            "Error installing python. Please Reinstall this app.",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -400,8 +359,8 @@ class AutoPieCoreService {
             }
         }
 
-
-        fun installExtraPackages() {
+        //TODO: Newer version is in previous commit.
+        fun installOtherPackages() {
 
             CoroutineScope(dispatchers.io).launch {
 

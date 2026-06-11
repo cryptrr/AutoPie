@@ -684,6 +684,23 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     }
 
+    fun makeBinariesFolderExecutable() {
+
+        Timber.d("Making python binary files executable")
+
+        val shellPath = File(activity.filesDir, "sh").absolutePath
+
+        val binLocation = File(activity.filesDir, "build/usr/bin")
+
+        val shell = Shell(
+            shellPath,
+        )
+
+        shell.run("chmod +x ${binLocation.absolutePath}/*")
+
+
+    }
+
     fun writeLogLine(writer: BufferedWriter, line: String) {
         writer.appendLine(line)
         writer.flush() // flush immediately for streaming
