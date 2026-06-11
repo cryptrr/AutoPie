@@ -73,7 +73,7 @@ class AutoPieCoreService {
         fun extractRequiredFilesAndMakeExec(context: Application) {
 
 
-            val binaries = if(isPrimaryUser(context)) listOf("env.sh", "busybox") else listOf("env.sh", "busybox")
+            val binaries = if(isPrimaryUser(context)) listOf("env.sh", "busybox", "env-shell.sh") else listOf("env.sh", "busybox","env-shell.sh")
 
             CoroutineScope(dispatchers.io).launch {
 
