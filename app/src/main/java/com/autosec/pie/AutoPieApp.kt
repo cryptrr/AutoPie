@@ -68,7 +68,7 @@ class MyApplication : Application() {
         initAutosec()
         AutoPieCoreService.extractRequiredFilesAndMakeExec(this@MyApplication)
         if(!AutoPieCoreService.isPrimaryUser(this)){
-            AutoPieCoreService.extractBootstrapArchive(this@MyApplication)
+            //AutoPieCoreService.extractBootstrapArchive(this@MyApplication)
         }
         mainViewModel.viewModelScope.launch {
             scheduleJob()
