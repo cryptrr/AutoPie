@@ -6,7 +6,7 @@ import java.io.File
 class GetInstalledPackages(){
     operator fun invoke(appFilesDir: File) : List<File> {
 
-        val binLocation = File(appFilesDir, "build/bin").listFiles()
+        val binLocation = File(appFilesDir, "usr/bin").listFiles()
         val usrBinLocation = File(appFilesDir, "build/usr/bin")
         val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 

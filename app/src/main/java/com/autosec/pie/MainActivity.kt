@@ -1,5 +1,6 @@
 package com.autosec.pie
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -50,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,6 +80,7 @@ import com.autosec.pie.autopieapp.presentation.screens.CommandHistorySheet
 import com.autosec.pie.ui.theme.AutoPieTheme
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.termux.app.TermuxActivity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -109,6 +112,7 @@ class MainActivity : ComponentActivity() {
             val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
             val autoPieStates = rememberAutoPieStates()
+            val context = LocalContext.current
 
 
             AutoPieTheme {
@@ -282,7 +286,13 @@ class MainActivity : ComponentActivity() {
                                     1 -> {
                                         FloatingActionButton(
                                             onClick = {
-                                                autoPieStates.installNewPackageBottomSheetOpen.value = true
+                                                try {
+                                                    val intent = Intent(context, TermuxActivity::class.java)
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+
                                             },
                                             containerColor = MaterialTheme.colorScheme.primary
 
