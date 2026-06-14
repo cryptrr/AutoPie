@@ -34,7 +34,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var shells = HashMap<Int, Shell>()
 
-    private val SHELL_PATH = if(AutoPieCoreService.isPrimaryUser(activity) && activity.packageName == "com.autosec.pie") "usr/bin/bash" else "sh"
+    private val SHELL_PATH = "usr/bin/bash"
 
     var processIds : List<Int> = emptyList()
     var successProcessIds : List<Int> = emptyList()
@@ -431,16 +431,17 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             val fullCommand = when {
                 usePython -> "python $exec $command"
-                isShellScript -> "sh $exec $command"
+                isShellScript -> "bash $exec $command"
                 else -> "$exec $command"
             }
 
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
             scriptFile.writeText("set -x\n")
-            scriptFile.appendText("\n")
+            //TODO: Do this on condition.
+            scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             scriptFile.appendText(fullCommand)
 
-            Timber.d("Script file written ${scriptFile.absolutePath}}")
+            Timber.d("Script file written ${scriptFile.absolutePath}} with content\n ${scriptFile.readText()}")
 
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
@@ -466,7 +467,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d("Env dump: ${shell.environment}")
 
 
-            val result = shell.run("sh ${scriptFile.absolutePath}")
+            val result = shell.run("bash ${scriptFile.absolutePath}")
 
             Timber.d("Exit Code ${result.exitCode}")
 

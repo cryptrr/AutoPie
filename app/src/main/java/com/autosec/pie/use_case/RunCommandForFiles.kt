@@ -34,7 +34,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
         return flow{
             val currentItems = fileUris
 
-            if (item.command.contains("{INPUT_FILES}")) {
+            if (item.command.contains("INPUT_FILES")) {
 
                 Timber.d("Multiple Input files detected")
 
@@ -72,18 +72,21 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
-                val inputFiles = if(usePython){
-                    currentItems.joinToString(" "){"'${it}'"}.replace("''","'").replace("'", "\'")
-                }else{
-                    currentItems.joinToString(" ")
-                }
+//                val inputFiles = if(usePython){
+//                    currentItems.joinToString(" "){"'${it}'"}.replace("''","'").replace("'", "\'")
+//                }else{
+//                    currentItems.joinToString(" ")
+//                }
+
+                val inputFiles = currentItems.joinToString("\n")
 
                 val parsedPath = Path(currentItems.firstOrNull() ?: "")
 
+                Timber.d("Input Files: $inputFiles")
                 Timber.d("Parsed Path: ${parsedPath.absolutePathString()}")
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
-                    it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
+                    it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
                     it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
