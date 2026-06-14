@@ -326,7 +326,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
     }
 
 
-    fun runCommandForShareWithEnv2(
+    fun runCommandForShareWithEnv2a(
         commandObject: CommandInterface,
         exec: String,
         command: String,
@@ -380,6 +380,93 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d("Exit Code ${result.exitCode}")
 
             val checkPwd = shell.run("pwd")
+
+
+            val output = result.output()
+
+            Timber.d(output)
+
+            Timber.d("Command Run: ${result.details.command}")
+
+
+            shell.shutdown()
+
+            closeLog(logWriter)
+
+            shells.remove(processId)
+
+            return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
+
+
+        }
+        catch (e: Exception) {
+            Timber.e(e.toString())
+            throw e
+        }
+    }
+
+    fun runCommandForShareWithEnv2(
+        commandObject: CommandInterface,
+        exec: String,
+        command: String,
+        cwd: String,
+        inputParsedData: List<InputParsedData> = emptyList(),
+        commandExtraInputs: List<CommandExtraInput>,
+        rawInput: String,
+        processId: Int,
+        jobType: JobType,
+        usePython: Boolean = true,
+        isShellScript: Boolean = false
+    ): ProcessResult {
+
+        try {
+
+            val logFile = File(activity.cacheDir, "${processId}.log")
+            logFile.createNewFile()
+
+            val logWriter = BufferedWriter(FileWriter(logFile, true))
+            Timber.d("Logs written to ${logFile.absolutePath}")
+
+            val fullCommand = when {
+                usePython -> "python $exec $command"
+                isShellScript -> "sh $exec $command"
+                else -> "$exec $command"
+            }
+
+            val scriptFile = File(activity.cacheDir, "${processId}.sh")
+            scriptFile.writeText("set -x\n")
+            scriptFile.appendText("\n")
+            scriptFile.appendText(fullCommand)
+
+            Timber.d("Script file written ${scriptFile.absolutePath}}")
+
+
+            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
+
+            checkForUnsafeCommands(commandObject, command)
+
+            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
+
+            Timber.d("Received processId in Command Start: $processId")
+            shells.set(processId, shell)
+
+            val cwdSuccess = shell.run("cd ${cwd}")
+
+            if(!cwdSuccess.isSuccess){
+                Timber.e("CWD unsuccessful ${cwdSuccess.output}")
+            }else{
+                Timber.d("current working directory is $cwd")
+            }
+
+
+            Timber.d("FULL COMMAND: $fullCommand")
+
+            Timber.d("Env dump: ${shell.environment}")
+
+
+            val result = shell.run("sh ${scriptFile.absolutePath}")
+
+            Timber.d("Exit Code ${result.exitCode}")
 
 
             val output = result.output()
