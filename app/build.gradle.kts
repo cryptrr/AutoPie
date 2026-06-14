@@ -45,6 +45,7 @@ android {
             versionNameSuffix = ".debug"
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher_debug"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_debug_round"
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             manifestPlaceholders += mapOf()

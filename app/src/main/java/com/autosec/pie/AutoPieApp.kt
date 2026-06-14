@@ -62,7 +62,7 @@ class MyApplication : Application() {
         val config = Configuration.Builder()
             .build()
 
-        WorkManager.initialize(this, config)
+        //WorkManager.initialize(this, config)
 
 
         initAutosec()

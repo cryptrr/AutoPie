@@ -3,14 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
-    <application android:name="com.autosec.pie.MyApplication">
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            tools:node="remove" />
-        <provider
-            android:name="com.termux.filepicker.TermuxDocumentsProvider"
-            tools:node="remove" />
-    </application>
+
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -37,6 +30,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AutoPieTheme" tools:targetApi="28">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+<!--        <provider-->
+<!--            android:name="androidx.startup.InitializationProvider"-->
+<!--            android:authorities="com.termux..androidx-startup"-->
+<!--            tools:node="remove" />-->
+
+        <provider
+            android:name="com.termux.app.TermuxOpenReceiver$ContentProvider"
+            android:authorities="com.termux.files"
+            tools:node="remove" />
+
+        <provider
+            android:name="com.termux.filepicker.TermuxDocumentsProvider"
+            android:authorities="com.termux.files"
+            tools:node="remove" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
