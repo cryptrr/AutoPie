@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -157,8 +158,11 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 singleLine = false,
                 modifier = Modifier
                 //.height(100.dp)
-                //.wrapContentHeight()
+                //.wrapContentHeight(),
+                ,
+                subtitle = "Bash shell scripting syntax is supported."
             )
+
 
             if(viewModel.selectedCommandType == "FILE_OBSERVER"){
                 Spacer(modifier = Modifier.height(20.dp))
@@ -199,34 +203,58 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 }
             }
 
-        }
-
-
-        Row {
-            Button(
+            OutlinedButton(
                 modifier = Modifier
                     .padding(vertical = 15.dp)
                     .height(52.dp)
-                    .width(75.dp),
-                enabled = viewModel.isValidCommand,
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(20),
-                contentPadding = PaddingValues(vertical = 10.dp),
+                //contentPadding = PaddingValues(vertical = 20.dp),
+                enabled = viewModel.isValidCommand,
                 onClick = {
                     addExtra()
                 },
 
                 ) {
-                Icon(
-                    modifier = Modifier
-
-                        .size(27.dp),
-                    imageVector = Icons.Default.AddCircle,
-                    contentDescription = "Extras",
+                Text(
+                    text = "ADD EXTRA",
+                    //modifier = Modifier.align(Alignment.Center),
+                    letterSpacing = 1.11.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
 
             }
 
-            Spacer(modifier = Modifier.width(11.dp))
+        }
+
+
+
+        Row {
+//            Button(
+//                modifier = Modifier
+//                    .padding(vertical = 15.dp)
+//                    .height(52.dp)
+//                    .width(75.dp),
+//                enabled = viewModel.isValidCommand,
+//                shape = RoundedCornerShape(20),
+//                contentPadding = PaddingValues(vertical = 10.dp),
+//                onClick = {
+//                    addExtra()
+//                },
+//
+//                ) {
+//                Icon(
+//                    modifier = Modifier
+//
+//                        .size(27.dp),
+//                    imageVector = Icons.Default.AddCircle,
+//                    contentDescription = "Extras",
+//                )
+//
+//            }
+//
+//            Spacer(modifier = Modifier.width(11.dp))
+
 
             Button(
                 modifier = Modifier
