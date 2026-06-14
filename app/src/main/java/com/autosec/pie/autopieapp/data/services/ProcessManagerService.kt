@@ -181,6 +181,8 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             envMap[inputData.name] = inputData.value
         }
 
+        Timber.d("INPUT_FILE DATA: ${envMap["INPUT_FILE"]}")
+
         //This is for when "Extra Inputs" are not passed in ie when the CommandExtrasBottomSheet is not opened or edited.
         if (commandExtraInputs.isEmpty()) {
             for (extra in commandObject.extras ?: emptyList()) {

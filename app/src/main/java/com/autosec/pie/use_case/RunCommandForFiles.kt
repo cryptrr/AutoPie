@@ -67,6 +67,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 }
 
                 val useQuotes = execType != ExecType.SHELL_INSTALLED
+                //val useQuotes = true
 
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath))
@@ -78,6 +79,8 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 }
 
                 val parsedPath = Path(currentItems.firstOrNull() ?: "")
+
+                Timber.d("Parsed Path: ${parsedPath.absolutePathString()}")
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "INPUT_FILES", value = "$inputFiles"))
@@ -140,6 +143,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     }
 
                     val useQuotes = execType != ExecType.SHELL_INSTALLED
+                    //val useQuotes = true
                     val isShellScript = Utils.isShellScript(File(fullExecPath))
                     val usePython = Utils.isZipFile(File(fullExecPath))
 

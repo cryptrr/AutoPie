@@ -64,6 +64,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
 
 
                 val useQuotes = execType != ExecType.SHELL_INSTALLED
+                //val useQuotes = true
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath))
 
