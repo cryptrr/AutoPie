@@ -12,6 +12,7 @@ import com.autosec.pie.autopieapp.data.CommandResult
 import com.autosec.pie.autopieapp.data.InputParsedData
 import com.autosec.pie.autopieapp.data.JobType
 import com.autosec.pie.autopieapp.data.ProcessResult
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
@@ -174,6 +175,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
         envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
         envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
+        envMap["COOKIE_JAR"] = System.getenv("COOKIE_JAR") ?: "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
 
 
 

@@ -42,28 +42,32 @@ class AutoPieCoreService {
 
         fun initAutosec() {
 
-            CoroutineScope(dispatchers.io).launch{
-                val autosecFolderExists = checkForAutoSecFolder()
-                val binFolderExists = checkForBinFolder()
+            try {
+                CoroutineScope(dispatchers.io).launch{
+                    val autosecFolderExists = checkForAutoSecFolder()
+                    val binFolderExists = checkForBinFolder()
 
-                if (mainViewModel.storageManagerPermissionGranted && !autosecFolderExists) {
-                    Timber.d("Autosec folder does not exist. Creating and copying files")
-                    createAutoSecFolder()
-                    createLogsFolder()
+                    if (mainViewModel.storageManagerPermissionGranted && !autosecFolderExists) {
+                        Timber.d("Autosec folder does not exist. Creating and copying files")
+                        createAutoSecFolder()
+                        createLogsFolder()
 
-                } else {
-                    Timber.d("Autosec folder exists. Doing nothing.")
+                    } else {
+                        Timber.d("Autosec folder exists. Doing nothing.")
+                    }
+
+                    if (mainViewModel.storageManagerPermissionGranted && !binFolderExists) {
+                        Timber.d("Starting fetching init files")
+                        //downloadAndExtractAutoSecInitArchive()
+
+                        mainViewModel.installInitPackagesPrompt = true
+
+                    } else {
+                        Timber.d("Bin folder exists. Doing nothing.")
+                    }
                 }
-
-                if (mainViewModel.storageManagerPermissionGranted && !binFolderExists) {
-                    Timber.d("Starting fetching init files")
-                    //downloadAndExtractAutoSecInitArchive()
-
-                    mainViewModel.installInitPackagesPrompt = true
-
-                } else {
-                    Timber.d("Bin folder exists. Doing nothing.")
-                }
+            }catch (e: Exception){
+                Timber.e(e)
             }
 
 
@@ -224,35 +228,53 @@ class AutoPieCoreService {
         }
 
         fun checkForAutoSecFolder(): Boolean {
-            val autoSecFolder =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+            try {
+                val autoSecFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
-            return autoSecFolder.exists()
+                return autoSecFolder.exists()
+            }catch (e: Exception){
+                Timber.e(e)
+                return false
+            }
         }
 
         fun checkForBinFolder(): Boolean {
-            val binFolder =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+            try {
+                val binFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
 
-            return binFolder.exists()
+                return binFolder.exists()
+            }catch (e: Exception){
+                Timber.e(e)
+                return false
+            }
         }
 
         fun createAutoSecFolder() {
-            Timber.d("Creating AutoSec Folder")
-            val autoSecFolder =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+            try {
+                Timber.d("Creating AutoSec Folder")
+                val autoSecFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
-            autoSecFolder.mkdir()
+                autoSecFolder.mkdir()
+            }catch (e: Exception){
+                Timber.e(e)
+            }
 
         }
 
         fun createLogsFolder() {
             Timber.d("Creating Logs Folder")
 
-            val logsFolder =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs")
+            try {
+                val logsFolder =
+                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs")
 
-            logsFolder.mkdir()
+                logsFolder.mkdir()
+            }catch (e: Exception){
+                Timber.e(e)
+            }
 
         }
 
@@ -299,38 +321,41 @@ class AutoPieCoreService {
 
             Timber.d("Downloading Init Archive")
 
-
             CoroutineScope(dispatchers.io).launch {
 
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+               try {
+                   val autoSecFolder =
+                       File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
 
-                val versionFile = File(autoSecFolder, "version.txt")
+                   val versionFile = File(autoSecFolder, "version.txt")
 
-                val versionText = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL.split("/").takeLast(2).joinToString("/")
+                   val versionText = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL.split("/").takeLast(2).joinToString("/")
 
-                val appDataFolder =
-                    File(application.filesDir.absolutePath)
+                   val appDataFolder =
+                       File(application.filesDir.absolutePath)
 
-                if (autoSecFolder.exists()) {
-                    mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
+                   if (autoSecFolder.exists()) {
+                       mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
 
-                    //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
-                    val isDownloaded = processManagerService.downloadFileWithWCurl(
-                        AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
-                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
-                    )
+                       //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
+                       val isDownloaded = processManagerService.downloadFileWithWCurl(
+                           AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
+                           Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
+                       )
 
-                    if (isDownloaded) {
-                        mainViewModel.showNotification(AppNotification.DownloadedInitPackages)
+                       if (isDownloaded) {
+                           mainViewModel.showNotification(AppNotification.DownloadedInitPackages)
 
-                        versionFile.writeText(versionText)
+                           versionFile.writeText(versionText)
 
-                        extractAutoSecFiles()
-                    }else{
-                        mainViewModel.showError(ViewModelError.ErrorDownloadingInitPackages)
-                    }
-                }
+                           extractAutoSecFiles()
+                       }else{
+                           mainViewModel.showError(ViewModelError.ErrorDownloadingInitPackages)
+                       }
+                   }
+               }catch (e: Exception){
+                   Timber.e(e)
+               }
             }
         }
 
@@ -364,16 +389,20 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
 
-                val distFolder = File(application.filesDir, "usr")
+                try {
+                    val distFolder = File(application.filesDir, "usr")
 
-                if (distFolder.exists()) {
+                    if (distFolder.exists()) {
 
-                   // processManagerService.installPip()
+                        // processManagerService.installPip()
 
-                    //Installing the forked version of httpx that supports --cookie-file
-                    //Both these calls are necessary
-                    processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
-                    processManagerService.pipInstallPackage("httpx[cli]")
+                        //Installing the forked version of httpx that supports --cookie-file
+                        //Both these calls are necessary
+                        processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
+                        processManagerService.pipInstallPackage("httpx[cli]")
+                    }
+                }catch (e: Exception){
+                    Timber.e(e,"installOtherPackages() failed")
                 }
             }
         }
@@ -387,12 +416,13 @@ class AutoPieCoreService {
             }
 
             CoroutineScope(dispatchers.io).launch {
-                val cookieFile =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/cookies.txt")
+                try {
+                    val cookieFile =
+                        File(application.filesDir.absolutePath + "/usr/var/lib/cookies.txt")
 
-                if(!cookieFile.exists()){
-                    cookieFile.createNewFile()
-                    val textToWrite = """
+                    if(!cookieFile.exists()){
+                        cookieFile.createNewFile()
+                        val textToWrite = """
                         # Netscape HTTP Cookie File
                         # Generated by Cyotek WebCopy v1.9.1.0 on 2023-03-13T10:13:33
                         # Edit at your own risk.
@@ -401,7 +431,10 @@ class AutoPieCoreService {
                         demo.cyotek.com	FALSE	/	FALSE	1678706015	CrawlDemo_Domain	delta
                     """.trimIndent()
 
-                    cookieFile.writeText(textToWrite)
+                        cookieFile.writeText(textToWrite)
+                    }
+                }catch (e: Exception){
+                    Timber.e(e)
                 }
             }
         }
