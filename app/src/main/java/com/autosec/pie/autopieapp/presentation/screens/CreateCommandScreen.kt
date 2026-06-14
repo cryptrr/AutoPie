@@ -199,14 +199,6 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 }
             }
 
-
-            GenericFormSwitch(
-                text = "Delete source file after completion",
-                switchState = viewModel.deleteSource,
-                modifier = Modifier.fillMaxWidth()
-                    .height(55.dp),
-                onChange = { viewModel.deleteSource.value = it }
-            )
         }
 
 

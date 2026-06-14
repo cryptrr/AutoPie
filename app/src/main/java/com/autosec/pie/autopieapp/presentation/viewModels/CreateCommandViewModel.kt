@@ -35,7 +35,6 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
     val selectors = mutableStateOf("")
     val cronInterval = mutableStateOf("")
     val directory = mutableStateOf("")
-    val deleteSource = mutableStateOf(false)
 
     var selectedICommandTypeIndex by mutableIntStateOf(0)
     val commandTypeOptions = listOf("Share", "Observer", "Cron")
@@ -57,7 +56,6 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     commandName = commandName.value,
                     directory = directory.value,
                     command = command.value,
-                    deleteSourceFile = deleteSource.value,
                     isValidCommand = isValidCommand,
                     exec = execFile.value,
                     commandExtras = commandExtras.value,
@@ -89,7 +87,6 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     commandName = "${command.name}:COPY",
                     directory = command.path,
                     command = command.command,
-                    deleteSourceFile = command.deleteSourceFile,
                     isValidCommand = true,
                     exec = command.exec,
                     commandExtras = command.extras ?: emptyList(),
@@ -139,7 +136,6 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
         commandName.value = ""
         selectors.value = ""
         directory.value = ""
-        deleteSource.value = false
         selectedICommandTypeIndex = 0
         selectedCommandType = "SHARE"
     }

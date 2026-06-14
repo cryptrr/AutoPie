@@ -38,7 +38,6 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
     val command = mutableStateOf("")
     val directory = mutableStateOf("")
     val type = mutableStateOf("")
-    val deleteSource = mutableStateOf(false)
 
     val isLoading = mutableStateOf(true)
 
@@ -74,7 +73,6 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
                     directory.value = commandModel.path
                     execFile.value = commandModel.exec
                     command.value = commandModel.command
-                    deleteSource.value = commandModel.deleteSourceFile == true
                     selectors.value = commandModel.selectors?.joinToString(",") ?: ""
                     cronInterval.value = commandModel.cronInterval ?: ""
 
@@ -98,7 +96,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
         viewModelScope.launch(dispatchers.io){
             try {
-                useCases.changeCommandDetails(key, commandExtras, oldCommandName, selectors, commandName, directory, execFile, command, deleteSource, type, cronInterval)
+                useCases.changeCommandDetails(key, commandExtras, oldCommandName, selectors, commandName, directory, execFile, command, type, cronInterval)
 
             }catch (e: ViewModelError){
                 main.showError(e)
@@ -153,7 +151,6 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
         commandName.value = ""
         selectors.value = ""
         directory.value = "${Environment.getExternalStorageDirectory().absolutePath}/"
-        deleteSource.value = false
         selectedCommandType = "SHARE"
     }
 }

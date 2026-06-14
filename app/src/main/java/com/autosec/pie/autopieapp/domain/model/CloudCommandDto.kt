@@ -26,7 +26,6 @@ data class CloudCommandModel(
     override val directory: String,
     override val command: String,
     override val packageUniqueName: String,
-    override val deleteSourceFile: Boolean? = false,
     override val description: String,
     val extrasRequired : Boolean? = false,
     override val extras: List<CloudCommandExtra>? = null
@@ -42,7 +41,6 @@ interface CloudCommandInterface {
     val command: String
     val description: String
     val packageUniqueName: String
-    val deleteSourceFile: Boolean?
     val extras: List<CloudCommandExtra>?
 }
 

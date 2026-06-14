@@ -10,7 +10,7 @@ import com.google.gson.JsonParser
 import timber.log.Timber
 
 class ChangeCommandDetails(private val jsonService: JsonService) {
-    suspend operator fun invoke(key: String, commandExtras: MutableState<List<CommandExtra>>, oldCommandName: MutableState<String>, selectors: MutableState<String>, commandName: MutableState<String>, directory: MutableState<String>, execFile: MutableState<String>, command: MutableState<String>, deleteSource: MutableState<Boolean>, type: MutableState<String>, cronInterval: MutableState<String>) {
+    suspend operator fun invoke(key: String, commandExtras: MutableState<List<CommandExtra>>, oldCommandName: MutableState<String>, selectors: MutableState<String>, commandName: MutableState<String>, directory: MutableState<String>, execFile: MutableState<String>, command: MutableState<String>, type: MutableState<String>, cronInterval: MutableState<String>) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
         //isLoading.value = true
@@ -73,7 +73,6 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
             commandObject.addProperty("path", directory.value)
             commandObject.addProperty("exec", execFile.value)
             commandObject.addProperty("command", command.value)
-            commandObject.addProperty("deleteSourceFile", deleteSource.value)
 
             when (type.value) {
                 "SHARE" -> {
@@ -122,7 +121,6 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
             commandObject.addProperty("path", directory.value)
             commandObject.addProperty("exec", execFile.value)
             commandObject.addProperty("command", command.value)
-            commandObject.addProperty("deleteSourceFile", deleteSource.value)
 
             when (type.value) {
                 "SHARE" -> {

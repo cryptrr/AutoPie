@@ -14,7 +14,6 @@ data class ShareItemModel(
     val path: String,
     val command: String,
     val exec: String,
-    val deleteSourceFile: Boolean? = false,
     val forUrl: Boolean? = true,
     val forSingleFile: Boolean? = true,
     val forMultipleFiles: Boolean? = true
@@ -26,7 +25,6 @@ data class CommandModel(
     override val path: String,
     override val command: String,
     override val exec: String,
-    override val deleteSourceFile: Boolean? = false,
     override val selectors: List<String>? = emptyList(),
     override val cronInterval: String? = "",
     override val extras: List<CommandExtra>? = null
@@ -38,7 +36,6 @@ data class CommandCreationModel(
     val directory: String,
     val command: String,
     val exec: String,
-    val deleteSourceFile: Boolean? = false,
     val cronInterval: String,
     val selectors: String,
     val isValidCommand: Boolean,
@@ -51,7 +48,6 @@ interface CommandInterface {
     val path: String
     val command: String
     val exec: String
-    val deleteSourceFile: Boolean?
     val selectors: List<String>?
     val cronInterval: String?
     val extras: List<CommandExtra>?

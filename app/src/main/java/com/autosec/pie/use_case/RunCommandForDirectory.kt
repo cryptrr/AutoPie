@@ -83,16 +83,6 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                     inputParsedData,commandExtraInputs,inputDir.absolutePath,processId,  JobType.DIRECTORY,usePython, isShellScript)
 
 
-                if (processResult.success) {
-
-                    if (item.deleteSourceFile == true) {
-                        processManagerService.deleteFile(path.absolutePath)
-                    }
-
-                } else {
-                    //autoPieNotification.sendNotification("Command Failed", "${item.name} $inputDir")
-                }
-
                 val result = processResult.toCommandResult(JobType.DIRECTORY, inputDir.path)
 
                 emit(result)

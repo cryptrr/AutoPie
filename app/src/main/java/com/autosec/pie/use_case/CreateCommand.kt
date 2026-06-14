@@ -29,7 +29,6 @@ class CreateCommand(private val jsonService: JsonService) {
         commandObject.addProperty("path", newCommand.directory)
         commandObject.addProperty("exec", newCommand.exec)
         commandObject.addProperty("command", newCommand.command)
-        commandObject.addProperty("deleteSourceFile", newCommand.deleteSourceFile)
 
         val selectorsJson = if(newCommand.selectors.isNotBlank()){
             val jsonArray = JsonArray()

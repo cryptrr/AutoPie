@@ -218,9 +218,6 @@ class FileObserverJobService : JobService() {
 
                             val result = useCases.runCommandForFiles(commandModel, null, listOf(fullFilepath), emptyList(), processId).first()
 
-                            if (commandModel.deleteSourceFile == true && result.success) {
-                                processManagerService.deleteFile(fullFilepath)
-                            }
                         } else {
                             Timber.d("File does not match selector")
                         }

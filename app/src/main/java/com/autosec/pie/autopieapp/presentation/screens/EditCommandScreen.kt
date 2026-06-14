@@ -315,18 +315,6 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-
-            GenericFormSwitch(
-                text = "Delete source file after completion",
-                switchState = viewModel.deleteSource,
-                modifier = Modifier.fillMaxWidth()
-                    .height(55.dp),
-                onChange = { viewModel.deleteSource.value = it }
-            )
-
-
         }
 
 
