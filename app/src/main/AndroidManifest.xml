@@ -136,6 +136,11 @@
             android:taskAffinity="${applicationId}.output"
             >
         </activity>
+        <activity android:name=".LoadingActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            />
         <service
             android:name=".autopieapp.data.services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />

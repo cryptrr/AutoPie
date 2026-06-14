@@ -83,6 +83,7 @@ import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import com.autosec.pie.utils.getActivity
 import org.koin.androidx.compose.koinViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 
 class ShareReceiverActivity : ComponentActivity() {
@@ -398,7 +399,9 @@ fun ShareCard(
                         shareReceiverViewModel.onCommandClick(card, fileUris, currentLink) {
                             shareReceiverViewModel.viewModelScope.launch {
                                 isLoading = true
-                                delay(900)
+                                //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
+                                val delayTime = if (card.exec.startsWith("am")) 2000.milliseconds else 900.milliseconds
+                                delay(delayTime)
                                 Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
                                 activity?.finish()
                             }
