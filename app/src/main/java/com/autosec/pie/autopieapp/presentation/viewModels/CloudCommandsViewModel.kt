@@ -1,108 +1,123 @@
 package com.autosec.pie.autopieapp.presentation.viewModels
 
+import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.autopieapp.data.AutoPieConstants
+import com.autosec.pie.autopieapp.data.CommandModel
 import com.autosec.pie.autopieapp.data.apiService.ApiService
+import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
+import com.autosec.pie.autopieapp.data.services.ProcessManagerService
+import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.domain.model.CloudCommandModel
 import com.autosec.pie.autopieapp.domain.model.CloudCommandsListDto
 import com.autosec.pie.core.Result
 import com.autosec.pie.core.asResult
 import com.autosec.pie.autopieapp.domain.model.GenericResponseDTO
+import com.autosec.pie.core.DispatcherProvider
+import com.autosec.pie.use_case.AutoPieUseCases
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
+import kotlin.getValue
 
-class CloudCommandsViewModel() : ViewModel(), KoinComponent {
+class CloudCommandsViewModel(private val application: Application) : ViewModel(), KoinComponent {
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+    private val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
+    val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
+    val processManagerService: ProcessManagerService by KoinJavaComponent.inject(
+        ProcessManagerService::class.java)
 
-    private val  _stateFlow = MutableStateFlow<Result<GenericResponseDTO<CloudCommandsListDto>>>(Result.None)
-    val stateFlow = _stateFlow.asSharedFlow()
-
-    var selectedCommand = mutableStateOf<CloudCommandModel?>(null)
-    var searchQuery = mutableStateOf<String>("")
-
-    val isLoading = mutableStateOf(true)
+    var fullListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
+    var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
+    var filteredListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
 
 
-    var cloudCommandsList by mutableStateOf<List<CloudCommandModel>>(emptyList())
-    var currentCursor by mutableStateOf("")
-    var hasNext by mutableStateOf(false)
+    var selectedICommandTypeIndex by  mutableIntStateOf(0)
+    val commandTypeOptions = listOf("All", "Share", "Observers")
 
-    val apiService by inject<ApiService>()
+    val selectedCommand = mutableStateOf<CloudCommandModel?>(null)
 
-    fun getCloudCommands() {
+    val searchCommandQuery = mutableStateOf("")
+    val isLoading = mutableStateOf(false)
+
+    init {
         viewModelScope.launch {
-            apiService.getCloudCommandsList().asResult().collectLatest {
-                _stateFlow.value = it
-                when(it){
-                    is Result.Success -> {
-                        cloudCommandsList = it.data.data.items
-                        currentCursor = it.data.data.cursor
-                        hasNext = it.data.data.hasNext
-
-                        Timber.d ("commands list size : ${it.data.data.items.size}" )
-
-                    }
-                    else -> {}
-                }
-            }
-
+            getCommandsList()
         }
     }
 
-    fun getMoreCloudCommands() {
-        Timber.d("Getting more blocked of user ")
-        currentCursor?.let{cursor ->
-            if(hasNext){
-                viewModelScope.launch {
-                    apiService.getMoreCloudCommandsList(cursor).asResult().collectLatest {
-                        when(it){
-                            is Result.Success -> {
-                                cloudCommandsList =  cloudCommandsList + it.data.data.items
-                                currentCursor = it.data.data.cursor
-                                hasNext = it.data.data.hasNext
-
-                                Timber.d ("Load more commands size : ${it.data.data.items.size}")
 
 
-                            }
-                            else -> {}
+    fun getCommandsList(){
+        isLoading.value = true
+        Timber.d("Getting Repo Commands List")
+
+        viewModelScope.launch(dispatchers.io){
+
+            delay(500L)
+
+            try {
+                useCases.getRepoCommandsList("${application.filesDir.absolutePath}/repolist.json").let { newCommands ->
+                    withContext(dispatchers.main){
+                        fullListOfCommands.update {
+                            newCommands.sortedBy { it.name }
                         }
-                    }
 
+                        filteredListOfCommands.update {
+                            newCommands.sortedBy { it.name }
+                        }
+
+                        if(searchCommandQuery.value.isNotEmpty()){
+                            searchInCommands(searchCommandQuery.value)
+                        }
+
+                        //mostUsedPackages.update { getFrequentPackages(fullListOfCommands.value) }
+                        //setFrequentPackages(fullListOfCommands.value)
+
+
+                        isLoading.value = false
+                    }
+                }
+            }catch (e: Exception){
+                Timber.e(e)
+
+                when(e){
+                    is java.io.FileNotFoundException -> {}
+                    is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
+                    is ViewModelError.InvalidObserverConfig -> main.showError(ViewModelError.InvalidObserverConfig)
+                    is ViewModelError.InvalidCronConfig -> main.showError(ViewModelError.InvalidCronConfig)
                 }
             }
         }
     }
 
-    fun searchCloudCommands() {
-        viewModelScope.launch {
-            apiService.searchCloudCommands(searchQuery.value).asResult().collectLatest {
-                //_stateFlow.value = it
-                when(it){
-                    is Result.Success -> {
-                        cloudCommandsList = it.data.data.items
-                        currentCursor = it.data.data.cursor
-                        hasNext = it.data.data.hasNext
+    fun searchInCommands(query: String){
 
-                        Timber.d ("commands list size : ${it.data.data.items.size}" )
-
-                    }
-                    else -> {}
-                }
-            }
-
+        filteredListOfCommands.update {
+            fullListOfCommands.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
         }
+
     }
+
+
 
 
 }

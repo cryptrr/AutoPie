@@ -76,6 +76,7 @@ class MyApplication : Application() {
             startScreenStateReceiver()
             startNotificationReceiver()
 
+            AutoPieCoreService.fetchLatestRepositoryJson()
             checkForUpdates()
             createEmptyCookieFile()
         }

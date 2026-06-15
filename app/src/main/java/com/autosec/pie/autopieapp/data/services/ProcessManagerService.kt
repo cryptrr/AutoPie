@@ -279,6 +279,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     }
 
+
     fun checkShell(): Boolean {
         try {
             val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath

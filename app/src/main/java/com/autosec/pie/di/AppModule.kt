@@ -49,7 +49,7 @@ val appModule = module {
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
     viewModel<CommandHistoryViewModel> { CommandHistoryViewModel(get())}
 
-    viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+    viewModel<CloudCommandsViewModel> { CloudCommandsViewModel(get()) }
     viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
     single<HTTPClientService> { AutoSecHTTPClient() }

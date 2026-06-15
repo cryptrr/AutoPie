@@ -144,17 +144,11 @@ fun CloudCommandsScreen() {
 
     val viewModel: CloudCommandsViewModel = koinViewModel()
 
-    val state by viewModel.stateFlow.collectAsState(initial = Result.None)
-
-    LaunchedEffect(key1 = Unit) {
-        if (state !is Result.Success) {
-            viewModel.getCloudCommands()
-        }
-    }
+    val state = viewModel.fullListOfCommands.collectAsState()
 
 
     Box(modifier = Modifier.fillMaxSize()) {
-        CloudCommandsList(viewModel.cloudCommandsList, viewModel)
+        CloudCommandsList(state.value, viewModel)
     }
 }
 
@@ -165,14 +159,6 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 
     val isAtBottom = !state.canScrollForward
 
-    LaunchedEffect(key1 = isAtBottom) {
-        if (isAtBottom) {
-            Timber.d ( "Reached bottom" )
-
-            viewModel.getMoreCloudCommands()
-
-        }
-    }
 
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
@@ -198,8 +184,8 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             }
 
             item {
-                SearchBar(viewModel.searchQuery,"Search your commands"){
-                    viewModel.searchCloudCommands()
+                SearchBar(viewModel.searchCommandQuery,"Search your commands"){
+                    viewModel.searchInCommands(viewModel.searchCommandQuery.value)
                 }
             }
 

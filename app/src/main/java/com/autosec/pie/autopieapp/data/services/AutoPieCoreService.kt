@@ -439,6 +439,16 @@ class AutoPieCoreService {
             }
         }
 
+        fun fetchLatestRepositoryJson(){
+            Timber.d("Fetching latest commands repository")
+            try {
+                processManagerService.createTerminalShell()?.run("wcurl -o ${application.filesDir.absolutePath}/repolist.json ${AutoPieConstants.AUTOPIE_FULL_COMMANDS_REPO_URL}")
+                Timber.d("Latest repository fetched successfully")
+            }catch (e: Exception){
+                Timber.e(e)
+            }
+        }
+
         private fun isFileCompletelyDownloaded(
             filePath: String,
             timeoutMillis: Long = 25000

@@ -12,6 +12,7 @@ import com.autosec.pie.use_case.GetCommandsList
 import com.autosec.pie.use_case.GetHistoryOfCommand
 import com.autosec.pie.use_case.GetInstalledPackages
 import com.autosec.pie.use_case.GetLatestUsedPackages
+import com.autosec.pie.use_case.GetRepoCommandsList
 import com.autosec.pie.use_case.GetShareCommands
 import com.autosec.pie.use_case.GetUserTags
 import com.autosec.pie.use_case.RunCommand
@@ -43,7 +44,8 @@ val useCaseModule = module {
             getUserTags = GetUserTags(get()),
             addUserTag = AddUserTag(get()),
             deleteUserTag = DeleteUserTag(get()),
-            getInstalledPackages = GetInstalledPackages()
+            getInstalledPackages = GetInstalledPackages(),
+            getRepoCommandsList = GetRepoCommandsList(get())
         )
     }
 }

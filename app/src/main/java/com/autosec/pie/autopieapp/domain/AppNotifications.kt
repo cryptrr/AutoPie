@@ -47,6 +47,10 @@ sealed class ViewModelError() : Exception(), Notification {
     object InvalidObserverConfig : ViewModelError()
     object CommandNotFound : ViewModelError()
     object TagNotDeletable : ViewModelError()
+    object InvalidCommandRepoFile : ViewModelError()
+    object CommandRepoUnavailable : ViewModelError()
+
+
     data class CommandUnknown(override val message: String) : ViewModelError()
 
 
