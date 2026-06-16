@@ -107,8 +107,6 @@ fun CommandsSearchBottomSheet(
 
             }
         }
-
-
     }
 
     ModalBottomSheet(
@@ -124,19 +122,6 @@ fun CommandsSearchBottomSheet(
     )
 }
 
-@Composable
-fun SearchCommands(
-
-) {
-
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-        Column(horizontalAlignment = Alignment.CenterHorizontally){
-            Text("Search from Commands Repository to Add")
-            Spacer(modifier = Modifier.height(7.dp))
-            Text("Work In Progress")
-        }
-    }
-}
 
 @Composable
 fun CloudCommandsScreen() {
@@ -144,7 +129,7 @@ fun CloudCommandsScreen() {
 
     val viewModel: CloudCommandsViewModel = koinViewModel()
 
-    val state = viewModel.fullListOfCommands.collectAsState()
+    val state = viewModel.filteredListOfCommands.collectAsState()
 
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -313,7 +298,7 @@ fun CloudCommandCard(
                     Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "${card.packageUniqueName} ${card.command}",
+                        text = card.command,
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,

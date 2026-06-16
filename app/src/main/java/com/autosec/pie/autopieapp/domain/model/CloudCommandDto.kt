@@ -26,8 +26,9 @@ data class CloudCommandModel(
     override val directory: String,
     override val command: String,
     override val packageUniqueName: String,
-    override val description: String,
-    val extrasRequired : Boolean? = false,
+    override val installationScript: String,
+    override val description: String, //Link to MD file.
+    override val extrasRequired : Boolean? = false,
     override val extras: List<CloudCommandExtra>? = null
 ) : CloudCommandInterface
 
@@ -39,8 +40,10 @@ interface CloudCommandInterface {
     val name: String
     val directory: String
     val command: String
-    val description: String
+    val description: String?
     val packageUniqueName: String
+    val installationScript: String?
+    val extrasRequired : Boolean?
     val extras: List<CloudCommandExtra>?
 }
 
