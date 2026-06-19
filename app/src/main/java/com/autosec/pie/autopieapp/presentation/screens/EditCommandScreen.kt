@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -232,26 +234,26 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
 
-            Spacer(modifier = Modifier.height(20.dp))
-            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file"){
-                Box(
-                    Modifier
-                        .padding(horizontal = 5.dp)
-                        .clip(RoundedCornerShape(15.dp))
-                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
-                        .clickable {
-                            showPackagesDialog = true
-                        }
-                        .padding(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.UnfoldMore,
-                        tint = MaterialTheme.colorScheme.primary,
-                        contentDescription = "Show more options",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
+//            Spacer(modifier = Modifier.height(20.dp))
+//            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file"){
+//                Box(
+//                    Modifier
+//                        .padding(horizontal = 5.dp)
+//                        .clip(RoundedCornerShape(15.dp))
+//                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
+//                        .clickable {
+//                            showPackagesDialog = true
+//                        }
+//                        .padding(10.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.UnfoldMore,
+//                        tint = MaterialTheme.colorScheme.primary,
+//                        contentDescription = "Show more options",
+//                        modifier = Modifier.size(22.dp)
+//                    )
+//                }
+//            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -261,8 +263,10 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 placeholder = "command",
                 singleLine = false,
                 modifier = Modifier
-                //.height(100.dp)
+                .defaultMinSize(minHeight = 100.dp)
                 //.wrapContentHeight()
+                ,
+                subtitle = "Bash shell scripting syntax is supported."
             )
 
             if (viewModel.selectedCommandType == "FILE_OBSERVER") {
@@ -313,6 +317,28 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 }){
                     viewModel.removeCommandExtra(it)
                 }
+            }
+
+            OutlinedButton(
+                modifier = Modifier
+                    .padding(vertical = 15.dp)
+                    .height(52.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20),
+                //contentPadding = PaddingValues(vertical = 20.dp),
+                enabled = viewModel.isValidCommand,
+                onClick = {
+                    addExtra()
+                },
+
+                ) {
+                Text(
+                    text = "ADD EXTRA",
+                    //modifier = Modifier.align(Alignment.Center),
+                    letterSpacing = 1.11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
             }
 
         }

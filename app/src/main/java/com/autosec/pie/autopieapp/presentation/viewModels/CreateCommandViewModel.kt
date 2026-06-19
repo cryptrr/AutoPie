@@ -41,7 +41,7 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
 
     var selectedCommandType by mutableStateOf("SHARE")
 
-    val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
+    val isValidCommand by derivedStateOf { commandName.value.isNotBlank() }
 
     val commandExtras = mutableStateOf<List<CommandExtra>>(emptyList())
 
@@ -57,7 +57,7 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                     directory = directory.value,
                     command = command.value,
                     isValidCommand = isValidCommand,
-                    exec = execFile.value,
+                    //exec = execFile.value,
                     commandExtras = commandExtras.value,
                     selectors = selectors.value,
                     cronInterval = cronInterval.value

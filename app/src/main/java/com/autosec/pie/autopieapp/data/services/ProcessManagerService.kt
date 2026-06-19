@@ -433,9 +433,9 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython -> "python $exec $command"
-                isShellScript -> "bash $exec $command"
-                else -> "$exec $command"
+                usePython -> "python $command"
+                isShellScript -> "bash $command"
+                else -> "$command"
             }
 
             val scriptFile = File(activity.cacheDir, "${processId}.sh")

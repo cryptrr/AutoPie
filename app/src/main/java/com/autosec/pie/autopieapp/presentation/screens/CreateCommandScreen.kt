@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -128,26 +129,26 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
             GenericTextFormField(text = viewModel.commandName, "NAME*")
 
-            Spacer(modifier = Modifier.height(20.dp))
-            GenericTextFormField(text = viewModel.execFile, "PROGRAM*"){
-                Box(
-                    Modifier
-                        .padding(horizontal = 5.dp)
-                        .clip(RoundedCornerShape(15.dp))
-                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
-                        .clickable {
-                            showPackagesDialog = true
-                        }
-                        .padding(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.UnfoldMore,
-                        tint = MaterialTheme.colorScheme.primary,
-                        contentDescription = "Show more options",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
+//            Spacer(modifier = Modifier.height(20.dp))
+//            GenericTextFormField(text = viewModel.execFile, "PROGRAM*"){
+//                Box(
+//                    Modifier
+//                        .padding(horizontal = 5.dp)
+//                        .clip(RoundedCornerShape(15.dp))
+//                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
+//                        .clickable {
+//                            showPackagesDialog = true
+//                        }
+//                        .padding(10.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.UnfoldMore,
+//                        tint = MaterialTheme.colorScheme.primary,
+//                        contentDescription = "Show more options",
+//                        modifier = Modifier.size(22.dp)
+//                    )
+//                }
+//            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -157,7 +158,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 placeholder = "command",
                 singleLine = false,
                 modifier = Modifier
-                //.height(100.dp)
+                .defaultMinSize(minHeight = 100.dp)
                 //.wrapContentHeight(),
                 ,
                 subtitle = "Bash shell scripting syntax is supported."
@@ -290,12 +291,12 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
         }
 
     }
-    PackagesListDialog(
-        showDialog = showPackagesDialog,
-        title = "Installed Packages",
-        value= viewModel.execFile,
-        onDismissRequest = {
-            showPackagesDialog = false
-        }
-    )
+//    PackagesListDialog(
+//        showDialog = showPackagesDialog,
+//        title = "Installed Packages",
+//        value= viewModel.execFile,
+//        onDismissRequest = {
+//            showPackagesDialog = false
+//        }
+//    )
 }

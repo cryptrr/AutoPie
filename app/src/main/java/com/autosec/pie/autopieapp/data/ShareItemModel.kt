@@ -24,7 +24,7 @@ data class CommandModel(
     override val name: String = "",
     override val path: String,
     override val command: String,
-    override val exec: String,
+    override val exec: String = "",
     override val selectors: List<String>? = emptyList(),
     override val cronInterval: String? = "",
     override val extras: List<CommandExtra>? = null
@@ -35,7 +35,7 @@ data class CommandCreationModel(
     val commandName: String,
     val directory: String,
     val command: String,
-    val exec: String,
+    val exec: String = "",
     val cronInterval: String,
     val selectors: String,
     val isValidCommand: Boolean,
@@ -47,7 +47,7 @@ interface CommandInterface {
     val name: String
     val path: String
     val command: String
-    val exec: String
+    val exec: String?
     val selectors: List<String>?
     val cronInterval: String?
     val extras: List<CommandExtra>?
