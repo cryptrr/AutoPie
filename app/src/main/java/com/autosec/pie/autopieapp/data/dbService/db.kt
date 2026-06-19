@@ -12,7 +12,7 @@ import com.autosec.pie.autopieapp.data.RoomTypeConverters
 import com.autosec.pie.autopieapp.data.UserTagEntity
 import kotlinx.coroutines.flow.Flow
 
-@Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 5)
+@Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 6)
 @TypeConverters(RoomTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun commandHistoryDao(): CommandHistoryDao
@@ -39,6 +39,14 @@ interface CommandHistoryDao {
         LIMIT :count;
     """)
     fun getLatestUsedPackages(count: Int): Flow<List<String>>
+
+    @Query("""
+        SELECT *
+            FROM CommandHistoryEntity
+        ORDER BY id DESC
+        LIMIT :count;
+    """)
+    fun getLatestUsedCommands(count: Int): Flow<List<CommandHistoryEntity>>
 
     @Query("SELECT * FROM CommandHistoryEntity WHERE id LIKE :id LIMIT 1")
     fun findById(id: String): CommandHistoryEntity

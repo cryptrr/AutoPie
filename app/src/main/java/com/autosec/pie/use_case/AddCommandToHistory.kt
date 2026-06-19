@@ -19,6 +19,7 @@ class AddCommandToHistory(private val dbService: AppDatabase){
             fileUris = fileUris,
             processId = processId,
             success = success,
+            command = command.command,
             exec = command.exec
         )
 

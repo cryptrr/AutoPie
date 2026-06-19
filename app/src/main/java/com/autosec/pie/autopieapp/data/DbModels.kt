@@ -11,6 +11,8 @@ import com.google.gson.reflect.TypeToken
 data class CommandHistoryEntity(
     @PrimaryKey val id: String,
     val commandModelId: String,
+    val command: String,
+    //TODO: MARKED FOR DELETION
     val exec: String,
     val commandExtraInputs: List<CommandExtraInputEntity>,
     val success: Boolean,
