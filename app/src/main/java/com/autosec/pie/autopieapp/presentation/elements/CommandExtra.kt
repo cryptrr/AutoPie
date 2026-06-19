@@ -138,7 +138,7 @@ fun CommandExtraInputElement(
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
-    val options = listOf("STRING", "SELECTABLE", "BOOLEAN","SLIDER")
+    val options = listOf("STRING", "SELECTABLE","FLAG", "BOOLEAN","SLIDER")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
@@ -336,6 +336,27 @@ fun CommandExtraInputElement(
                     singleLine = false,
                 )
             }
+            "FLAG" -> {
+                GenericTextFormField(
+                    text = name,
+                    "",
+                    placeholder = "NAME",
+                )
+                GenericTextFormField(
+                    text = default,
+                    "",
+                    placeholder = "FLAG",
+                    subtitle = "Flag to set. Eg --flag. Checkbox will be shown to select/deselect.",
+                    isError = default.value.isBlank()
+                )
+                GenericTextFormField(
+                    text = description,
+                    "",
+                    placeholder = "DESCRIPTION",
+                    singleLine = false,
+                )
+            }
+
         }
 
     }

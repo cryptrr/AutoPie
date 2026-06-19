@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Space
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +63,7 @@ import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelector
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.autopieapp.presentation.elements.EmptyItemsBadge
+import com.autosec.pie.autopieapp.presentation.elements.FlagSelector
 import com.autosec.pie.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autosec.pie.autopieapp.presentation.elements.MultiFilePicker
 import com.autosec.pie.autopieapp.presentation.elements.OptionSelectorBoolean
@@ -234,7 +237,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             }
 
 
-            for(extra in command.extras ?: emptyList()) {
+            for(extra in command.extras?.filter { it.type != "FLAG" } ?: emptyList()) {
 
                 Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
@@ -413,10 +416,52 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 SliderSelector(sliderState)
 
                             }
-
                         }
                     }
 
+
+                }
+            }
+
+            val horizontalScrollState = rememberScrollState()
+
+            Column {
+                Text(
+                    text = "FLAGS",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(text = "Extra flags to enable/disable.", fontSize = 14.sp, fontWeight = FontWeight.Normal)
+            }
+
+
+            Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
+                for(flag in command.extras?.filter { it.type == "FLAG" } ?: emptyList()){
+                    val isChecked = remember { mutableStateOf(false) }
+                    val defaultValue = remember { mutableStateOf(flag.default) }
+
+                    //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
+
+                    LaunchedEffect(key1 = defaultValue.value) {
+                        addToExtraInputs(
+                            CommandExtraInput(
+                                flag.name,
+                                flag.default,
+                                defaultValue.value,
+                                flag.type,
+                                flag.defaultBoolean,
+                                flag.id,
+                                flag.description
+                            )
+                        )
+                    }
+
+                    Column(Modifier.widthIn(min = 100.dp, max = 250.dp)){
+
+                        FlagSelector(flag, isChecked.value) { isChecked.value = it }
+
+                    }
 
                 }
             }
