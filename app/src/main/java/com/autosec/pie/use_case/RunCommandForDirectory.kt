@@ -49,7 +49,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                         Timber.d("Using package absolute path")
                         ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
                     }
-                    File(execFilePath).exists() -> {
+                    File(execFilePath).isFile -> {
                         Timber.d("Using autopie package")
                         //For packages installed inside autosec/bin
                         ExecAndCommand( ExecType.AUTOPIE_PACKAGE,execFilePath,"\"${item.command}\"")
