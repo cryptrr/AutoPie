@@ -101,8 +101,14 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 Timber.d("Result Command: $resultCommand")
 
-                val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
-                    inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
+                val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+                    processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand, path,
+                        inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
+                }else{
+                    processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
+                        inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
+                }
+
 
                 val result = processResult.toCommandResult(JobType.FILES, fileUris.toString())
 
@@ -163,9 +169,15 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                     Timber.d("Replaced String $replacedString")
 
+                    val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+                       processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,dirPath,
+                            inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
+                    }else{
+                        processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
+                            inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
+                    }
 
-                    val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
-                        inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
+
 
                     val result = processResult.toCommandResult(JobType.FILE, path)
 

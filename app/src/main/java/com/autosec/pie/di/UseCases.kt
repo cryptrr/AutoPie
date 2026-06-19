@@ -20,6 +20,7 @@ import com.autosec.pie.use_case.RunCommandForDirectory
 import com.autosec.pie.use_case.RunCommandForFiles
 import com.autosec.pie.use_case.RunCommandForText
 import com.autosec.pie.use_case.RunCommandForUrl
+import com.autosec.pie.use_case.RunInteractiveCommand
 import com.autosec.pie.use_case.RunStandaloneCommand
 import org.koin.dsl.module
 
@@ -45,7 +46,8 @@ val useCaseModule = module {
             addUserTag = AddUserTag(get()),
             deleteUserTag = DeleteUserTag(get()),
             getInstalledPackages = GetInstalledPackages(),
-            getRepoCommandsList = GetRepoCommandsList(get())
+            getRepoCommandsList = GetRepoCommandsList(get()),
+            runInteractiveCommand = RunInteractiveCommand(get())
         )
     }
 }

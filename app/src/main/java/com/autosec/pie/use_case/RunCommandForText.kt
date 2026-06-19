@@ -70,8 +70,13 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
 
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
+            val processResult = if(item.command.startsWith("#@INTERACTIVE")) {
+                processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
+            }else{
+                processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
+            }
+
 
             val result = processResult.toCommandResult(JobType.TEXT, text)
 

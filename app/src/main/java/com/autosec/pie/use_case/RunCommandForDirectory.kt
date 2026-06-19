@@ -79,8 +79,14 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val processResult = processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, cwdPath,
-                    inputParsedData,commandExtraInputs,inputDir.absolutePath,processId,  JobType.DIRECTORY,usePython, isShellScript)
+                val processResult = if(item.command.startsWith("#@INTERACTIVE")) {
+                   processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand, cwdPath,
+                        inputParsedData,commandExtraInputs,inputDir.absolutePath,processId,  JobType.DIRECTORY,usePython, isShellScript)
+                }else{
+                    processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, cwdPath,
+                        inputParsedData,commandExtraInputs,inputDir.absolutePath,processId,  JobType.DIRECTORY,usePython, isShellScript)
+                }
+
 
 
                 val result = processResult.toCommandResult(JobType.DIRECTORY, inputDir.path)

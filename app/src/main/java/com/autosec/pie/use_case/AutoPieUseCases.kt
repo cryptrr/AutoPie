@@ -20,5 +20,6 @@ data class AutoPieUseCases (
     val getUserTags: GetUserTags,
     val addUserTag: AddUserTag,
     val deleteUserTag: DeleteUserTag,
-    val getInstalledPackages: GetInstalledPackages
+    val getInstalledPackages: GetInstalledPackages,
+    val runInteractiveCommand: RunInteractiveCommand
 )

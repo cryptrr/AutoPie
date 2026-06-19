@@ -19,6 +19,13 @@ class RunCommand() {
         Timber.d("currentLink: $currentLink, fileUris: $fileUris")
 
         when {
+//            item.command.startsWith("#@INTERACTIVE") -> {
+//                Timber.d("Interactive command to be run in shell")
+//                return useCases.runInteractiveCommand(item, currentLink!!, fileUris, commandExtraInputs, processId).onEach { result ->
+//                    //useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+//                }
+//            }
+
             inputDir?.isDirectory == true -> {
                 Timber.d("directory detected")
                 return  useCases.runCommandForDirectory(item,inputDir, commandExtraInputs, processId).onEach { result ->

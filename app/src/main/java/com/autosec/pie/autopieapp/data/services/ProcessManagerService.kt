@@ -1,9 +1,12 @@
 package com.autosec.pie.autopieapp.data.services
 
+import android.app.Activity
 import android.app.Application
+import android.content.Intent
 import android.os.Environment
 import android.system.Os
 import androidx.lifecycle.viewModelScope
+import com.autosec.pie.OutputViewerActivity
 import com.autosec.pie.autopieapp.data.AutoPieError
 import com.autosec.pie.autopieapp.data.CommandExtraInput
 import com.autosec.pie.autopieapp.data.CommandInterface
@@ -17,6 +20,12 @@ import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
 import com.autosec.pie.core.DispatcherProvider
 import com.autosec.pie.utils.Shell
+import com.termux.app.RunCommandService
+import com.termux.app.TermuxActivity
+import com.termux.shared.shell.command.ExecutionCommand
+import com.termux.shared.termux.TermuxConstants
+import com.termux.terminal.TerminalSession
+import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -158,6 +167,88 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     }
 
+    private fun getEnvsFromCommand(inputParsedData:  List<InputParsedData>, commandExtraInputs: List<CommandExtraInput>,commandObject: CommandInterface, ): HashMap<String, String> {
+        val envMap = HashMap<String, String>()
+
+//        envMap["HOME"] = activity.filesDir.absolutePath
+//        envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
+//        envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
+//        envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
+//        envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
+//        envMap["COOKIE_JAR"] = System.getenv("COOKIE_JAR") ?: "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
+
+
+        for (inputData in inputParsedData) {
+            envMap[inputData.name] = inputData.value
+        }
+
+        if (commandExtraInputs.isEmpty()) {
+            for (extra in commandObject.extras ?: emptyList()) {
+                //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
+
+                //Check if the field is not string type. Then don't do all of this shit with the file paths.
+                if(extra.type != "STRING"){
+                    envMap[extra.name] = extra.default
+                }
+                //TEMP FIX for multi user envs where fully qualified paths for extras don't work
+                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                    if(Path(extra.default).isAbsolute){
+                        envMap[extra.name] = extra.default
+                    }else{
+                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.default).absolutePath
+                        envMap[extra.name] = fullPath
+                    }
+                }
+                else if(extra.name.endsWith("FILES")){
+                    envMap[extra.name] = extra.default.split(",").map {
+                        if(Path(extra.default).isAbsolute){
+                            it
+                        }else{
+                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                        }
+                    }.joinToString(",")
+                }
+                else{
+                    envMap[extra.name] = extra.default
+                }
+            }
+        }
+        //This is when the command extra inputs are passed. That is when the CommandExtrasBottomSheet is opened, all the extras including the defaults are passed as commandExtraInputs
+        else {
+            for (extra in commandExtraInputs) {
+
+                if(extra.type != "STRING"){
+                    envMap[extra.name] = extra.value
+                }
+                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
+                    if(Path(extra.default).isAbsolute){
+                        envMap[extra.name] = extra.value
+                    }else{
+                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.value).absolutePath
+                        envMap[extra.name] = fullPath
+                    }
+                }
+                else if(extra.name.endsWith("FILES")){
+                    envMap[extra.name] = extra.value.split(",").map {
+                        if(Path(extra.value).isAbsolute){
+                            it
+                        }else{
+                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                        }
+                    }.joinToString(",")
+                }
+                else{
+                    envMap[extra.name] = extra.value
+                }
+            }
+        }
+
+        //Adding the command at last to get the env included result command
+        envMap["resultCommand"] = commandObject.command
+
+        return envMap
+    }
+
     private fun getShell(
         inputParsedData: List<InputParsedData>,
         commandObject: CommandInterface,
@@ -176,7 +267,6 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
         envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
         envMap["COOKIE_JAR"] = System.getenv("COOKIE_JAR") ?: "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
-
 
 
         for (inputData in inputParsedData) {
@@ -496,6 +586,82 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.e(e.toString())
             throw e
         }
+    }
+
+    fun runCommandInTermuxShell(
+        commandObject: CommandInterface,
+        exec: String,
+        command: String,
+        cwd: String,
+        inputParsedData: List<InputParsedData> = emptyList(),
+        commandExtraInputs: List<CommandExtraInput>,
+        rawInput: String,
+        processId: Int,
+        jobType: JobType,
+        usePython: Boolean = true,
+        isShellScript: Boolean = false
+    ): ProcessResult {
+
+        Timber.d("runCommandInTermuxShell for $command")
+
+        try {
+            val envs = getEnvsFromCommand(inputParsedData, commandExtraInputs, commandObject)
+            val scriptFile = File(activity.cacheDir, "${processId}.sh")
+            scriptFile.writeText("set -x\n")
+            envs.forEach { (key, value) ->
+                scriptFile.appendText(
+                    "export $key=${value}\n"
+                )
+            }
+            //TODO: Do this on condition.
+            scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            scriptFile.appendText(command)
+
+
+            val intent = Intent(activity, RunCommandService::class.java).apply {
+
+                action = TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.ACTION_RUN_COMMAND
+
+                putExtra(
+                    TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH,
+                    "${activity.filesDir}/usr/bin/bash"
+                )
+
+                putExtra(
+                    TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS,
+                    arrayOf("-i", scriptFile.absolutePath)
+                )
+
+                putExtra(
+                    TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_WORKDIR,
+                    cwd
+                )
+
+                putExtra(
+                    TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND,
+                    false
+                )
+
+                putExtra(
+                    TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_SESSION_ACTION,
+                    TermuxConstants.TERMUX_APP.TERMUX_SERVICE.VALUE_EXTRA_SESSION_ACTION_SWITCH_TO_NEW_SESSION_AND_OPEN_ACTIVITY.toString()
+                )
+            }
+
+            Timber.d(intent.toString())
+
+            activity.startService(intent).also {
+                Timber.d("Starting Termux Activity for Command: $it")
+            }
+
+            return ProcessResult(commandObject.name, processId , true, "Command Opened in Termux Shell")
+
+
+        }catch (e: Exception){
+            Timber.e(e)
+            throw e
+        }
+
     }
 
 

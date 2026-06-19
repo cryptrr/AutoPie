@@ -102,19 +102,36 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             Timber.d("Command to run: ${item.exec} ${resultCommand}")
 
 
-            val processResult = processManagerService.runCommandForShareWithEnv2(
-                item,
-                fullExecPath,
-                resultCommand,
-                path,
-                inputParsedData,
-                if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
-                currentLink,
-                processId,
-                JobType.URL,
-                usePython,
-                isShellScript
-            )
+
+            val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+                processManagerService.runCommandInTermuxShell(
+                    item,
+                    fullExecPath,
+                    resultCommand,
+                    path,
+                    inputParsedData,
+                    if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
+                    currentLink,
+                    processId,
+                    JobType.URL,
+                    usePython,
+                    isShellScript
+                )
+            }else{
+                processManagerService.runCommandForShareWithEnv2(
+                    item,
+                    fullExecPath,
+                    resultCommand,
+                    path,
+                    inputParsedData,
+                    if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
+                    currentLink,
+                    processId,
+                    JobType.URL,
+                    usePython,
+                    isShellScript
+                )
+            }
 
             val result = processResult.toCommandResult(JobType.URL, currentLink)
 
