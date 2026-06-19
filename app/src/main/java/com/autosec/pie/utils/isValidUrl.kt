@@ -1,9 +1,9 @@
-package com.autosec.pie.utils
+package com.autopi.utils
 
 import android.util.Patterns
-import com.autosec.pie.autopieapp.data.CommandResult
-import com.autosec.pie.autopieapp.data.JobType
-import com.autosec.pie.autopieapp.data.ProcessResult
+import com.autopi.autopieapp.data.CommandResult
+import com.autopi.autopieapp.data.JobType
+import com.autopi.autopieapp.data.ProcessResult
 
 fun String?.isValidUrl(): Boolean {
     return this != null && Patterns.WEB_URL.matcher(this).matches()

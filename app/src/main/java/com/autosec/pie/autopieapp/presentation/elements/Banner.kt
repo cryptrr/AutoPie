@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,14 +30,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.domain.Notification
-import com.autosec.pie.ui.theme.PastelBlue
-import com.autosec.pie.ui.theme.PastelGreen
-import com.autosec.pie.ui.theme.PastelRed
-import com.autosec.pie.ui.theme.PastelYellow
-import com.autosec.pie.ui.theme.Purple10
-import com.autosec.pie.ui.theme.Purple50
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.Notification
+import com.autopi.ui.theme.PastelBlue
+import com.autopi.ui.theme.PastelGreen
+import com.autopi.ui.theme.PastelRed
+import com.autopi.ui.theme.PastelYellow
+import com.autopi.ui.theme.Purple10
+import com.autopi.ui.theme.Purple50
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import org.koin.java.KoinJavaComponent
 
 sealed class BannerType {

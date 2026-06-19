@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.app.Application
 import android.app.DownloadManager
@@ -9,12 +9,12 @@ import android.os.UserManager
 import android.system.Os
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
-import com.autosec.pie.autopieapp.data.AutoPieConstants
-import com.autosec.pie.autopieapp.domain.AppNotification
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.core.DispatcherProvider
+import com.autopi.autopieapp.data.AutoPieConstants
+import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.core.DispatcherProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry

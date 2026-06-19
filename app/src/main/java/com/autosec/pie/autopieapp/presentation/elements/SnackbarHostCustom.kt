@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarDuration
@@ -13,8 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
-import com.autosec.pie.autopieapp.domain.Notification
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.Notification
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flattenMerge

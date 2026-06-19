@@ -1,4 +1,4 @@
-package com.autosec.pie.core
+package com.autopi.core
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.StandardTestDispatcher

@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.app.Application
 import android.app.job.JobInfo
@@ -10,16 +10,16 @@ import android.content.IntentFilter
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import androidx.work.WorkManager
-import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
-import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.createEmptyCookieFile
-import com.autosec.pie.autopieapp.data.services.CronService
-import com.autosec.pie.autopieapp.data.services.FileObserverJobService
-import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
-import com.autosec.pie.autopieapp.data.services.ScreenStateReceiver
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.di.appModule
-import com.autosec.pie.di.useCaseModule
-import com.autosec.pie.logging.FileLoggingTree
+import com.autopi.autopieapp.data.services.AutoPieCoreService
+import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.createEmptyCookieFile
+import com.autopi.autopieapp.data.services.CronService
+import com.autopi.autopieapp.data.services.FileObserverJobService
+import com.autopi.autopieapp.data.services.ProcessBroadcastReceiver
+import com.autopi.autopieapp.data.services.ScreenStateReceiver
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.di.appModule
+import com.autopi.di.useCaseModule
+import com.autopi.logging.FileLoggingTree
 import com.termux.app.TermuxApplication
 import com.termux.shared.logger.Logger
 import com.termux.shared.termux.crash.TermuxCrashUtils

@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.services.ForegroundService
+import com.autopi.autopieapp.data.services.ForegroundService
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

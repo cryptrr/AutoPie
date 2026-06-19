@@ -1,6 +1,6 @@
-package com.autosec.pie.autopieapp.domain.model
+package com.autopi.autopieapp.domain.model
 
-import com.autosec.pie.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.CommandType
 import kotlinx.serialization.Serializable
 
 

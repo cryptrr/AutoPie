@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
+import com.autopi.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.delay

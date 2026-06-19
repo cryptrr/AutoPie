@@ -1,13 +1,13 @@
-package com.autosec.pie.autopieapp.presentation.viewModels
+package com.autopi.autopieapp.presentation.viewModels
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.CommandHistoryEntity
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.use_case.AutoPieUseCases
+import com.autopi.autopieapp.data.CommandHistoryEntity
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.core.DispatcherProvider
+import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update

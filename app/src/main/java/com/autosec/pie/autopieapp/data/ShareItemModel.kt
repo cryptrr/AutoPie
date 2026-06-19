@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data
+package com.autopi.autopieapp.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

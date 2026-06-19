@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.domain.model
+package com.autopi.autopieapp.domain.model
 
 data class FileUploadGenericDto(
     val filename: String,

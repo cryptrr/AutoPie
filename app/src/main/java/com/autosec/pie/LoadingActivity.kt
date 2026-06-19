@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.content.Context
 import android.content.Intent
@@ -14,7 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.autosec.pie.ui.theme.AutoPieTheme
+import com.autopi.ui.theme.AutoPieTheme
 
 class LoadingActivity : ComponentActivity() {
 

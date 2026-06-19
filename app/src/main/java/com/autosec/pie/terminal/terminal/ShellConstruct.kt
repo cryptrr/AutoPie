@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal.terminal
+package com.autopi.terminal.terminal
 
 enum class ShellConstruct(
     val open: Keyword,

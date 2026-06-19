@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import android.app.PendingIntent
 import android.content.Context
@@ -29,15 +29,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.DirectCommandActivity
-import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.ShareInputs
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.elements.AutoPiePrimaryButton
-import com.autosec.pie.autopieapp.presentation.elements.OptionItem
-import com.autosec.pie.autopieapp.presentation.elements.OptionLayout
-import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.DirectCommandActivity
+import com.autopi.R
+import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.elements.AutoPiePrimaryButton
+import com.autopi.autopieapp.presentation.elements.OptionItem
+import com.autopi.autopieapp.presentation.elements.OptionLayout
+import com.autopi.autopieapp.presentation.viewModels.CreateCommandViewModel
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber

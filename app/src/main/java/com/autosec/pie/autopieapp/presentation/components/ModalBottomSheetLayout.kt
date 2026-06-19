@@ -1,2 +1,2 @@
-package com.autosec.pie.autopieapp.presentation.components
+package com.autopi.autopieapp.presentation.components
 

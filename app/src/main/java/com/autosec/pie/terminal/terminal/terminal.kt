@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal.terminal
+package com.autopi.terminal.terminal
 
 import android.content.Context
 import android.util.AttributeSet
@@ -23,7 +23,7 @@ import android.widget.ScrollView
 import androidx.core.content.res.use
 import androidx.core.view.children
 import androidx.core.view.doOnNextLayout
-import com.autosec.pie.R
+import com.autopi.R
 import com.blacksquircle.ui.editorkit.model.ColorScheme
 import com.blacksquircle.ui.editorkit.theme.EditorTheme
 import com.jaredrummler.ktsh.Shell

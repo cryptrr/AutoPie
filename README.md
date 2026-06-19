@@ -76,10 +76,10 @@ Extend the functionality of your apps by adding `RunCommandButton()`.
 fun RunCommandButton(){
     val context = LocalContext.current
     val intent = Intent(Intent.ACTION_MAIN).apply {
-        setClassName(context, "com.autosec.pie" + ".DirectCommandActivity")
+        setClassName(context, "com.autopi" + ".DirectCommandActivity")
         component = ComponentName(
-            "com.autosec.pie", // target app package
-            "com.autosec.pie.DirectCommandActivity" // full class name
+            "com.autopi", // target app package
+            "com.autopi.DirectCommandActivity" // full class name
         )
         putExtra("commandId", "YT-DLP Generic Downloader")
         putExtra("input", "https://www.youtube.com/watch?v=7N74-JBHk3g")

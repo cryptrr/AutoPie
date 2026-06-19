@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,16 +8,16 @@ import android.os.IBinder
 import android.os.Process
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.CommandExtraInput
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.JobType
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.use_case.AutoPieUseCases
-import com.autosec.pie.utils.Utils
+import com.autopi.R
+import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.JobType
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.core.DispatcherProvider
+import com.autopi.use_case.AutoPieUseCases
+import com.autopi.utils.Utils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope

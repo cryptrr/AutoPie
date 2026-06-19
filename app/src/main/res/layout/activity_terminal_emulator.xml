@@ -22,7 +22,7 @@
             app:popupTheme="@style/Theme.Ktsh.PopupOverlay" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.autosec.pie.terminal.terminal.Terminal
+    <com.autopi.terminal.terminal.Terminal
         android:id="@+id/terminal"
         android:layout_width="0dp"
         android:layout_height="0dp"

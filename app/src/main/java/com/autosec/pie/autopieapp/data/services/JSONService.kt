@@ -1,8 +1,8 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.os.Environment
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject

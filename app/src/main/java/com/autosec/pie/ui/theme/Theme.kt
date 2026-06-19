@@ -1,4 +1,4 @@
-package com.autosec.pie.ui.theme
+package com.autopi.ui.theme
 
 import android.app.Activity
 import android.os.Build

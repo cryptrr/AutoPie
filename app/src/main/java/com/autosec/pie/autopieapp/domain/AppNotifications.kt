@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.domain
+package com.autopi.autopieapp.domain
 
 import android.content.Intent
 import android.net.Uri
@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.presentation.elements.BannerType
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.presentation.elements.BannerType
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 

@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.dbService
+package com.autopi.autopieapp.data.dbService
 
 import androidx.room.Dao
 import androidx.room.Database
@@ -7,9 +7,9 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.autosec.pie.autopieapp.data.CommandHistoryEntity
-import com.autosec.pie.autopieapp.data.RoomTypeConverters
-import com.autosec.pie.autopieapp.data.UserTagEntity
+import com.autopi.autopieapp.data.CommandHistoryEntity
+import com.autopi.autopieapp.data.RoomTypeConverters
+import com.autopi.autopieapp.data.UserTagEntity
 import kotlinx.coroutines.flow.Flow
 
 @Database(entities = [CommandHistoryEntity::class, UserTagEntity::class], version = 6)

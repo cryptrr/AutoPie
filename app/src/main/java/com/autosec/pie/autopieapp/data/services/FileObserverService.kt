@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.app.job.JobInfo
 import android.app.job.JobParameters
@@ -10,12 +10,12 @@ import android.os.Environment
 import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.use_case.AutoPieUseCases
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.core.DispatcherProvider
+import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first

@@ -1,4 +1,4 @@
-package com.autosec.pie.use_case
+package com.autopi.use_case
 
 data class AutoPieUseCases (
     val getCommandsList: GetCommandsList,

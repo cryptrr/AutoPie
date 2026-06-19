@@ -1,9 +1,9 @@
-package com.autosec.pie.use_case
+package com.autopi.use_case
 
-import com.autosec.pie.autopieapp.data.CommandCreationModel
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.CommandCreationModel
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.data.services.JsonService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray

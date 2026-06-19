@@ -1,4 +1,4 @@
-package com.autosec.pie.logging
+package com.autopi.logging
 import android.content.Context
 import android.os.Build
 import android.os.Environment

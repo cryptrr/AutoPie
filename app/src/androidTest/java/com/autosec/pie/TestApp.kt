@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.app.Application
 import timber.log.Timber

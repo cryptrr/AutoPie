@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

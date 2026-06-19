@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal
+package com.autopi.terminal
 
-import com.autosec.pie.terminal.terminal.Terminal
+import com.autopi.terminal.terminal.Terminal
 
 interface TerminalEmulatorView : Terminal.CommandExecutor

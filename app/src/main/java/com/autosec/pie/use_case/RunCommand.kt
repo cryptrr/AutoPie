@@ -1,9 +1,9 @@
-package com.autosec.pie.use_case
+package com.autopi.use_case
 
-import com.autosec.pie.autopieapp.data.CommandExtraInput
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.CommandResult
-import com.autosec.pie.utils.isValidUrl
+import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandResult
+import com.autopi.utils.isValidUrl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
 import org.koin.java.KoinJavaComponent.inject

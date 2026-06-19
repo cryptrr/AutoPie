@@ -1,8 +1,8 @@
-package com.autosec.pie.autopieapp.data.apiService
+package com.autopi.autopieapp.data.apiService
 
 
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.onUpload

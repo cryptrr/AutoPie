@@ -1,13 +1,13 @@
-package com.autosec.pie
+package com.autopi
 
 
 import android.os.Environment
-import com.autosec.pie.autopieApp.data.services.FakeJSONService
-import com.autosec.pie.autopieapp.data.CommandCreationModel
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.use_case.CreateCommand
-import com.autosec.pie.use_case.GetCommandDetails
-import com.autosec.pie.use_case.GetCommandsList
+import com.autopi.autopieApp.data.services.FakeJSONService
+import com.autopi.autopieapp.data.CommandCreationModel
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.use_case.CreateCommand
+import com.autopi.use_case.GetCommandDetails
+import com.autopi.use_case.GetCommandsList
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers

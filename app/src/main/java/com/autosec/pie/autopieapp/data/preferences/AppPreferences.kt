@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.preferences
+package com.autopi.autopieapp.data.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore

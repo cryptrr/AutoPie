@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.apiService
+package com.autopi.autopieapp.data.apiService
 
 sealed class RequestError : Exception() {
     object Decode : RequestError()

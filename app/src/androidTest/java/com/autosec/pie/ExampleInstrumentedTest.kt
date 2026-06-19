@@ -1,14 +1,14 @@
-package com.autosec.pie
+package com.autopi
 
 import android.app.Application
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.runner.AndroidJUnitRunner
-import com.autosec.pie.di.getTestModule
-import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
-import com.autosec.pie.core.TestDispatchers
-import com.autosec.pie.di.useCaseModule
+import com.autopi.di.getTestModule
+import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
+import com.autopi.core.TestDispatchers
+import com.autopi.di.useCaseModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

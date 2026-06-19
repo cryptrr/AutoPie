@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +32,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.BuildConfig
-import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.AutoPieStrings
-import com.autosec.pie.autopieapp.domain.AppNotification
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.BuildConfig
+import com.autopi.R
+import com.autopi.autopieapp.data.AutoPieStrings
+import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 

@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data
+package com.autopi.autopieapp.data
 
 
 data class ShareInputs(

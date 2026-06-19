@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal.terminal
+package com.autopi.terminal.terminal
 
 import android.content.Context
 import android.graphics.Typeface
@@ -25,7 +25,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
-import com.autosec.pie.R
+import com.autopi.R
 import com.blacksquircle.ui.editorkit.model.ColorScheme
 import com.jaredrummler.ktsh.Shell
 import com.jaredrummler.ktsh.Shell.Command.Config.Companion.silent

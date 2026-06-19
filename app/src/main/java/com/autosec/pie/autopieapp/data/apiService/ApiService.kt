@@ -1,9 +1,9 @@
-package com.autosec.pie.autopieapp.data.apiService
+package com.autopi.autopieapp.data.apiService
 
-import com.autosec.pie.autopieapp.domain.model.CloudCommandModel
-import com.autosec.pie.autopieapp.domain.model.CloudCommandsListDto
-import com.autosec.pie.autopieapp.domain.model.CloudPackageListDTO
-import com.autosec.pie.autopieapp.domain.model.GenericResponseDTO
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.domain.model.CloudCommandsListDto
+import com.autopi.autopieapp.domain.model.CloudPackageListDTO
+import com.autopi.autopieapp.domain.model.GenericResponseDTO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

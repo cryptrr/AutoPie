@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
@@ -15,12 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.domain.AppNotification
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.presentation.viewModels.OutputViewerViewModel
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

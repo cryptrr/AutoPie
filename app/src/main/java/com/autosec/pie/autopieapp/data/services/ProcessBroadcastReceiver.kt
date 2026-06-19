@@ -1,11 +1,11 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 

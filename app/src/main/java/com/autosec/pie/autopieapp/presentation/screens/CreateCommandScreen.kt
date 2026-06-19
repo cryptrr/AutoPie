@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,15 +44,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.CommandExtra
-import com.autosec.pie.autopieapp.domain.AppNotification
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.elements.CommandExtraElement
-import com.autosec.pie.autopieapp.presentation.elements.GenericFormSwitch
-import com.autosec.pie.autopieapp.presentation.elements.GenericTextFormField
-import com.autosec.pie.autopieapp.presentation.elements.PackagesListDialog
-import com.autosec.pie.utils.Utils
-import com.autosec.pie.autopieapp.presentation.viewModels.CreateCommandViewModel
+import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.elements.CommandExtraElement
+import com.autopi.autopieapp.presentation.elements.GenericFormSwitch
+import com.autopi.autopieapp.presentation.elements.GenericTextFormField
+import com.autopi.autopieapp.presentation.elements.PackagesListDialog
+import com.autopi.utils.Utils
+import com.autopi.autopieapp.presentation.viewModels.CreateCommandViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

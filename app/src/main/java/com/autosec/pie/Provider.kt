@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.content.ContentProvider
 import android.content.ContentValues
@@ -7,8 +7,8 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.os.Environment
-import com.autosec.pie.autopieapp.data.services.ProcessManagerService
-import com.autosec.pie.use_case.AutoPieUseCases
+import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.use_case.AutoPieUseCases
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File

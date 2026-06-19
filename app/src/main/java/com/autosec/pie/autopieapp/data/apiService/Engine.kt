@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.apiService
+package com.autopi.autopieapp.data.apiService
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine

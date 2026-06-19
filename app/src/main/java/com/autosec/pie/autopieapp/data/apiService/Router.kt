@@ -1,8 +1,8 @@
-package com.autosec.pie.autopieapp.data.apiService
+package com.autopi.autopieapp.data.apiService
 
-import com.autosec.pie.autopieapp.data.preferences.AppPreferences
-import com.autosec.pie.autopieapp.data.preferences.MyPreferences
-import com.autosec.pie.autopieapp.domain.model.FileUploadGenericDto
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.preferences.MyPreferences
+import com.autopi.autopieapp.domain.model.FileUploadGenericDto
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber

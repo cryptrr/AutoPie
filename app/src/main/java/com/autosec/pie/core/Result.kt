@@ -1,8 +1,8 @@
-package com.autosec.pie.core
+package com.autopi.core
 
-import com.autosec.pie.autopieapp.data.apiService.RequestError
-import com.autosec.pie.autopieapp.domain.Notification
-import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.data.apiService.RequestError
+import com.autopi.autopieapp.domain.Notification
+import com.autopi.autopieapp.domain.ViewModelError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

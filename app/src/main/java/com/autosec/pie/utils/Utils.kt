@@ -1,4 +1,4 @@
-package com.autosec.pie.utils
+package com.autopi.utils
 
 import android.content.Context
 import android.content.ContextWrapper

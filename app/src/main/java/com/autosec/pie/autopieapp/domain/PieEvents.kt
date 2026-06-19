@@ -1,7 +1,7 @@
-package com.autosec.pie.autopieapp.domain
+package com.autopi.autopieapp.domain
 
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.JobType
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.JobType
 
 sealed class ViewModelEvent {
     data object InstallingPython : ViewModelEvent()

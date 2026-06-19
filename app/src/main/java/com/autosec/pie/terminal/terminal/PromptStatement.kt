@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal.terminal
+package com.autopi.terminal.terminal
 
 import android.content.Context
 import android.util.AttributeSet

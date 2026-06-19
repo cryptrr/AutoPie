@@ -1,9 +1,9 @@
-package com.autosec.pie.use_case
+package com.autopi.use_case
 
 import androidx.compose.runtime.MutableState
-import com.autosec.pie.autopieapp.data.CommandExtra
-import com.autosec.pie.autopieapp.data.services.JsonService
-import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.domain.ViewModelError
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser

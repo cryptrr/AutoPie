@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.viewModels
+package com.autopi.autopieapp.presentation.viewModels
 
 
 import androidx.compose.runtime.getValue
@@ -6,14 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.apiService.ApiService
-import com.autosec.pie.autopieapp.domain.model.CloudCommandModel
-import com.autosec.pie.autopieapp.domain.model.CloudCommandsListDto
-import com.autosec.pie.core.Result
-import com.autosec.pie.core.asResult
-import com.autosec.pie.autopieapp.domain.model.CloudPackageListDTO
-import com.autosec.pie.autopieapp.domain.model.CloudPackageModel
-import com.autosec.pie.autopieapp.domain.model.GenericResponseDTO
+import com.autopi.autopieapp.data.apiService.ApiService
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.domain.model.CloudCommandsListDto
+import com.autopi.core.Result
+import com.autopi.core.asResult
+import com.autopi.autopieapp.domain.model.CloudPackageListDTO
+import com.autopi.autopieapp.domain.model.CloudPackageModel
+import com.autopi.autopieapp.domain.model.GenericResponseDTO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest

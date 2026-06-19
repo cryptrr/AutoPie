@@ -1,4 +1,4 @@
-package com.autosec.pie.ui.theme
+package com.autopi.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

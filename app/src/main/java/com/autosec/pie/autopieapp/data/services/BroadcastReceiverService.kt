@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.app.job.JobInfo
 import android.app.job.JobScheduler

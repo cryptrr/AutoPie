@@ -1,4 +1,4 @@
-package com.autosec.pie.terminal
+package com.autopi.terminal
 
 /*
  * Copyright (C) 2021 Jared Rummler
@@ -27,10 +27,10 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
-import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.services.ProcessManagerService
+import com.autopi.R
+import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.jaredrummler.ktsh.Shell
-import com.autosec.pie.terminal.terminal.Terminal
+import com.autopi.terminal.terminal.Terminal
 import org.koin.java.KoinJavaComponent.inject
 
 /**

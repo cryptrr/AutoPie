@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import android.app.Activity
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -40,15 +40,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.core.Result
-import com.autosec.pie.autopieapp.data.InstalledPackageModel
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.domain.model.CloudPackageModel
-import com.autosec.pie.autopieapp.presentation.elements.SearchBar
-import com.autosec.pie.utils.getActivity
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudPackagesViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.core.Result
+import com.autopi.autopieapp.data.InstalledPackageModel
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.domain.model.CloudPackageModel
+import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.utils.getActivity
+import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
+import com.autopi.autopieapp.presentation.viewModels.CloudPackagesViewModel
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent.inject

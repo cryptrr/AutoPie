@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,12 +12,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import com.autosec.pie.autopieapp.presentation.screens.CommandExtrasBottomSheet
-import com.autosec.pie.autopieapp.presentation.screens.OutputViewerBottomSheet
-import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
-import com.autosec.pie.ui.theme.AutoPieTheme
-import com.autosec.pie.utils.getActivity
+import com.autopi.autopieapp.presentation.screens.CommandExtrasBottomSheet
+import com.autopi.autopieapp.presentation.screens.OutputViewerBottomSheet
+import com.autopi.autopieapp.presentation.viewModels.OutputViewerViewModel
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.ui.theme.AutoPieTheme
+import com.autopi.utils.getActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

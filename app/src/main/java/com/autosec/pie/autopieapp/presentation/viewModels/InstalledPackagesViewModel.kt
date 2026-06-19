@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.viewModels
+package com.autopi.autopieapp.presentation.viewModels
 
 import android.app.Application
 import android.os.Environment
@@ -6,8 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import com.autosec.pie.autopieapp.data.InstalledPackageModel
-import com.autosec.pie.use_case.AutoPieUseCases
+import com.autopi.autopieapp.data.InstalledPackageModel
+import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.java.KoinJavaComponent

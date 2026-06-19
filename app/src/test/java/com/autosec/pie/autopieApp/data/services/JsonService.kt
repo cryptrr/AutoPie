@@ -1,7 +1,7 @@
-package com.autosec.pie.autopieApp.data.services
+package com.autopi.autopieApp.data.services
 
-import com.autosec.pie.autopieapp.data.services.JsonService
-import com.autosec.pie.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.domain.ViewModelError
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject

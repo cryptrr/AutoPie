@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 import android.app.Activity
 import android.content.Intent
@@ -34,9 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.data.services.AutoPieCoreService
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.AutoPieCoreService
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

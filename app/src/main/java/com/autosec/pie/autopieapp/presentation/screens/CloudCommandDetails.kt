@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import android.content.Intent
 import androidx.compose.foundation.gestures.scrollable
@@ -39,10 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.presentation.elements.SearchBar
-import com.autosec.pie.autopieapp.data.services.ForegroundService
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.EditCommandViewModel
+import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.autopieapp.data.services.ForegroundService
+import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
+import com.autopi.autopieapp.presentation.viewModels.EditCommandViewModel
 import com.google.gson.Gson
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.LocalMarkdownComponents

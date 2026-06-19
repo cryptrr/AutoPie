@@ -1,16 +1,16 @@
-package com.autosec.pie
+package com.autopi
 
 import android.app.Application
 import android.os.Environment
-import com.autosec.pie.autopieapp.data.AutoPieError
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.CommandType
-import com.autosec.pie.autopieapp.data.preferences.AppPreferences
-import com.autosec.pie.autopieapp.data.services.ProcessManagerService
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.core.DefaultDispatchers
-import com.autosec.pie.utils.Shell
+import com.autopi.autopieapp.data.AutoPieError
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.core.DefaultDispatchers
+import com.autopi.utils.Shell
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf

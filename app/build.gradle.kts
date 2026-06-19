@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.autosec.pie"
+    namespace = "com.autopi"
     compileSdk = 35
 
     buildFeatures {
@@ -16,14 +16,14 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.autosec.pie"
+        applicationId = "com.autopi"
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
         versionCode = 28
         versionName = "\"0.14.9-beta\""
 
-        testInstrumentationRunner = "com.autosec.pie.AutoPieTestRunner"
+        testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }

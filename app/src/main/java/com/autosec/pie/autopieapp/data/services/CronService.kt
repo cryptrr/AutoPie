@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services
+package com.autopi.autopieapp.data.services
 
 import android.app.Application
 import android.content.Context
@@ -9,11 +9,11 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.autosec.pie.autopieapp.data.CronCommandModel
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.utils.Utils
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.core.DispatcherProvider
+import com.autopi.autopieapp.data.CronCommandModel
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.utils.Utils
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.core.DispatcherProvider
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope

@@ -1,4 +1,4 @@
-package com.autosec.pie.utils
+package com.autopi.utils
 
 /*
  * Copyright (C) 2021 Jared Rummler

@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -32,10 +32,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.data.InstalledPackageModel
-import com.autosec.pie.utils.getActivity
-import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.autopieapp.data.InstalledPackageModel
+import com.autopi.utils.getActivity
+import com.autopi.autopieapp.presentation.viewModels.InstalledPackagesViewModel
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent.inject
 

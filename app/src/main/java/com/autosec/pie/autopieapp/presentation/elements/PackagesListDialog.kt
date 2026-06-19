@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
@@ -34,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.autosec.pie.autopieapp.data.InstalledPackageModel
-import com.autosec.pie.autopieapp.presentation.viewModels.InstalledPackagesViewModel
-import com.autosec.pie.utils.getActivity
+import com.autopi.autopieapp.data.InstalledPackageModel
+import com.autopi.autopieapp.presentation.viewModels.InstalledPackagesViewModel
+import com.autopi.utils.getActivity
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

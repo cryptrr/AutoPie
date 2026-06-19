@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.autosec.pie.terminal
+package com.autopi.terminal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.core.DispatcherProvider
+import com.autopi.core.DispatcherProvider
 import com.jaredrummler.ktsh.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

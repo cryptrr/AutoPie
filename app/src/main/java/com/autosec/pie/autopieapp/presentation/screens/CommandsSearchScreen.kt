@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -53,19 +53,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.utils.getActivity
-import com.autosec.pie.autopieapp.presentation.viewModels.CloudCommandsViewModel
+import com.autopi.utils.getActivity
+import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
-import com.autosec.pie.core.*
-import com.autosec.pie.autopieapp.data.CommandType
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.domain.model.CloudCommandModel
-import com.autosec.pie.autopieapp.presentation.elements.SearchBar
-import com.autosec.pie.ui.theme.GreenGrey60
-import com.autosec.pie.ui.theme.PastelPurple
-import com.autosec.pie.ui.theme.Purple10
-import com.autosec.pie.autopieapp.presentation.viewModels.CommandsListScreenViewModel
+import com.autopi.core.*
+import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.ui.theme.GreenGrey60
+import com.autopi.ui.theme.PastelPurple
+import com.autopi.ui.theme.Purple10
+import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
