@@ -294,7 +294,7 @@ fun SettingsToggles() {
                 )
             }
             //Spacer(modifier = Modifier.width(20.dp))
-            Switch(checked = !mainViewModel.turnOffFileObservers, onCheckedChange = {
+            Switch(checked = mainViewModel.turnOnFileObservers, onCheckedChange = {
                 mainViewModel.toggleFileObservers()
             })
         }

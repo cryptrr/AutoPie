@@ -28,7 +28,7 @@ class AppPreferences(private val context: Context) : MyPreferences {
     companion object{
         private val Context.dataStore : DataStore<Preferences> by preferencesDataStore(name = "settings")
         val IS_LOGGED_IN = booleanPreferencesKey("isLoggedIn")
-        val IS_FILE_OBSERVERS_OFF = booleanPreferencesKey("isFileObserversOff")
+        val IS_FILE_OBSERVERS_ON = booleanPreferencesKey("isFileObserversOn")
         val ACCESS_TOKEN = stringPreferencesKey("accessToken")
         val REFRESH_TOKEN = stringPreferencesKey("refreshToken")
         val USER_NAME = stringPreferencesKey("username")

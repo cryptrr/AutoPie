@@ -83,7 +83,7 @@ class MyApplication : Application() {
     }
 
     private fun scheduleJob() {
-        if(!mainViewModel.turnOffFileObservers){
+        if(mainViewModel.turnOnFileObservers){
             val componentName = ComponentName(this, FileObserverJobService::class.java)
             val jobInfo = JobInfo.Builder(123, componentName)
                 .setPersisted(true) // Keep the job alive after device reboot

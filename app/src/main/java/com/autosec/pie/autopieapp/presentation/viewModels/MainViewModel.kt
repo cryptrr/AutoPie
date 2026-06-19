@@ -76,9 +76,9 @@ class MainViewModel(
 
 
 
-    var turnOffFileObservers by mutableStateOf(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_OFF)).also { state ->
+    var turnOnFileObservers by mutableStateOf(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_ON)).also { state ->
         viewModelScope.launch {
-            appPreferences.getBool(AppPreferences.IS_FILE_OBSERVERS_OFF).collectLatest{
+            appPreferences.getBool(AppPreferences.IS_FILE_OBSERVERS_ON).collectLatest{
                 state.value = it
             }
         }
@@ -106,17 +106,17 @@ class MainViewModel(
 
     fun toggleFileObservers(){
         viewModelScope.launch {
-            if(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_OFF)){
-                scheduleJob(application)
-                appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_OFF, false)
-
-            }else{
+            if(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_ON)){
                 cancelJob(application)
-                appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_OFF, true)
-
+                appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_ON, false)
+            }else{
+                scheduleJob(application)
+                appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_ON, true)
             }
         }
     }
+
+
 
     fun dispatchEvent(event: ViewModelEvent) {
         Timber.d("Event Fired: $event")
