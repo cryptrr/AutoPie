@@ -2,17 +2,21 @@ package com.autosec.pie.autopieapp.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -23,17 +27,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
+import com.autosec.pie.utils.conditional
 import com.autosec.pie.utils.getActivity
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -67,6 +77,7 @@ fun OutputViewerBottomSheet(
 
     val scroll = rememberScrollState()
     val horizontal = rememberScrollState()
+    var wordWrap by remember { mutableStateOf(true) }
 
 
     @Composable
@@ -98,24 +109,52 @@ fun OutputViewerBottomSheet(
 
                 Spacer(modifier = Modifier.height(17.dp))
 
-                Text(
-                    text = "Logs",
-                    lineHeight = 32.sp,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F)
-                )
+                Row (Modifier.fillMaxWidth(), Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
+                    Text(
+                        text = "Logs",
+                        lineHeight = 32.sp,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F)
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        Checkbox(checked = wordWrap, onCheckedChange = { wordWrap = it })
+                        Spacer(Modifier.width(5.dp))
+                        Text("Word Wrap", fontWeight = FontWeight.SemiBold)
+                    }
+
+                }
 
 
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 viewModel.currentLogPath.value?.let {
-                    Column(Modifier.clip(
-                        RoundedCornerShape(15.dp)
-                    ).fillMaxHeight().background(Color.Black.copy(alpha = 0.25F)).padding(horizontal = 15.dp).verticalScroll(scroll).horizontalScroll(horizontal)){
-                        SelectionContainer(Modifier.fillMaxWidth()){
-                            Text(logsState.value, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(vertical = 15.dp))
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(15.dp))
+                            .fillMaxHeight()
+                            .background(Color.Black.copy(alpha = 0.25F))
+                            .padding(horizontal = 15.dp)
+                            .verticalScroll(scroll) // Only vertical scroll on the parent
+                    ) {
+                        // If word wrap is disabled, wrap the text in a horizontal scroll container
+                        val contentModifier = if (!wordWrap) {
+                            Modifier.horizontalScroll(horizontal)
+                        } else {
+                            Modifier.fillMaxWidth()
+                        }
+
+                        Box(modifier = contentModifier) {
+                            SelectionContainer {
+                                Text(
+                                    text = logsState.value,
+                                    fontFamily = FontFamily.Monospace,
+                                    softWrap = wordWrap,
+                                    modifier = Modifier.padding(vertical = 15.dp)
+                                )
+                            }
                         }
                     }
                 }

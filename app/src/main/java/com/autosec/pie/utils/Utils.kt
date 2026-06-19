@@ -10,6 +10,7 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -316,5 +317,16 @@ class Debouncer(
             delay(delayMillis)  // Wait for the specified delay
             function()  // Execute the function after the delay
         }
+    }
+}
+
+fun Modifier.conditional(
+    condition: Boolean,
+    modifier: Modifier.() -> Modifier
+): Modifier {
+    return if (condition) {
+        then(modifier())
+    } else {
+        this
     }
 }
