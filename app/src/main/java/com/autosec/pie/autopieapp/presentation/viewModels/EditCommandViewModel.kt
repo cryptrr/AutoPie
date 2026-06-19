@@ -49,7 +49,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
     var selectedCommandType by mutableStateOf("")
 
-    val isValidCommand by derivedStateOf { execFile.value.isNotBlank() && commandName.value.isNotBlank() }
+    val isValidCommand by derivedStateOf { commandName.value.isNotBlank() }
 
     val formErrorsCount = mutableIntStateOf(0)
 
