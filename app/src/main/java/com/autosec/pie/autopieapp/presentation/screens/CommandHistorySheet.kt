@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autosec.pie.BuildConfig
+import com.autosec.pie.OutputViewerActivity
 import com.autosec.pie.R
 import com.autosec.pie.autopieapp.data.CommandHistoryEntity
 import com.autosec.pie.autopieapp.data.CommandModel
@@ -86,6 +89,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
+import java.io.File
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -252,31 +256,42 @@ fun CommandHistoryCard(commandHistory: CommandHistoryEntity, command: CommandMod
         //verticalArrangement = Arrangement.Center
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            Modifier
-                .clip(
-                    RoundedCornerShape(10.dp)
-                )
-                .padding(horizontal = 5.dp, vertical = 3.dp)
-                .align(Alignment.TopEnd)
-            ,
 
-        ) {
-            Icon(
-                imageVector = Icons.Default.Circle,
-                tint = if(commandHistory.success) GreenGrey60 else PastelRed,
-                contentDescription = "Command Success or Failure",
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        val context = LocalContext.current
+
+
         Column {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = Utils.timeAgo(commandHistory.id),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(if (commandHistory.commandExtraInputs.isNotEmpty()) 0.9F else 1F)
+                    //modifier = Modifier.fillMaxWidth(if (commandHistory.commandExtraInputs.isNotEmpty()) 0.9F else 1F)
                 )
+                OutlinedButton(onClick = {
+
+                    val logsFile = File(context.cacheDir, "${commandHistory.processId}.log")
+                    Timber.d("Logs file: ${logsFile.absolutePath}")
+
+                    val intent = Intent(Intent.ACTION_MAIN).apply {
+                        setClass(context, OutputViewerActivity::class.java)
+                        putExtra("logFile", logsFile.absolutePath )
+                        putExtra("commandName", command?.name ?: "")
+                        //flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+
+                    context.startActivity(intent)
+
+                }, shape = RoundedCornerShape(10.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Circle,
+                        tint = if(commandHistory.success) GreenGrey60 else PastelRed,
+                        contentDescription = "Command Success or Failure",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("OPEN LOGS")
+                }
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
