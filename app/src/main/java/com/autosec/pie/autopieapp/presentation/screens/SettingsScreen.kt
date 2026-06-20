@@ -47,6 +47,7 @@ import com.autosec.pie.BuildConfig
 import com.autosec.pie.autopieapp.domain.AppNotification
 import com.autosec.pie.autopieapp.presentation.elements.SettingsHeader
 import com.autosec.pie.autopieapp.data.services.GithubApiService
+import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.terminal.TerminalEmulatorActivity
 import com.autosec.pie.ui.theme.PastelYellow
 import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel

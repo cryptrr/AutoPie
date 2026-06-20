@@ -18,6 +18,9 @@ sealed class ViewModelEvent {
     data object CronConfigChanged : ViewModelEvent()
     data object CloseShareReceiverSheet : ViewModelEvent()
     data class CancelProcess(val processId: Int) : ViewModelEvent()
+    data object CancelAllProcesses : ViewModelEvent()
+    data class CommandStoppedByUser(val processId: Int) : ViewModelEvent()
+
     data object StopAutoPie : ViewModelEvent()
     data class CommandStarted(val processId: Int,val command: CommandModel, val logFile: String, val input: String, val jobType: JobType) : ViewModelEvent()
     data class CommandCompleted(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()

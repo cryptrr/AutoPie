@@ -28,6 +28,7 @@ import androidx.core.net.toUri
 import com.autosec.pie.BuildConfig
 import com.autosec.pie.OutputViewerActivity
 import com.autosec.pie.autopieapp.data.CommandModel
+import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
 
 class AutoPieNotification(val context: Application) {
 
@@ -104,20 +105,18 @@ class AutoPieNotification(val context: Application) {
     }
 
 
-    fun sendNotification(contentTitle: String, contentText: String,command: CommandModel?, logFile: String) {
+    fun sendNotification(contentTitle: String, contentText: String,command: CommandModel?, logFile: String, processId: Int) {
         val channelId = MAIN_CHANNEL
         val notificationId = System.currentTimeMillis().toInt()
 
 
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            setClass(context, OutputViewerActivity::class.java)
-            putExtra("logFile", logFile)
-            putExtra("commandName", command?.name ?: "")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        val intent = Intent(context, ProcessBroadcastReceiver::class.java).apply {
+            action = "${context.packageName}.CANCEL_PROCESS"
+            putExtra("processId", processId)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context, logFile.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, processId.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
 
@@ -131,7 +130,7 @@ class AutoPieNotification(val context: Application) {
             .setAutoCancel(false)
             .addAction(
                 R.mipmap.ic_launcher,
-                "Open Logs",
+                "Cancel",
                 pendingIntent
             )
 
@@ -182,13 +181,18 @@ class AutoPieNotification(val context: Application) {
             context, logFile.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val cancelIntent = Intent(context, ProcessBroadcastReceiver::class.java).apply {
+            action = "${context.packageName}.CANCEL_PROCESS"
+            putExtra("processId", processId)
+        }
 
-        val pendingButtonIntent: PendingIntent = PendingIntent.getActivity(
+        val pendingCancelIntent = PendingIntent.getBroadcast(
             context,
-            logFile.hashCode(),
-            intent,
+            processId.hashCode(),
+            cancelIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
 
         var builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -200,8 +204,8 @@ class AutoPieNotification(val context: Application) {
             .setAutoCancel(false)
             .addAction(
                 R.mipmap.ic_launcher,
-                "Open Logs",
-                pendingButtonIntent
+                "Cancel",
+                pendingCancelIntent
             )
 
         if (total_progress == 0) {
@@ -342,9 +346,14 @@ class AutoPieNotification(val context: Application) {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(getOpenUrlIntent())
             .setAutoCancel(true)
+//            .addAction(
+//                R.mipmap.ic_launcher,
+//                "Open Logs",
+//                pendingButtonIntent
+//            )
             .addAction(
                 R.mipmap.ic_launcher,
-                "Open Logs",
+                "Cancel",
                 pendingButtonIntent
             )
 

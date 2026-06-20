@@ -46,9 +46,10 @@ class CronJobWorker(private val context: Context, workerParams: WorkerParameters
 
         var processId: Int? = null
 
+        processId = (100000..999999).random()
+
         try {
             inputData.let {
-                processId = (100000..999999).random()
 
                 processIds = processIds + processId
 
@@ -93,7 +94,7 @@ class CronJobWorker(private val context: Context, workerParams: WorkerParameters
 
         }catch (e: Exception){
             Timber.e(e)
-            autoPieNotification.sendNotification("Command Failed", command.name ,null, logsFile!!.absolutePath)
+            autoPieNotification.sendNotification("Command Failed", command.name ,null, logsFile!!.absolutePath, processId)
             mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId!!, command, logsFile.absolutePath))
 
             return Result.failure()

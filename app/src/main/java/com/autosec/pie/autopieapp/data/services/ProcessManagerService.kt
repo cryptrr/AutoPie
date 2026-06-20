@@ -33,6 +33,7 @@ import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 import kotlin.io.path.createSymbolicLinkPointingTo
 
@@ -42,7 +43,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
     private var mcpShell: Shell? = null
 
-    private var shells = HashMap<Int, Shell>()
+    private var shells = ConcurrentHashMap<Int, Shell>()
 
     private val SHELL_PATH = "usr/bin/bash"
 
@@ -69,8 +70,25 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
                                 Timber.d("Process terminated: ${it.processId}")
                                 shells.remove(it.processId)
+                                main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(it.processId))
                             } else {
                                 Timber.d("processId not match")
+                            }
+
+                            Timber.d("Shells List After: ${shells.keys}")
+                        }
+                    }
+
+                    is ViewModelEvent.CancelAllProcesses -> {
+                        CoroutineScope(dispatchers.io).launch {
+                            Timber.d("Shells List: ${shells.keys}")
+
+                            for(runningShell in shells.entries){
+                                runningShell.value.process.destroyForcibly()
+
+                                Timber.d("Process terminated: ${runningShell.key}")
+                                shells.remove(runningShell.key)
+                                main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(runningShell.key))
                             }
 
                             Timber.d("Shells List After: ${shells.keys}")

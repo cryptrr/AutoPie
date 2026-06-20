@@ -43,6 +43,8 @@ class ForegroundService : Service() {
     private var processIds : List<Int> = emptyList()
     private var successProcessIds : List<Int> = emptyList()
     private var failedProcessIds : List<Int> = emptyList()
+    private var stoppedProcessList : List<Int> = emptyList()
+
 
 
     private var foregroundServiceId : Int? = null
@@ -80,6 +82,29 @@ class ForegroundService : Service() {
 
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
+
+                            //Remove from the current running processIds list
+                            processIds = processIds.filter {item -> item !=  it.processId}
+
+                            Timber.d("ProcessIds at completion of command: $processIds")
+
+                            autoPieNotification.cancelNotification(it.processId)
+
+                            //Close if no processes remain in the list
+                            if(processIds.isEmpty()){
+                                Timber.d("All processed completed")
+                                onDestroy()
+                            }
+                        }catch (e: Exception){
+                            Timber.e(e)
+                        }
+                    }
+
+                    is ViewModelEvent.CommandStoppedByUser -> {
+                        try {
+
+                            //Add it to the failed list
+                            stoppedProcessList = stoppedProcessList + it.processId
 
                             //Remove from the current running processIds list
                             processIds = processIds.filter {item -> item !=  it.processId}
@@ -136,7 +161,7 @@ class ForegroundService : Service() {
 
 
         val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
-            action = "${this@ForegroundService.packageName}.STOP_AUTOPIE"
+            action = "${this@ForegroundService.packageName}.CANCEL_ALL_PROCESSES"
         }
 
         val pendingButtonIntent: PendingIntent = PendingIntent.getBroadcast(
@@ -206,17 +231,17 @@ class ForegroundService : Service() {
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
 
-                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , logsFile.absolutePath)
+                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , logsFile.absolutePath, processId)
 
                     }.collect{ receipt ->
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath)
+                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         }
                     }
@@ -224,7 +249,7 @@ class ForegroundService : Service() {
                 }catch (e: Exception){
                     Timber.e(e)
                     //TODO: Could change the !! operator
-                    autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath)
+                    autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath, processId)
                     mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))
                     onDestroy()
 
