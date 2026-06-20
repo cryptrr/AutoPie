@@ -138,7 +138,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             latestUsedFlow,
             userTagsFlow
         ) { input, latestUsed, userTags ->
-            val frequencyMap = input.map { it.exec }
+            val frequencyMap = input.map { it.command.lines().first { !it.startsWith("#") }.split(" ").first() }
                 .groupingBy { it }
                 .eachCount()
 
