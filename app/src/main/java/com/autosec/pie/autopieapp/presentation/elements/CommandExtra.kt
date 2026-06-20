@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autosec.pie.autopieapp.data.AutoPieStrings
@@ -439,13 +440,15 @@ fun OptionSelector(
             .background(Color.Black.copy(alpha = 0.15F))
             .clickable { expanded.value = true }
     ) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween){
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(0.9F)){
             Text(
                 text = selectedOption.value,
+                softWrap = false,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    //.clip(RoundedCornerShape(15.dp))
-                    .fillMaxWidth(0.7F)
-                    .padding(16.dp)
+                    .fillMaxWidth(0.85F)
+                    .padding(top = 16.dp, bottom = 16.dp, start = 16.dp)
             )
             Box(Modifier
                 .fillMaxHeight()
