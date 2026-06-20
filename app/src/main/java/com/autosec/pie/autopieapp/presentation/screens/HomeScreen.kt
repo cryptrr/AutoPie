@@ -334,7 +334,7 @@ fun CommandCard(
                     Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "${card.exec.split("/").last()} ${card.command}",
+                        text = card.command,
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,

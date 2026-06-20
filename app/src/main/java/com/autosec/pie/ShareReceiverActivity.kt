@@ -483,7 +483,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "${card.exec} ${card.command}",
+                text = card.command,
                 maxLines = 2,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
