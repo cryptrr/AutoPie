@@ -156,29 +156,6 @@ fun SettingsToggles() {
             GoToPageIcon()
         }
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .clickable(
-                    indication = null,
-                    enabled = true,
-                    interactionSource = remember { MutableInteractionSource() })
-                {
-                    //mainViewModel.showNotification(AppNotification.FeatureWIP)
-
-                    val intent = Intent(context, TerminalEmulatorActivity::class.java)
-                    context.startActivity(intent)
-
-
-                }
-        ) {
-            Text("Terminal 2")
-            GoToPageIcon()
-        }
-
         Row(horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier

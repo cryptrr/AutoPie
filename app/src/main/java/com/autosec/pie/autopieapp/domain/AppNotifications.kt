@@ -136,7 +136,7 @@ sealed class AppNotification : Notification {
             is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
             is CommandDeleted -> "Command Deleted"
-            else -> "An Event Occurred"
+            else -> "Unknown Event Occurred"
         }
 
     override val type: BannerType
