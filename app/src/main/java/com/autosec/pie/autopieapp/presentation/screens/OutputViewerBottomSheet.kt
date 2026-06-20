@@ -79,6 +79,10 @@ fun OutputViewerBottomSheet(
     val horizontal = rememberScrollState()
     var wordWrap by remember { mutableStateOf(true) }
 
+    LaunchedEffect(logsState.value) {
+        scroll.scrollTo(scroll.maxValue)
+    }
+
 
     @Composable
     fun bottomSheetContent() {
