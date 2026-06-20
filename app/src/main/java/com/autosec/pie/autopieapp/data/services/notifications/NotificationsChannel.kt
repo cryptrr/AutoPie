@@ -110,13 +110,15 @@ class AutoPieNotification(val context: Application) {
         val notificationId = System.currentTimeMillis().toInt()
 
 
-        val intent = Intent(context, ProcessBroadcastReceiver::class.java).apply {
-            action = "${context.packageName}.CANCEL_PROCESS"
-            putExtra("processId", processId)
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            setClass(context, OutputViewerActivity::class.java)
+            putExtra("logFile", logFile)
+            putExtra("commandName", command?.name ?: "")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context, processId.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, logFile.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
 
@@ -128,11 +130,6 @@ class AutoPieNotification(val context: Application) {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(false)
-            .addAction(
-                R.mipmap.ic_launcher,
-                "Cancel",
-                pendingIntent
-            )
 
         // Show the notification
         with(NotificationManagerCompat.from(context)) {
