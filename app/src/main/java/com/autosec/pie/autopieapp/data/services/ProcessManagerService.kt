@@ -669,7 +669,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d(intent.toString())
 
             activity.startService(intent).also {
-                Timber.d("Starting Termux Activity for Command: $it")
+                Timber.d("Starting Termux Activity: $it")
             }
 
             return ProcessResult(commandObject.name, processId , true, "Command Opened in Termux Shell")

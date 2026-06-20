@@ -333,5 +333,13 @@ fun Modifier.conditional(
 }
 
 fun getCommandExec(command: String) : String {
-    return command.lines().first { !it.startsWith("#") }.split(" ").first()
+    return if(command.lines().any { it.startsWith("#@SHELL") }){
+        "Shell"
+    }
+    else if(command.lines().any { it.startsWith("#@PYTHON") }){
+        "Python"
+    }
+    else{
+        command.lines().first { !it.startsWith("#") }.split(" ").first()
+    }
 }
