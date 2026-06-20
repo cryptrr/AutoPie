@@ -425,15 +425,19 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             val horizontalScrollState = rememberScrollState()
 
-            Column {
-                Text(
-                    text = "FLAGS",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(text = "Extra flags to enable/disable.", fontSize = 14.sp, fontWeight = FontWeight.Normal)
+
+            if(command.extras?.filter { it.type == "FLAG" }.isNullOrEmpty()){
+                Column {
+                    Text(
+                        text = "FLAGS",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(text = "Extra flags to enable/disable.", fontSize = 14.sp, fontWeight = FontWeight.Normal)
+                }
             }
+
 
 
             Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
