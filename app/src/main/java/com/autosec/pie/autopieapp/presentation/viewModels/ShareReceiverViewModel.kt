@@ -194,7 +194,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?): Boolean{
+    fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?, processId: Int? = null): Boolean{
         try {
             val command = shareItemsResult.value.find { it.name == commandId }
 
@@ -216,7 +216,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     Triple(true, command, ShareInputs(input, null))
             }
             else{
-                onCommandClick(command, emptyList(), input) {
+                onCommandClick(command, emptyList(), input, processId) {
                     viewModelScope.launch {
                         delay(1000L)
                         currentExtrasDetails.value = null
@@ -232,7 +232,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, onComplete: () -> Unit){
+    fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, processId: Int? = null, onComplete: () -> Unit){
         viewModelScope.launch {
             try {
                 val commandJson = Gson().toJson(card)
@@ -242,6 +242,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     putExtra("command", commandJson)
                     putExtra("currentLink", currentLink)
                     putExtra("fileUris", fileUrisJson)
+                    //Optional
+                    putExtra("processId", processId)
                 }
 
                 startForegroundService(application1, intent)

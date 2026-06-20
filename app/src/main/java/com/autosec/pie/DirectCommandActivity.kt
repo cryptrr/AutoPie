@@ -80,11 +80,7 @@ class DirectCommandActivity : ComponentActivity() {
         Timber.d("Calling package: $callerPackage")
 
 
-
-
         setContent {
-
-
 
             //val activity = LocalContext.current.getActivity()
 
