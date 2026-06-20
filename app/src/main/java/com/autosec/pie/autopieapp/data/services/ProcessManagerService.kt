@@ -523,7 +523,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython -> "python $command"
+                usePython -> "python $exec $command"
                 isShellScript -> "bash $command"
                 else -> "$command"
             }

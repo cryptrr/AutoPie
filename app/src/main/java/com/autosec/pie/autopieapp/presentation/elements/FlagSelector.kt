@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.autosec.pie.autopieapp.data.CommandExtra
 
 
@@ -26,7 +27,7 @@ fun FlagSelector(extra: CommandExtra, checked: Boolean, onCheckedChange: (Boolea
     Row(Modifier.clip(RoundedCornerShape(10.dp)).background(Color.Black.copy(0.29F)).padding(vertical = 10.dp, horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically){
         Column(Modifier.fillMaxWidth(0.8F)){
             Text(extra.name, fontWeight = FontWeight.SemiBold)
-            if(extra.description.isNotEmpty()) Text(extra.description)
+            if(extra.description.isNotEmpty()) Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
         }
         Spacer(Modifier.width(3.dp))
         Box(Modifier.padding(1.dp)){

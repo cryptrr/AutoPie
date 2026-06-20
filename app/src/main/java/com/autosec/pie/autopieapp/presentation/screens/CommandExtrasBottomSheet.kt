@@ -426,7 +426,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             val horizontalScrollState = rememberScrollState()
 
 
-            if(command.extras?.filter { it.type == "FLAG" }.isNullOrEmpty()){
+            if(!command.extras?.filter { it.type == "FLAG" }.isNullOrEmpty()){
                 Column {
                     Text(
                         text = "FLAGS",
