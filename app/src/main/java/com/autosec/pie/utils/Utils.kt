@@ -11,6 +11,7 @@ import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.Modifier
+import com.autosec.pie.autopieapp.data.CommandInterface
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -329,4 +330,8 @@ fun Modifier.conditional(
     } else {
         this
     }
+}
+
+fun getCommandExec(command: String) : String {
+    return command.lines().first { !it.startsWith("#") }.split(" ").first()
 }

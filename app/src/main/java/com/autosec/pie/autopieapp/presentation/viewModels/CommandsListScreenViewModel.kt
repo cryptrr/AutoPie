@@ -16,6 +16,7 @@ import com.autosec.pie.autopieapp.domain.ViewModelError
 import com.autosec.pie.autopieapp.domain.ViewModelEvent
 import com.autosec.pie.autopieapp.data.services.JsonService
 import com.autosec.pie.use_case.AutoPieUseCases
+import com.autosec.pie.utils.getCommandExec
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -167,7 +168,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
             latestUsedFlow,
             userTagsFlow
         ) { input, latestUsed, userTags ->
-            val frequencyMap = input.map { it.command.lines().first { !it.startsWith("#") }.split(" ").first() }
+            val frequencyMap = input.map { getCommandExec(it.command) }
                 .groupingBy { it }
                 .eachCount()
 

@@ -18,6 +18,7 @@ import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotificatio
 import com.autosec.pie.autopieapp.data.services.ForegroundService
 import com.autosec.pie.use_case.AutoPieUseCases
 import com.autosec.pie.utils.Utils
+import com.autosec.pie.utils.getCommandExec
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -138,7 +139,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             latestUsedFlow,
             userTagsFlow
         ) { input, latestUsed, userTags ->
-            val frequencyMap = input.map { it.command.lines().first { !it.startsWith("#") }.split(" ").first() }
+            val frequencyMap = input.map { getCommandExec(it.command) }
                 .groupingBy { it }
                 .eachCount()
 
