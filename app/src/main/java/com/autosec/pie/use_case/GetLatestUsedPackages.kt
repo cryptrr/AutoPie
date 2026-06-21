@@ -1,8 +1,8 @@
-package com.autosec.pie.use_case
+package com.autopi.use_case
 
 
-import com.autosec.pie.autopieapp.data.dbService.AppDatabase
-import com.autosec.pie.utils.getCommandExec
+import com.autopi.autopieapp.data.dbService.AppDatabase
+import com.autopi.utils.getCommandExec
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber

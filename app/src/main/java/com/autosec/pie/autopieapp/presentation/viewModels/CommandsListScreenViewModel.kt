@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.viewModels
+package com.autopi.autopieapp.presentation.viewModels
 
 import android.app.Application
 import android.os.Environment
@@ -8,15 +8,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.autopieapp.data.CommandExtra
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.CommandType
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.data.services.JsonService
-import com.autosec.pie.use_case.AutoPieUseCases
-import com.autosec.pie.utils.getCommandExec
+import com.autopi.core.DispatcherProvider
+import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.use_case.AutoPieUseCases
+import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers

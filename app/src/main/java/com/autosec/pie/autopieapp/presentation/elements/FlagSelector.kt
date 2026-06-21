@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandExtra
 
 
 @Composable

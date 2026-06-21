@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.data.services.notifications
+package com.autopi.autopieapp.data.services.notifications
 
 import android.Manifest
 import android.app.Activity
@@ -18,17 +18,17 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.autosec.pie.MainActivity
-import com.autosec.pie.R
-import com.autosec.pie.autopieapp.data.AutoPieConstants
-import com.autosec.pie.utils.getIntExtraOrNull
+import com.autopi.MainActivity
+import com.autopi.R
+import com.autopi.autopieapp.data.AutoPieConstants
+import com.autopi.utils.getIntExtraOrNull
 import timber.log.Timber
 import java.io.File
 import androidx.core.net.toUri
-import com.autosec.pie.BuildConfig
-import com.autosec.pie.OutputViewerActivity
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.services.ProcessBroadcastReceiver
+import com.autopi.BuildConfig
+import com.autopi.OutputViewerActivity
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.services.ProcessBroadcastReceiver
 
 class AutoPieNotification(val context: Application) {
 

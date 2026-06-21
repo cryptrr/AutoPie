@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.elements
+package com.autopi.autopieapp.presentation.elements
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider

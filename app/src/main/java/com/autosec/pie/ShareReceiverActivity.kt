@@ -1,4 +1,4 @@
-package com.autosec.pie
+package com.autopi
 
 
 import android.content.Intent
@@ -68,21 +68,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.ShareInputs
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.presentation.elements.AutoPieLogo
-import com.autosec.pie.autopieapp.presentation.elements.SearchBar
-import com.autosec.pie.autopieapp.presentation.screens.CommandExtrasBottomSheet
-import com.autosec.pie.ui.theme.AutoPieTheme
-import com.autosec.pie.utils.Utils.Companion.getPathsFromClipData
-import com.autosec.pie.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.presentation.elements.AutoPieLogo
+import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.autopieapp.presentation.screens.CommandExtrasBottomSheet
+import com.autopi.ui.theme.AutoPieTheme
+import com.autopi.utils.Utils.Companion.getPathsFromClipData
+import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
-import com.autosec.pie.utils.getActivity
-import com.autosec.pie.utils.getCommandExec
+import com.autopi.utils.getActivity
+import com.autopi.utils.getCommandExec
 import org.koin.androidx.compose.koinViewModel
 import kotlin.time.Duration.Companion.milliseconds
 

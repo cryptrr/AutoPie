@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import android.content.Intent
 import android.os.Build
@@ -43,15 +43,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.BuildConfig
-import com.autosec.pie.autopieapp.domain.AppNotification
-import com.autosec.pie.autopieapp.presentation.elements.SettingsHeader
-import com.autosec.pie.autopieapp.data.services.GithubApiService
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.terminal.TerminalEmulatorActivity
-import com.autosec.pie.ui.theme.PastelYellow
-import com.autosec.pie.autopieapp.presentation.viewModels.MainViewModel
-import com.autosec.pie.ui.theme.PastelGreen
+import com.autopi.BuildConfig
+import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.presentation.elements.SettingsHeader
+import com.autopi.autopieapp.data.services.GithubApiService
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.terminal.TerminalEmulatorActivity
+import com.autopi.ui.theme.PastelYellow
+import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.ui.theme.PastelGreen
 import com.termux.app.TermuxActivity
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber

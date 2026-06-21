@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.viewModels
+package com.autopi.autopieapp.presentation.viewModels
 
 import android.app.Activity
 import android.app.Application
@@ -7,18 +7,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autosec.pie.core.DispatcherProvider
-import com.autosec.pie.autopieapp.data.CommandExtraInput
-import com.autosec.pie.autopieapp.data.CommandModel
-import com.autosec.pie.autopieapp.data.ShareInputs
-import com.autosec.pie.autopieapp.data.preferences.AppPreferences
-import com.autosec.pie.autopieapp.domain.ViewModelError
-import com.autosec.pie.autopieapp.domain.ViewModelEvent
-import com.autosec.pie.autopieapp.data.services.notifications.AutoPieNotification
-import com.autosec.pie.autopieapp.data.services.ForegroundService
-import com.autosec.pie.use_case.AutoPieUseCases
-import com.autosec.pie.utils.Utils
-import com.autosec.pie.utils.getCommandExec
+import com.autopi.core.DispatcherProvider
+import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
+import com.autopi.autopieapp.data.services.ForegroundService
+import com.autopi.use_case.AutoPieUseCases
+import com.autopi.utils.Utils
+import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

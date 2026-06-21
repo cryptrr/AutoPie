@@ -1,4 +1,4 @@
-package com.autosec.pie.autopieapp.presentation.screens
+package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -42,9 +42,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autosec.pie.autopieapp.presentation.viewModels.OutputViewerViewModel
-import com.autosec.pie.utils.conditional
-import com.autosec.pie.utils.getActivity
+import com.autopi.autopieapp.presentation.viewModels.OutputViewerViewModel
+import com.autopi.utils.conditional
+import com.autopi.utils.getActivity
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 

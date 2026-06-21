@@ -11,7 +11,7 @@ import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.Modifier
-import com.autosec.pie.autopieapp.data.CommandInterface
+import com.autopi.autopieapp.data.CommandInterface
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
