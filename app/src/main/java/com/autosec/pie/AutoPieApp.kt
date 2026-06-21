@@ -79,6 +79,7 @@ class MyApplication : Application() {
             AutoPieCoreService.fetchLatestRepositoryJson()
             checkForUpdates()
             createEmptyCookieFile()
+            AutoPieCoreService.setAutoPieGraphics()
         }
     }
 
