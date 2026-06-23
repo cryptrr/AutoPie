@@ -463,7 +463,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
 
-            checkForUnsafeCommands(commandObject, command)
+            //checkForUnsafeCommands(commandObject, command)
 
             val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
 
@@ -557,7 +557,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
 
-            checkForUnsafeCommands(commandObject, command)
+            //checkForUnsafeCommands(commandObject, command)
 
             val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
 
