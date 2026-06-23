@@ -387,29 +387,6 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    Button(
-        onClick = { if(mainViewModel.mcpServerActive) mainViewModel.stopMCPServer() else mainViewModel.startMCPServer() },
-        colors = ButtonDefaults.buttonColors(
-            contentColor = MaterialTheme.colorScheme.onTertiary,
-            disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = .12f),
-            containerColor = if(mainViewModel.mcpServerActive) PastelGreen else MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = .12f)
-        ),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-
-    ) {
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = if(mainViewModel.mcpServerActive) "MCP Server Running" else "Start MCP Server" )
-        Spacer(modifier = Modifier.width(8.dp))
-    }
-
-
-    Spacer(modifier = Modifier.height(20.dp))
-
-
     Column(
         verticalArrangement = Arrangement.Center, modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
