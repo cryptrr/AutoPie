@@ -3,6 +3,7 @@ package com.autopi.autopieapp.data.services
 import android.app.Application
 import android.app.DownloadManager
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.os.UserManager
@@ -15,6 +16,7 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
+import com.termux.app.TermuxActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -28,6 +30,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 class AutoPieCoreService {
 
@@ -37,7 +41,30 @@ class AutoPieCoreService {
         private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
         val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+        private var termuxBootstrapTriggered = false
 
+        fun ensureTermuxBootstrapTriggered(context: Context) {
+            if (isTermuxBootstrapInstalled(context) || termuxBootstrapTriggered) {
+                return
+            }
+
+            termuxBootstrapTriggered = true
+
+            try {
+                Timber.d("Termux bootstrap missing. Launching TermuxActivity to trigger setup.")
+                val intent = Intent(context, TermuxActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                termuxBootstrapTriggered = false
+                Timber.e(e, "Failed to launch TermuxActivity for bootstrap setup")
+            }
+        }
+
+        fun isTermuxBootstrapInstalled(context: Context): Boolean {
+            return File(context.filesDir, "usr/bin/bash").exists()
+        }
 
 
         fun initAutosec() {
@@ -316,6 +343,57 @@ class AutoPieCoreService {
             }
         }
 
+        private fun downloadFileNatively(url: String, fullFilePath: String): Boolean {
+            Timber.d("Downloading file natively")
+
+            return try {
+                val destinationFile = File(fullFilePath)
+                val tempFile = File(destinationFile.parentFile, "${destinationFile.name}.download")
+
+                destinationFile.parentFile?.mkdirs()
+
+                val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 30_000
+                    readTimeout = 30_000
+                    instanceFollowRedirects = true
+                    requestMethod = "GET"
+                }
+
+                try {
+                    val responseCode = connection.responseCode
+                    if (responseCode !in 200..299) {
+                        Timber.e("Download failed with HTTP $responseCode for $url")
+                        return false
+                    }
+
+                    connection.inputStream.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+
+                    if (destinationFile.exists() && !destinationFile.delete()) {
+                        Timber.e("Unable to replace existing file ${destinationFile.absolutePath}")
+                        tempFile.delete()
+                        return false
+                    }
+
+                    if (!tempFile.renameTo(destinationFile)) {
+                        Timber.e("Unable to move downloaded file to ${destinationFile.absolutePath}")
+                        tempFile.delete()
+                        return false
+                    }
+
+                    true
+                } finally {
+                    connection.disconnect()
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
+                false
+            }
+        }
+
         fun downloadAndExtractAutoSecInitArchive() {
 
             Timber.d("Downloading Init Archive")
@@ -337,7 +415,7 @@ class AutoPieCoreService {
                        mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
 
                        //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
-                       val isDownloaded = processManagerService.downloadFileWithWCurl(
+                       val isDownloaded = downloadFileNatively(
                            AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
                            Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
                        )
@@ -612,4 +690,3 @@ class AutoPieCoreService {
 
     }
 }
-

@@ -104,7 +104,6 @@ class MainActivity : ComponentActivity() {
         autoPieNotification.requestNotificationPermission(this)
         autoPieNotification.createNotificationChannel()
 
-
         setContent {
 
             val mainViewModel: MainViewModel by inject(MainViewModel::class.java)

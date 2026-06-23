@@ -66,6 +66,8 @@ class MyApplication : Application() {
 
 
         initAutosec()
+        AutoPieCoreService.ensureTermuxBootstrapTriggered(this@MyApplication)
+
         AutoPieCoreService.extractRequiredFilesAndMakeExec(this@MyApplication)
         if(!AutoPieCoreService.isPrimaryUser(this)){
             //AutoPieCoreService.extractBootstrapArchive(this@MyApplication)
@@ -75,7 +77,6 @@ class MyApplication : Application() {
             scheduleCron()
             startScreenStateReceiver()
             startNotificationReceiver()
-
             AutoPieCoreService.fetchLatestRepositoryJson()
             checkForUpdates()
             createEmptyCookieFile()
