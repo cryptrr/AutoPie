@@ -348,22 +348,22 @@ class MainActivity : ComponentActivity() {
 
                     }
 
-                    YesNoDialog(
-                        showDialog = mainViewModel.installInitPackagesPrompt,
-                        title = "Do you want to install init packages and its commands?",
-                        subtitle = "Contains ffmpeg and imagemagick.",
-                        onYesClicked = {
-                            mainViewModel.installInitPackagesPrompt = false
-                            AutoPieCoreService.downloadAndExtractAutoSecInitArchive()
-                        },
-                        onNoClicked = {
-                            mainViewModel.installInitPackagesPrompt = false
-                            AutoPieCoreService.downloadAndExtractAutoSecEmptyInit()
-                        },
-                        onDismissRequest = {
-
-                        }
-                    )
+//                    YesNoDialog(
+//                        showDialog = mainViewModel.installInitPackagesPrompt,
+//                        title = "Do you want to install init packages and its commands?",
+//                        subtitle = "Contains ffmpeg and imagemagick.",
+//                        onYesClicked = {
+//                            mainViewModel.installInitPackagesPrompt = false
+//                            AutoPieCoreService.downloadAndExtractAutoSecInitArchive()
+//                        },
+//                        onNoClicked = {
+//                            mainViewModel.installInitPackagesPrompt = false
+//                            AutoPieCoreService.downloadAndExtractAutoSecEmptyInit()
+//                        },
+//                        onDismissRequest = {
+//
+//                        }
+//                    )
 
 
                     if (autoPieStates.addShareBottomSheetStateOpen.value) {
