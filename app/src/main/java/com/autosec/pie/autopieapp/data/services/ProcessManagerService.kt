@@ -486,7 +486,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             Timber.d("FULL COMMAND: $fullCommand")
 
-            Timber.d("Env dump: ${shell.environment}")
+            //Timber.d("Env dump: ${shell.environment}")
 
             val result = shell.run(fullCommand)
 
@@ -575,7 +575,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
 
             Timber.d("FULL COMMAND: $fullCommand")
 
-            Timber.d("Env dump: ${shell.environment}")
+            //Timber.d("Env dump: ${shell.environment}")
 
 
             val result = shell.run("bash ${scriptFile.absolutePath}")
