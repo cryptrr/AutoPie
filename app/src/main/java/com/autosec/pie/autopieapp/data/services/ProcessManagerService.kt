@@ -552,7 +552,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             scriptFile.appendText(fullCommand)
 
-            Timber.d("Script file written ${scriptFile.absolutePath}} with content\n ${scriptFile.readText()}")
+            Timber.d("Script file written ${scriptFile.absolutePath}}")
 
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
