@@ -1,0 +1,167 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Thu, 11 Jun 2026 01:51:30 +0530
+Subject: [PATCH 05/18] Full termux integration
+
+---
+ .../java/com/termux/app/TermuxInstaller.java  | 40 ++++++++++++++++---
+ .../environment/UnixShellEnvironment.java     |  4 +-
+ .../environment/TermuxShellEnvironment.java   |  5 ++-
+ .../runner/terminal/TermuxSession.java        | 27 +++++++++++--
+ 4 files changed, 63 insertions(+), 13 deletions(-)
+
+diff --git a/app/src/main/java/com/termux/app/TermuxInstaller.java b/app/src/main/java/com/termux/app/TermuxInstaller.java
+index cfbbfe0f..38481850 100644
+--- a/app/src/main/java/com/termux/app/TermuxInstaller.java
++++ b/app/src/main/java/com/termux/app/TermuxInstaller.java
+@@ -25,8 +25,11 @@ import com.termux.shared.termux.shell.command.environment.TermuxShellEnvironment
+ 
+ import java.io.BufferedReader;
+ import java.io.ByteArrayInputStream;
++import java.io.ByteArrayOutputStream;
+ import java.io.File;
+ import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
+ import java.io.InputStreamReader;
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -156,11 +159,14 @@ final class TermuxInstaller {
+                     final byte[] buffer = new byte[8096];
+                     final List<Pair<String, String>> symlinks = new ArrayList<>(50);
+ 
+-                    final byte[] zipBytes = loadZipBytes();
++                    final byte[] zipBytes = loadZipBytes(activity);
+                     try (ZipInputStream zipInput = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+                         ZipEntry zipEntry;
+                         while ((zipEntry = zipInput.getNextEntry()) != null) {
++                            Logger.logInfo(LOG_TAG, zipEntry.getName() + "______" + zipEntry.toString());
+                             if (zipEntry.getName().equals("SYMLINKS.txt")) {
++                                Logger.logInfo(LOG_TAG, "Detected SYMLINKS file at" + zipEntry);
++
+                                 BufferedReader symlinksReader = new BufferedReader(new InputStreamReader(zipInput));
+                                 String line;
+                                 while ((line = symlinksReader.readLine()) != null) {
+@@ -205,7 +211,7 @@ final class TermuxInstaller {
+                     }
+ 
+                     if (symlinks.isEmpty())
+-                        //throw new RuntimeException("No SYMLINKS.txt encountered");
++                        throw new RuntimeException("No SYMLINKS.txt encountered");
+                     for (Pair<String, String> symlink : symlinks) {
+                         Os.symlink(symlink.first, symlink.second);
+                     }
+@@ -375,10 +381,32 @@ final class TermuxInstaller {
+         return FileUtils.createDirectoryFile(directory.getAbsolutePath());
+     }
+ 
+-    public static byte[] loadZipBytes() {
+-        // Only load the shared library when necessary to save memory usage.
+-        System.loadLibrary("termux-bootstrap");
+-        return getZip();
++//    public static byte[] loadZipBytes() {
++//        Logger.logError("BOOTSTRAP", "Before loadLibrary");
++//        System.loadLibrary("termux-bootstrap");
++//        Logger.logError("BOOTSTRAP", "After loadLibrary");
++//
++//        byte[] bytes = getZip();
++//
++//        Logger.logError("BOOTSTRAP",
++//            "After getZip size=" + (bytes == null ? "null" : bytes.length));
++//
++//        return bytes;
++//    }
++
++    public static byte[] loadZipBytes(Context context) throws IOException {
++        try (InputStream is = context.getAssets().open("bootstrap-aarch64.zip");
++             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
++
++            byte[] buffer = new byte[8192];
++            int read;
++
++            while ((read = is.read(buffer)) != -1) {
++                baos.write(buffer, 0, read);
++            }
++
++            return baos.toByteArray();
++        }
+     }
+ 
+     public static native byte[] getZip();
+diff --git a/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
+index 8e0e4edd..69e21228 100644
+--- a/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
+@@ -53,8 +53,8 @@ public abstract class UnixShellEnvironment implements IShellEnvironment {
+ 
+ 
+     /** Names for common/supported login shell binaries. */
+-    //public static final String[] LOGIN_SHELL_BINARIES = new String[]{"login", "bash", "zsh", "fish", "sh"};
+-    public static final String[] LOGIN_SHELL_BINARIES = new String[]{"sh", "fish", "zsh"};
++    public static final String[] LOGIN_SHELL_BINARIES = new String[]{"login", "bash", "zsh", "fish", "sh"};
++    //public static final String[] LOGIN_SHELL_BINARIES = new String[]{"sh", "fish", "zsh"};
+ 
+ 
+ 
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+index acabc47e..46d61269 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+@@ -77,6 +77,9 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+ 
+         environment.put(ENV_HOME, TermuxConstants.TERMUX_HOME_DIR_PATH);
+         environment.put(ENV_PREFIX, TermuxConstants.TERMUX_PREFIX_DIR_PATH);
++        environment.put(ENV_LD_LIBRARY_PATH, TermuxConstants.TERMUX_LIB_PREFIX_DIR_PATH);
++        environment.put("TEST_VAR", "hello");
++
+ 
+         // If failsafe is not enabled, then we keep default PATH and TMPDIR so that system binaries can be used
+         if (!isFailSafe) {
+@@ -88,7 +91,7 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+             } else {
+                 // Termux binaries on Android 7+ rely on DT_RUNPATH, so LD_LIBRARY_PATH should be unset by default
+                 environment.put(ENV_PATH, TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH);
+-                environment.remove(ENV_LD_LIBRARY_PATH);
++                //environment.remove(ENV_LD_LIBRARY_PATH);
+             }
+         }
+ 
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/runner/terminal/TermuxSession.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/runner/terminal/TermuxSession.java
+index 4046a319..7635c7ca 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/runner/terminal/TermuxSession.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/runner/terminal/TermuxSession.java
+@@ -95,11 +95,30 @@ public class TermuxSession {
+         boolean isLoginShell = false;
+ 
+         if (executionCommand.executable == null) {
+-            executionCommand.executable =
+-                "/data/data/" + currentPackageContext.getPackageName()
+-                    + "/files/busybox";
++            if (!executionCommand.isFailsafe) {
++                for (String shellBinary : UnixShellEnvironment.LOGIN_SHELL_BINARIES) {
++                    File shellFile = new File(defaultBinPath, shellBinary);
++                    if (shellFile.canExecute()) {
++                        executionCommand.executable = shellFile.getAbsolutePath();
++                        break;
++                    }
++                }
++            }
++
++            if (executionCommand.executable == null) {
++                // Fall back to system shell as last resort:
++                // Do not start a login shell since ~/.profile may cause startup failure if its invalid.
++                // /system/bin/sh is provided by mksh (not toybox) and does load .mkshrc but for android its set
++                // to /system/etc/mkshrc even though its default is ~/.mkshrc.
++                // So /system/etc/mkshrc must still be valid for failsafe session to start properly.
++                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r3:external/mksh/src/main.c;l=663
++                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r3:external/mksh/src/main.c;l=41
++                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r3:external/mksh/Android.bp;l=114
++                executionCommand.executable = "/system/bin/sh";
++            } else {
++                isLoginShell = true;
++            }
+ 
+-            executionCommand.arguments = new String[]{"sh"};
+         }
+         // Setup command args
+         String[] commandArgs = shellEnvironmentClient.setupShellCommandArguments(executionCommand.executable, executionCommand.arguments);

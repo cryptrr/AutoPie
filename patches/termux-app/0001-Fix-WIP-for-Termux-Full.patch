@@ -1,0 +1,142 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Tue, 9 Jun 2026 10:12:25 +0530
+Subject: [PATCH 01/18] Fix WIP for Termux-Full
+
+---
+ .../java/com/termux/app/TermuxActivity.java   | 22 ++++++++++++++++++-
+ .../com/termux/app/TermuxApplication.java     |  2 +-
+ app/src/main/res/layout/activity_termux.xml   |  6 +++--
+ art/copy-to-other-apps.sh                     |  0
+ art/generate-big-icon.sh                      |  0
+ art/generate-feature-graphic.sh               |  0
+ art/generate-launcher-images.sh               |  0
+ art/generate-tv-banner.sh                     |  0
+ gradlew                                       |  0
+ .../termux/shared/termux/TermuxConstants.java |  2 +-
+ .../src/main/res/values-night/themes.xml      |  0
+ 11 files changed, 27 insertions(+), 5 deletions(-)
+ mode change 100755 => 100644 art/copy-to-other-apps.sh
+ mode change 100755 => 100644 art/generate-big-icon.sh
+ mode change 100755 => 100644 art/generate-feature-graphic.sh
+ mode change 100755 => 100644 art/generate-launcher-images.sh
+ mode change 100755 => 100644 art/generate-tv-banner.sh
+ mode change 100755 => 100644 gradlew
+ mode change 100755 => 100644 termux-shared/src/main/res/values-night/themes.xml
+
+diff --git a/app/src/main/java/com/termux/app/TermuxActivity.java b/app/src/main/java/com/termux/app/TermuxActivity.java
+index 0c9f7412..4682ccef 100644
+--- a/app/src/main/java/com/termux/app/TermuxActivity.java
++++ b/app/src/main/java/com/termux/app/TermuxActivity.java
+@@ -9,9 +9,11 @@ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.ServiceConnection;
++import android.content.pm.ResolveInfo;
+ import android.net.Uri;
+ import android.os.Bundle;
+ import android.os.IBinder;
++import android.util.Log;
+ import android.view.ContextMenu;
+ import android.view.ContextMenu.ContextMenuInfo;
+ import android.view.Gravity;
+@@ -260,9 +262,27 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
+             Intent serviceIntent = new Intent(this, TermuxService.class);
+             startService(serviceIntent);
+ 
++            Log.d("TERMUX", "starting service");
++            ComponentName cn = startService(serviceIntent);
++            Log.d("TERMUX", "startService result=" + cn);
++
++            ResolveInfo ri =
++                getPackageManager().resolveService(serviceIntent, 0);
++            Log.d("TERMUX", "resolveService=" + ri);
++
++            Log.d("TERMUX", serviceIntent.getComponent().flattenToString());
++
++            boolean bound =
++                bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
++            Log.d("TERMUX", "bind result=" + bound);
++
+             // Attempt to bind to the service, this will call the {@link #onServiceConnected(ComponentName, IBinder)}
+             // callback if it succeeds.
+-            if (!bindService(serviceIntent, this, 0))
++            if (!bindService(
++                serviceIntent,
++                this,
++                Context.BIND_AUTO_CREATE
++            ))
+                 throw new RuntimeException("bindService() failed");
+         } catch (Exception e) {
+             Logger.logStackTraceWithMessage(LOG_TAG,"TermuxActivity failed to start TermuxService", e);
+diff --git a/app/src/main/java/com/termux/app/TermuxApplication.java b/app/src/main/java/com/termux/app/TermuxApplication.java
+index 1123abf6..969d9b72 100644
+--- a/app/src/main/java/com/termux/app/TermuxApplication.java
++++ b/app/src/main/java/com/termux/app/TermuxApplication.java
+@@ -35,7 +35,7 @@ public class TermuxApplication extends Application {
+         Logger.logDebug("Starting Application");
+ 
+         // Set TermuxBootstrap.TERMUX_APP_PACKAGE_MANAGER and TermuxBootstrap.TERMUX_APP_PACKAGE_VARIANT
+-        TermuxBootstrap.setTermuxPackageManagerAndVariant(BuildConfig.TERMUX_PACKAGE_VARIANT);
++        //TermuxBootstrap.setTermuxPackageManagerAndVariant(BuildConfig.TERMUX_PACKAGE_VARIANT);
+ 
+         // Init app wide SharedProperties loaded from termux.properties
+         TermuxAppSharedProperties properties = TermuxAppSharedProperties.init(context);
+diff --git a/app/src/main/res/layout/activity_termux.xml b/app/src/main/res/layout/activity_termux.xml
+index 831ea7cf..14c1c24f 100644
+--- a/app/src/main/res/layout/activity_termux.xml
++++ b/app/src/main/res/layout/activity_termux.xml
+@@ -43,7 +43,9 @@
+                 android:dividerHeight="0dp"
+                 android:descendantFocusability="blocksDescendants"
+                 android:orientation="vertical"
+-                android:background="?attr/termuxActivityDrawerBackground">
++                android:background="@android:color/black"
++                >
++
+ 
+                 <LinearLayout
+                     android:layout_width="match_parent"
+@@ -56,7 +58,7 @@
+                         android:src="@drawable/ic_settings"
+                         android:background="@null"
+                         android:contentDescription="@string/action_open_settings"
+-                        app:tint="?attr/termuxActivityDrawerImageTint" />
++                        app:tint="@android:color/white" />
+                 </LinearLayout>
+ 
+                 <ListView
+diff --git a/art/copy-to-other-apps.sh b/art/copy-to-other-apps.sh
+old mode 100755
+new mode 100644
+diff --git a/art/generate-big-icon.sh b/art/generate-big-icon.sh
+old mode 100755
+new mode 100644
+diff --git a/art/generate-feature-graphic.sh b/art/generate-feature-graphic.sh
+old mode 100755
+new mode 100644
+diff --git a/art/generate-launcher-images.sh b/art/generate-launcher-images.sh
+old mode 100755
+new mode 100644
+diff --git a/art/generate-tv-banner.sh b/art/generate-tv-banner.sh
+old mode 100755
+new mode 100644
+diff --git a/gradlew b/gradlew
+old mode 100755
+new mode 100644
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index 534936ff..e8f1799b 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -349,7 +349,7 @@ public final class TermuxConstants {
+     /** Termux app name */
+     public static final String TERMUX_APP_NAME = "Termux"; // Default: "Termux"
+     /** Termux package name */
+-    public static final String TERMUX_PACKAGE_NAME = "com.termux"; // Default: "com.termux"
++    public static final String TERMUX_PACKAGE_NAME = "com.autosec.pie.debug"; // Default: "com.termux"
+     /** Termux GitHub repo name */
+     public static final String TERMUX_GITHUB_REPO_NAME = "termux-app"; // Default: "termux-app"
+     /** Termux GitHub repo url */
+diff --git a/termux-shared/src/main/res/values-night/themes.xml b/termux-shared/src/main/res/values-night/themes.xml
+old mode 100755
+new mode 100644

@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Fri, 19 Jun 2026 11:38:40 +0530
+Subject: [PATCH 12/18] Removed exec from UI and command.
+
+---
+ .../main/java/com/termux/shared/termux/TermuxConstants.java   | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index fd2e02c6..3753147e 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -349,7 +349,7 @@ public final class TermuxConstants {
+     /** Termux app name */
+     public static final String TERMUX_APP_NAME = "AutoPie"; // Default: "Termux"
+     /** Termux package name */
+-    public static final String TERMUX_PACKAGE_NAME = "com.pie"; // Default: "com.termux"
++    public static final String TERMUX_PACKAGE_NAME = "com.autosec.pie"; // Default: "com.termux"
+     /** Termux GitHub repo name */
+     public static final String TERMUX_GITHUB_REPO_NAME = "termux-app"; // Default: "termux-app"
+     /** Termux GitHub repo url */
+@@ -578,7 +578,7 @@ public final class TermuxConstants {
+ 
+     /** Termux app internal private app data directory path */
+     @SuppressLint("SdCardPath")
+-    public static final String TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH = "/data/user/10/" + TERMUX_PACKAGE_NAME; // Default: "/data/data/com.termux"
++    public static final String TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH = "/data/data/" + TERMUX_PACKAGE_NAME; // Default: "/data/data/com.termux"
+     /** Termux app internal private app data directory */
+     public static final File TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR = new File(TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH);
+ 

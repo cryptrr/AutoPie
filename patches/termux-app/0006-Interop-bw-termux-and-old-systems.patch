@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Thu, 11 Jun 2026 18:06:50 +0530
+Subject: [PATCH 06/18] Interop bw termux and old systems.
+
+---
+ .../java/com/termux/app/TermuxInstaller.java  | 22 +++++++++----------
+ .../termux/shared/termux/TermuxConstants.java |  2 +-
+ 2 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/app/src/main/java/com/termux/app/TermuxInstaller.java b/app/src/main/java/com/termux/app/TermuxInstaller.java
+index 38481850..8ed82871 100644
+--- a/app/src/main/java/com/termux/app/TermuxInstaller.java
++++ b/app/src/main/java/com/termux/app/TermuxInstaller.java
+@@ -76,17 +76,17 @@ final class TermuxInstaller {
+ 
+         // Termux can only be run as the primary user (device owner) since only that
+         // account has the expected file system paths. Verify that:
+-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !PackageUtils.isCurrentUserThePrimaryUser(activity)) {
+-            bootstrapErrorMessage = activity.getString(R.string.bootstrap_error_not_primary_user_message,
+-                MarkdownUtils.getMarkdownCodeForString(TERMUX_PREFIX_DIR_PATH, false));
+-            Logger.logError(LOG_TAG, "isFilesDirectoryAccessible: " + isFilesDirectoryAccessible);
+-            Logger.logError(LOG_TAG, bootstrapErrorMessage);
+-            sendBootstrapCrashReportNotification(activity, bootstrapErrorMessage);
+-            MessageDialogUtils.exitAppWithErrorMessage(activity,
+-                activity.getString(R.string.bootstrap_error_title),
+-                bootstrapErrorMessage);
+-            return;
+-        }
++//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !PackageUtils.isCurrentUserThePrimaryUser(activity)) {
++//            bootstrapErrorMessage = activity.getString(R.string.bootstrap_error_not_primary_user_message,
++//                MarkdownUtils.getMarkdownCodeForString(TERMUX_PREFIX_DIR_PATH, false));
++//            Logger.logError(LOG_TAG, "isFilesDirectoryAccessible: " + isFilesDirectoryAccessible);
++//            Logger.logError(LOG_TAG, bootstrapErrorMessage);
++//            sendBootstrapCrashReportNotification(activity, bootstrapErrorMessage);
++//            MessageDialogUtils.exitAppWithErrorMessage(activity,
++//                activity.getString(R.string.bootstrap_error_title),
++//                bootstrapErrorMessage);
++//            return;
++//        }
+ 
+         if (!isFilesDirectoryAccessible) {
+             bootstrapErrorMessage = Error.getMinimalErrorString(filesDirectoryAccessibleError);
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index e507b41a..3753147e 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -347,7 +347,7 @@ public final class TermuxConstants {
+      */
+ 
+     /** Termux app name */
+-    public static final String TERMUX_APP_NAME = "Termux"; // Default: "Termux"
++    public static final String TERMUX_APP_NAME = "AutoPie"; // Default: "Termux"
+     /** Termux package name */
+     public static final String TERMUX_PACKAGE_NAME = "com.autosec.pie"; // Default: "com.termux"
+     /** Termux GitHub repo name */

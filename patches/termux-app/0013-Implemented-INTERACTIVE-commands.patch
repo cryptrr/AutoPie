@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Fri, 19 Jun 2026 16:14:35 +0530
+Subject: [PATCH 13/18] Implemented #@INTERACTIVE commands.
+
+---
+ .../main/java/com/termux/app/RunCommandService.java  | 12 ++++++------
+ app/src/main/java/com/termux/app/TermuxActivity.java |  3 +++
+ app/src/main/java/com/termux/app/TermuxService.java  | 12 +-----------
+ 3 files changed, 10 insertions(+), 17 deletions(-)
+
+diff --git a/app/src/main/java/com/termux/app/RunCommandService.java b/app/src/main/java/com/termux/app/RunCommandService.java
+index 635f2810..462e5651 100644
+--- a/app/src/main/java/com/termux/app/RunCommandService.java
++++ b/app/src/main/java/com/termux/app/RunCommandService.java
+@@ -137,12 +137,12 @@ public class RunCommandService extends Service {
+         // user knows someone tried to run a command in termux context, since it may be malicious
+         // app or imported (tasker) plugin project and not the user himself. If a pending intent is
+         // also sent, then its creator is also logged and shown.
+-        errmsg = TermuxPluginUtils.checkIfAllowExternalAppsPolicyIsViolated(this, LOG_TAG);
+-        if (errmsg != null) {
+-            executionCommand.setStateFailed(Errno.ERRNO_FAILED.getCode(), errmsg);
+-            TermuxPluginUtils.processPluginExecutionCommandError(this, LOG_TAG, executionCommand, true);
+-            return stopService();
+-        }
++//        errmsg = TermuxPluginUtils.checkIfAllowExternalAppsPolicyIsViolated(this, LOG_TAG);
++//        if (errmsg != null) {
++//            executionCommand.setStateFailed(Errno.ERRNO_FAILED.getCode(), errmsg);
++//            TermuxPluginUtils.processPluginExecutionCommandError(this, LOG_TAG, executionCommand, true);
++//            return stopService();
++//        }
+ 
+ 
+ 
+diff --git a/app/src/main/java/com/termux/app/TermuxActivity.java b/app/src/main/java/com/termux/app/TermuxActivity.java
+index 73805bbb..27ca030a 100644
+--- a/app/src/main/java/com/termux/app/TermuxActivity.java
++++ b/app/src/main/java/com/termux/app/TermuxActivity.java
+@@ -469,6 +469,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
+ 
+ 
+ 
++    public TermuxTerminalSessionActivityClient getTerminalSessionClient(){
++        return mTermuxTerminalSessionActivityClient;
++    }
+ 
+ 
+ 
+diff --git a/app/src/main/java/com/termux/app/TermuxService.java b/app/src/main/java/com/termux/app/TermuxService.java
+index 8025d0bd..c3189615 100644
+--- a/app/src/main/java/com/termux/app/TermuxService.java
++++ b/app/src/main/java/com/termux/app/TermuxService.java
+@@ -714,17 +714,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
+ 
+     /** Launch the {@link }TermuxActivity} to bring it to foreground. */
+     private void startTermuxActivity() {
+-        // For android >= 10, apps require Display over other apps permission to start foreground activities
+-        // from background (services). If it is not granted, then TermuxSessions that are started will
+-        // show in Termux notification but will not run until user manually clicks the notification.
+-        if (PermissionUtils.validateDisplayOverOtherAppsPermissionForPostAndroid10(this, true)) {
+-            TermuxActivity.startTermuxActivity(this);
+-        } else {
+-            TermuxAppSharedPreferences preferences = TermuxAppSharedPreferences.build(this);
+-            if (preferences == null) return;
+-            if (preferences.arePluginErrorNotificationsEnabled(false))
+-                Logger.showToast(this, this.getString(R.string.error_display_over_other_apps_permission_not_granted_to_start_terminal), true);
+-        }
++        TermuxActivity.startTermuxActivity(this);
+     }
+ 
+ 

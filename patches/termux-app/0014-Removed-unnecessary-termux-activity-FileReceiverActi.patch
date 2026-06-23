@@ -1,0 +1,119 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Sat, 20 Jun 2026 18:35:40 +0530
+Subject: [PATCH 14/18] Removed unnecessary termux activity :
+ FileReceiverActivity
+
+---
+ app/src/main/AndroidManifest.xml | 98 ++++++++++++++++----------------
+ 1 file changed, 49 insertions(+), 49 deletions(-)
+
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 1d0dfe19..197e6a05 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -107,55 +107,55 @@
+             android:theme="@style/Theme.MarkdownViewActivity.DayNight"
+             android:documentLaunchMode="intoExisting" />
+ 
+-        <activity
+-            android:name=".app.api.file.FileReceiverActivity"
+-            android:excludeFromRecents="true"
+-            android:exported="false"
+-            android:noHistory="true"
+-            android:resizeableActivity="true"
+-            android:taskAffinity="${TERMUX_PACKAGE_NAME}.filereceiver"
+-            tools:targetApi="n">
+-        </activity>
+-
+-        <activity-alias
+-            android:name=".app.api.file.FileShareReceiverActivity"
+-            android:exported="true"
+-            android:targetActivity=".app.api.file.FileReceiverActivity">
+-
+-            <!-- Accept multiple file types when sending. -->
+-            <intent-filter>
+-                <action android:name="android.intent.action.SEND" />
+-
+-                <category android:name="android.intent.category.DEFAULT" />
+-
+-                <data android:mimeType="application/*" />
+-                <data android:mimeType="audio/*" />
+-                <data android:mimeType="image/*" />
+-                <data android:mimeType="message/*" />
+-                <data android:mimeType="multipart/*" />
+-                <data android:mimeType="text/*" />
+-                <data android:mimeType="video/*" />
+-            </intent-filter>
+-        </activity-alias>
+-
+-        <activity-alias
+-            android:name=".app.api.file.FileViewReceiverActivity"
+-            android:exported="true"
+-            android:targetActivity=".app.api.file.FileReceiverActivity">
+-
+-            <!-- Accept multiple file types to let Termux be usable as generic file viewer. -->
+-            <intent-filter tools:ignore="AppLinkUrlError">
+-                <action android:name="android.intent.action.VIEW" />
+-
+-                <category android:name="android.intent.category.DEFAULT" />
+-
+-                <data android:mimeType="application/*" />
+-                <data android:mimeType="audio/*" />
+-                <data android:mimeType="image/*" />
+-                <data android:mimeType="text/*" />
+-                <data android:mimeType="video/*" />
+-            </intent-filter>
+-        </activity-alias>
++<!--        <activity-->
++<!--            android:name=".app.api.file.FileReceiverActivity"-->
++<!--            android:excludeFromRecents="true"-->
++<!--            android:exported="false"-->
++<!--            android:noHistory="true"-->
++<!--            android:resizeableActivity="true"-->
++<!--            android:taskAffinity="${TERMUX_PACKAGE_NAME}.filereceiver"-->
++<!--            tools:targetApi="n">-->
++<!--        </activity>-->
++
++<!--        <activity-alias-->
++<!--            android:name=".app.api.file.FileShareReceiverActivity"-->
++<!--            android:exported="true"-->
++<!--            android:targetActivity=".app.api.file.FileReceiverActivity">-->
++
++<!--            &lt;!&ndash; Accept multiple file types when sending. &ndash;&gt;-->
++<!--            <intent-filter>-->
++<!--                <action android:name="android.intent.action.SEND" />-->
++
++<!--                <category android:name="android.intent.category.DEFAULT" />-->
++
++<!--                <data android:mimeType="application/*" />-->
++<!--                <data android:mimeType="audio/*" />-->
++<!--                <data android:mimeType="image/*" />-->
++<!--                <data android:mimeType="message/*" />-->
++<!--                <data android:mimeType="multipart/*" />-->
++<!--                <data android:mimeType="text/*" />-->
++<!--                <data android:mimeType="video/*" />-->
++<!--            </intent-filter>-->
++<!--        </activity-alias>-->
++
++<!--        <activity-alias-->
++<!--            android:name=".app.api.file.FileViewReceiverActivity"-->
++<!--            android:exported="true"-->
++<!--            android:targetActivity=".app.api.file.FileReceiverActivity">-->
++
++<!--            &lt;!&ndash; Accept multiple file types to let Termux be usable as generic file viewer. &ndash;&gt;-->
++<!--            <intent-filter tools:ignore="AppLinkUrlError">-->
++<!--                <action android:name="android.intent.action.VIEW" />-->
++
++<!--                <category android:name="android.intent.category.DEFAULT" />-->
++
++<!--                <data android:mimeType="application/*" />-->
++<!--                <data android:mimeType="audio/*" />-->
++<!--                <data android:mimeType="image/*" />-->
++<!--                <data android:mimeType="text/*" />-->
++<!--                <data android:mimeType="video/*" />-->
++<!--            </intent-filter>-->
++<!--        </activity-alias>-->
+ 
+         <provider
+             android:name=".filepicker.TermuxDocumentsProvider"

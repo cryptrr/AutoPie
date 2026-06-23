@@ -249,6 +249,19 @@ if __name__ == "__main__":
 
 You can build the app with prebuilt binaries by opening the project with Android Studio and then run build task.
 
+The Termux modules are generated rather than stored as a git submodule. To
+clone the latest official Termux source, apply the AutoPie patch series, and
+build a debug APK, run:
+
+```sh
+./build_with_termux.sh
+```
+
+Pass Gradle tasks as arguments for another build, for example
+`./build_with_termux.sh :app:assembleRelease`. Set `TERMUX_REF` to pin a
+specific upstream tag or commit. Run `./scripts/prepare-termux-app.sh` when you
+only want to refresh the patched Termux checkout for Android Studio.
+
 ### If you want to build your own python and busybox binaries
 
 * Set Environment Variable `ANDROID_NDK_ROOT` to your Android NDK installation folder.
@@ -264,6 +277,5 @@ You can build the app with prebuilt binaries by opening the project with Android
 [Jared Rummler](https://github.com/jaredrummler)
 
 [Termux](https://github.com/termux)
-
 
 

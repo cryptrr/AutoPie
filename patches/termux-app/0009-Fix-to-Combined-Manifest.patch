@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Sun, 14 Jun 2026 21:59:49 +0530
+Subject: [PATCH 09/18] Fix to Combined Manifest
+
+---
+ .../main/java/com/termux/shared/termux/TermuxConstants.java    | 2 +-
+ .../java/com/termux/shared/termux/file/TermuxFileUtils.java    | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index 3753147e..7d179478 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -578,7 +578,7 @@ public final class TermuxConstants {
+ 
+     /** Termux app internal private app data directory path */
+     @SuppressLint("SdCardPath")
+-    public static final String TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH = "/data/data/" + TERMUX_PACKAGE_NAME; // Default: "/data/data/com.termux"
++    public static final String TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH = "/data/user/10/" + TERMUX_PACKAGE_NAME; // Default: "/data/data/com.termux"
+     /** Termux app internal private app data directory */
+     public static final File TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR = new File(TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH);
+ 
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/file/TermuxFileUtils.java b/termux-shared/src/main/java/com/termux/shared/termux/file/TermuxFileUtils.java
+index 6fc79a7e..a963af3f 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/file/TermuxFileUtils.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/file/TermuxFileUtils.java
+@@ -2,6 +2,7 @@ package com.termux.shared.termux.file;
+ 
+ import static com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH;
+ 
++import android.annotation.SuppressLint;
+ import android.content.Context;
+ import android.os.Environment;
+ 
+@@ -348,6 +349,7 @@ public class TermuxFileUtils {
+      * @param context The context for operations.
+      * @return Returns the markdown {@link String}.
+      */
++    @SuppressLint("NewApi")
+     public static String getTermuxFilesStatMarkdownString(@NonNull final Context context) {
+         Context termuxPackageContext = TermuxUtils.getTermuxPackageContext(context);
+         if (termuxPackageContext == null) return null;
+@@ -363,6 +365,7 @@ public class TermuxFileUtils {
+             .append(" '/data/data'")
+             .append(" '/data/user/0'")
+             .append(" '" + TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH + "'")
++            //.append(" '" + context.getDataDir().getAbsolutePath() + "'")
+             .append(" '/data/user/0/" + TermuxConstants.TERMUX_PACKAGE_NAME + "'")
+             .append(" '" + TermuxConstants.TERMUX_FILES_DIR_PATH + "'")
+             .append(" '" + filesDir + "'")

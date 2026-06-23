@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Thu, 11 Jun 2026 23:17:35 +0530
+Subject: [PATCH 07/18] Fixed some env issues.
+
+---
+ .../command/environment/TermuxAppShellEnvironment.java      | 6 ++++++
+ .../shell/command/environment/TermuxShellEnvironment.java   | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxAppShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxAppShellEnvironment.java
+index abd11f65..12f41204 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxAppShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxAppShellEnvironment.java
+@@ -72,6 +72,8 @@ public class TermuxAppShellEnvironment {
+     /** Environment variable for the Termux app files directory. */
+     public static final String ENV_TERMUX_APP__FILES_DIR = TERMUX_APP_ENV_PREFIX + "FILES_DIR";
+ 
++    public static final String ENV_LD_LIBRARY_PATH = TERMUX_APP_ENV_PREFIX + "LIB_URL";
++
+ 
+     /** Environment variable for the Termux app {@link TermuxAmSocketServer#getTermuxAppAMSocketServerEnabled(Context)}. */
+     public static final String ENV_TERMUX_APP__AM_SOCKET_SERVER_ENABLED = TERMUX_APP_ENV_PREFIX + "AM_SOCKET_SERVER_ENABLED";
+@@ -115,6 +117,10 @@ public class TermuxAppShellEnvironment {
+         ShellEnvironmentUtils.putToEnvIfSet(environment, ENV_TERMUX_APP__IS_DEBUGGABLE_BUILD, PackageUtils.isAppForPackageADebuggableBuild(applicationInfo));
+         ShellEnvironmentUtils.putToEnvIfSet(environment, ENV_TERMUX_APP__APK_PATH, PackageUtils.getBaseAPKPathForPackage(applicationInfo));
+         ShellEnvironmentUtils.putToEnvIfSet(environment, ENV_TERMUX_APP__IS_INSTALLED_ON_EXTERNAL_STORAGE, PackageUtils.isAppInstalledOnExternalStorage(applicationInfo));
++        ShellEnvironmentUtils.putToEnvIfSet(environment, "LD_LIBRARY_PATH", currentPackageContext.getFilesDir().getAbsolutePath() + "/usr/lib");
++        ShellEnvironmentUtils.putToEnvIfSet(environment, "TEST_APP_SHELL_ENVS", "HELLO");
++
++
+ 
+         putTermuxAPKSignature(currentPackageContext, environment);
+ 
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+index 46d61269..9ec584c9 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+@@ -91,6 +91,7 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+             } else {
+                 // Termux binaries on Android 7+ rely on DT_RUNPATH, so LD_LIBRARY_PATH should be unset by default
+                 environment.put(ENV_PATH, TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH);
++                environment.remove("LD_PRELOAD");
+                 //environment.remove(ENV_LD_LIBRARY_PATH);
+             }
+         }

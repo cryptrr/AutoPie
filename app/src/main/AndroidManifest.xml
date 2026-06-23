@@ -28,7 +28,9 @@
         android:label="@string/app_name"
         android:roundIcon="${appIconRound}"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AutoPieTheme" tools:targetApi="28">
+        android:theme="@style/Theme.AutoPieTheme"
+        tools:replace="android:name,android:allowBackup,android:icon,android:label,android:roundIcon,android:supportsRtl,android:theme"
+        tools:targetApi="28">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 <!--        <provider-->
 <!--            android:name="androidx.startup.InitializationProvider"-->
@@ -37,12 +39,12 @@
 
         <provider
             android:name="com.termux.app.TermuxOpenReceiver$ContentProvider"
-            android:authorities="com.termux.files"
+            android:authorities="${applicationId}.files"
             tools:node="remove" />
 
         <provider
             android:name="com.termux.filepicker.TermuxDocumentsProvider"
-            android:authorities="com.termux.files"
+            android:authorities="${applicationId}.documents"
             tools:node="remove" />
 
         <activity
@@ -120,6 +122,7 @@
             android:name="com.termux.app.TermuxActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            tools:replace="android:exported,android:theme"
             android:windowSoftInputMode="stateVisible|adjustResize">
         </activity>
         <activity

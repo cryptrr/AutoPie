@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Fri, 19 Jun 2026 11:09:03 +0530
+Subject: [PATCH 11/18] changed pkg name for secondaryuser rewriting
+
+---
+ .../src/main/java/com/termux/shared/termux/TermuxConstants.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index 81bd7481..fd2e02c6 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -349,7 +349,7 @@ public final class TermuxConstants {
+     /** Termux app name */
+     public static final String TERMUX_APP_NAME = "AutoPie"; // Default: "Termux"
+     /** Termux package name */
+-    public static final String TERMUX_PACKAGE_NAME = "com.autopi"; // Default: "com.termux"
++    public static final String TERMUX_PACKAGE_NAME = "com.pie"; // Default: "com.termux"
+     /** Termux GitHub repo name */
+     public static final String TERMUX_GITHUB_REPO_NAME = "termux-app"; // Default: "termux-app"
+     /** Termux GitHub repo url */

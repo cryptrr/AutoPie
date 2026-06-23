@@ -1,0 +1,115 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Tue, 9 Jun 2026 11:46:05 +0530
+Subject: [PATCH 02/18] Access to Termux Shell but wrong PATHS
+
+---
+ .../java/com/termux/app/TermuxActivity.java   | 54 +++++++++++--------
+ .../java/com/termux/app/TermuxInstaller.java  |  4 +-
+ 2 files changed, 34 insertions(+), 24 deletions(-)
+
+diff --git a/app/src/main/java/com/termux/app/TermuxActivity.java b/app/src/main/java/com/termux/app/TermuxActivity.java
+index 4682ccef..73805bbb 100644
+--- a/app/src/main/java/com/termux/app/TermuxActivity.java
++++ b/app/src/main/java/com/termux/app/TermuxActivity.java
+@@ -9,7 +9,9 @@ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.ServiceConnection;
++import android.content.pm.PackageManager;
+ import android.content.pm.ResolveInfo;
++import android.content.pm.ServiceInfo;
+ import android.net.Uri;
+ import android.os.Bundle;
+ import android.os.IBinder;
+@@ -258,38 +260,46 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
+         FileReceiverActivity.updateFileReceiverActivityComponentsState(this);
+ 
+         try {
+-            // Start the {@link TermuxService} and make it run regardless of who is bound to it
+             Intent serviceIntent = new Intent(this, TermuxService.class);
+-            startService(serviceIntent);
+ 
+-            Log.d("TERMUX", "starting service");
+-            ComponentName cn = startService(serviceIntent);
+-            Log.d("TERMUX", "startService result=" + cn);
++            Log.d("TERMUX", "Component=" +
++                serviceIntent.getComponent().flattenToString());
+ 
+-            ResolveInfo ri =
+-                getPackageManager().resolveService(serviceIntent, 0);
++            try {
++                ServiceInfo info = getPackageManager().getServiceInfo(
++                    new ComponentName(this, TermuxService.class),
++                    PackageManager.GET_META_DATA
++                );
++
++                Log.d("TERMUX", "SERVICE FOUND: " + info.name);
++                Log.d("TERMUX", "SERVICE ENABLED: " + info.enabled);
++                Log.d("TERMUX", "SERVICE EXPORTED: " + info.exported);
++            } catch (Exception e) {
++                Log.e("TERMUX", "SERVICE LOOKUP FAILED", e);
++            }
++
++            ResolveInfo ri = getPackageManager().resolveService(serviceIntent, 0);
+             Log.d("TERMUX", "resolveService=" + ri);
+ 
+-            Log.d("TERMUX", serviceIntent.getComponent().flattenToString());
++            ComponentName started = startService(serviceIntent);
++            Log.d("TERMUX", "startService=" + started);
+ 
+             boolean bound =
+                 bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
+-            Log.d("TERMUX", "bind result=" + bound);
+-
+-            // Attempt to bind to the service, this will call the {@link #onServiceConnected(ComponentName, IBinder)}
+-            // callback if it succeeds.
+-            if (!bindService(
+-                serviceIntent,
+-                this,
+-                Context.BIND_AUTO_CREATE
+-            ))
++
++            Log.d("TERMUX", "bindService=" + bound);
++
++            if (!bound) {
+                 throw new RuntimeException("bindService() failed");
++            }
++
+         } catch (Exception e) {
+-            Logger.logStackTraceWithMessage(LOG_TAG,"TermuxActivity failed to start TermuxService", e);
+-            Logger.showToast(this,
+-                getString(e.getMessage() != null && e.getMessage().contains("app is in background") ?
+-                    R.string.error_termux_service_start_failed_bg : R.string.error_termux_service_start_failed_general),
+-                true);
++            Logger.logStackTraceWithMessage(
++                LOG_TAG,
++                "TermuxActivity failed to start TermuxService",
++                e
++            );
++
+             mIsInvalidState = true;
+             return;
+         }
+diff --git a/app/src/main/java/com/termux/app/TermuxInstaller.java b/app/src/main/java/com/termux/app/TermuxInstaller.java
+index b1414999..14051e4b 100644
+--- a/app/src/main/java/com/termux/app/TermuxInstaller.java
++++ b/app/src/main/java/com/termux/app/TermuxInstaller.java
+@@ -160,7 +160,7 @@ final class TermuxInstaller {
+                     try (ZipInputStream zipInput = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+                         ZipEntry zipEntry;
+                         while ((zipEntry = zipInput.getNextEntry()) != null) {
+-                            if (zipEntry.getName().equals("SYMLINKS.txt")) {
++                            if (zipEntry.getName().equals("build/usr/SYMLINKS.txt")) {
+                                 BufferedReader symlinksReader = new BufferedReader(new InputStreamReader(zipInput));
+                                 String line;
+                                 while ((line = symlinksReader.readLine()) != null) {
+@@ -205,7 +205,7 @@ final class TermuxInstaller {
+                     }
+ 
+                     if (symlinks.isEmpty())
+-                        throw new RuntimeException("No SYMLINKS.txt encountered");
++                        //throw new RuntimeException("No SYMLINKS.txt encountered");
+                     for (Pair<String, String> symlink : symlinks) {
+                         Os.symlink(symlink.first, symlink.second);
+                     }

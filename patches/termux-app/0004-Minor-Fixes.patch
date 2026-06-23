@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Tue, 9 Jun 2026 14:12:32 +0530
+Subject: [PATCH 04/18] Minor Fixes
+
+---
+ app/build.gradle                                                | 2 +-
+ app/src/main/java/com/termux/app/TermuxApplication.java         | 2 --
+ app/src/main/java/com/termux/app/TermuxInstaller.java           | 2 +-
+ .../src/main/java/com/termux/shared/termux/TermuxConstants.java | 2 +-
+ 4 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/app/build.gradle b/app/build.gradle
+index 33c88d1d..38796c10 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -88,7 +88,7 @@ android {
+ 
+     buildTypes {
+         release {
+-            minifyEnabled true
++            minifyEnabled false
+             shrinkResources false // Reproducible builds
+             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+         }
+diff --git a/app/src/main/java/com/termux/app/TermuxApplication.java b/app/src/main/java/com/termux/app/TermuxApplication.java
+index 969d9b72..583d1161 100644
+--- a/app/src/main/java/com/termux/app/TermuxApplication.java
++++ b/app/src/main/java/com/termux/app/TermuxApplication.java
+@@ -3,10 +3,8 @@ package com.termux.app;
+ import android.app.Application;
+ import android.content.Context;
+ 
+-import com.termux.BuildConfig;
+ import com.termux.shared.errors.Error;
+ import com.termux.shared.logger.Logger;
+-import com.termux.shared.termux.TermuxBootstrap;
+ import com.termux.shared.termux.TermuxConstants;
+ import com.termux.shared.termux.crash.TermuxCrashUtils;
+ import com.termux.shared.termux.file.TermuxFileUtils;
+diff --git a/app/src/main/java/com/termux/app/TermuxInstaller.java b/app/src/main/java/com/termux/app/TermuxInstaller.java
+index 14051e4b..cfbbfe0f 100644
+--- a/app/src/main/java/com/termux/app/TermuxInstaller.java
++++ b/app/src/main/java/com/termux/app/TermuxInstaller.java
+@@ -160,7 +160,7 @@ final class TermuxInstaller {
+                     try (ZipInputStream zipInput = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+                         ZipEntry zipEntry;
+                         while ((zipEntry = zipInput.getNextEntry()) != null) {
+-                            if (zipEntry.getName().equals("build/usr/SYMLINKS.txt")) {
++                            if (zipEntry.getName().equals("SYMLINKS.txt")) {
+                                 BufferedReader symlinksReader = new BufferedReader(new InputStreamReader(zipInput));
+                                 String line;
+                                 while ((line = symlinksReader.readLine()) != null) {
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+index e8f1799b..e507b41a 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -349,7 +349,7 @@ public final class TermuxConstants {
+     /** Termux app name */
+     public static final String TERMUX_APP_NAME = "Termux"; // Default: "Termux"
+     /** Termux package name */
+-    public static final String TERMUX_PACKAGE_NAME = "com.autosec.pie.debug"; // Default: "com.termux"
++    public static final String TERMUX_PACKAGE_NAME = "com.autosec.pie"; // Default: "com.termux"
+     /** Termux GitHub repo name */
+     public static final String TERMUX_GITHUB_REPO_NAME = "termux-app"; // Default: "termux-app"
+     /** Termux GitHub repo url */
