@@ -58,9 +58,8 @@ class AutoPieCoreService {
 
                     if (mainViewModel.storageManagerPermissionGranted && !binFolderExists) {
                         Timber.d("Starting fetching init files")
-                        //downloadAndExtractAutoSecInitArchive()
-
-                        mainViewModel.installInitPackagesPrompt = true
+                        downloadAndExtractAutoSecInitArchive()
+                        //mainViewModel.installInitPackagesPrompt = true
 
                     } else {
                         Timber.d("Bin folder exists. Doing nothing.")
