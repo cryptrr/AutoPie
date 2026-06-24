@@ -1,8 +1,11 @@
 # AutoPie
 
+AutoPie includes a Termux-based environment, so you can now install packages
+from the terminal with `pkg install`.
+
 ### Commands hub where you can create, automate and run commands without using the terminal.
 
-**AutoPie is your own power tool-kit for android.**
+**AutoPie is your own power tool-kit for Android.**
 
 [Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
 
@@ -19,10 +22,9 @@
 
 1) Build from source yourself or get the prebuilt APK from the releases section.
 2) Install the APK and accept Play Protect Dialogs if any.
-3) Wait for the Python Binaries to get installed.
+3) Open AutoPie once and wait for the embedded Termux bootstrap to finish installing.
 4) Grant necessary permissions.
-5) AutoPie will try to download an init binary & configuration archive and extract it into the `AutoSec` directory. If it fails, you can download the latest `autosec-init.tar.xz` file from the [releases](https://github.com/cryptrr/AutoPie/releases/) and extract to the `AutoSec` folder.
-6) Optional: Disable Battery Optimization for AutoPie.
+5) Optional: Disable Battery Optimization for AutoPie.
 
 
 ## Usage
@@ -33,13 +35,14 @@
 
 ## Easiest way to add new packages
 - Open the Terminal inside AutoPie
-- Pip should already be installed in the AutoPie environment. Otherwise, Run `python3 -m ensurepip`
-- Run `pip3 install package`
+- Install Termux packages with `pkg install package-name`
+- Install Python packages with `pip3 install package-name`
 
 
 
 ## Troubleshooting
-* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. And a `bin` folder with the binaries like `ffmpeg`.
+* If `pkg install` fails immediately after installation, open the AutoPie terminal once more and let the bootstrap finish before retrying.
+* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration.
 
 ## Command Format
 
@@ -59,10 +62,10 @@
 
 ## Example Commands
 
-| USE                             | COMMAND                                                   |
-|---------------------------------|-----------------------------------------------------------|
-| Ffmpeg Extract Audio from Video | `-i ${INPUT_FILE} -b:a 192K -vn ${INPUT_FILE}.mp3`        |
-| ImageMagick combine horizontal  | `${INPUT_FILES} +append ${INPUT_FILE}-horiz-${RAND}.jpeg` |
+| USE                             | COMMAND                                                          |
+|---------------------------------|------------------------------------------------------------------|
+| Ffmpeg Extract Audio from Video | `ffmpeg -i ${INPUT_FILE} -b:a 192K -vn ${INPUT_FILE}.mp3`        |
+| ImageMagick combine horizontal  | `magick ${INPUT_FILES} +append ${INPUT_FILE}-horiz-${RAND}.jpeg` |
 
 
 ## Start AutoPie Commands from your app.
@@ -123,9 +126,9 @@ Defining extra items such as options for codecs etc will look like this.
 
 ## Commands and Package Repository
 
-- A package manager.
+- A package manager powered by the embedded Termux environment.
 
-- A repository where users can search and add pre-made AutoPie command snippets and install packages is in the works.
+- A repository where users can search and add pre-made AutoPie command snippets is in the works.
 
 ## New MCP Server
 AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
@@ -176,78 +179,12 @@ class MCPTool:
 ```
 
 
-### How do I create binaries for AutoPie.
-
-AutoPie binaries are just thin python wrappers around binaries like `ffmpeg` `magick` etc.
-
-Using **Shiv** to package the binaries, dependencies and python files is strongly recommended.
-
-This is an example for how to include the `ffmpeg` binaries and libraries in a single file with shiv.
-
-A more detailed docs is in WIP.
-
-
-```py
-
-import subprocess
-import sys
-import os
-import shlex
-
-script_dir = os.path.dirname(__file__)
-
-# Set the path to the ImageMagick binary and library directories
-bin_path = os.path.join(script_dir, 'usr', 'bin')
-lib_path = os.path.join(script_dir, 'usr', 'lib')
-
-# Update PATH environment variable
-os.environ['PATH'] = bin_path + os.pathsep + os.environ['PATH']
-
-# Update LD_LIBRARY_PATH environment variable
-os.environ['LD_LIBRARY_PATH'] = lib_path + os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')
-
-
-
-def main():
-    
-    """Console script for ffmpeg wrapper"""
-
-    input_command = sys.argv[1]
-
-    commands_list = shlex.split(input_command)
-
-    runner(commands_list)
-
-def runner(commands_list: list[str]):
-
-    try:
-
-        commands_list= ["ffmpeg"] + commands_list
-
-        print(f"shlex command list: {commands_list}")
-
-        result = subprocess.run(commands_list)
-
-        if result.returncode == 0:
-            print(f"Successfully executed {commands_list}")
-        else:
-            print(f"Subprocess failed with exit code {result.returncode} : {commands_list}")
-        
-        sys.exit(result.returncode)
-        
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        sys.exit(e.returncode)
-
-
-if __name__ == "__main__":
-    main()
-
-```
 
 ## Build Instructions
 
-You can build the app with prebuilt binaries by opening the project with Android Studio and then run build task.
+You can build the app by opening the project with Android Studio and running the
+normal Gradle build tasks. For a clean command-line build that prepares the
+embedded Termux source and bootstrap, use `build_with_termux.sh`.
 
 The Termux modules are generated rather than stored as a git submodule. To
 clone the latest official Termux source, apply the AutoPie patch series, and
@@ -259,13 +196,19 @@ build a debug APK, run:
 
 Pass Gradle tasks as arguments for another build, for example
 `./build_with_termux.sh :app:assembleRelease`. Set `TERMUX_REF` to pin a
-specific upstream tag or commit. Run `./scripts/prepare-termux-app.sh` when you
-only want to refresh the patched Termux checkout for Android Studio.
+specific upstream tag or commit.
 
-### If you want to build your own python and busybox binaries
+The build script also downloads Termux's pinned bootstrap, injects AutoPie's
+required packages from termux repo, patches package paths for `com.autopi`, and writes the final
+bootstrap archive to `app/src/main/assets/bootstrap-aarch64.zip`.
 
-* Set Environment Variable `ANDROID_NDK_ROOT` to your Android NDK installation folder.
-* Run the `./build-all.sh` script to build all dependencies and store them in the Assets folder.
+Run `./scripts/prepare-termux-app.sh` when you only want to refresh the patched
+Termux checkout for Android Studio. Run `./scripts/prepare-termux-bootstrap.sh`
+when you only want to regenerate the bootstrap asset.
+
+The current bootstrap includes `python`, `pip`, `binutils`, `openssh`, and
+`sshpass` so package installation works from a fresh app install without Docker
+or the old Python/busybox build scripts.
 
 
 ## Support
@@ -277,5 +220,3 @@ only want to refresh the patched Termux checkout for Android Studio.
 [Jared Rummler](https://github.com/jaredrummler)
 
 [Termux](https://github.com/termux)
-
-
