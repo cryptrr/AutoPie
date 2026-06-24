@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Amal Shaji <amalshaji01@users.noreply.github.com>
+Date: Thu, 25 Jun 2026 03:04:00 +0530
+Subject: [PATCH 20/20] Add Gradle distribution checksum
+
+---
+ gradle/wrapper/gradle-wrapper.properties | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 1aa8134..5a5d3f2 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,7 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+ distributionUrl=https\://services.gradle.org/distributions/gradle-9.2.1-bin.zip
++distributionSha256Sum=72f44c9f8ebcb1af43838f45ee5c4aa9c5444898b3468ab3f4af7b6076c5bc3f
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+-- 
+2.50.0

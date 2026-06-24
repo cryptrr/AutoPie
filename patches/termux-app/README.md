@@ -31,3 +31,6 @@ Patch 19 restores a standalone Gradle task named `downloadAutoPieBootstrap`.
 The task downloads Termux's pinned bootstrap archive into the prepared Termux
 source without wiring it back into the Termux library build. AutoPie then
 patches and copies that archive with `scripts/prepare-termux-bootstrap.sh`.
+
+Patch 20 adds the official Gradle distribution checksum to Termux's wrapper so
+the generated source does not trigger F-Droid's missing checksum warning.
