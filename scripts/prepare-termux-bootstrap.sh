@@ -9,6 +9,8 @@ ASSETS_DIR="${AUTOPIE_ASSETS_DIR:-$ROOT_DIR/app/src/main/assets}"
 GRADLE_USER_HOME="${GRADLE_USER_HOME:-$ROOT_DIR/.gradle}"
 FS_REWRITER="${AUTOPIE_FS_REWRITER:-$ROOT_DIR/scripts/bootstrap/fs-rewriter.py}"
 DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
+BOOTSTRAP_EXTENDER="${AUTOPIE_BOOTSTRAP_EXTENDER:-$ROOT_DIR/scripts/bootstrap/extend-bootstrap.py}"
+EXTRA_BOOTSTRAP_PACKAGES="${AUTOPIE_BOOTSTRAP_PACKAGES:-python,binutils}"
 ARCH="${TERMUX_BOOTSTRAP_ARCH:-aarch64}"
 OLD_PACKAGE="${TERMUX_BOOTSTRAP_OLD_PACKAGE:-com.termux}"
 NEW_PACKAGE="${TERMUX_BOOTSTRAP_NEW_PACKAGE:-com.autopi}"
@@ -50,6 +52,11 @@ if [[ ! -f "$DPKG_WRAPPER" ]]; then
     exit 1
 fi
 
+if [[ ! -f "$BOOTSTRAP_EXTENDER" ]]; then
+    echo "Missing bootstrap package extender at $BOOTSTRAP_EXTENDER" >&2
+    exit 1
+fi
+
 echo "Downloading Termux bootstrap with Gradle"
 echo "  source:  $TERMUX_SOURCE_DIR"
 echo "  variant: $PACKAGE_VARIANT"
@@ -70,6 +77,23 @@ fi
 
 mkdir -p "$EXTRACTED_DIR"
 unzip -q "$SOURCE_ZIP" -d "$EXTRACTED_DIR"
+
+echo "Injecting Termux packages into bootstrap"
+IFS=',' read -r -a EXTRA_PACKAGE_NAMES <<< "$EXTRA_BOOTSTRAP_PACKAGES"
+EXTRA_PACKAGE_ARGS=()
+for package_name in "${EXTRA_PACKAGE_NAMES[@]}"; do
+    package_name="${package_name//[[:space:]]/}"
+    if [[ -n "$package_name" ]]; then
+        EXTRA_PACKAGE_ARGS+=(--package "$package_name")
+    fi
+done
+
+if [[ "${#EXTRA_PACKAGE_ARGS[@]}" -gt 0 ]]; then
+    python3 "$BOOTSTRAP_EXTENDER" "$EXTRACTED_DIR" \
+        --arch "$ARCH" \
+        --old-package "$OLD_PACKAGE" \
+        "${EXTRA_PACKAGE_ARGS[@]}"
+fi
 
 echo "Patching bootstrap strings"
 python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
