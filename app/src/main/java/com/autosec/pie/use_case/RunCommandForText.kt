@@ -1,6 +1,5 @@
 package com.autopi.use_case
 
-import android.os.Environment
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
@@ -19,8 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 class RunCommandForText(private val processManagerService: ProcessManagerService){
     operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
@@ -28,10 +25,9 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
         return flow {
             Timber.d("RunCommandForText")
 
-            val execFilePath =
-                Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+            val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
-            val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+            val path = processManagerService.getCommandWorkingDirectory(item.path)
 
 
             val (execType,fullExecPath, resultCommand) = when{

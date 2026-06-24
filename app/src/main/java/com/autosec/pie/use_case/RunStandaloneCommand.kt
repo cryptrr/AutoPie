@@ -1,26 +1,19 @@
 package com.autopi.use_case
 
-import android.os.Environment
 import com.autopi.autopieapp.data.CommandExtraInput
-import com.autopi.autopieapp.data.CommandHistoryEntity
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
 import com.autopi.autopieapp.data.ExecAndCommand
 import com.autopi.autopieapp.data.ExecType
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
-import com.autopi.autopieapp.data.dbService.AppDatabase
 import com.autopi.autopieapp.data.services.ProcessManagerService
-import com.autopi.autopieapp.data.toEntity
 import com.autopi.utils.Utils
 import com.autopi.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
-import java.util.UUID
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 class RunStandaloneCommand(private val processManagerService: ProcessManagerService){
     operator fun invoke(item: CommandModel, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
@@ -28,10 +21,9 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
         return flow {
             Timber.d("RunStandaloneCommand")
 
-            val execFilePath =
-                Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+            val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
-            val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+            val path = processManagerService.getCommandWorkingDirectory(item.path)
 
 
             val (execType,fullExecPath, resultCommand) = when{

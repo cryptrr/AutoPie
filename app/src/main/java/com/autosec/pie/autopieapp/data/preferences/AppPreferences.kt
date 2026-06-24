@@ -17,8 +17,10 @@ import timber.log.Timber
 interface MyPreferences {
     fun getString(key: Preferences.Key<String>) : Flow<String>
     fun getBool(key: Preferences.Key<Boolean>) : Flow<Boolean>
+    fun getBool(key: Preferences.Key<Boolean>, defaultValue: Boolean) : Flow<Boolean>
     fun getStringSync(key: Preferences.Key<String>) : String
     fun getBoolSync(key: Preferences.Key<Boolean>) : Boolean
+    fun getBoolSync(key: Preferences.Key<Boolean>, defaultValue: Boolean) : Boolean
     suspend fun setString(key: Preferences.Key<String>, value: String)
     suspend fun setBool(key: Preferences.Key<Boolean>, value: Boolean)
 
@@ -35,6 +37,8 @@ class AppPreferences(private val context: Context) : MyPreferences {
         val USER_AVATAR = stringPreferencesKey("userAvatar")
         val CURRENT_THEME = stringPreferencesKey("darkThemeEnabled")
         val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamicColorsEnabled")
+        val AUTOPIE_CONFIG_LOCATION = stringPreferencesKey("autoPieConfigLocation")
+        val FILE_LOGGING_ENABLED = booleanPreferencesKey("fileLoggingEnabled")
     }
 
     override fun getString(key: Preferences.Key<String>)  = context.dataStore.data.map {
@@ -45,9 +49,14 @@ class AppPreferences(private val context: Context) : MyPreferences {
         it[key] ?: false
     }
 
+    override fun getBool(key: Preferences.Key<Boolean>, defaultValue: Boolean) = context.dataStore.data.map{
+        it[key] ?: defaultValue
+    }
 
     override fun getStringSync(key: Preferences.Key<String>) = runBlocking { context.dataStore.data.first()[key] ?: "" }
     override fun getBoolSync(key: Preferences.Key<Boolean>) = runBlocking { context.dataStore.data.first()[key] ?: false }
+    override fun getBoolSync(key: Preferences.Key<Boolean>, defaultValue: Boolean) =
+        runBlocking { context.dataStore.data.first()[key] ?: defaultValue }
 
 
     override suspend fun setString(key: Preferences.Key<String>, value: String){

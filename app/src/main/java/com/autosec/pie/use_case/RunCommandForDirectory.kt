@@ -1,6 +1,5 @@
 package com.autopi.use_case
 
-import android.os.Environment
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
@@ -15,8 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 class RunCommandForDirectory(private val processManagerService: ProcessManagerService){
 
@@ -38,10 +35,9 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
             currentItems.map { path ->
 
 
-                val execFilePath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
-                val cwdPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+                val cwdPath = processManagerService.getCommandWorkingDirectory(item.path)
 
 
                 val (execType,fullExecPath, resultCommand) = when{

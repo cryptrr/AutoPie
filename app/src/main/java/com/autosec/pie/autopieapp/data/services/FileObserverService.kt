@@ -6,11 +6,11 @@ import android.app.job.JobScheduler
 import android.app.job.JobService
 import android.content.ComponentName
 import android.content.Context
-import android.os.Environment
 import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -31,6 +31,9 @@ class FileObserverJobService : JobService() {
     val main: MainViewModel by inject(MainViewModel::class.java)
     val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider by inject(
+        AutoPieConfigPathProvider::class.java
+    )
 
 
     val jsonService: JsonService by inject(JsonService::class.java)
@@ -109,7 +112,10 @@ class FileObserverJobService : JobService() {
                     val key = entry.key
 
                     val commandModel = useCases.getCommandDetails(key)
-                    val fullPath = File(Environment.getExternalStorageDirectory().absolutePath, commandModel.path).absolutePath
+                    val fullPath = File(
+                        autoPieConfigPathProvider.getCommandBaseDirectory(),
+                        commandModel.path
+                    ).absolutePath
 
                     Timber.d("Starting $key observer for ${commandModel.path}")
 
@@ -208,7 +214,9 @@ class FileObserverJobService : JobService() {
                             if (!file.name.startsWith(".pending")) file.name else file.name.split("-")
                                 .subList(2, file.name.split("-").size).joinToString("-")
 
-                        val fullFilepath = File(Environment.getExternalStorageDirectory().absolutePath, File(commandModel.path, fileName).absolutePath).absolutePath
+                        val fullFilepath = processManagerService.getConfigRelativePath(
+                            File(commandModel.path, fileName).path
+                        )
 
                         Timber.d("Edited Filename: $fileName")
 

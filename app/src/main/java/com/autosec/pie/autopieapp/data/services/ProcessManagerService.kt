@@ -15,6 +15,7 @@ import com.autopi.autopieapp.data.CommandResult
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -35,9 +36,15 @@ import java.io.File
 import java.io.FileWriter
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.createSymbolicLinkPointingTo
 
-class ProcessManagerService(private val main: MainViewModel, private val dispatchers: DispatcherProvider, private val activity: Application){
+class ProcessManagerService(
+    private val main: MainViewModel,
+    private val dispatchers: DispatcherProvider,
+    private val activity: Application,
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
+){
 
     private var shell: Shell? = null
 
@@ -127,6 +134,18 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         }
     }
 
+    fun getAutoPiePackagePath(exec: String): String {
+        return File(autoPieConfigPathProvider.getBinDirectory(), exec).absolutePath
+    }
+
+    fun getCommandWorkingDirectory(path: String): String {
+        return Path(autoPieConfigPathProvider.getCommandBaseDirectory().absolutePath, path).absolutePathString()
+    }
+
+    fun getConfigRelativePath(path: String): String {
+        return File(autoPieConfigPathProvider.getCommandBaseDirectory(), path).absolutePath
+    }
+
 
     private fun initShell() {
         Timber.d("Initializing Shell")
@@ -213,7 +232,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.default
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.default).absolutePath
+                        val fullPath = getConfigRelativePath(extra.default)
                         envMap[extra.name] = fullPath
                     }
                 }
@@ -222,7 +241,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                         if(Path(extra.default).isAbsolute){
                             it
                         }else{
-                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                            getConfigRelativePath(it)
                         }
                     }.joinToString(",")
                 }
@@ -242,7 +261,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.value
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.value).absolutePath
+                        val fullPath = getConfigRelativePath(extra.value)
                         envMap[extra.name] = fullPath
                     }
                 }
@@ -251,7 +270,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                         if(Path(extra.value).isAbsolute){
                             it
                         }else{
-                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                            getConfigRelativePath(it)
                         }
                     }.joinToString(",")
                 }
@@ -307,7 +326,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.default
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.default).absolutePath
+                        val fullPath = getConfigRelativePath(extra.default)
                         envMap[extra.name] = fullPath
                     }
                 }
@@ -316,7 +335,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                         if(Path(extra.default).isAbsolute){
                             it
                         }else{
-                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                            getConfigRelativePath(it)
                         }
                     }.joinToString(",")
                 }
@@ -336,7 +355,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                     if(Path(extra.default).isAbsolute){
                         envMap[extra.name] = extra.value
                     }else{
-                        val fullPath = File(Environment.getExternalStorageDirectory(), extra.value).absolutePath
+                        val fullPath = getConfigRelativePath(extra.value)
                         envMap[extra.name] = fullPath
                     }
                 }
@@ -345,7 +364,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
                         if(Path(extra.value).isAbsolute){
                             it
                         }else{
-                            File(Environment.getExternalStorageDirectory(), it).absolutePath
+                            getConfigRelativePath(it)
                         }
                     }.joinToString(",")
                 }
@@ -832,7 +851,7 @@ class ProcessManagerService(private val main: MainViewModel, private val dispatc
         try {
             val binLocation = File(activity.filesDir, "bin").listFiles()
             val usrBinLocation = File(activity.filesDir, "usr/bin")
-            val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+            val autosecBinLocation = autoPieConfigPathProvider.getBinDirectory()
 
             val packages = listOf(
                 binLocation?.toList() ?: emptyList(),

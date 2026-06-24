@@ -8,6 +8,7 @@ import com.autopi.autopieapp.data.apiService.ApiService
 import com.autopi.autopieapp.data.apiService.ApiServiceImpl
 import com.autopi.autopieapp.data.apiService.AutoSecHTTPClient
 import com.autopi.autopieapp.data.apiService.HTTPClientService
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.dbService.AppDatabase
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
@@ -43,8 +44,8 @@ val appModule = module {
         }
     }
 
-    single<MainViewModel> { MainViewModel(get(), get(), get()) }
-    single<ProcessManagerService> { ProcessManagerService(get(), get(), get()) }
+    single<MainViewModel> { MainViewModel(get(), get(), get(), get()) }
+    single<ProcessManagerService> { ProcessManagerService(get(), get(), get(), get()) }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
     viewModel<CommandHistoryViewModel> { CommandHistoryViewModel(get())}
@@ -63,8 +64,6 @@ val appModule = module {
     viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
     viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
     single<AppPreferences> { AppPreferences(get()) }
-    single<AutoPieNotification> { AutoPieNotification(get()) }
+    single<AutoPieConfigPathProvider> { AutoPieConfigPathProvider(get(), get()) }
+    single<AutoPieNotification> { AutoPieNotification(get(), get()) }
 }
-
-
-

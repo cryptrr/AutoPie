@@ -45,7 +45,7 @@ val useCaseModule = module {
             getUserTags = GetUserTags(get()),
             addUserTag = AddUserTag(get()),
             deleteUserTag = DeleteUserTag(get()),
-            getInstalledPackages = GetInstalledPackages(),
+            getInstalledPackages = GetInstalledPackages(get()),
             getRepoCommandsList = GetRepoCommandsList(get()),
             runInteractiveCommand = RunInteractiveCommand(get())
         )

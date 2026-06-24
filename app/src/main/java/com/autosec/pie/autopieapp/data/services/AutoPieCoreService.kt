@@ -11,6 +11,7 @@ import android.system.Os
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.autopi.autopieapp.data.AutoPieConstants
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -41,6 +42,7 @@ class AutoPieCoreService {
         private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
         val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+        private val autoPieConfigPathProvider: AutoPieConfigPathProvider by inject(AutoPieConfigPathProvider::class.java)
         private var termuxBootstrapTriggered = false
 
         fun ensureTermuxBootstrapTriggered(context: Context) {
@@ -73,8 +75,10 @@ class AutoPieCoreService {
                 CoroutineScope(dispatchers.io).launch{
                     val autosecFolderExists = checkForAutoSecFolder()
                     val binFolderExists = checkForBinFolder()
+                    val canAccessConfigPath =
+                        !autoPieConfigPathProvider.usesExternalStorage() || mainViewModel.storageManagerPermissionGranted
 
-                    if (mainViewModel.storageManagerPermissionGranted && !autosecFolderExists) {
+                    if (canAccessConfigPath && !autosecFolderExists) {
                         Timber.d("Autosec folder does not exist. Creating and copying files")
                         createAutoSecFolder()
                         createLogsFolder()
@@ -83,7 +87,7 @@ class AutoPieCoreService {
                         Timber.d("Autosec folder exists. Doing nothing.")
                     }
 
-                    if (mainViewModel.storageManagerPermissionGranted && !binFolderExists) {
+                    if (canAccessConfigPath && !binFolderExists) {
                         Timber.d("Starting fetching init files")
                         downloadAndExtractAutoSecInitArchive()
                         //mainViewModel.installInitPackagesPrompt = true
@@ -255,8 +259,7 @@ class AutoPieCoreService {
 
         fun checkForAutoSecFolder(): Boolean {
             try {
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
 
                 return autoSecFolder.exists()
             }catch (e: Exception){
@@ -267,8 +270,7 @@ class AutoPieCoreService {
 
         fun checkForBinFolder(): Boolean {
             try {
-                val binFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+                val binFolder = autoPieConfigPathProvider.getBinDirectory()
 
                 return binFolder.exists()
             }catch (e: Exception){
@@ -280,10 +282,9 @@ class AutoPieCoreService {
         fun createAutoSecFolder() {
             try {
                 Timber.d("Creating AutoSec Folder")
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
 
-                autoSecFolder.mkdir()
+                autoSecFolder.mkdirs()
             }catch (e: Exception){
                 Timber.e(e)
             }
@@ -294,10 +295,9 @@ class AutoPieCoreService {
             Timber.d("Creating Logs Folder")
 
             try {
-                val logsFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs")
+                val logsFolder = autoPieConfigPathProvider.getLogsDirectory()
 
-                logsFolder.mkdir()
+                logsFolder.mkdirs()
             }catch (e: Exception){
                 Timber.e(e)
             }
@@ -401,15 +401,11 @@ class AutoPieCoreService {
             CoroutineScope(dispatchers.io).launch {
 
                try {
-                   val autoSecFolder =
-                       File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                   val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
 
                    val versionFile = File(autoSecFolder, "version.txt")
 
                    val versionText = AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL.split("/").takeLast(2).joinToString("/")
-
-                   val appDataFolder =
-                       File(application.filesDir.absolutePath)
 
                    if (autoSecFolder.exists()) {
                        mainViewModel.showNotification(AppNotification.DownloadingInitPackages)
@@ -417,7 +413,7 @@ class AutoPieCoreService {
                        //ProcessManagerService.runWget(AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL, Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
                        val isDownloaded = downloadFileNatively(
                            AutoPieConstants.AUTOPIE_INIT_ARCHIVE_URL,
-                           Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
+                           autoPieConfigPathProvider.getInitArchiveFile().absolutePath
                        )
 
                        if (isDownloaded) {
@@ -443,15 +439,14 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
 
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
 
 
                 if (autoSecFolder.exists()) {
 
                     val isDownloaded = processManagerService.downloadFileWithWCurl(
                         AutoPieConstants.AUTOPIE_EMPTY_INIT_ARCHIVE_URL,
-                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz"
+                        autoPieConfigPathProvider.getInitArchiveFile().absolutePath
                     )
 
                     if (isDownloaded) {
@@ -602,10 +597,8 @@ class AutoPieCoreService {
 
             Timber.d("extractAutoSecFiles()")
 
-            val autoSecFolder =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
-            val initArchiveFile =
-                File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/autosec.tar.xz")
+            val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
+            val initArchiveFile = autoPieConfigPathProvider.getInitArchiveFile()
 
 
 

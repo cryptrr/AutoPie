@@ -10,6 +10,8 @@ import android.content.IntentFilter
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.createEmptyCookieFile
 import com.autopi.autopieapp.data.services.CronService
@@ -50,14 +52,18 @@ class MyApplication : Application() {
         TermuxAppSharedProperties.init(this@MyApplication)
         onCreateTermux()
 
-
-        Timber.plant(FileLoggingTree(this@MyApplication))
-        Timber.plant(Timber.DebugTree())
-
         startKoin {
             androidContext(this@MyApplication)
             modules(appModule, useCaseModule)
         }
+
+        val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
+        val autoPieConfigPathProvider: AutoPieConfigPathProvider by KoinJavaComponent.inject(
+            AutoPieConfigPathProvider::class.java
+        )
+
+        Timber.plant(FileLoggingTree(appPreferences, autoPieConfigPathProvider))
+        Timber.plant(Timber.DebugTree())
 
         val config = Configuration.Builder()
             .build()
@@ -196,6 +202,5 @@ class MyApplication : Application() {
     }
 
 }
-
 
 

@@ -1,6 +1,5 @@
 package com.autopi.use_case
 
-import android.os.Environment
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
@@ -16,8 +15,6 @@ import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import java.io.File
 import java.net.URL
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 class RunCommandForUrl(private val processManagerService: ProcessManagerService) {
     suspend operator fun invoke(
@@ -38,13 +35,9 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
             val filename = inputUrl.file
 
-            val path = Path(
-                Environment.getExternalStorageDirectory().absolutePath,
-                item.path
-            ).absolutePathString()
+            val path = processManagerService.getCommandWorkingDirectory(item.path)
 
-            val execFilePath =
-                Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+            val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
             val (execType, fullExecPath, resultCommand) = when {
                 File(item.exec).isAbsolute -> {

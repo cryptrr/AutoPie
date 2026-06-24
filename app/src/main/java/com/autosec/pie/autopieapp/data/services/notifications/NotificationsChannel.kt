@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -28,9 +27,13 @@ import androidx.core.net.toUri
 import com.autopi.BuildConfig
 import com.autopi.OutputViewerActivity
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessBroadcastReceiver
 
-class AutoPieNotification(val context: Application) {
+class AutoPieNotification(
+    val context: Application,
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
+) {
 
     companion object{
         const val FOREGROUND_CHANNEL = "foreground_channel"
@@ -320,7 +323,7 @@ class AutoPieNotification(val context: Application) {
         }
 
 
-        val file = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie.log")
+        val file = autoPieConfigPathProvider.getLogFile()
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
         val openFileIntent = Intent(Intent.ACTION_VIEW).apply {

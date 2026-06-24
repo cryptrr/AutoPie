@@ -9,6 +9,7 @@ import com.autopi.autopieapp.data.apiService.ApiServiceImpl
 import com.autopi.autopieapp.data.apiService.AutoSecHTTPClient
 import com.autopi.autopieapp.data.apiService.HTTPClientService
 import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.data.services.CronService
 import com.autopi.autopieapp.data.services.JsonService
@@ -40,6 +41,7 @@ fun mockMainViewModel(app: Application): MainViewModel {
     return spyk(MainViewModel(
         app,
         appPreferences = TODO(),
+        autoPieConfigPathProvider = TODO(),
         dispatchers = TODO()
     )) {
         every { storageManagerPermissionGranted } returns true
@@ -95,6 +97,7 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
         viewModel<CreateCommandViewModel> { CreateCommandViewModel(get()) }
         viewModel<EditCommandViewModel> { EditCommandViewModel(get(), get()) }
         single<AppPreferences> { AppPreferences(get()) }
-        single<AutoPieNotification> { AutoPieNotification(get()) }
+        single<AutoPieConfigPathProvider> { AutoPieConfigPathProvider(get(), get()) }
+        single<AutoPieNotification> { AutoPieNotification(get(), get()) }
     }
 }

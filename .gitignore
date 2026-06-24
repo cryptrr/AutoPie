@@ -16,3 +16,6 @@ local.properties
 app/release
 /termux-app/
 /.termux-app.*
+/app/src/main/assets/bootstrap-aarch64.zip
+/base.apk
+**/__pycache__/

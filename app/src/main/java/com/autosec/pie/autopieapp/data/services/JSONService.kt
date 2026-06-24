@@ -1,8 +1,7 @@
 package com.autopi.autopieapp.data.services
 
-import android.os.Environment
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.domain.ViewModelError
-import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -10,7 +9,6 @@ import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
-import java.nio.file.Path
 
 interface JsonService {
     fun readSharesConfig(): JsonObject?
@@ -25,12 +23,16 @@ interface JsonService {
 
 class JSONServiceImpl : JsonService {
 
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider by KoinJavaComponent.inject(
+        AutoPieConfigPathProvider::class.java
+    )
+
 
 
     override fun readSharesConfig(): JsonObject? {
 
 
-        val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
+        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
 
 
         try {
@@ -65,7 +67,7 @@ class JSONServiceImpl : JsonService {
     override fun readObserversConfig(): JsonObject? {
 
 
-        val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
+        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("observers.json").absolutePath
 
         try {
             val file = File(fileObserverPath)
@@ -99,7 +101,7 @@ class JSONServiceImpl : JsonService {
     override fun readCronConfig(): JsonObject? {
 
 
-        val cronConfigPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
+        val cronConfigPath = autoPieConfigPathProvider.getConfigFile("cron.json").absolutePath
 
         try {
             val file = File(cronConfigPath)
@@ -163,7 +165,7 @@ class JSONServiceImpl : JsonService {
 
     override fun writeSharesConfig(jsonString: String) {
 
-        val sharesFilePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/shares.json"
+        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
 
         try {
             val file = File(sharesFilePath)
@@ -176,7 +178,7 @@ class JSONServiceImpl : JsonService {
     }
 
     override fun writeObserversConfig(jsonString: String) {
-        val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/observers.json"
+        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("observers.json").absolutePath
 
         try {
             val file = File(fileObserverPath)
@@ -188,7 +190,7 @@ class JSONServiceImpl : JsonService {
     }
 
     override fun writeCronConfig(jsonString: String) {
-        val fileObserverPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/cron.json"
+        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("cron.json").absolutePath
 
         try {
             val file = File(fileObserverPath)
@@ -200,4 +202,3 @@ class JSONServiceImpl : JsonService {
     }
 
 }
-

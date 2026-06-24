@@ -18,10 +18,13 @@ import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.preferences.AutoPieConfigLocation
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.Notification
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.FileObserverJobService
 import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.ProcessManagerService
@@ -40,6 +43,7 @@ import java.io.File
 class MainViewModel(
     private val application: Application,
     private val appPreferences: AppPreferences,
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
     private val dispatchers: DispatcherProvider,
 ) : AndroidViewModel(application) {
 
@@ -84,6 +88,27 @@ class MainViewModel(
         }
     }
 
+    var autoPieConfigPath by mutableStateOf(autoPieConfigPathProvider.getAutoSecDirectory().absolutePath)
+    var fileLoggerPath by mutableStateOf(autoPieConfigPathProvider.getLogFile().absolutePath)
+
+    var autoPieConfigLocation by mutableStateOf(autoPieConfigPathProvider.getConfigLocationSync()).also { state ->
+        viewModelScope.launch {
+            autoPieConfigPathProvider.locationFlow.collectLatest {
+                state.value = it
+                autoPieConfigPath = autoPieConfigPathProvider.getAutoSecDirectory(it).absolutePath
+                fileLoggerPath = autoPieConfigPathProvider.getLogFile().absolutePath
+            }
+        }
+    }
+
+    var fileLoggingEnabled by mutableStateOf(appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, true)).also { state ->
+        viewModelScope.launch {
+            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, true).collectLatest{
+                state.value = it
+            }
+        }
+    }
+
     var storageManagerPermissionGranted by mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         Environment.isExternalStorageManager()
     } else {
@@ -113,6 +138,29 @@ class MainViewModel(
                 scheduleJob(application)
                 appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_ON, true)
             }
+        }
+    }
+
+    fun updateAutoPieConfigLocation(location: AutoPieConfigLocation) {
+        if (location == autoPieConfigLocation) {
+            return
+        }
+
+        viewModelScope.launch(dispatchers.io) {
+            val moved = autoPieConfigPathProvider.moveAutoSecDirectoryTo(location)
+            if (!moved) {
+                showError(ViewModelError.Unknown)
+                return@launch
+            }
+
+            autoPieConfigPathProvider.setConfigLocation(location)
+            AutoPieCoreService.initAutosec()
+        }
+    }
+
+    fun updateFileLoggingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            appPreferences.setBool(AppPreferences.FILE_LOGGING_ENABLED, enabled)
         }
     }
 
@@ -164,8 +212,8 @@ class MainViewModel(
 
     fun startMCPServer(){
 
-        val mcpPath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/mcp_server"
-        val modulePath = Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/mcp_modules"
+        val mcpPath = File(autoPieConfigPathProvider.getBinDirectory(), "mcp_server").absolutePath
+        val modulePath = File(autoPieConfigPathProvider.getAutoSecDirectory(), "mcp_modules").absolutePath
         val host = "0.0.0.0"
         val port  = "8000"
 
@@ -244,14 +292,13 @@ class MainViewModel(
             try {
                 Timber.d("Checking for package updates")
 
-                if(!storageManagerPermissionGranted){
+                if(autoPieConfigPathProvider.usesExternalStorage() && !storageManagerPermissionGranted){
                     Timber.d("Storage permission not granted")
 
                     return@launch
                 }
 
-                val autoSecFolder =
-                    File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec")
+                val autoSecFolder = autoPieConfigPathProvider.getAutoSecDirectory()
 
                 val installedVersionText = File(autoSecFolder, "version.txt").readText()
 

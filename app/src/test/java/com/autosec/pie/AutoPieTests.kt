@@ -76,7 +76,6 @@ class CommandTests : KoinTest {
             commandName = "Create Plumbus",
             directory = "",
             command = "plumb --create",
-            deleteSourceFile = true,
             isValidCommand = true,
             exec = "plumbus",
             commandExtras = emptyList(),
@@ -135,6 +134,5 @@ class MainDispatcherRule : TestWatcher() {
         Dispatchers.resetMain()
     }
 }
-
 
 

@@ -1,13 +1,15 @@
 package com.autopi.logging
-import android.content.Context
-import android.os.Build
-import android.os.Environment
 import android.util.Log
-import androidx.annotation.RequiresApi
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import java.io.FileWriter
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.Handler
@@ -15,12 +17,32 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 
-class FileLoggingTree(context: Context) : Timber.DebugTree() {
-    //private val logFile = File(context.filesDir, "autopie_log.txt")
-    private val logFile = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/logs/", "autopie.log")
+class FileLoggingTree(
+    private val appPreferences: AppPreferences,
+    private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
+) : Timber.DebugTree() {
     private val maxFileSize = 100 * 1024 // 100 KB
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    @Volatile
+    private var fileLoggingEnabled = appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, true)
+
+    @Volatile
+    private var logsDirectory = autoPieConfigPathProvider.getLogsDirectory()
 
     init {
+        scope.launch {
+            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, true).collectLatest {
+                fileLoggingEnabled = it
+            }
+        }
+
+        scope.launch {
+            autoPieConfigPathProvider.locationFlow.collectLatest {
+                logsDirectory = autoPieConfigPathProvider.getLogsDirectory()
+            }
+        }
+
 //        @RequiresApi(Build.VERSION_CODES.R)
 //        if(Environment.isExternalStorageManager()){
 //            try {
@@ -39,20 +61,25 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
     @Synchronized
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         try {
+            if (!fileLoggingEnabled) return
+
+            val logFile = File(logsDirectory, "autopie.log")
+            logFile.parentFile?.mkdirs()
+
             if (logFile.length() > maxFileSize) {
-                trimLogFile()
+                trimLogFile(logFile)
             }
 
             val timestamp = getCurrentTimeStamp()
             val logMessage = "$timestamp [${getPriorityString(priority)}] $tag: $message\n"
-            appendLogToFile(logMessage)
-        } catch (e: IOException) {
-            println("No permission to write to userspace log")
+            appendLogToFile(logFile, logMessage)
+        } catch (e: Exception) {
+            println("Unable to write AutoPie file log")
         }
     }
 
     // Append log message to the file
-    private fun appendLogToFile(logMessage: String) {
+    private fun appendLogToFile(logFile: File, logMessage: String) {
         val writer = FileWriter(logFile, true)
         writer.append(logMessage)
         writer.flush()
@@ -60,7 +87,7 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
     }
 
     // Trim log file by keeping only the last 50% of lines (can adjust as needed)
-    private fun trimLogFile() {
+    private fun trimLogFile(logFile: File) {
         val lines = logFile.readLines()
         val halfSize = lines.size / 2
         val writer = FileWriter(logFile)

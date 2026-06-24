@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.BuildConfig
+import com.autopi.autopieapp.data.preferences.AutoPieConfigLocation
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.presentation.elements.SettingsHeader
 import com.autopi.autopieapp.data.services.GithubApiService
@@ -258,6 +260,80 @@ fun SettingsToggles() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp)
+        ) {
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("File Logger")
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    mainViewModel.fileLoggerPath,
+                    softWrap = true,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                )
+            }
+            Switch(
+                checked = mainViewModel.fileLoggingEnabled,
+                onCheckedChange = {
+                    mainViewModel.updateFileLoggingEnabled(it)
+                }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Column(
+        verticalArrangement = Arrangement.Center, modifier = Modifier
+            .clip(RoundedCornerShape(15.dp))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+            .fillMaxWidth()
+            .padding(vertical = 7.dp, horizontal = 15.dp)
+    ) {
+        Text(
+            "AutoPie Config Path",
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
+        )
+
+        ConfigLocationRow(
+            title = "External storage",
+            description = "Persists over installs but is less secure.",
+            selected = mainViewModel.autoPieConfigLocation == AutoPieConfigLocation.EXTERNAL_STORAGE,
+            onClick = { mainViewModel.updateAutoPieConfigLocation(AutoPieConfigLocation.EXTERNAL_STORAGE) }
+        )
+
+        ConfigLocationRow(
+            title = "App data home",
+            description = "Stores config under appdata/home/AutoSec.",
+            selected = mainViewModel.autoPieConfigLocation == AutoPieConfigLocation.APP_DATA_HOME,
+            onClick = { mainViewModel.updateAutoPieConfigLocation(AutoPieConfigLocation.APP_DATA_HOME) }
+        )
+
+        Text(
+            mainViewModel.autoPieConfigPath,
+            softWrap = true,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(0.7f),
+            modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Column(
+        verticalArrangement = Arrangement.Center, modifier = Modifier
+            .clip(RoundedCornerShape(15.dp))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+            .fillMaxWidth()
+            .padding(vertical = 7.dp, horizontal = 15.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp)
 
                 //.height(90.dp)
         ) {
@@ -439,4 +515,41 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
+}
+
+@Composable
+private fun ConfigLocationRow(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(
+                indication = null,
+                enabled = true,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick
+            )
+    ) {
+        Column(Modifier.fillMaxWidth(0.82F)) {
+            Text(title)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                description,
+                softWrap = true,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
+            )
+        }
+        RadioButton(
+            selected = selected,
+            onClick = onClick
+        )
+    }
 }

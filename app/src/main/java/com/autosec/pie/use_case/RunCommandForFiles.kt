@@ -1,6 +1,5 @@
 package com.autopi.use_case
 
-import android.os.Environment
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
@@ -44,9 +43,8 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 Timber.d("Replaced String $replacedString")
 
-                val execFilePath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
-                val path = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+                val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
+                val path = processManagerService.getCommandWorkingDirectory(item.path)
 
 
                 val (execType,fullExecPath, resultCommand) = when{
@@ -128,10 +126,9 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     Timber.d("Parsed path: $parsedPath")
 
 
-                    val execFilePath =
-                        Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin/" + item.exec
+                    val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
-                    val dirPath = Path(Environment.getExternalStorageDirectory().absolutePath, item.path).absolutePathString()
+                    val dirPath = processManagerService.getCommandWorkingDirectory(item.path)
 
 
                     val (execType,fullExecPath, resultCommand) = when{

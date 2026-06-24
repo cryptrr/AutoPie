@@ -189,6 +189,10 @@ class FakeJSONService : JsonService {
         }
     }
 
+    override fun readRepoList(path: String): JsonObject? {
+        return readSharesConfig()
+    }
+
     // Helper method for tests to clear storage
     fun clearStorage() {
         inMemoryStorage.clear()

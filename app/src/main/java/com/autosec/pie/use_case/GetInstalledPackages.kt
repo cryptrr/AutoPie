@@ -1,14 +1,14 @@
 package com.autopi.use_case
 
-import android.os.Environment
+import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import java.io.File
 
-class GetInstalledPackages(){
+class GetInstalledPackages(private val autoPieConfigPathProvider: AutoPieConfigPathProvider){
     operator fun invoke(appFilesDir: File) : List<File> {
 
         val binLocation = File(appFilesDir, "usr/bin").listFiles()
         val usrBinLocation = File(appFilesDir, "build/usr/bin")
-        val autosecBinLocation = File(Environment.getExternalStorageDirectory().absolutePath + "/AutoSec/bin")
+        val autosecBinLocation = autoPieConfigPathProvider.getBinDirectory()
 
         val packages = listOf(
             binLocation?.toList() ?: emptyList(),
