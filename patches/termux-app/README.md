@@ -26,3 +26,8 @@ bootstrap download and native bootstrap build. AutoPie supplies its own
 `app/src/main/assets/bootstrap-aarch64.zip`. The native builds in the
 `terminal-emulator` and `termux-shared` modules remain enabled because those
 libraries are runtime dependencies, not bootstrap packaging scripts.
+
+Patch 19 restores a standalone Gradle task named `downloadAutoPieBootstrap`.
+The task downloads Termux's pinned bootstrap archive into the prepared Termux
+source without wiring it back into the Termux library build. AutoPie then
+patches and copies that archive with `scripts/prepare-termux-bootstrap.sh`.
