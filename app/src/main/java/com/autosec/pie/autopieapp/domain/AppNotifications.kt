@@ -94,6 +94,7 @@ sealed class AppNotification : Notification {
     data object InstallingPythonPackages : AppNotification()
     data object InstallingPythonPackagesSuccess : AppNotification()
     data object FeatureWIP : AppNotification()
+    data object UsePerCommandHistory : AppNotification()
     object FailedDownloadingArchive : AppNotification()
     object FailedExtractingArchive : AppNotification()
     data object DownloadingInitPackages : AppNotification()
@@ -122,6 +123,7 @@ sealed class AppNotification : Notification {
             is InstallingPythonPackages -> "Installing Bootstrap & Python. Don't close the app."
             is InstallingPythonPackagesSuccess -> "Installing Bootstrap Packages: Success"
             is FeatureWIP -> "This feature is 'Work In Progress'"
+            is UsePerCommandHistory -> "Use per command history instead"
             is FailedDownloadingArchive -> "Failed Downloading Bootstrap binaries. Check Internet."
             is FailedExtractingArchive -> "Failed Extracting Init Archive. Please manually download zip from github"
 

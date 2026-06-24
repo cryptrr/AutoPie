@@ -170,7 +170,7 @@ fun SettingsToggles() {
                     enabled = true,
                     interactionSource = remember { MutableInteractionSource() })
                 {
-                    mainViewModel.showNotification(AppNotification.FeatureWIP)
+                    mainViewModel.showNotification(AppNotification.UsePerCommandHistory)
                 }
         ) {
             Text(
