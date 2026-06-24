@@ -11,7 +11,7 @@ Repo: https://github.com/cryptrr/AutoPie.git
 Builds:
   - versionName: 0.15.0-beta
     versionCode: 29
-    commit: c22538587e9714811dd4a58c37254ac3e1f3121d
+    commit: 1dea2cc9908772d694f34cdbc3d829d0dea9cf5e
     gradle:
       - yes
 
