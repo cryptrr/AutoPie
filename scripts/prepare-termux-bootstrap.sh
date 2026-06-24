@@ -113,7 +113,14 @@ mv "$EXTRACTED_DIR/bin/dpkg" "$EXTRACTED_DIR/bin/dpkg.real"
 install -m 0700 "$DPKG_WRAPPER" "$EXTRACTED_DIR/bin/dpkg"
 
 echo "Repacking patched bootstrap"
-python3 - "$EXTRACTED_DIR" "$PATCHED_ZIP" <<'PY'
+if command -v 7z >/dev/null 2>&1; then
+    (
+        cd "$EXTRACTED_DIR"
+        7z a -tzip -mx=9 -mm=Deflate -mfb=258 -mpass=15 "$PATCHED_ZIP" . >/dev/null
+    )
+else
+    echo "7z not found; falling back to Python zipfile compression"
+    python3 - "$EXTRACTED_DIR" "$PATCHED_ZIP" <<'PY'
 from __future__ import annotations
 
 import sys
@@ -142,6 +149,7 @@ with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
             with path.open("rb") as f:
                 zf.writestr(info, f.read(), compress_type=zipfile.ZIP_DEFLATED)
 PY
+fi
 
 mkdir -p "$ASSETS_DIR"
 install -m 0644 "$PATCHED_ZIP" "$DEST_ZIP"
