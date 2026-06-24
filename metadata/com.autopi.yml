@@ -1,0 +1,19 @@
+Categories:
+  - System
+License: Apache-2.0
+AuthorName: Amal Shaji
+SourceCode: https://github.com/cryptrr/AutoPie
+IssueTracker: https://github.com/cryptrr/AutoPie/issues
+
+RepoType: git
+Repo: https://github.com/cryptrr/AutoPie.git
+
+Builds:
+  - versionName: 0.15.0-beta
+    versionCode: 29
+    commit: 561873bab0f5710e0445c49fa4537be37a5e36bb
+    gradle:
+      - yes
+
+AutoUpdateMode: None
+UpdateCheckMode: None
