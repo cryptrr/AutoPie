@@ -2,10 +2,9 @@
 
 ### [Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
 
-### AutoPie includes a Termux-based environment, so you can now install packages
-### from the terminal with `pkg install package-name`.
+### AutoPie includes a Termux-based environment, so you can now install packages from the terminal with `pkg install package-name`.
 
-### Commands hub where you can create, automate and run commands without using the terminal.
+## Commands hub where you can create, automate and run commands without using the terminal.
 
 **AutoPie is your own power tool-kit for Android.**
 
