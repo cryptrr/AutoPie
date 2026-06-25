@@ -158,10 +158,18 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 placeholder = "command",
                 singleLine = false,
                 modifier = Modifier
-                .defaultMinSize(minHeight = 100.dp)
+                .defaultMinSize(minHeight = 120.dp)
                 //.wrapContentHeight(),
                 ,
-                subtitle = "Bash shell scripting syntax is supported."
+                subtitle = "Bash and Python scripting syntax is supported.",
+                contentAfterSubtitle = {
+                    CommandLanguageSelector(
+                        command = viewModel.command.value,
+                        onCommandChange = {
+                            viewModel.command.value = it
+                        }
+                    )
+                }
             )
 
 
@@ -299,4 +307,55 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 //            showPackagesDialog = false
 //        }
 //    )
+    }
+
+@Composable
+private fun CommandLanguageSelector(
+    command: String,
+    onCommandChange: (String) -> Unit
+) {
+    val commandLanguageOptions = listOf("BASH", "PYTHON")
+    val selectedIndex = if (Utils.isPythonScript(command)) 1 else 0
+
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        commandLanguageOptions.forEachIndexed { index, label ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = commandLanguageOptions.size,
+                    baseShape = RoundedCornerShape(10.dp)
+                ),
+                onClick = {
+                    onCommandChange(
+                        when (label) {
+                            "PYTHON" -> command.withPythonHeader()
+                            else -> command.withoutPythonHeader()
+                        }
+                    )
+                },
+                colors = SegmentedButtonDefaults.colors().copy(
+                    inactiveContainerColor = Color.Transparent,
+                    activeContentColor = MaterialTheme.colorScheme.primary
+                ),
+                selected = index == selectedIndex
+            ) {
+                Text(label)
+            }
+        }
+    }
+}
+
+private fun String.withPythonHeader(): String {
+    val commandWithoutHeader = withoutPythonHeader()
+    return if (commandWithoutHeader.isBlank()) {
+        "#@PYTHON\n"
+    } else {
+        "#@PYTHON\n$commandWithoutHeader"
+    }
+}
+
+private fun String.withoutPythonHeader(): String {
+    return lineSequence()
+        .dropWhile { it.trim() == "#@PYTHON" }
+        .joinToString("\n")
 }

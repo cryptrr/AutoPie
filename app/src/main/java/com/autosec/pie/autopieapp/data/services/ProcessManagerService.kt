@@ -139,7 +139,7 @@ class ProcessManagerService(
     }
 
     fun getCommandWorkingDirectory(path: String): String {
-        return Path(autoPieConfigPathProvider.getCommandBaseDirectory().absolutePath, path).absolutePathString()
+        return Path(Environment.getExternalStorageDirectory().absolutePath, path).absolutePathString()
     }
 
     fun getConfigRelativePath(path: String): String {
@@ -560,7 +560,11 @@ class ProcessManagerService(
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython -> "python $exec $command"
+                usePython -> {
+                    Timber.d("Running Python Script")
+                    "python $command"
+                }
+                //TODO: shellScript Marked for deletion
                 isShellScript -> "bash $command"
                 else -> "$command"
             }

@@ -55,7 +55,7 @@ import timber.log.Timber
 
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: (@Composable (() -> Unit))? = null){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: (@Composable (() -> Unit))? = null, contentAfterSubtitle: (@Composable (() -> Unit))? = null){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -64,6 +64,11 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
 
         if(subtitle?.isNotBlank() == true){
             Text(text = subtitle, fontSize = 14.sp, fontWeight = FontWeight.Normal)
+        }
+
+        contentAfterSubtitle?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            it()
         }
 
         Spacer(modifier = Modifier.height(10.dp))
