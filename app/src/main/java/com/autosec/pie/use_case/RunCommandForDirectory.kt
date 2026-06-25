@@ -62,7 +62,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                 val useQuotes = execType != ExecType.SHELL_INSTALLED
                 //val useQuotes = true
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
-                val usePython = Utils.isZipFile(File(fullExecPath))
+                val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map{item -> "\"$item\""}.joinToString(" ")))

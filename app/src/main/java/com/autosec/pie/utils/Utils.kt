@@ -68,6 +68,14 @@ class Utils{
             return firstLine.startsWith("#!") && (firstLine.contains("bash") || firstLine.contains("sh"))
         }
 
+        fun isPythonScript(command: String): Boolean {
+            val firstLine = command.lineSequence().firstOrNull() ?: ""
+
+            Timber.d("Command first line: $firstLine")
+
+            return firstLine.trim().startsWith("#@PYTHON")
+        }
+
         fun isZipFile(file: File): Boolean {
             if (!file.isFile) return false
 

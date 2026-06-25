@@ -61,7 +61,7 @@ class RunInteractiveCommand(private val processManagerService: ProcessManagerSer
 
 
             val isShellScript = Utils.isShellScript(File(fullExecPath))
-            val usePython = Utils.isZipFile(File(fullExecPath))
+            val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
 
             Timber.d("Command to run: ${item.exec} $resultCommand")

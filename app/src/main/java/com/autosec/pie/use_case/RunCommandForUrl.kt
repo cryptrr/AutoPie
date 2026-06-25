@@ -60,7 +60,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
             val useQuotes = execType != ExecType.SHELL_INSTALLED
             val isShellScript = Utils.isShellScript(File(fullExecPath))
-            val usePython = Utils.isZipFile(File(fullExecPath))
+            val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
 
             val inputParsedData = mutableListOf<InputParsedData>().also {

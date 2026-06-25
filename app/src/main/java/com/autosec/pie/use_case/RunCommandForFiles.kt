@@ -68,7 +68,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 //val useQuotes = true
 
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
-                val usePython = Utils.isZipFile(File(fullExecPath))
+                val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
 //                val inputFiles = if(usePython){
 //                    currentItems.joinToString(" "){"'${it}'"}.replace("''","'").replace("'", "\'")
@@ -151,7 +151,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     val useQuotes = execType != ExecType.SHELL_INSTALLED
                     //val useQuotes = true
                     val isShellScript = Utils.isShellScript(File(fullExecPath))
-                    val usePython = Utils.isZipFile(File(fullExecPath))
+                    val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
