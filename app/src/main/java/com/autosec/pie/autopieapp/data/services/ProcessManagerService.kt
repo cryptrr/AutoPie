@@ -561,15 +561,11 @@ class ProcessManagerService(
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython && Utils.isPythonScript(commandObject.command) -> {
+                usePython -> {
                     Timber.d("Running Python Script")
                     val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
                     pythonScriptFile.writeText(commandObject.command.withoutPythonHeader())
                     "python ${pythonScriptFile.absolutePath.shellQuote()}"
-                }
-                usePython -> {
-                    Timber.d("Running Python Package")
-                    "python $exec $command"
                 }
                 //TODO: shellScript Marked for deletion
                 isShellScript -> "bash $command"

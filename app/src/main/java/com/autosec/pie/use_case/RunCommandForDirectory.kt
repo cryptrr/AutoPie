@@ -64,8 +64,10 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
+                val inputFiles = currentItems.joinToString("\n")
+
                 val inputParsedData = mutableListOf<InputParsedData>().also {
-                    it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map{item -> "\"$item\""}.joinToString(" ")))
+                    it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${path.absolutePath}\"" else path.absolutePath))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${path.name}\"" else path.name))
                     it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${path.parent}\"" else path.parent))
