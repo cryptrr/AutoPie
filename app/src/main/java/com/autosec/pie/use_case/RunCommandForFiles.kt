@@ -84,6 +84,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 Timber.d("Parsed Path: ${parsedPath.absolutePathString()}")
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
+                    it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
@@ -154,6 +155,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
+                        it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
                         it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                         it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))

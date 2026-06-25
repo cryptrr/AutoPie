@@ -51,6 +51,7 @@ class RunInteractiveCommand(private val processManagerService: ProcessManagerSer
 
             //TODO: Make this more robust
             val inputParsedData = mutableListOf<InputParsedData>().also {
+                it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                 it.add(InputParsedData(name = "INPUT_TEXT", value = "$text"))
                 it.add(InputParsedData(name = "INPUT_FILE", value = "${if(text.containsValidUrl()) text.extractFirstUrl() else ""}"))
                 it.add(InputParsedData(name = "INPUT_FILES", value = "${if(text.containsValidUrl()) text.extractAllUrls() else ""}"))

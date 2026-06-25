@@ -44,6 +44,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
             }
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
+                it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 

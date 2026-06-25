@@ -266,7 +266,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 .defaultMinSize(minHeight = 100.dp)
                 //.wrapContentHeight()
                 ,
-                subtitle = "Bash shell scripting syntax is supported."
+                subtitle = "Bash and Python scripting syntax is supported."
             )
 
             if (viewModel.selectedCommandType == "FILE_OBSERVER") {

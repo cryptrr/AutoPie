@@ -64,6 +64,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
+                it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                 it.add(
                     InputParsedData(
                         name = "INPUT_FILE",

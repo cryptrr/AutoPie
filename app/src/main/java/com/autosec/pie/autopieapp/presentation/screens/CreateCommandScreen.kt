@@ -161,7 +161,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 .defaultMinSize(minHeight = 120.dp)
                 //.wrapContentHeight(),
                 ,
-                subtitle = "Bash and Python scripting syntax is supported.",
+                subtitle = "Bash and Python scripting syntax are supported.",
                 contentAfterSubtitle = {
                     CommandLanguageSelector(
                         command = viewModel.command.value,

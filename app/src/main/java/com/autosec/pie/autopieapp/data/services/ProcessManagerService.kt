@@ -61,6 +61,8 @@ class ProcessManagerService(
     var failedProcessIds : List<Int> = emptyList()
         private set
 
+    fun getLoadingActivityComponentName(): String = "${activity.packageName}/.LoadingActivity"
+
 
     init {
         main.viewModelScope.launch {
