@@ -17,7 +17,7 @@ What it rewrites in .deb packages:
 - likely text files inside the package are byte-replaced
 
 Notes:
-- This is designed to be a practical wrapper, not a perfect package binary rewriter.
+- This is designed to be a practical wrapper and package binary rewriter.
 - Packages embedding the old prefix inside opaque binary blobs may still need custom handling.
 - apt dependency resolution still works normally because apt does that before dpkg runs.
 """
