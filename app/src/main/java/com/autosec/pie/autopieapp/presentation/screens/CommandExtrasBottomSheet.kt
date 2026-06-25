@@ -268,22 +268,32 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 PasswordFormField(text = textValue , title = extra.name, subtitle = extra.description)
                             }
                             else{
-                                GenericTextFormField(text = textValue , title = extra.name, subtitle = extra.description){
-                                    if(extra.name.endsWith("FILES")){
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            MultiFilePicker(useRelativePaths = true){
-                                                textValue.value = it.joinToString(",")
+                                GenericTextFormField(
+                                    text = textValue,
+                                    title = extra.name,
+                                    subtitle = extra.description,
+                                    trailingIcon = if(extra.name.endsWith("FILES")){
+                                        {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                                MultiFilePicker(useRelativePaths = true){
+                                                    textValue.value = it.joinToString(",")
+                                                }
                                             }
                                         }
                                     }
                                     else if(extra.name.endsWith("FILE")){
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            SingleFilePicker(useRelativePaths = true){
-                                                textValue.value = it
+                                        {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                                SingleFilePicker(useRelativePaths = true){
+                                                    textValue.value = it
+                                                }
                                             }
                                         }
                                     }
-                                }
+                                    else {
+                                        null
+                                    }
+                                )
                             }
 
 

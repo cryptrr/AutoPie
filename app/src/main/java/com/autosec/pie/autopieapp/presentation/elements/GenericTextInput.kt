@@ -25,9 +25,8 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilePresent
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -171,7 +170,7 @@ fun MultiFilePicker(
     // Call this when you want to launch the picker, for example on button click
     remember { launcher }
 
-    Button(onClick = { launcher.launch(arrayOf("*/*")) }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+    IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
         Icon(
             imageVector = Icons.Rounded.FilePresent,
             contentDescription = "File Picker",
@@ -202,7 +201,7 @@ fun SingleFilePicker(
 
     remember { launcher }
 
-    Button(onClick = { launcher.launch(arrayOf("*/*")) }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+    IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
         Icon(
             imageVector = Icons.Rounded.FilePresent,
             contentDescription = "File Picker",

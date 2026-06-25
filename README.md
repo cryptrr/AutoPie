@@ -51,9 +51,10 @@
 |--------------------|-------------------------------------------------------------------------------------------------|
 | ${INPUT_FILE}      | Use it to pass input file path or url in the command                                            |
 | ${INPUT_FILES}     | If multiple files are needed as input to the command<br/> Example : `magick combine two images` |
+| ${INPUT_FILES_ARR} | Input files as Shell array<br/> Example : `magick "${INPUT_FILES_ARR[@]}"`                      |
 | ${INPUT_URL}       | If the program takes a single URL                                                               |
 | ${INPUT_URLS}      | If the program takes multiple URLs                                                              |
-| ${INPUT_TEXT}      | If program takes raw TEXT as value                                                              |
+| ${INPUT_TEXT}      | If program takes raw TEXT as input                                                              |
 | ${FILENAME}        | Filename without path                                                                           |
 | ${DIRECTORY}       | Parent Directory of file                                                                        |
 | ${FILENAME_NO_EXT} | Filename without path and extension                                                             |
