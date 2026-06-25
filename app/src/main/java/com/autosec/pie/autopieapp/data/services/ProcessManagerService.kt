@@ -698,6 +698,15 @@ class ProcessManagerService(
                 scriptFile.appendText(command)
             }
 
+            scriptFile.appendText(
+                """
+
+                status=${'$'}?
+                printf '\nExit code: %s\n' "${'$'}status"
+                exec "${'$'}{SHELL:-bash}" -i
+                """.trimIndent()
+            )
+
 
             val intent = Intent(activity, RunCommandService::class.java).apply {
 
