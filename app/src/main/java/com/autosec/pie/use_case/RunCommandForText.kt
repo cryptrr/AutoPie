@@ -66,7 +66,7 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
 
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
-            val processResult = if(item.command.startsWith("#@INTERACTIVE")) {
+            val processResult = if(Utils.isInteractiveCommand(item.command)) {
                 processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
 
             }else{

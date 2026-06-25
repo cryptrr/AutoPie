@@ -355,7 +355,16 @@ private fun String.withPythonHeader(): String {
 }
 
 private fun String.withoutPythonHeader(): String {
+    var readingHeaders = true
     return lineSequence()
-        .dropWhile { it.trim() == "#@PYTHON" }
+        .filter { line ->
+            val trimmedLine = line.trim()
+            if (readingHeaders && trimmedLine.startsWith("#@")) {
+                !trimmedLine.startsWith("#@PYTHON")
+            } else {
+                readingHeaders = false
+                true
+            }
+        }
         .joinToString("\n")
 }

@@ -99,7 +99,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 Timber.d("Result Command: $resultCommand")
 
-                val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+                val processResult = if(Utils.isInteractiveCommand(item.command)){
                     processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand, path,
                         inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
                 }else{
@@ -166,7 +166,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                     Timber.d("Replaced String $replacedString")
 
-                    val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+                    val processResult = if(Utils.isInteractiveCommand(item.command)){
                        processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,dirPath,
                             inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
                     }else{

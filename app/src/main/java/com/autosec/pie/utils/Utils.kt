@@ -69,11 +69,28 @@ class Utils{
         }
 
         fun isPythonScript(command: String): Boolean {
-            val firstLine = command.lineSequence().firstOrNull() ?: ""
+            return hasCommandHeader(command, "#@PYTHON")
+        }
 
-            Timber.d("Command first line: $firstLine")
+        fun isInteractiveCommand(command: String): Boolean {
+            return hasCommandHeader(command, "#@INTERACTIVE")
+        }
 
-            return firstLine.trim().startsWith("#@PYTHON")
+        fun hasCommandHeader(command: String, header: String): Boolean {
+            return commandHeaders(command).any { it.startsWith(header) }
+        }
+
+        fun stripCommandHeaders(command: String): String {
+            return command.lineSequence()
+                .dropWhile { it.trim().startsWith("#@") }
+                .joinToString("\n")
+        }
+
+        private fun commandHeaders(command: String): List<String> {
+            return command.lineSequence()
+                .map { it.trim() }
+                .takeWhile { it.startsWith("#@") }
+                .toList()
         }
 
         fun isZipFile(file: File): Boolean {
@@ -341,10 +358,10 @@ fun Modifier.conditional(
 }
 
 fun getCommandExec(command: String) : String {
-    return if(command.lines().any { it.startsWith("#@SHELL") }){
+    return if(Utils.hasCommandHeader(command, "#@SHELL")){
         "Shell"
     }
-    else if(command.lines().any { it.startsWith("#@PYTHON") }){
+    else if(Utils.hasCommandHeader(command, "#@PYTHON")){
         "Python"
     }
     else{

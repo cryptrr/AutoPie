@@ -96,7 +96,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
 
 
-            val processResult = if(item.command.startsWith("#@INTERACTIVE")){
+            val processResult = if(Utils.isInteractiveCommand(item.command)){
                 processManagerService.runCommandInTermuxShell(
                     item,
                     fullExecPath,

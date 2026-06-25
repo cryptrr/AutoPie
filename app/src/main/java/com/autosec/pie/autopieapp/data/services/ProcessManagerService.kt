@@ -561,11 +561,15 @@ class ProcessManagerService(
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython -> {
+                usePython && Utils.isPythonScript(commandObject.command) -> {
                     Timber.d("Running Python Script")
                     val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                    pythonScriptFile.writeText(commandObject.command.withoutPythonHeader())
+                    pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
                     "python ${pythonScriptFile.absolutePath.shellQuote()}"
+                }
+                usePython -> {
+                    Timber.d("Running Python Package")
+                    "python $exec $command"
                 }
                 //TODO: shellScript Marked for deletion
                 isShellScript -> "bash $command"
@@ -660,7 +664,13 @@ class ProcessManagerService(
             }
             //TODO: Do this on condition.
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
-            scriptFile.appendText(command)
+            if (usePython && Utils.isPythonScript(commandObject.command)) {
+                val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
+                pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
+                scriptFile.appendText("python ${pythonScriptFile.absolutePath.shellQuote()}")
+            } else {
+                scriptFile.appendText(command)
+            }
 
 
             val intent = Intent(activity, RunCommandService::class.java).apply {
@@ -1015,12 +1025,6 @@ class ProcessManagerService(
     }
 
 
-}
-
-private fun String.withoutPythonHeader(): String {
-    return lineSequence()
-        .dropWhile { it.trim().startsWith("#@PYTHON") }
-        .joinToString("\n")
 }
 
 private fun String.shellQuote(): String {
