@@ -22,6 +22,7 @@ import com.autopi.use_case.RunCommandForText
 import com.autopi.use_case.RunCommandForUrl
 import com.autopi.use_case.RunInteractiveCommand
 import com.autopi.use_case.RunStandaloneCommand
+import com.autopi.use_case.ToggleCommandDebugMode
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -47,7 +48,8 @@ val useCaseModule = module {
             deleteUserTag = DeleteUserTag(get()),
             getInstalledPackages = GetInstalledPackages(get()),
             getRepoCommandsList = GetRepoCommandsList(get()),
-            runInteractiveCommand = RunInteractiveCommand(get())
+            runInteractiveCommand = RunInteractiveCommand(get()),
+            toggleCommandDebugMode = ToggleCommandDebugMode(get())
         )
     }
 }

@@ -6,8 +6,10 @@ import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,13 +20,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +45,8 @@ import com.autopi.autopieapp.presentation.elements.OptionItem
 import com.autopi.autopieapp.presentation.elements.OptionLayout
 import com.autopi.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.utils.Utils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
@@ -60,6 +69,9 @@ fun CommandDetailsSheet(
     val createCommandViewModel: CreateCommandViewModel = koinViewModel()
 
     val card = shareReceiverViewModel.main.currentSelectedCommand.value ?: return
+    var debugModeEnabled by remember(card.name, card.command) {
+        mutableStateOf(Utils.isInteractiveCommand(card.command))
+    }
 
     val context = LocalContext.current
 
@@ -176,6 +188,45 @@ fun CommandDetailsSheet(
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(0.7F))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1F)) {
+                        Text(
+                            text = "Debug Mode",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = "Runs this command in interactive shell by default",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.68F)
+                        )
+                    }
+
+                    Switch(
+                        checked = debugModeEnabled,
+                        onCheckedChange = { enabled ->
+                            debugModeEnabled = enabled
+                            createCommandViewModel.toggleCommandDebugMode(card, enabled)
+                            scope.launch {
+                                delay(250L)
+                                open.value = false
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 OptionLayout(Modifier, optionList = optionsList)
 

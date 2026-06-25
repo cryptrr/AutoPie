@@ -82,14 +82,16 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 Timber.d("Input Files: $inputFiles")
                 Timber.d("Parsed Path: ${parsedPath.absolutePathString()}")
+                val sanitizedFilename = Utils.sanitizeAndroidFilename(parsedPath.fileName.toString())
+                val sanitizedFilenameNoExt = Utils.sanitizeAndroidFilename(parsedPath.nameWithoutExtension)
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                    it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                    it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
                     it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${sanitizedFilenameNoExt}\"" else sanitizedFilenameNoExt))
                     it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
@@ -153,14 +155,16 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     //val useQuotes = true
                     val isShellScript = Utils.isShellScript(File(fullExecPath))
                     val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
+                    val sanitizedFilename = Utils.sanitizeAndroidFilename(parsedPath.fileName.toString())
+                    val sanitizedFilenameNoExt = Utils.sanitizeAndroidFilename(parsedPath.nameWithoutExtension)
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
                         it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                        it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${parsedPath.fileName}\"" else "${parsedPath.fileName}"))
+                        it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
                         it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${parsedPath.nameWithoutExtension}\"" else parsedPath.nameWithoutExtension))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${sanitizedFilenameNoExt}\"" else sanitizedFilenameNoExt))
                         it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }

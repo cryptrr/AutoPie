@@ -635,7 +635,7 @@ class ProcessManagerService(
             //Timber.d("Env dump: ${shell.environment}")
 
 
-            val result = shell.run("bash ${scriptFile.absolutePath}")
+            val result = shell.run("bash ${scriptFile.absolutePath.shellQuote()} < /dev/null")
 
             Timber.d("Exit Code ${result.exitCode}")
 
@@ -685,7 +685,7 @@ class ProcessManagerService(
             scriptFile.writeText("set -x\n")
             envs.forEach { (key, value) ->
                 scriptFile.appendText(
-                    "export $key=${value}\n"
+                    "export $key=${value.shellExportValue()}\n"
                 )
             }
             //TODO: Do this on condition.
@@ -698,6 +698,15 @@ class ProcessManagerService(
             } else {
                 scriptFile.appendText(command)
             }
+
+            scriptFile.appendText(
+                """
+
+                status=${'$'}?
+                printf '\nExit code: %s\n' "${'$'}status"
+                exec "${'$'}{SHELL:-bash}" -i
+                """.trimIndent()
+            )
 
 
             val intent = Intent(activity, RunCommandService::class.java).apply {
@@ -1056,4 +1065,12 @@ class ProcessManagerService(
 
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\"'\"'")}'"
+}
+
+private fun String.shellExportValue(): String {
+    val trimmed = trim()
+    val alreadyQuoted = (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+            (trimmed.startsWith("\"") && trimmed.endsWith("\""))
+
+    return if (alreadyQuoted) this else shellQuote()
 }

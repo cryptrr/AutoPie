@@ -13,6 +13,7 @@ import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -100,6 +101,21 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
                 }
             }catch (e: Exception){
                 when(e){
+                    is ViewModelError -> main.showError(e)
+                    else -> Timber.e(e)
+                }
+            }
+        }
+    }
+
+    fun toggleCommandDebugMode(command: CommandModel, enabled: Boolean) {
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val updatedCommand = useCases.toggleCommandDebugMode(command, enabled)
+                main.currentSelectedCommand.value = updatedCommand
+                main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+            } catch (e: Exception) {
+                when (e) {
                     is ViewModelError -> main.showError(e)
                     else -> Timber.e(e)
                 }
