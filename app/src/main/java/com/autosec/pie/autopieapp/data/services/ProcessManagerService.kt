@@ -664,6 +664,7 @@ class ProcessManagerService(
             }
             //TODO: Do this on condition.
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+
             if (usePython && Utils.isPythonScript(commandObject.command)) {
                 val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
                 pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
