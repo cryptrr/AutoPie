@@ -1,9 +1,11 @@
 package com.autopi.autopieapp.presentation.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -84,6 +87,7 @@ fun OutputViewerBottomSheet(
     }
 
 
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     @Composable
     fun bottomSheetContent() {
         Box(
@@ -137,27 +141,32 @@ fun OutputViewerBottomSheet(
                 viewModel.currentLogPath.value?.let {
                     Column(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .clip(RoundedCornerShape(15.dp))
                             .fillMaxHeight()
                             .background(Color.Black.copy(alpha = 0.25F))
                             .padding(horizontal = 15.dp)
                             .verticalScroll(scroll) // Only vertical scroll on the parent
                     ) {
-                        // If word wrap is disabled, wrap the text in a horizontal scroll container
-                        val contentModifier = if (!wordWrap) {
-                            Modifier.horizontalScroll(horizontal)
-                        } else {
-                            Modifier.fillMaxWidth()
-                        }
+                        BoxWithConstraints(Modifier.fillMaxWidth()) {
+                            // If word wrap is disabled, keep the scroll content at least as wide as the visible log area.
+                            val contentModifier = if (!wordWrap) {
+                                Modifier
+                                    .widthIn(min = maxWidth)
+                                    .horizontalScroll(horizontal)
+                            } else {
+                                Modifier.fillMaxWidth()
+                            }
 
-                        Box(modifier = contentModifier) {
-                            SelectionContainer {
-                                Text(
-                                    text = logsState.value,
-                                    fontFamily = FontFamily.Monospace,
-                                    softWrap = wordWrap,
-                                    modifier = Modifier.padding(vertical = 15.dp)
-                                )
+                            Box(modifier = contentModifier) {
+                                SelectionContainer {
+                                    Text(
+                                        text = logsState.value,
+                                        fontFamily = FontFamily.Monospace,
+                                        softWrap = wordWrap,
+                                        modifier = Modifier.padding(vertical = 15.dp)
+                                    )
+                                }
                             }
                         }
                     }
