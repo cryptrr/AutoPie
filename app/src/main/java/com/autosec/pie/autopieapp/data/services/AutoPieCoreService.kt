@@ -513,11 +513,52 @@ class AutoPieCoreService {
 
         fun fetchLatestRepositoryJson(){
             Timber.d("Fetching latest commands repository")
-            try {
-                processManagerService.createTerminalShell()?.run("wcurl -o ${application.filesDir.absolutePath}/repolist.json ${AutoPieConstants.AUTOPIE_FULL_COMMANDS_REPO_URL}")
-                Timber.d("Latest repository fetched successfully")
-            }catch (e: Exception){
-                Timber.e(e)
+            CoroutineScope(dispatchers.io).launch {
+                try {
+                    val repositoryJsonFile = File(application.filesDir, "repolist.json")
+                    val repositoryJsonNewFile = File(application.filesDir, "repolist.json.new")
+                    val repositoryJsonBackupFile = File(application.filesDir, "repolist.json.bak")
+
+                    if (repositoryJsonNewFile.exists() && !repositoryJsonNewFile.delete()) {
+                        Timber.e("Unable to delete existing new repository file ${repositoryJsonNewFile.absolutePath}")
+                        return@launch
+                    }
+
+                    val isDownloaded = downloadFileNatively(
+                        AutoPieConstants.AUTOPIE_FULL_COMMANDS_REPO_URL,
+                        repositoryJsonNewFile.absolutePath
+                    )
+
+                    if (!isDownloaded) {
+                        Timber.e("Failed to fetch latest commands repository")
+                        repositoryJsonNewFile.delete()
+                        return@launch
+                    }
+
+                    if (repositoryJsonBackupFile.exists() && !repositoryJsonBackupFile.delete()) {
+                        Timber.e("Unable to delete existing repository backup ${repositoryJsonBackupFile.absolutePath}")
+                        repositoryJsonNewFile.delete()
+                        return@launch
+                    }
+
+                    if (repositoryJsonFile.exists() && !repositoryJsonFile.renameTo(repositoryJsonBackupFile)) {
+                        Timber.e("Unable to backup existing repository file ${repositoryJsonFile.absolutePath}")
+                        repositoryJsonNewFile.delete()
+                        return@launch
+                    }
+
+                    if (!repositoryJsonNewFile.renameTo(repositoryJsonFile)) {
+                        Timber.e("Unable to move new repository file to ${repositoryJsonFile.absolutePath}")
+                        if (!repositoryJsonFile.exists() && repositoryJsonBackupFile.exists()) {
+                            repositoryJsonBackupFile.renameTo(repositoryJsonFile)
+                        }
+                        return@launch
+                    }
+
+                    Timber.d("Latest repository fetched successfully")
+                }catch (e: Exception){
+                    Timber.e(e)
+                }
             }
         }
 
