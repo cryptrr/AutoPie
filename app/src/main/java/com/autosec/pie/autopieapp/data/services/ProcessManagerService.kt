@@ -63,6 +63,21 @@ class ProcessManagerService(
 
     fun getLoadingActivityComponentName(): String = "${activity.packageName}/.LoadingActivity"
 
+    private fun openOutputViewer(logFile: String, commandName: String) {
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                setClass(activity, OutputViewerActivity::class.java)
+                putExtra("logFile", logFile)
+                putExtra("commandName", commandName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+
+            activity.startActivity(intent)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to open output viewer")
+        }
+    }
+
 
     init {
         main.viewModelScope.launch {
@@ -485,6 +500,10 @@ class ProcessManagerService(
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
 
+            if (Utils.isOpenLogsCommand(commandObject.command)) {
+                openOutputViewer(logFile.absolutePath, commandObject.name)
+            }
+
             //checkForUnsafeCommands(commandObject, command)
 
             val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
@@ -589,6 +608,10 @@ class ProcessManagerService(
 
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
+
+            if (Utils.isOpenLogsCommand(commandObject.command)) {
+                openOutputViewer(logFile.absolutePath, commandObject.name)
+            }
 
             //checkForUnsafeCommands(commandObject, command)
 

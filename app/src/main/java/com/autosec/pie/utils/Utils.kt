@@ -76,6 +76,10 @@ class Utils{
             return hasCommandHeader(command, "#@INTERACTIVE")
         }
 
+        fun isOpenLogsCommand(command: String): Boolean {
+            return hasCommandHeader(command, "#@OPEN_LOGS")
+        }
+
         fun hasCommandHeader(command: String, header: String): Boolean {
             return commandHeaders(command).any { it.startsWith(header) }
         }
