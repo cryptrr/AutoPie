@@ -61,6 +61,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             val useQuotes = execType != ExecType.SHELL_INSTALLED
             val isShellScript = Utils.isShellScript(File(fullExecPath))
             val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
+            val sanitizedFilename = Utils.sanitizeAndroidFilename(filename)
 
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
@@ -81,7 +82,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 it.add(
                     InputParsedData(
                         name = "FILENAME",
-                        value = if (useQuotes) "\"$filename\"" else filename
+                        value = if (useQuotes) "\"$sanitizedFilename\"" else sanitizedFilename
                     )
                 )
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))

@@ -127,6 +127,12 @@ class Utils{
             return "\"$filePath\"".replace("'","")
         }
 
+        fun sanitizeAndroidFilename(filename: String): String {
+            return filename
+                .replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), "")
+                .trim()
+        }
+
         fun getPathsFromClipData(context: Context, intent: Intent): List<String> {
             val filePaths = mutableListOf<String>()
 
