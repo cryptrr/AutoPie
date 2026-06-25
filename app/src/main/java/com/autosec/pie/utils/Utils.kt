@@ -80,6 +80,10 @@ class Utils{
             return hasCommandHeader(command, "#@OPEN_LOGS")
         }
 
+        fun setCommandHeader(command: String, header: String, enabled: Boolean): String {
+            return if (enabled) command.withCommandHeader(header) else command.withoutCommandHeader(header)
+        }
+
         fun hasCommandHeader(command: String, header: String): Boolean {
             return commandHeaders(command).any { it.startsWith(header) }
         }
@@ -95,6 +99,32 @@ class Utils{
                 .map { it.trim() }
                 .takeWhile { it.startsWith("#@") }
                 .toList()
+        }
+
+        private fun String.withCommandHeader(header: String): String {
+            if (hasCommandHeader(this, header)) return this
+
+            val lines = lines().toMutableList()
+            val insertIndex = lines.indexOfFirst { !it.trim().startsWith("#@") }
+                .let { if (it == -1) lines.size else it }
+
+            lines.add(insertIndex, header)
+            return lines.joinToString("\n")
+        }
+
+        private fun String.withoutCommandHeader(header: String): String {
+            var readingHeaders = true
+            return lineSequence()
+                .filter { line ->
+                    val trimmedLine = line.trim()
+                    if (readingHeaders && trimmedLine.startsWith("#@")) {
+                        !trimmedLine.startsWith(header)
+                    } else {
+                        readingHeaders = false
+                        true
+                    }
+                }
+                .joinToString("\n")
         }
 
         fun isZipFile(file: File): Boolean {
