@@ -9,13 +9,14 @@ from the terminal with `pkg install`.
 
 [Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
 
-
 <div style="display:flex;flex-direction:row;justify-content:space-between">
 <img src="https://github.com/user-attachments/assets/ff9d86db-fc71-45e6-bbe6-9891ab5af35c" alt="AutoPie screenshot" width="47%" height="auto">
 <img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie feature demo" width="47%" height="auto">
 </div>
 
-<video src="https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb" width="47%" height="auto"></video>
+[<video src="https://cryptrr.github.io/AutoPie/fastlane/metadata/android/en-US/autopie-feature-demo1.mp4" width="47%" height="auto"></video>
+](https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb)
+
 
 
 ## Installation
@@ -42,7 +43,7 @@ from the terminal with `pkg install`.
 
 ## Troubleshooting
 * If `pkg install` fails immediately after installation, open the AutoPie terminal once more and let the bootstrap finish before retrying.
-* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration.
+* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
 
 ## Command Format
 
