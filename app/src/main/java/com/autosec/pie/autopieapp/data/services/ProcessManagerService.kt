@@ -21,6 +21,7 @@ import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.utils.Shell
+import com.autopi.utils.Utils
 import com.termux.app.RunCommandService
 import com.termux.app.TermuxActivity
 import com.termux.shared.shell.command.ExecutionCommand
@@ -560,12 +561,19 @@ class ProcessManagerService(
             Timber.d("Logs written to ${logFile.absolutePath}")
 
             val fullCommand = when {
-                usePython -> {
+                usePython && Utils.isPythonScript(commandObject.command) -> {
                     Timber.d("Running Python Script")
-                    "python $command"
+                    val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
+                    pythonScriptFile.writeText(commandObject.command.withoutPythonHeader())
+                    "python ${pythonScriptFile.absolutePath.shellQuote()}"
+                }
+                usePython -> {
+                    Timber.d("Running Python Package")
+                    "python $exec $command"
                 }
                 //TODO: shellScript Marked for deletion
                 isShellScript -> "bash $command"
+                //This is the default branch for modern AutoPie
                 else -> "$command"
             }
 
@@ -1011,4 +1019,14 @@ class ProcessManagerService(
     }
 
 
+}
+
+private fun String.withoutPythonHeader(): String {
+    return lineSequence()
+        .dropWhile { it.trim().startsWith("#@PYTHON") }
+        .joinToString("\n")
+}
+
+private fun String.shellQuote(): String {
+    return "'${replace("'", "'\"'\"'")}'"
 }
