@@ -6,3 +6,11 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     id("androidx.room") version "2.7.2" apply false
 }
+
+subprojects {
+    configurations.configureEach {
+        // F-Droid flags OpenCensus as a tracker when Gradle resolves Android test tooling.
+        // AutoPie does not use it, so keep it out of all project dependency graphs.
+        exclude(group = "io.opencensus")
+    }
+}
