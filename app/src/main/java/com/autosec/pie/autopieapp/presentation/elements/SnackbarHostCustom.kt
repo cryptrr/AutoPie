@@ -1,6 +1,8 @@
 package com.autopi.autopieapp.presentation.elements
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -10,9 +12,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ConstraintLayout
 import com.autopi.autopieapp.domain.Notification
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,40 +39,39 @@ fun SnackbarHostCustom() {
 
     LaunchedEffect(key1 = Unit) {
         flowOf(viewModel.viewModelError, viewModel.appNotification).flattenMerge(2).collectLatest { notification ->
-            notification?.apply {
-                bannerState = this
-                snackbarHostState.showSnackbar(
-                    "",
-                    duration = if (bannerState!!.infinite) SnackbarDuration.Indefinite else SnackbarDuration.Short,
-                )
+            if (notification == null) {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                bannerState = null
+                return@collectLatest
             }
+
+            bannerState = notification
+            snackbarHostState.showSnackbar(
+                "",
+                duration = if (notification.infinite) SnackbarDuration.Indefinite else SnackbarDuration.Short,
+            )
+            bannerState = null
         }
     }
 
 
 
-    ConstraintLayout(
-        modifier = Modifier
-            .fillMaxSize()
-        //.background(Color.Blue.copy(alpha = 0.2F))
-    ) {
-
+    if (bannerState != null && snackbarHostState.currentSnackbarData != null) {
         Timber.d("SnackbarHostCustom")
 
-        val (snackbarHostRef) = createRefs()
-
-        SnackbarHost(
-            modifier = Modifier
-                .constrainAs(snackbarHostRef) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    top.linkTo(parent.top, margin = 270.dp)
-                },
-            hostState = snackbarHostState,
-            snackbar = {
-                Banner(bannerState!!)
+        Popup(alignment = Alignment.TopCenter) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+            ) {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    snackbar = {
+                        Banner(bannerState!!)
+                    }
+                )
             }
-
-        )
+        }
     }
 }
