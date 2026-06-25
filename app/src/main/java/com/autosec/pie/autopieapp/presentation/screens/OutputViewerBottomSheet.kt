@@ -104,7 +104,7 @@ fun OutputViewerBottomSheet(
                             .padding(horizontal = 18.dp, vertical = 12.dp)
                     ) {
                         Row(
-                            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            Modifier.fillMaxWidth().padding(vertical = 10.dp),
                             Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {

@@ -63,6 +63,8 @@ class ProcessManagerService(
 
     fun getLoadingActivityComponentName(): String = "${activity.packageName}/.LoadingActivity"
 
+    fun getCookieJarPath(): String = "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
+
     private fun openOutputViewer(logFile: String, commandName: String) {
         try {
             val intent = Intent(Intent.ACTION_MAIN).apply {
@@ -321,7 +323,6 @@ class ProcessManagerService(
         envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
         envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
         envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
-        envMap["COOKIE_JAR"] = System.getenv("COOKIE_JAR") ?: "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
 
 
         for (inputData in inputParsedData) {
