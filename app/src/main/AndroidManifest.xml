@@ -18,7 +18,6 @@
 
     <application
         android:name=".MyApplication"
-        android:networkSecurityConfig="@xml/network_security_config"
         android:requestLegacyExternalStorage="true"
         android:extractNativeLibs="true"
         android:allowBackup="true"
