@@ -19,6 +19,7 @@ import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.termux.app.TermuxActivity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -46,7 +47,12 @@ class AutoPieCoreService {
         private var termuxBootstrapTriggered = false
 
         fun ensureTermuxBootstrapTriggered(context: Context) {
-            if (isTermuxBootstrapInstalled(context) || termuxBootstrapTriggered) {
+            if (isTermuxBootstrapInstalled(context)) {
+                installOtherPackages()
+                return
+            }
+
+            if (termuxBootstrapTriggered) {
                 return
             }
 
@@ -58,6 +64,7 @@ class AutoPieCoreService {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
+                installOtherPackagesAfterBootstrap(context)
             } catch (e: Exception) {
                 termuxBootstrapTriggered = false
                 Timber.e(e, "Failed to launch TermuxActivity for bootstrap setup")
@@ -65,7 +72,24 @@ class AutoPieCoreService {
         }
 
         fun isTermuxBootstrapInstalled(context: Context): Boolean {
-            return File(context.filesDir, "usr/bin/bash").exists()
+            //Pip is the better indicator of completed install than bash since it is installed in second stage.
+            return File(context.filesDir, "usr/bin/pip").exists()
+        }
+
+        private fun installOtherPackagesAfterBootstrap(context: Context) {
+            CoroutineScope(dispatchers.io).launch {
+                repeat(120) {
+                    if (isTermuxBootstrapInstalled(context)) {
+                        installOtherPackages()
+                        return@launch
+                    }
+
+                    delay(1000L)
+                }
+
+                termuxBootstrapTriggered = false
+                Timber.d("Timed out waiting for Termux bootstrap before installing extra packages")
+            }
         }
 
 
@@ -456,23 +480,30 @@ class AutoPieCoreService {
             }
         }
 
-        //TODO: Newer version is in previous commit.
         fun installOtherPackages() {
 
             CoroutineScope(dispatchers.io).launch {
 
                 try {
-                    val distFolder = File(application.filesDir, "usr")
+                    val termuxPrefix = File(application.filesDir, "usr")
+                    val bootstrapMarker = File(termuxPrefix, "bin/bash")
 
-                    if (distFolder.exists()) {
-
-                        // processManagerService.installPip()
-
-                        //Installing the forked version of httpx that supports --cookie-file
-                        //Both these calls are necessary
-                        processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
-                        processManagerService.pipInstallPackage("httpx[cli]")
+                    if (!bootstrapMarker.exists()) {
+                        Timber.d("Termux bootstrap not installed. Skipping extra package install.")
+                        return@launch
                     }
+
+                    if (processManagerService.commandExists("httpx")) {
+                        Timber.d("httpx CLI already exists. Skipping extra package install.")
+                        return@launch
+                    }
+
+                    //processManagerService.installPip()
+
+                    //Installing the forked version of httpx that supports --cookie-file
+                    //Both these calls are necessary
+                    processManagerService.pipInstallPackage("https://github.com/cryptrr/httpx/raw/refs/heads/master/dist/httpx-0.28.1-py3-none-any.whl")
+                    processManagerService.pipInstallPackage("httpx[cli]")
                 }catch (e: Exception){
                     Timber.e(e,"installOtherPackages() failed")
                 }

@@ -173,6 +173,7 @@ class ProcessManagerService(
 
         shell = Shell(
             shellPath,
+            getTermuxShellEnvironment(),
         )
 
         Timber.d("DIRECTORY: . ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
@@ -182,13 +183,14 @@ class ProcessManagerService(
             shell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
         Timber.d(setEnvResult?.output())
+        shell?.run(getTermuxEnvExports())
 
     }
 
     private fun initMCPShell(modulePath: String, host: String, port: String) {
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
-        val envMap = HashMap<String, String>()
+        val envMap = getTermuxShellEnvironment()
         envMap["MCP_SERVER_HOST"] = host
         envMap["MCP_SERVER_PORT"] = port
         envMap["DYNAMIC_MODULES_DIR"] = modulePath
@@ -205,6 +207,7 @@ class ProcessManagerService(
             mcpShell?.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
 
         Timber.d(setEnvResult?.output())
+        mcpShell?.run(getTermuxEnvExports())
 
     }
 
@@ -213,6 +216,7 @@ class ProcessManagerService(
 
         val newShell = Shell(
             shellPath,
+            getTermuxShellEnvironment(),
         )
 
         Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
@@ -222,6 +226,39 @@ class ProcessManagerService(
 
         return newShell
 
+    }
+
+    private fun getTermuxShellEnvironment(): HashMap<String, String> {
+        val defaultPath = System.getenv("PATH") ?: ""
+        val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
+        val prefix = File(activity.filesDir, "usr").absolutePath
+
+        return hashMapOf(
+            "ANDROID_PACKAGE_NAME" to activity.packageName,
+            "HOME" to activity.filesDir.absolutePath,
+            "PREFIX" to prefix,
+            "PATH" to "$prefix/bin:${activity.filesDir.absolutePath}/bin:$defaultPath",
+            "LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
+            "SSL_CERT_FILE" to "$prefix/etc/ssl/cert.pem",
+            "TERMINFO" to "$prefix/share/terminfo",
+        )
+    }
+
+    private fun getTermuxEnvExports(): String {
+        val prefix = File(activity.filesDir, "usr").absolutePath
+        val appBin = File(activity.filesDir, "bin").absolutePath
+
+        return """
+            export ANDROID_PACKAGE_NAME=${activity.packageName.shellQuote()}
+            export HOME=${activity.filesDir.absolutePath.shellQuote()}
+            export PREFIX=${prefix.shellQuote()}
+            export PATH=${"$prefix/bin".shellQuote()}:${appBin.shellQuote()}:${'$'}PATH
+            export LD_LIBRARY_PATH=${"$prefix/lib".shellQuote()}:${'$'}LD_LIBRARY_PATH
+            export SSL_CERT_FILE=${"$prefix/etc/ssl/cert.pem".shellQuote()}
+            export TERMINFO=${"$prefix/share/terminfo".shellQuote()}
+            unset PYTHONHOME
+            unset PYTHONPATH
+        """.trimIndent()
     }
 
     private fun getEnvsFromCommand(inputParsedData:  List<InputParsedData>, commandExtraInputs: List<CommandExtraInput>,commandObject: CommandInterface, ): HashMap<String, String> {
@@ -856,6 +893,20 @@ class ProcessManagerService(
         }
     }
 
+    fun commandExists(commandName: String): Boolean {
+        Timber.d("Checking if command exists: $commandName")
+
+        return try {
+            if (shell?.isAlive() != true) initShell()
+
+            val result = shell!!.run("command -v ${commandName.shellQuote()} >/dev/null 2>&1")
+            result.isSuccess
+        } catch (e: Exception) {
+            Timber.e(e.toString())
+            false
+        }
+    }
+
     fun linkBusyboxAr(): Boolean {
         Timber.d("Linking busybox ar to usr/bin")
 
@@ -885,7 +936,7 @@ class ProcessManagerService(
         try {
             if (shell?.isAlive() != true) initShell()
             val command =
-                "pip3 install $packageName"
+                "pip install $packageName"
             Timber.d(command)
 
             val result = shell!!.run(command)
