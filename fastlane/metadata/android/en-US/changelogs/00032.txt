@@ -1,0 +1,5 @@
+What's Changed
+
+- Minor F-Droid changes to source.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.15.3-beta
