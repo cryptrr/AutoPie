@@ -157,3 +157,58 @@ dependencies {
     androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
     debugImplementation("androidx.compose.ui:ui-tooling:1.8.3")
 }
+
+val signingStoreFile = providers.environmentVariable("AUTOPIE_SIGNING_STORE_FILE")
+val signingStorePassword = providers.environmentVariable("AUTOPIE_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = providers.environmentVariable("AUTOPIE_SIGNING_KEY_ALIAS")
+val signingKeyPassword = providers.environmentVariable("AUTOPIE_SIGNING_KEY_PASSWORD")
+    .orElse(signingStorePassword)
+val apkSignerExecutable = androidComponents.sdkComponents.sdkDirectory.map { sdkDirectory ->
+    val executableName = if (System.getProperty("os.name").startsWith("Windows")) {
+        "apksigner.bat"
+    } else {
+        "apksigner"
+    }
+    sdkDirectory.file("build-tools/${android.buildToolsVersion}/$executableName")
+}
+
+tasks.register<Exec>("signReleaseApk") {
+    group = "build"
+    description = "Signs the release APK using the AutoPie signing environment variables."
+    dependsOn("assembleRelease")
+
+    val unsignedApk = layout.buildDirectory.file("outputs/apk/release/app-release-unsigned.apk")
+    val signedApk = layout.buildDirectory.file("outputs/apk/release/app-release.apk")
+
+    inputs.file(unsignedApk)
+    outputs.file(signedApk)
+
+    doFirst {
+        fun requiredVariable(name: String, value: String?): String {
+            return value?.takeIf { it.isNotBlank() }
+                ?: throw GradleException("Missing signing environment variable: $name")
+        }
+
+        val storeFile = requiredVariable("AUTOPIE_SIGNING_STORE_FILE", signingStoreFile.orNull)
+        val storePassword = requiredVariable("AUTOPIE_SIGNING_STORE_PASSWORD", signingStorePassword.orNull)
+        val keyAlias = requiredVariable("AUTOPIE_SIGNING_KEY_ALIAS", signingKeyAlias.orNull)
+        val keyPassword = requiredVariable("AUTOPIE_SIGNING_KEY_PASSWORD", signingKeyPassword.orNull)
+        val apkSigner = apkSignerExecutable.get().asFile
+        if (!apkSigner.isFile) {
+            throw GradleException("apksigner was not found at ${apkSigner.absolutePath}")
+        }
+
+        environment("AUTOPIE_APKSIGNER_STORE_PASSWORD", storePassword)
+        environment("AUTOPIE_APKSIGNER_KEY_PASSWORD", keyPassword)
+        commandLine(
+            apkSigner.absolutePath,
+            "sign",
+            "--ks", storeFile,
+            "--ks-key-alias", keyAlias,
+            "--ks-pass", "env:AUTOPIE_APKSIGNER_STORE_PASSWORD",
+            "--key-pass", "env:AUTOPIE_APKSIGNER_KEY_PASSWORD",
+            "--out", signedApk.get().asFile.absolutePath,
+            unsignedApk.get().asFile.absolutePath,
+        )
+    }
+}
