@@ -55,22 +55,37 @@ def looks_like_text(data: bytes) -> bool:
     return printable / max(1, len(sample)) > 0.85
 
 
-def build_rewrites(old_package: str, new_package: str) -> list[tuple[bytes, bytes]]:
-    old_prefix = f"/data/data/{old_package}/files/usr"
-    new_prefix = f"/data/data/{new_package}/files/usr"
-    old_root_dir = f"/data/data/{old_package}"
-    new_root_dir = f"/data/data/{new_package}"
+def normalize_new_root_dir(new_package: str, new_root_dir: str | None) -> str:
+    if not new_root_dir:
+        return f"/data/data/{new_package}"
+
+    normalized = new_root_dir.rstrip("/")
+    if not normalized.startswith("/"):
+        raise ValueError("--new-root-dir must be an absolute Android data path")
+
+    if not normalized.endswith(f"/{new_package}"):
+        normalized = f"{normalized}/{new_package}"
+
+    return normalized
+
+
+def user_de_root_for(new_package: str, new_root_dir: str) -> str:
+    parts = new_root_dir.strip("/").split("/")
+    if len(parts) >= 4 and parts[0] == "data" and parts[1] == "user":
+        return f"/data/user_de/{parts[2]}/{new_package}"
+    return f"/data/user_de/0/{new_package}"
+
+
+def build_rewrites(
+    old_package: str,
+    new_package: str,
+    new_root_dir: str | None = None,
+) -> list[tuple[bytes, bytes]]:
+    new_root_dir = normalize_new_root_dir(new_package, new_root_dir)
+    new_prefix = f"{new_root_dir}/files/usr"
+    new_user_de_root = user_de_root_for(new_package, new_root_dir)
 
     rewrites = [
-        (old_prefix, new_prefix),
-        (old_root_dir, new_root_dir),
-        (f".{old_prefix}", f".{new_prefix}"),
-        (f".{old_root_dir}", f".{new_root_dir}"),
-        (f"/data/user/0/{old_package}/files/usr", new_prefix),
-        (f"/data/user/0/{old_package}", new_root_dir),
-        (f"./data/user/0/{old_package}/files/usr", f".{new_prefix}"),
-        (f"./data/user/0/{old_package}", f".{new_root_dir}"),
-        (f"/data/user_de/0/{old_package}", f"/data/user_de/0/{new_package}"),
         (
             f"/storage/emulated/0/Android/data/{old_package}",
             f"/storage/emulated/0/Android/data/{new_package}",
@@ -81,6 +96,27 @@ def build_rewrites(old_package: str, new_package: str) -> list[tuple[bytes, byte
         ),
         (old_package, new_package),
     ]
+
+    for old_root_dir in (
+        f"/data/data/{old_package}",
+        f"/data/user/0/{old_package}",
+    ):
+        old_prefix = f"{old_root_dir}/files/usr"
+        rewrites.extend(
+            [
+                (old_prefix, new_prefix),
+                (old_root_dir, new_root_dir),
+                (f".{old_prefix}", f".{new_prefix}"),
+                (f".{old_root_dir}", f".{new_root_dir}"),
+            ]
+        )
+
+    rewrites.extend(
+        [
+            (f"/data/user_de/0/{old_package}", new_user_de_root),
+            (f"./data/user_de/0/{old_package}", f".{new_user_de_root}"),
+        ]
+    )
 
     unique_rewrites = {}
     for old, new in rewrites:
@@ -338,13 +374,23 @@ def main() -> int:
         default=NEW_PACKAGE,
         help=f"Package name to write (default: {NEW_PACKAGE})",
     )
+    parser.add_argument(
+        "--new-root-dir",
+        help=(
+            "Target app root directory. Defaults to /data/data/<new-package>. "
+            "Use /data/user/10 or /data/user/10/<new-package> for a secondary user."
+        ),
+    )
     args = parser.parse_args()
 
     root = args.root.resolve()
     if not root.exists() or not root.is_dir():
         raise SystemExit(f"Not a directory: {root}")
 
-    rewrites = build_rewrites(args.old_package, args.new_package)
+    try:
+        rewrites = build_rewrites(args.old_package, args.new_package, args.new_root_dir)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     count = walk_and_rewrite(
         root,
         rewrites,

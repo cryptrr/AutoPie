@@ -14,14 +14,76 @@ EXTRA_BOOTSTRAP_PACKAGES="${AUTOPIE_BOOTSTRAP_PACKAGES:-python,python-pip,binuti
 ARCH="${TERMUX_BOOTSTRAP_ARCH:-aarch64}"
 OLD_PACKAGE="${TERMUX_BOOTSTRAP_OLD_PACKAGE:-com.termux}"
 NEW_PACKAGE="${TERMUX_BOOTSTRAP_NEW_PACKAGE:-com.autopi}"
+NEW_ROOT_DIR="${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}"
 PACKAGE_VARIANT="${TERMUX_PACKAGE_VARIANT:-apt-android-7}"
 GRADLE_TASK="${TERMUX_BOOTSTRAP_GRADLE_TASK:-:app:downloadAutoPieBootstrap}"
 
 SOURCE_ZIP="$TERMUX_APP_DIR/src/main/cpp/bootstrap-$ARCH.zip"
 DEST_ZIP="$ASSETS_DIR/bootstrap-$ARCH.zip"
+
+usage() {
+    cat <<USAGE
+Usage: $0 [--new-root-dir PATH]
+
+Options:
+  --new-root-dir PATH  Target app root. Defaults to /data/data/$NEW_PACKAGE.
+                       For secondary user 10, pass /data/user/10 or
+                       /data/user/10/$NEW_PACKAGE.
+
+Environment:
+  TERMUX_BOOTSTRAP_NEW_ROOT_DIR  Same as --new-root-dir.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --new-root-dir|--new-root)
+            if [[ $# -lt 2 || -z "$2" ]]; then
+                echo "$1 requires a path argument" >&2
+                exit 1
+            fi
+            NEW_ROOT_DIR="$2"
+            shift 2
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+normalize_root_dir() {
+    local root="$1"
+
+    if [[ -z "$root" ]]; then
+        printf '/data/data/%s\n' "$NEW_PACKAGE"
+        return
+    fi
+
+    root="${root%/}"
+    if [[ "$root" != /* ]]; then
+        echo "Custom root must be an absolute Android data path: $root" >&2
+        exit 1
+    fi
+
+    if [[ "$root" != */"$NEW_PACKAGE" ]]; then
+        root="$root/$NEW_PACKAGE"
+    fi
+
+    printf '%s\n' "$root"
+}
+
+TARGET_ROOT_DIR="$(normalize_root_dir "$NEW_ROOT_DIR")"
+TARGET_PREFIX="$TARGET_ROOT_DIR/files/usr"
 WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-bootstrap.XXXXXX")"
 EXTRACTED_DIR="$WORK_DIR/extracted"
 PATCHED_ZIP="$WORK_DIR/bootstrap-$ARCH.zip"
+PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
 
 cleanup() {
     rm -rf "$WORK_DIR"
@@ -61,6 +123,7 @@ echo "Downloading Termux bootstrap with Gradle"
 echo "  source:  $TERMUX_SOURCE_DIR"
 echo "  variant: $PACKAGE_VARIANT"
 echo "  arch:    $ARCH"
+echo "  root:    $TARGET_ROOT_DIR"
 
 (
     cd "$TERMUX_SOURCE_DIR"
@@ -98,7 +161,8 @@ fi
 echo "Patching bootstrap strings"
 python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
     --old-package "$OLD_PACKAGE" \
-    --new-package "$NEW_PACKAGE"
+    --new-package "$NEW_PACKAGE" \
+    --new-root-dir "$TARGET_ROOT_DIR"
 
 echo "Installing dpkg wrapper"
 if [[ ! -f "$EXTRACTED_DIR/bin/dpkg" ]]; then
@@ -110,7 +174,29 @@ if [[ -e "$EXTRACTED_DIR/bin/dpkg.real" ]]; then
     exit 1
 fi
 mv "$EXTRACTED_DIR/bin/dpkg" "$EXTRACTED_DIR/bin/dpkg.real"
-install -m 0700 "$DPKG_WRAPPER" "$EXTRACTED_DIR/bin/dpkg"
+python3 - "$DPKG_WRAPPER" "$PATCHED_DPKG_WRAPPER" "$TARGET_ROOT_DIR" "$TARGET_PREFIX" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1])
+dest = Path(sys.argv[2])
+target_root = sys.argv[3].rstrip("/")
+target_prefix = sys.argv[4].rstrip("/")
+
+text = source.read_text(encoding="utf-8")
+lines = text.splitlines(keepends=True)
+if not lines or not lines[0].startswith("#!"):
+    raise SystemExit(f"Missing shebang in dpkg wrapper: {source}")
+
+line_ending = "\n" if lines[0].endswith("\n") else ""
+lines[0] = f"#!{target_prefix}/bin/env python{line_ending}"
+text = "".join(lines)
+text = text.replace("/data/data/com.autopi/files/usr", target_prefix)
+text = text.replace("/data/data/com.autopi", target_root)
+
+dest.write_text(text, encoding="utf-8")
+PY
+install -m 0700 "$PATCHED_DPKG_WRAPPER" "$EXTRACTED_DIR/bin/dpkg"
 
 echo "Repacking patched bootstrap"
 if command -v 7z >/dev/null 2>&1; then
