@@ -18,4 +18,5 @@ app/release
 /.termux-app.*
 /app/src/main/assets/bootstrap-aarch64.zip
 /base.apk
+/.kotlin/errors/
 **/__pycache__/
