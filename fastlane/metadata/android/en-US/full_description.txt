@@ -1,47 +1,47 @@
-<p><strong>AutoPie&nbsp;</strong> is the Swiss Army Knife for Android. It allows you to create and run and automate Linux commands and Python scripts dead easily.</p>
+<p><strong>AutoPie</strong> is a command automation hub for Android. It gives you a Linux environment where you can create, run, and automate Bash commands or Python scripts without using a terminal.</p>
 
-<p>&nbsp;</p>
+<p>Use it to build small Android utilities for file conversion, downloads, monitoring, backups, web requests, AI tooling, device workflows, and any other task you would normally solve with Linux packages or scripts.</p>
 
-<p><strong>Features</strong></p>
+<p><strong>Highlights</strong></p>
 
 <ul>
-	<li>Automate Linux Commands and Python scripts on Android.
+	<li><strong>Embedded Termux environment</strong>
 	<ul>
-		<li>AutoPie can replace a lot of apps for you with a few clicks with the power of Python and Linux.</li>
-		<li>Makes your phone uncluttered and clean and ad-free since you offloaded utility apps to AutoPie.</li>
+		<li>Run Linux commands directly from AutoPie without the Terminal</li>
+		<li>Install extra Termux packages with <code>pkg install package-name</code>.</li>
+		<li>Install Python packages with <code>pip install package-name</code>.</li>
+		<li>Includes useful tooling such as Python, pip, openssh and other utilities out of the box.</li>
 	</ul>
 	</li>
-	<li>AutoPie currently provides three modes of automating commands.
+	<li><strong>Command and script automation</strong>
 	<ul>
-		<li>Adds Commands to your Share Sheet</li>
-		<ul>
-		    <li>Convert a file with ffmpeg in just a few clicks.</li>
-		    <li>Save commands for whatever you want to do.</li>
-		</ul>
-		<li>File Observers to automate file creation/conversion</li>
-		<ul>
-            <li>Automatically convert screenshots you take to take up less space.</li>
-            <li>Automatically convert gifs in downloads folder into better formats.</li>
-            <li>Automatically upload files in a specific folder to whatever service you want.</li>
-        </ul>
-		<li>Cron: Add any command/python script to a cron job.</li>
-		<ul>
-            <li>Ping urls with json payloads and get notified when changes occur.</li>
-            <li>Automate Home appliances.</li>
-            <li>Server health monitoring.</li>
-         </ul>
+	    <li>Create custom applets that lives on your homescreen.</li>
+		<li>Create applets from Bash commands and Python scripts.</li>
+		<li>Add commands to the Android share sheet for quick file, text, and URL workflows.</li>
+		<li>Watch folders and automatically process new files.</li>
+		<li>Schedule commands with cron-style automation.</li>
+		<li>Use interactive command mode when a script needs a live shell session.</li>
 	</ul>
 	</li>
-	<li>Add GUI to your commands for ease of use and customization.
+	<li><strong>Custom applet creation forms</strong>
 	<ul>
-		<li>Customize commands on the fly with AutoPie customization options.</li>
-		<li>Add Text Inputs, Switches and Selectors to make your commands utilize the power of GUI.</li>
+		<li>Add text inputs, switches, selectors, file inputs, and other extras to your commands.</li>
+		<li>Turn scripts into simple Android workflows that are easy to reuse.</li>
+		<li>Use placeholders for files, URLs, text, filenames, directories, random values, and more.</li>
 	</ul>
 	</li>
-	<li>Comes with Support for ffmpeg, magick and commands out of the box so that you can experiment with them.</li>
-	<li>Built in terminal with python installed for users to tinker with.</li>
-	<li>Supports adding GUI to Commands for better customization and ease of use</li>
-	<li>Supports Regex selectors to only operate on files that you want.&nbsp;</li>
-	<li>Modern <strong>Material 3</strong> Design Guidelines powered by <strong>Jetpack Compose</strong></li>
-	<li><strong><u>Open Source</u></strong></li>
+	<li><strong>Ready for practical phone automation</strong>
+	<ul>
+		<li>Convert videos, audio, images, screenshots, GIFs, and documents with command-line tools.</li>
+		<li>Upload, download, rename, compress, and organize files automatically.</li>
+		<li>Run web checks, API calls, health monitors, notifications, and custom background jobs.</li>
+		<li>Keep the command output and logs accessible from the app.</li>
+	</ul>
+	</li>
+	<li><strong>Open source Android app</strong>
+	<ul>
+		<li>Built with Kotlin, Jetpack Compose, and Material 3.</li>
+		<li>Designed for users who want powerful local automation without ads or clutter.</li>
+	</ul>
+	</li>
 </ul>

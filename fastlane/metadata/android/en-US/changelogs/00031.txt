@@ -1,0 +1,10 @@
+What's Changed
+
+- Added interactive debug mode for commands.
+- Improved Termux shell handling so interactive commands keep running reliably.
+- Added COOKIE_JAR and safer filename environment variables for command execution.
+- Redesigned the logs/output viewer and fixed horizontal scrolling.
+- Fixed FilePicker icon placement and refined snackbar behavior.
+- Removed the embedded Termux launcher entry and excluded scanner-flagged OpenCensus test-tooling dependencies.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.15.2-beta

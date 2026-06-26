@@ -1,8 +1,10 @@
 What's Changed
 
-- Added interactive debug mode for commands.
-- Improved Termux shell handling so interactive commands keep running reliably.
-- Added COOKIE_JAR and safer filename environment variables for command execution.
-- Redesigned the logs/output viewer and fixed horizontal scrolling.
-- Fixed FilePicker icon placement and refined snackbar behavior.
-- Removed the embedded Termux launcher entry and excluded scanner-flagged OpenCensus test-tooling dependencies.
+- Added Python script support in command creation and execution.
+- Improved command input parsing and multiple header handling.
+- Added LOADING_ACTIVITY support for externally triggered loading screens.
+- Fixed Termux shell command execution regressions.
+- Fixed startup repo refresh so it no longer blocks the app on the main thread.
+- Improved F-Droid build metadata, Gradle wrapper checks, and bootstrap preparation.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.15.1-beta

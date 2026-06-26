@@ -1,0 +1,18 @@
+What's Changed
+
+- Integrated full Termux compatibility into AutoPie.
+- Added Termux bootstrap support with updated filesystem layout under `PREFIX`.
+- Replaced the old shell flow with Bash-based execution.
+- Added fallback shell support for non-primary Android users.
+- Added AutoPie shell login graphics.
+- Added package listing support for installed Termux packages.
+
+- Added support for interactive commands using `#@INTERACTIVE`.
+- Reworked command execution to run commands through generated scripts.
+- Added support for `INPUT_FILES_ARR` using Bash arrays.
+- Disabled automatic quoting/escaping to reduce command execution issues.
+- Improved `getCommandExec` logic and cleaned up exec handling.
+- Removed exec fields from the home screen, share UI, tags, and command model flow.
+- Removed command safety check logic.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.15.0-beta
