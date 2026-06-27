@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Amal Shaji <amalshaji01@users.noreply.github.com>
+Date: Sat, 27 Jun 2026 12:00:00 +0530
+Subject: [PATCH 21/21] Adjust login shell environment
+
+---
+ .../shell/command/environment/UnixShellEnvironment.java      | 3 +--
+ .../command/environment/TermuxShellEnvironment.java          | 2 --
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
+index e09f1cd3..2a0d624a 100644
+--- a/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/shell/command/environment/UnixShellEnvironment.java
+@@ -53,8 +53,7 @@ public abstract class UnixShellEnvironment implements IShellEnvironment {
+ 
+ 
+     /** Names for common/supported login shell binaries. */
+-    public static final String[] LOGIN_SHELL_BINARIES = new String[]{"bash", "zsh", "fish", "sh"};
+-    //public static final String[] LOGIN_SHELL_BINARIES = new String[]{"sh", "fish", "zsh"};
++    public static final String[] LOGIN_SHELL_BINARIES = new String[]{"login", "bash", "zsh", "fish", "sh"};
+ 
+ 
+ 
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+index 5044d021..f18a858b 100644
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+@@ -96,8 +96,6 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+             } else {
+                 // Termux binaries on Android 7+ rely on DT_RUNPATH, so LD_LIBRARY_PATH should be unset by default
+                 environment.put(ENV_PATH, TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH);
+-                environment.remove("LD_PRELOAD");
+-                //environment.remove(ENV_LD_LIBRARY_PATH);
+             }
+         }
+ 
+-- 
+2.50.0

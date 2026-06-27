@@ -34,3 +34,6 @@ patches and copies that archive with `scripts/prepare-termux-bootstrap.sh`.
 
 Patch 20 adds the official Gradle distribution checksum to Termux's wrapper so
 the generated source does not trigger F-Droid's missing checksum warning.
+
+Patch 21 recognizes `login` as a supported login shell binary and preserves the
+configured `LD_PRELOAD` value when constructing the Termux shell environment.
