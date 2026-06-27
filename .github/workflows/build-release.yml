@@ -33,6 +33,11 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager "platforms;android-35" "platforms;android-36" "ndk;29.0.14206865"
 
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Build release APK
         run: ./build_with_termux.sh :app:assembleRelease
 
