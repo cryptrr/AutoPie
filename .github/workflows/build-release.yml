@@ -31,7 +31,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Install Android SDK components
-        run: sdkmanager "platforms;android-35" "platforms;android-36" "ndk;29.0.14206865"
+        run: sdkmanager "platforms;android-35" "platforms;android-36" "build-tools;36.0.0" "ndk;29.0.14206865"
 
       - name: Configure Git identity
         run: |
@@ -41,11 +41,47 @@ jobs:
       - name: Build release APK
         run: ./build_with_termux.sh :app:assembleRelease
 
-      - name: Upload release APKs
+      - name: Decode release keystore
+        env:
+          AUTOPIE_SIGNING_KEYSTORE_BASE64: ${{ secrets.AUTOPIE_SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          if [[ -z "$AUTOPIE_SIGNING_KEYSTORE_BASE64" ]]; then
+            echo "::error::Missing GitHub Actions secret AUTOPIE_SIGNING_KEYSTORE_BASE64"
+            exit 1
+          fi
+          printf '%s' "$AUTOPIE_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/autopie-release.jks"
+
+      - name: Sign and verify release APK
+        env:
+          AUTOPIE_SIGNING_STORE_PASSWORD: ${{ secrets.AUTOPIE_SIGNING_STORE_PASSWORD }}
+          AUTOPIE_SIGNING_KEY_ALIAS: ${{ secrets.AUTOPIE_SIGNING_KEY_ALIAS }}
+          AUTOPIE_SIGNING_KEY_PASSWORD: ${{ secrets.AUTOPIE_SIGNING_KEY_PASSWORD }}
+        run: |
+          for secret_name in AUTOPIE_SIGNING_STORE_PASSWORD AUTOPIE_SIGNING_KEY_ALIAS AUTOPIE_SIGNING_KEY_PASSWORD; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Missing GitHub Actions secret $secret_name"
+              exit 1
+            fi
+          done
+
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign \
+            --ks "$RUNNER_TEMP/autopie-release.jks" \
+            --ks-key-alias "$AUTOPIE_SIGNING_KEY_ALIAS" \
+            --ks-pass env:AUTOPIE_SIGNING_STORE_PASSWORD \
+            --key-pass env:AUTOPIE_SIGNING_KEY_PASSWORD \
+            --out app/build/outputs/apk/release/app-release.apk \
+            app/build/outputs/apk/release/app-release-unsigned.apk
+
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify \
+            --verbose \
+            --print-certs \
+            app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
           name: AutoPie-release-${{ github.sha }}
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
