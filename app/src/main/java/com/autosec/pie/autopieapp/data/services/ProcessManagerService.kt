@@ -597,14 +597,15 @@ class ProcessManagerService(
             Timber.d("Command Run: ${result.details.command}")
 
 
-            shell.shutdown()
+            if(commandObject.multiStage == false){
+                shell.shutdown()
 
-            closeLog(logWriter)
+                closeLog(logWriter)
 
-            shells.remove(processId)
+                shells.remove(processId)
+            }
 
             return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
-
 
         }
         catch (e: Exception) {

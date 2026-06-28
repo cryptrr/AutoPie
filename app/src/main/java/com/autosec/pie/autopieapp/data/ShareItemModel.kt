@@ -16,8 +16,9 @@ data class CommandModel(
     override val selectors: List<String>? = emptyList(),
     override val cronInterval: String? = "",
     override val flags: List<String>? = null,
-    override val extras: List<CommandExtra>? = null
-) : CommandInterface
+    override val extras: List<CommandExtra>? = null,
+    override val multiStage: Boolean? = false,
+    ) : CommandInterface
 
 data class CommandCreationModel(
     val selectedCommandType: String,
@@ -39,6 +40,7 @@ interface CommandInterface {
     val exec: String?
     val selectors: List<String>?
     val cronInterval: String?
+    val multiStage: Boolean?
     val flags: List<String>?
     val extras: List<CommandExtra>?
 }
