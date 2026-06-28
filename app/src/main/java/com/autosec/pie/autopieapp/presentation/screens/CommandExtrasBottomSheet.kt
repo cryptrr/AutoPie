@@ -195,8 +195,24 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         mutableStateOf(false)
     }
 
-    val commandExtraInputs = remember {
-        mutableStateOf<List<CommandExtraInput>>(emptyList())
+    val visibleExtras = command.extras.orEmpty().filterNot { it.isInternalConfig == true }
+
+    val commandExtraInputs = remember(command.extras) {
+        mutableStateOf(
+            command.extras.orEmpty()
+                .filter { it.isInternalConfig == true }
+                .map { extra ->
+                    CommandExtraInput(
+                        extra.name,
+                        extra.default,
+                        extra.default,
+                        extra.type,
+                        extra.defaultBoolean,
+                        extra.id,
+                        extra.description
+                    )
+                }
+        )
     }
 
     fun addToExtraInputs(commandExtraInput: CommandExtraInput) {
@@ -237,7 +253,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             }
 
 
-            for(extra in command.extras?.filter { it.type != "FLAG" } ?: emptyList()) {
+            for(extra in visibleExtras.filter { it.type != "FLAG" }) {
 
                 Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
@@ -436,7 +452,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             val horizontalScrollState = rememberScrollState()
 
 
-            if(!command.extras?.filter { it.type == "FLAG" }.isNullOrEmpty()){
+            if(visibleExtras.any { it.type == "FLAG" }){
                 Column {
                     Text(
                         text = "FLAGS",
@@ -451,7 +467,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
             Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
-                for(flag in command.extras?.filter { it.type == "FLAG" } ?: emptyList()){
+                for(flag in visibleExtras.filter { it.type == "FLAG" }){
                     val isChecked = remember { mutableStateOf(false) }
                     val defaultValue = remember { mutableStateOf(flag.default) }
 

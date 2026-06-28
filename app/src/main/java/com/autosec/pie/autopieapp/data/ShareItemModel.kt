@@ -61,6 +61,7 @@ data class CommandExtra(
     val description: String = "",
     val defaultBoolean: Boolean = true,
     val required: Boolean = true,
+    val isInternalConfig: Boolean? = null,
     val selectableOptions: List<String> = emptyList()
 )
 
@@ -135,4 +136,3 @@ data class InstalledPackageModel(
     val version: String,
     val hasUpdate: Boolean,
 )
-
