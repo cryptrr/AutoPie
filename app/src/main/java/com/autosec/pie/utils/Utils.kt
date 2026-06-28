@@ -1,6 +1,7 @@
 package com.autopi.utils
 
 import android.content.Context
+import android.content.ContentUris
 import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
@@ -207,60 +208,214 @@ class Utils{
 
         @RequiresApi(Build.VERSION_CODES.Q)
         fun getAbsolutePathFromUri2(context: Context, uri: Uri): String? {
-            // Try MediaStore first
+            val log = Timber.tag("UriResolver")
+            log.d(
+                "Resolving URI: uri=%s scheme=%s authority=%s mimeType=%s",
+                uri,
+                uri.scheme,
+                uri.authority,
+                context.contentResolver.getType(uri)
+            )
+
             if ("content".equals(uri.scheme, ignoreCase = true)) {
                 if (isExternalStorageDocument(uri)) {
                     val docId = DocumentsContract.getDocumentId(uri)
-                    val split = docId.split(":")
+                    val split = docId.split(":", limit = 2)
                     val type = split[0]
                     val relativePath = split.getOrNull(1)
+
+                    if (relativePath == null) {
+                        log.w("External-storage document has no relative path: docId=%s", docId)
+                        return null
+                    }
 
                     val fullPath = when (type) {
                         "primary" -> "/storage/emulated/0/$relativePath"
                         else -> "/storage/$type/$relativePath"
                     }
+                    log.d(
+                        "Resolved external-storage document: docId=%s volume=%s path=%s",
+                        docId,
+                        type,
+                        fullPath
+                    )
                     return fullPath
                 } else if (isDownloadsDocument(uri)) {
                     val id = DocumentsContract.getDocumentId(uri)
+                    log.d("Downloads document branch: documentId=%s", id)
                     if (id.startsWith("raw:")) {
-                        return id.removePrefix("raw:")
+                        val rawPath = id.removePrefix("raw:")
+                        log.d("Resolved raw downloads path: %s", rawPath)
+                        return rawPath
                     }
-                    val contentUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-                    return getDataColumn(context, contentUri, "_id=?", arrayOf(id))
+
+                    getMediaStorePath(context, uri)?.let {
+                        log.d("Resolved directly from DownloadsProvider URI: %s", it)
+                        return it
+                    }
+
+                    // DownloadsProvider may return IDs such as "msf:1234" or
+                    // "msd:1234". MediaStore expects only the numeric suffix.
+                    val mediaStoreId = id.substringAfterLast(":").toLongOrNull()
+                    if (mediaStoreId == null) {
+                        log.w("Downloads document ID has no numeric MediaStore suffix: %s", id)
+                        return null
+                    }
+                    val candidateUris = listOf(
+                        ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            mediaStoreId
+                        ),
+                        ContentUris.withAppendedId(
+                            MediaStore.Files.getContentUri("external"),
+                            mediaStoreId
+                        )
+                    )
+
+                    candidateUris.forEach { contentUri ->
+                        log.d("Trying Downloads MediaStore candidate: %s", contentUri)
+                        getMediaStorePath(context, contentUri)?.let {
+                            log.d("Resolved Downloads MediaStore candidate: %s", it)
+                            return it
+                        }
+                    }
+                    log.w("Unable to resolve Downloads document: uri=%s documentId=%s", uri, id)
+                    return null
                 } else if (isMediaDocument(uri)) {
                     val docId = DocumentsContract.getDocumentId(uri)
-                    val split = docId.split(":")
+                    val split = docId.split(":", limit = 2)
                     val type = split[0]
-                    val id = split[1]
+                    val id = split.getOrNull(1)
+
+                    if (id == null) {
+                        log.w("Media document has no item ID: documentId=%s", docId)
+                        return null
+                    }
+
+                    log.d("Media document branch: documentId=%s type=%s itemId=%s", docId, type, id)
 
                     val contentUri = when (type) {
                         "image" -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
                         "video" -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
                         "audio" -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-                        else -> null
+                        // PDFs, text files, and other non-media documents use
+                        // the generic MediaStore Files collection.
+                        "document", "file" -> MediaStore.Files.getContentUri("external")
+                        else -> {
+                            log.w("Unsupported MediaDocumentsProvider type: %s", type)
+                            null
+                        }
                     }
 
-                    return contentUri?.let {
-                        getDataColumn(context, it, "_id=?", arrayOf(id))
+                    return contentUri?.let { mediaUri ->
+                        getMediaStorePath(context, mediaUri, "_id=?", arrayOf(id)).also { path ->
+                            if (path == null) {
+                                log.w(
+                                    "MediaStore query did not resolve document: type=%s itemId=%s collection=%s",
+                                    type,
+                                    id,
+                                    mediaUri
+                                )
+                            } else {
+                                log.d("Resolved media document path: %s", path)
+                            }
+                        }
                     }
                 } else {
-                    return getDataColumn(context, uri, null, null)
+                    log.d("Generic content-provider branch: authority=%s", uri.authority)
+                    return getMediaStorePath(context, uri).also { path ->
+                        if (path == null) log.w("Generic provider did not expose a filesystem path: %s", uri)
+                    }
                 }
             } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+                log.d("File URI branch resolved path: %s", uri.path)
                 return uri.path
             }
+            log.w("Unsupported URI scheme: uri=%s scheme=%s", uri, uri.scheme)
             return null
         }
 
         @RequiresApi(Build.VERSION_CODES.Q)
         fun getRelativePathFromUri(context: Context, uri: Uri): String? {
+            val log = Timber.tag("UriResolver")
             val absolutePath = getAbsolutePathFromUri2(context, uri)
-            absolutePath ?: return null
+            if (absolutePath == null) {
+                log.w("No absolute path resolved for URI: %s", uri)
+                return null
+            }
 
             val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
             return if (absolutePath.startsWith(externalStoragePath)) {
-                absolutePath.removePrefix("$externalStoragePath/")
+                absolutePath.removePrefix("$externalStoragePath/").also { relativePath ->
+                    log.d(
+                        "Converted absolute path to relative path: absolute=%s root=%s relative=%s",
+                        absolutePath,
+                        externalStoragePath,
+                        relativePath
+                    )
+                }
             } else {
+                log.w(
+                    "Resolved path is outside primary external storage: absolute=%s expectedRoot=%s",
+                    absolutePath,
+                    externalStoragePath
+                )
+                null
+            }
+        }
+
+        @RequiresApi(Build.VERSION_CODES.Q)
+        private fun getMediaStorePath(
+            context: Context,
+            uri: Uri,
+            selection: String? = null,
+            selectionArgs: Array<String>? = null
+        ): String? {
+            getDataColumn(context, uri, selection, selectionArgs)?.let { return it }
+
+            val log = Timber.tag("UriResolver")
+            val projection = arrayOf(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                MediaStore.MediaColumns.DISPLAY_NAME
+            )
+
+            return try {
+                context.contentResolver.query(uri, projection, selection, selectionArgs, null)
+                    ?.use { cursor ->
+                        log.d(
+                            "Metadata query: uri=%s rows=%d columns=%s selection=%s args=%s",
+                            uri,
+                            cursor.count,
+                            cursor.columnNames.contentToString(),
+                            selection,
+                            selectionArgs?.contentToString()
+                        )
+                        if (!cursor.moveToFirst()) return@use null
+
+                        val relativePathIndex = cursor.getColumnIndex(MediaStore.MediaColumns.RELATIVE_PATH)
+                        val displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                        if (relativePathIndex < 0 || displayNameIndex < 0) {
+                            log.w("Provider omitted relative-path metadata for URI: %s", uri)
+                            return@use null
+                        }
+
+                        val relativePath = cursor.getString(relativePathIndex)
+                        val displayName = cursor.getString(displayNameIndex)
+                        if (relativePath.isNullOrBlank() || displayName.isNullOrBlank()) {
+                            log.w(
+                                "Provider returned incomplete path metadata: relativePath=%s displayName=%s",
+                                relativePath,
+                                displayName
+                            )
+                            return@use null
+                        }
+
+                        File(Environment.getExternalStorageDirectory(), "$relativePath$displayName")
+                            .absolutePath
+                            .also { log.d("Resolved path from MediaStore metadata: %s", it) }
+                    }
+            } catch (exception: Exception) {
+                log.w(exception, "Unable to query MediaStore path metadata: uri=%s", uri)
                 null
             }
         }
@@ -271,16 +426,39 @@ class Utils{
             selection: String?,
             selectionArgs: Array<String>?
         ): String? {
-            val column = "_data"
-            val projection = arrayOf(column)
-            context.contentResolver.query(uri, projection, selection, selectionArgs, null)
-                ?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        val index = cursor.getColumnIndexOrThrow(column)
-                        return cursor.getString(index)
+            val log = Timber.tag("UriResolver")
+            return try {
+                val column = MediaStore.MediaColumns.DATA
+                val projection = arrayOf(column)
+                context.contentResolver.query(uri, projection, selection, selectionArgs, null)
+                    ?.use { cursor ->
+                        log.d(
+                            "DATA query: uri=%s rows=%d columns=%s selection=%s args=%s",
+                            uri,
+                            cursor.count,
+                            cursor.columnNames.contentToString(),
+                            selection,
+                            selectionArgs?.contentToString()
+                        )
+                        if (cursor.moveToFirst()) {
+                            val index = cursor.getColumnIndex(column)
+                            if (index >= 0) {
+                                cursor.getString(index).also { path ->
+                                    log.d("DATA column result: uri=%s path=%s", uri, path)
+                                }
+                            } else {
+                                log.w("Provider omitted DATA column for URI: %s", uri)
+                                null
+                            }
+                        } else {
+                            log.w("DATA query returned no rows for URI: %s", uri)
+                            null
+                        }
                     }
-                }
-            return null
+            } catch (exception: Exception) {
+                log.w(exception, "Unable to resolve DATA column for URI: %s", uri)
+                null
+            }
         }
 
 

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.flagValue
 
 
 @Composable
@@ -151,6 +152,8 @@ fun CommandExtraInputElement(
         mutableStateOf(command.default)
     }
 
+    val pickerMimeType = command.flags.flagValue("--mime-type") ?: "*/*"
+
 
     LaunchedEffect(
         listOf(
@@ -246,7 +249,10 @@ fun CommandExtraInputElement(
                     trailingIcon = if(name.value.endsWith("FILE")){
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                SingleFilePicker(useRelativePaths = true){
+                                SingleFilePicker(
+                                    useRelativePaths = true,
+                                    mimeType = pickerMimeType
+                                ) {
                                     default.value = it
                                 }
                             }
@@ -254,7 +260,10 @@ fun CommandExtraInputElement(
                     }else if(name.value.endsWith("FILES")) {
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                MultiFilePicker(useRelativePaths = true){
+                                MultiFilePicker(
+                                    useRelativePaths = true,
+                                    mimeType = pickerMimeType
+                                ) {
                                     default.value = it.joinToString(",")
                                 }
                             }

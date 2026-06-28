@@ -59,6 +59,8 @@ import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.flagValue
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
@@ -259,19 +261,19 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     when (extra.type) {
                         "STRING" -> {
 
-                            val extraFlags = extra.flags.orEmpty()
                             val isPasswordField = remember(extra.name, extra.flags) {
-                                "--password" in extraFlags ||
+                                extra.flags.hasFlag("--password") ||
                                     extra.name.endsWith("PASSWORD") ||
                                     extra.name.endsWith("PASSWD") ||
                                     extra.name.endsWith("SECRET")
                             }
                             val useMultiFilePicker = remember(extra.name, extra.flags) {
-                                "--multi-file-picker" in extraFlags || extra.name.endsWith("FILES")
+                                extra.flags.hasFlag("--multi-file-picker") || extra.name.endsWith("FILES")
                             }
                             val useSingleFilePicker = remember(extra.name, extra.flags) {
-                                "--file-picker" in extraFlags || extra.name.endsWith("FILE")
+                                extra.flags.hasFlag("--file-picker") || extra.name.endsWith("FILE")
                             }
+                            val pickerMimeType = extra.flags.flagValue("--mime-type") ?: "*/*"
 
                             val textValue = remember {
                                 mutableStateOf(extra.default)
@@ -303,7 +305,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     trailingIcon = if(useMultiFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                                MultiFilePicker(useRelativePaths = true){
+                                                MultiFilePicker(
+                                                    useRelativePaths = true,
+                                                    mimeType = pickerMimeType
+                                                ) {
                                                     textValue.value = it.joinToString(",")
                                                 }
                                             }
@@ -312,7 +317,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     else if(useSingleFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                                SingleFilePicker(useRelativePaths = true){
+                                                SingleFilePicker(
+                                                    useRelativePaths = true,
+                                                    mimeType = pickerMimeType
+                                                ) {
                                                     textValue.value = it
                                                 }
                                             }
