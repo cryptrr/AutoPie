@@ -259,7 +259,19 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     when (extra.type) {
                         "STRING" -> {
 
-                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD") || extra.name.endsWith("SECRET")}
+                            val extraFlags = extra.flags.orEmpty()
+                            val isPasswordField = remember(extra.name, extra.flags) {
+                                "--password" in extraFlags ||
+                                    extra.name.endsWith("PASSWORD") ||
+                                    extra.name.endsWith("PASSWD") ||
+                                    extra.name.endsWith("SECRET")
+                            }
+                            val useMultiFilePicker = remember(extra.name, extra.flags) {
+                                "--multi-file-picker" in extraFlags || extra.name.endsWith("FILES")
+                            }
+                            val useSingleFilePicker = remember(extra.name, extra.flags) {
+                                "--file-picker" in extraFlags || extra.name.endsWith("FILE")
+                            }
 
                             val textValue = remember {
                                 mutableStateOf(extra.default)
@@ -288,7 +300,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     text = textValue,
                                     title = extra.name,
                                     subtitle = extra.description,
-                                    trailingIcon = if(extra.name.endsWith("FILES")){
+                                    trailingIcon = if(useMultiFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                                 MultiFilePicker(useRelativePaths = true){
@@ -297,7 +309,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                             }
                                         }
                                     }
-                                    else if(extra.name.endsWith("FILE")){
+                                    else if(useSingleFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                                 SingleFilePicker(useRelativePaths = true){

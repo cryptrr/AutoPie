@@ -176,7 +176,8 @@ fun CommandExtraInputElement(
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = selectableOptions.value.split(","),
             required = isRequired.value,
-            isInternalConfig = command.isInternalConfig
+            isInternalConfig = command.isInternalConfig,
+            flags = command.flags
         )
 
         onAddCommandExtra(commandExtra)
