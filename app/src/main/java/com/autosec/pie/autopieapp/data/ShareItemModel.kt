@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.google.gson.annotations.JsonAdapter
 
 data class CommandModelList(
     val items: Map<String, CommandModel>
@@ -61,7 +62,8 @@ data class CommandExtra(
     val description: String = "",
     val defaultBoolean: Boolean = true,
     val required: Boolean = true,
-    val selectableOptions: List<String> = emptyList()
+    @field:JsonAdapter(SelectableOptionsAdapter::class)
+    val selectableOptions: Map<String, String> = emptyMap()
 )
 
 data class ProcessResult(
@@ -135,4 +137,3 @@ data class InstalledPackageModel(
     val version: String,
     val hasUpdate: Boolean,
 )
-

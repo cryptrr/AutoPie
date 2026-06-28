@@ -339,11 +339,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         "SELECTABLE" -> {
                             val expanded = remember { mutableStateOf(false) }
+                            val options = extra.selectableOptions
                             val selectedOption =
                                 rememberSaveable {
-                                    mutableStateOf(extra.default)
+                                    mutableStateOf(options[extra.default] ?: extra.default)
                                 }
-                            val options = extra.selectableOptions
 
                             LaunchedEffect(key1 = selectedOption.value) {
                                 addToExtraInputs(
