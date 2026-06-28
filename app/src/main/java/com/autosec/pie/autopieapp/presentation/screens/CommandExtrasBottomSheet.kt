@@ -60,6 +60,7 @@ import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.matchesExtraValues
@@ -204,8 +205,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     CommandExtraInput(
                         extra.name,
                         extra.default,
+                        //TODO: Check if this is necessary
                         when {
-                            extra.flags.hasFlag("--internal-config") -> extra.default
+                            extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> extra.default
                             extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
                             extra.type == "SLIDER" ->
                                 extra.default.split(",").getOrNull(1) ?: extra.default
@@ -223,7 +225,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
     val visibleExtras = command.extras.orEmpty()
-        .filterNot { it.flags.hasFlag("--internal-config") }
+        .filterNot { it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) }
         .filter { extra ->
             extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
         }
@@ -273,18 +275,18 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         "STRING" -> {
 
                             val isPasswordField = remember(extra.name, extra.flags) {
-                                extra.flags.hasFlag("--password") ||
+                                extra.flags.hasFlag(ExtraFlags.PASSWORD) ||
                                     extra.name.endsWith("PASSWORD") ||
                                     extra.name.endsWith("PASSWD") ||
                                     extra.name.endsWith("SECRET")
                             }
                             val useMultiFilePicker = remember(extra.name, extra.flags) {
-                                extra.flags.hasFlag("--multi-file-picker") || extra.name.endsWith("FILES")
+                                extra.flags.hasFlag(ExtraFlags.MULTI_FILE_PICKER) || extra.name.endsWith("FILES")
                             }
                             val useSingleFilePicker = remember(extra.name, extra.flags) {
-                                extra.flags.hasFlag("--file-picker") || extra.name.endsWith("FILE")
+                                extra.flags.hasFlag(ExtraFlags.FILE_PICKER) || extra.name.endsWith("FILE")
                             }
-                            val pickerMimeType = extra.flags.flagValue("--mime-type") ?: "*/*"
+                            val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
                             val textValue = remember {
                                 mutableStateOf(extra.default)

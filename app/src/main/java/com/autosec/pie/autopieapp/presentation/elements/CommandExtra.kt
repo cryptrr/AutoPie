@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 
 
@@ -152,7 +153,7 @@ fun CommandExtraInputElement(
         mutableStateOf(command.default)
     }
 
-    val pickerMimeType = command.flags.flagValue("--mime-type") ?: "*/*"
+    val pickerMimeType = command.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
 
     LaunchedEffect(

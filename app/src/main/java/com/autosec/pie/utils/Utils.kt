@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.Modifier
 import com.autopi.autopieapp.data.CommandInterface
+import com.autopi.autopieapp.data.ScriptFlags
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -70,40 +71,44 @@ class Utils{
         }
 
         fun isPythonScript(command: String): Boolean {
-            return hasCommandHeader(command, "#@PYTHON")
+            return hasScriptHeader(command, ScriptFlags.PYTHON)
         }
 
         fun isInteractiveCommand(command: String): Boolean {
-            return hasCommandHeader(command, "#@INTERACTIVE")
+            return hasScriptHeader(command, ScriptFlags.INTERACTIVE)
         }
 
         fun isOpenLogsCommand(command: String): Boolean {
-            return hasCommandHeader(command, "#@OPEN_LOGS")
+            return hasScriptHeader(command, ScriptFlags.OPEN_LOGS)
         }
 
-        fun setCommandHeader(command: String, header: String, enabled: Boolean): String {
-            return if (enabled) command.withCommandHeader(header) else command.withoutCommandHeader(header)
+        fun setScriptHeader(command: String, flag: ScriptFlags, enabled: Boolean): String {
+            return if (enabled) {
+                command.withScriptHeader(flag.value)
+            } else {
+                command.withoutScriptHeader(flag.value)
+            }
         }
 
-        fun hasCommandHeader(command: String, header: String): Boolean {
-            return commandHeaders(command).any { it.startsWith(header) }
+        fun hasScriptHeader(command: String, flag: ScriptFlags): Boolean {
+            return scriptHeaders(command).any { it.startsWith(flag.value) }
         }
 
-        fun stripCommandHeaders(command: String): String {
+        fun stripScriptHeaders(command: String): String {
             return command.lineSequence()
                 .dropWhile { it.trim().startsWith("#@") }
                 .joinToString("\n")
         }
 
-        private fun commandHeaders(command: String): List<String> {
+        private fun scriptHeaders(command: String): List<String> {
             return command.lineSequence()
                 .map { it.trim() }
                 .takeWhile { it.startsWith("#@") }
                 .toList()
         }
 
-        private fun String.withCommandHeader(header: String): String {
-            if (hasCommandHeader(this, header)) return this
+        private fun String.withScriptHeader(header: String): String {
+            if (scriptHeaders(this).any { it.startsWith(header) }) return this
 
             val lines = lines().toMutableList()
             val insertIndex = lines.indexOfFirst { !it.trim().startsWith("#@") }
@@ -113,7 +118,7 @@ class Utils{
             return lines.joinToString("\n")
         }
 
-        private fun String.withoutCommandHeader(header: String): String {
+        private fun String.withoutScriptHeader(header: String): String {
             var readingHeaders = true
             return lineSequence()
                 .filter { line ->
@@ -576,10 +581,10 @@ fun Modifier.conditional(
 }
 
 fun getCommandExec(command: String) : String {
-    return if(Utils.hasCommandHeader(command, "#@SHELL")){
+    return if(Utils.hasScriptHeader(command, ScriptFlags.SHELL)){
         "Shell"
     }
-    else if(Utils.hasCommandHeader(command, "#@PYTHON")){
+    else if(Utils.hasScriptHeader(command, ScriptFlags.PYTHON)){
         "Python"
     }
     else{

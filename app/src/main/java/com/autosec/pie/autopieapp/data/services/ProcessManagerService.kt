@@ -623,7 +623,7 @@ class ProcessManagerService(
                 usePython && Utils.isPythonScript(commandObject.command) -> {
                     Timber.d("Running Python Script")
                     val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                    pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
+                    pythonScriptFile.writeText(Utils.stripScriptHeaders(commandObject.command))
                     "python ${pythonScriptFile.absolutePath.shellQuote()}"
                 }
                 usePython -> {
@@ -730,7 +730,7 @@ class ProcessManagerService(
 
             if (usePython && Utils.isPythonScript(commandObject.command)) {
                 val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
+                pythonScriptFile.writeText(Utils.stripScriptHeaders(commandObject.command))
                 scriptFile.appendText("python ${pythonScriptFile.absolutePath.shellQuote()}")
             } else {
                 scriptFile.appendText(command)

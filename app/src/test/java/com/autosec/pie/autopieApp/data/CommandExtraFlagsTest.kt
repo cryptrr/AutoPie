@@ -1,6 +1,7 @@
 package com.autopi.autopieApp.data
 
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.google.gson.Gson
@@ -35,22 +36,22 @@ class CommandExtraFlagsTest {
             CommandExtra::class.java
         )
 
-        assertTrue(extra.flags.hasFlag("--internal-config"))
+        assertTrue(extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG))
     }
 
     @Test
     fun `general flag methods parse names and quoted values`() {
         val flags = listOf("--file-picker", "--mime-type=\"application/pdf\"")
 
-        assertTrue(flags.hasFlag("--file-picker"))
-        assertTrue(flags.hasFlag("--mime-type"))
-        assertEquals("application/pdf", flags.flagValue("--mime-type"))
-        assertFalse(flags.hasFlag("--password"))
+        assertTrue(flags.hasFlag(ExtraFlags.FILE_PICKER))
+        assertTrue(flags.hasFlag(ExtraFlags.MIME_TYPE))
+        assertEquals("application/pdf", flags.flagValue(ExtraFlags.MIME_TYPE))
+        assertFalse(flags.hasFlag(ExtraFlags.PASSWORD))
     }
 
     @Test
     fun `missing flag value returns null`() {
-        assertNull(listOf("--file-picker").flagValue("--mime-type"))
-        assertNull(listOf("--mime-type").flagValue("--mime-type"))
+        assertNull(listOf("--file-picker").flagValue(ExtraFlags.MIME_TYPE))
+        assertNull(listOf("--mime-type").flagValue(ExtraFlags.MIME_TYPE))
     }
 }

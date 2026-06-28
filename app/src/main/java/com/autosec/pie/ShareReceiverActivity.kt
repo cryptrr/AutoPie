@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -382,7 +383,7 @@ fun ShareCard(
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
     val hasUserFacingExtras = card.extras?.any {
-        !it.flags.hasFlag("--internal-config")
+        !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
     } == true
 
     Card(
@@ -398,7 +399,7 @@ fun ShareCard(
                     }
 
                     if (card.extras?.any {
-                            !it.flags.hasFlag("--internal-config") &&
+                            !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
                                 it.type == "STRING" &&
                                 it.default.isEmpty() &&
                                 it.required
@@ -457,7 +458,7 @@ fun ShareCard(
 fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
 
     val hasUserFacingExtras = card.extras?.any {
-        !it.flags.hasFlag("--internal-config")
+        !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
     } == true
 
 
@@ -509,4 +510,3 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         }
     }
 }
-
