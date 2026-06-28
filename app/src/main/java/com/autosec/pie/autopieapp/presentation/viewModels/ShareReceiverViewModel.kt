@@ -11,6 +11,7 @@ import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.AppNotification
@@ -210,7 +211,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
             commandNotFound.value = null
 
-            if (command.extras?.isNotEmpty() == true) {
+            if (command.extras?.any { !it.flags.hasFlag("--internal-config") } == true) {
                 Timber.d("Opening Extras sheet for $commandId")
                 currentExtrasDetails.value =
                     Triple(true, command, ShareInputs(input, null))

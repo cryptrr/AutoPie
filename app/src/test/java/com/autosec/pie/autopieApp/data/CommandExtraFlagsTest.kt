@@ -29,6 +29,16 @@ class CommandExtraFlagsTest {
     }
 
     @Test
+    fun `internal config flag is deserialized and detected`() {
+        val extra = Gson().fromJson(
+            """{"id":"internal","flags":["--internal-config"]}""",
+            CommandExtra::class.java
+        )
+
+        assertTrue(extra.flags.hasFlag("--internal-config"))
+    }
+
+    @Test
     fun `general flag methods parse names and quoted values`() {
         val flags = listOf("--file-picker", "--mime-type=\"application/pdf\"")
 

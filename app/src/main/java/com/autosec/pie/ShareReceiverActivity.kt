@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SearchBar
@@ -380,6 +381,9 @@ fun ShareCard(
     }
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+    val hasUserFacingExtras = card.extras?.any {
+        !it.flags.hasFlag("--internal-config")
+    } == true
 
     Card(
         modifier = Modifier
@@ -393,7 +397,13 @@ fun ShareCard(
                         return@combinedClickable
                     }
 
-                    if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() && it.required } == true) {
+                    if (card.extras?.any {
+                            !it.flags.hasFlag("--internal-config") &&
+                                it.type == "STRING" &&
+                                it.default.isEmpty() &&
+                                it.required
+                        } == true
+                    ) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
                     } else {
@@ -413,7 +423,7 @@ fun ShareCard(
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
-                    if (card.extras?.isNotEmpty() == true) {
+                    if (hasUserFacingExtras) {
                         shareReceiverViewModel.currentExtrasDetails.value =
                             Triple(true, card, ShareInputs(currentLink, fileUris))
                     }
@@ -446,6 +456,10 @@ fun ShareCard(
 @Composable
 fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
 
+    val hasUserFacingExtras = card.extras?.any {
+        !it.flags.hasFlag("--internal-config")
+    } == true
+
 
     Box(
         Modifier
@@ -454,7 +468,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         //verticalArrangement = Arrangement.Center
         contentAlignment = Alignment.Center
     ) {
-        if (card.extras?.isNotEmpty() == true) {
+        if (hasUserFacingExtras) {
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
@@ -479,7 +493,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                     text = card.name ?: "",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty() == true) 0.9F else 1F)
+                    modifier = Modifier.fillMaxWidth(if (hasUserFacingExtras) 0.9F else 1F)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -495,6 +509,4 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         }
     }
 }
-
-
 

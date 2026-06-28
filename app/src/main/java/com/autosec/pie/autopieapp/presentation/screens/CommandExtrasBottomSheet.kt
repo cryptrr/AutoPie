@@ -172,8 +172,6 @@ fun CommandExtrasBottomSheet(
 @Composable
 fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>,sheetState: SheetState, callerName: String,isAsync: Boolean,) {
 
-    val context = LocalContext.current
-
     val activity = LocalContext.current.getActivity()
 
 
@@ -207,7 +205,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         extra.name,
                         extra.default,
                         when {
-                            extra.isInternalConfig == true -> extra.default
+                            extra.flags.hasFlag("--internal-config") -> extra.default
                             extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
                             extra.type == "SLIDER" ->
                                 extra.default.split(",").getOrNull(1) ?: extra.default
@@ -225,7 +223,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
     val visibleExtras = command.extras.orEmpty()
-        .filterNot { it.isInternalConfig == true }
+        .filterNot { it.flags.hasFlag("--internal-config") }
         .filter { extra ->
             extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
         }

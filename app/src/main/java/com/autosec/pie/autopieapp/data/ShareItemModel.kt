@@ -62,7 +62,6 @@ data class CommandExtra(
     val description: String = "",
     val defaultBoolean: Boolean = true,
     val required: Boolean = true,
-    val isInternalConfig: Boolean? = null,
     val flags: List<String>? = null,
     val visibleWhen: ExtraVisibilityRule? = null,
     val selectableOptions: List<String> = emptyList()
