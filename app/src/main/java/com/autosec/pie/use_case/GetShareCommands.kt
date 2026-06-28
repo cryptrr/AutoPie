@@ -4,12 +4,12 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.fromJsonObjectEntries
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import timber.log.Timber
 
 class GetShareCommands(private val jsonService: JsonService) {
-    suspend operator fun invoke(): List<CommandModel>{
+    suspend operator fun invoke(onCommandsSkipped: (List<String>) -> Unit = {}): List<CommandModel>{
         Timber.d("GetShareCommands useCase")
         val sharesConfig = jsonService.readSharesConfig()
 
@@ -18,11 +18,14 @@ class GetShareCommands(private val jsonService: JsonService) {
             throw ViewModelError.ShareConfigUnavailable
         }
 
-        val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
+        val sharesData = Gson().fromJsonObjectEntries(sharesConfig, CommandModel::class.java)
+        if (sharesData.skippedKeys.isNotEmpty()) {
+            val skippedCommands = sharesData.skippedKeys.map { "Share: $it" }
+            Timber.w("Skipped incompatible commands: $skippedCommands")
+            onCommandsSkipped(skippedCommands)
+        }
 
-        val sharesData: Map<String, CommandModel> = Gson().fromJson(sharesConfig, mapType)
-
-        val commandsData = sharesData.entries.toMutableList().map { it.value.copy(type = CommandType.SHARE, name = it.key) }
+        val commandsData = sharesData.values.map { it.value.copy(type = CommandType.SHARE, name = it.key) }
 
         return commandsData
     }

@@ -13,6 +13,7 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.data.services.ForegroundService
@@ -104,7 +105,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
         viewModelScope.launch(dispatchers.io){
             try {
-                useCases.getShareCommands().let{ newCommands ->
+                useCases.getShareCommands { skippedCommands ->
+                    main.showNotification(AppNotification.CommandsSkipped(skippedCommands))
+                }.let{ newCommands ->
                     shareItemsResult.update { newCommands }
                     filteredShareItemsResult.update { newCommands }
                     main.shareReceiverSearchQuery.value.let {
