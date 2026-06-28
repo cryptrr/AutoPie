@@ -42,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,6 +62,7 @@ import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.matchesExtraValues
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
@@ -197,17 +199,21 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         mutableStateOf(false)
     }
 
-    val visibleExtras = command.extras.orEmpty().filterNot { it.isInternalConfig == true }
-
     val commandExtraInputs = remember(command.extras) {
         mutableStateOf(
             command.extras.orEmpty()
-                .filter { it.isInternalConfig == true }
                 .map { extra ->
                     CommandExtraInput(
                         extra.name,
                         extra.default,
-                        extra.default,
+                        when {
+                            extra.isInternalConfig == true -> extra.default
+                            extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
+                            extra.type == "SLIDER" ->
+                                extra.default.split(",").getOrNull(1) ?: extra.default
+                            extra.type == "FLAG" -> ""
+                            else -> extra.default
+                        },
                         extra.type,
                         extra.defaultBoolean,
                         extra.id,
@@ -217,10 +223,17 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         )
     }
 
+    val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
+    val visibleExtras = command.extras.orEmpty()
+        .filterNot { it.isInternalConfig == true }
+        .filter { extra ->
+            extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
+        }
+
     fun addToExtraInputs(commandExtraInput: CommandExtraInput) {
-        if (commandExtraInputs.value.any { it.name == commandExtraInput.name }) {
+        if (commandExtraInputs.value.any { it.id == commandExtraInput.id }) {
             commandExtraInputs.value = commandExtraInputs.value.toMutableList().also {
-                val index = it.indexOfFirst { it.name == commandExtraInput.name }
+                val index = it.indexOfFirst { it.id == commandExtraInput.id }
 
                 it.set(index, commandExtraInput)
             }
@@ -256,8 +269,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
             for(extra in visibleExtras.filter { it.type != "FLAG" }) {
-
-                Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
+                key(extra.id) {
+                    Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
                     when (extra.type) {
                         "STRING" -> {
 
@@ -464,8 +477,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                         }
                     }
-
-
+                    }
                 }
             }
 
@@ -488,17 +500,17 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
                 for(flag in visibleExtras.filter { it.type == "FLAG" }){
+                    key(flag.id) {
                     val isChecked = remember { mutableStateOf(false) }
-                    val defaultValue = remember { mutableStateOf(flag.default) }
 
                     //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
 
-                    LaunchedEffect(key1 = defaultValue.value) {
+                    LaunchedEffect(key1 = isChecked.value) {
                         addToExtraInputs(
                             CommandExtraInput(
                                 flag.name,
                                 flag.default,
-                                defaultValue.value,
+                                if (isChecked.value) flag.default else "",
                                 flag.type,
                                 flag.defaultBoolean,
                                 flag.id,
@@ -513,6 +525,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                     }
 
+                }
                 }
             }
 

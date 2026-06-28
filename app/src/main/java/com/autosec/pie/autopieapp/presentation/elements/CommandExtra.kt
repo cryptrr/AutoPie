@@ -180,7 +180,8 @@ fun CommandExtraInputElement(
             selectableOptions = selectableOptions.value.split(","),
             required = isRequired.value,
             isInternalConfig = command.isInternalConfig,
-            flags = command.flags
+            flags = command.flags,
+            visibleWhen = command.visibleWhen
         )
 
         onAddCommandExtra(commandExtra)

@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.google.gson.JsonElement
 
 data class CommandModelList(
     val items: Map<String, CommandModel>
@@ -63,7 +64,29 @@ data class CommandExtra(
     val required: Boolean = true,
     val isInternalConfig: Boolean? = null,
     val flags: List<String>? = null,
+    val visibleWhen: ExtraVisibilityRule? = null,
     val selectableOptions: List<String> = emptyList()
+)
+
+data class ExtraVisibilityRule(
+    val all: List<ExtraVisibilityRule>? = null,
+    val or: List<ExtraVisibilityRule>? = null,
+    val any: List<ExtraVisibilityRule>? = null,
+    val not: ExtraVisibilityRule? = null,
+    val extraId: String? = null,
+    val equals: JsonElement? = null,
+    val notEquals: JsonElement? = null,
+    val startsWith: String? = null,
+    val endsWith: String? = null,
+    val contains: String? = null,
+    val matches: String? = null,
+    val gt: JsonElement? = null,
+    val gte: JsonElement? = null,
+    val lt: JsonElement? = null,
+    val lte: JsonElement? = null,
+    val oneOf: List<JsonElement>? = null,
+    val exists: Boolean? = null,
+    val isEmpty: Boolean? = null
 )
 
 data class ProcessResult(
