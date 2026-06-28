@@ -347,7 +347,8 @@ class ProcessManagerService(
         inputParsedData: List<InputParsedData>,
         commandObject: CommandInterface,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
-        logWriter: BufferedWriter
+        logWriter: BufferedWriter,
+        processId: Int
     ): Shell {
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
         val defaultPath = System.getenv("PATH") ?: ""
@@ -435,12 +436,11 @@ class ProcessManagerService(
 
         Timber.d("ENV MAP: $envMap")
 
-        val shell = Shell(
+        //GET RUNNING SHELL IF AVAILABLE - IMPORTANT FOR MULTI STAGE COMMANDS
+        val shell = shells[processId] ?: Shell(
             shellPath,
             envMap
         )
-
-        shells.entries.first().value
 
         shell.addOnStderrLineListener(object : Shell.OnLineListener {
             override fun onLine(line: String) {
@@ -566,7 +566,7 @@ class ProcessManagerService(
 
             //checkForUnsafeCommands(commandObject, command)
 
-            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
+            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter, processId)
 
             Timber.d("Received processId in Command Start: $processId")
             shells.set(processId, shell)

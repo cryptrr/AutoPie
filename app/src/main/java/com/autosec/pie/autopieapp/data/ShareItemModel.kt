@@ -6,19 +6,6 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.google.gson.JsonElement
 
-data class CommandModelList(
-    val items: Map<String, CommandModel>
-)
-
-data class ShareItemModel(
-    val name: String,
-    val path: String,
-    val command: String,
-    val exec: String,
-    val forUrl: Boolean? = true,
-    val forSingleFile: Boolean? = true,
-    val forMultipleFiles: Boolean? = true
-)
 
 data class CommandModel(
     override val type: CommandType? = null,
