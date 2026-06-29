@@ -472,6 +472,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             var options by remember(extra.id, configuredOptions) {
                                 mutableStateOf(configuredOptions)
                             }
+                            var selectableFetchFailed by remember(extra.id, configuredOptions) {
+                                mutableStateOf(false)
+                            }
                             val selectedOption =
                                 rememberSaveable(extra.id, extra.default, configuredOptions) {
                                     mutableStateOf(
@@ -484,17 +487,24 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
                                 shellEnvironmentVariable?.let { variableName ->
-                                    viewModel.processManagerService
+                                    val resolvedOptions = viewModel.processManagerService
                                         .getShellEnvironmentVariable(processId, variableName)
                                         ?.toSelectableOptions()
                                         ?.takeIf { it.isNotEmpty() }
-                                        ?.let { resolvedOptions ->
-                                            options = resolvedOptions
-                                            selectedOption.value = resolvedOptions[extra.default]
-                                                ?: extra.default.ifEmpty {
-                                                    resolvedOptions.values.firstOrNull().orEmpty()
-                                                }
-                                        }
+
+                                    if (resolvedOptions == null) {
+                                        selectableFetchFailed = true
+                                        expanded.value = false
+                                        options = emptyMap()
+                                        selectedOption.value = "Error fetching"
+                                    } else {
+                                        selectableFetchFailed = false
+                                        options = resolvedOptions
+                                        selectedOption.value = resolvedOptions[extra.default]
+                                            ?: extra.default.ifEmpty {
+                                                resolvedOptions.values.firstOrNull().orEmpty()
+                                            }
+                                    }
                                 }
                             }
 
@@ -527,7 +537,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 OptionSelector(
                                     options = options,
                                     selectedOption = selectedOption,
-                                    expanded = expanded
+                                    expanded = expanded,
+                                    enabled = !selectableFetchFailed
                                 )
                             }
                         }

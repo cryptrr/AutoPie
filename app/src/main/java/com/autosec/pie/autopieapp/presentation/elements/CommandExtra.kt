@@ -450,7 +450,8 @@ fun OptionSelectorBoolean(
 fun OptionSelector(
     options: Map<String, String>,
     selectedOption: MutableState<String>,
-    expanded: MutableState<Boolean>
+    expanded: MutableState<Boolean>,
+    enabled: Boolean = true
 ) {
     val selectedLabel = options.entries
         .firstOrNull { it.value == selectedOption.value }
@@ -461,17 +462,23 @@ fun OptionSelector(
         modifier = Modifier
             .border(
                 2.dp,
-                MaterialTheme.colorScheme.primary,
+                if (enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
                 RoundedCornerShape(15.dp)
             )
             .height(57.dp)
             .clip(RoundedCornerShape(15.dp))
-            .background(Color.Black.copy(alpha = 0.15F))
-            .clickable { expanded.value = true }
+            .background(
+                if (enabled) Color.Black.copy(alpha = 0.15F)
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08F)
+            )
+            .clickable(enabled = enabled) { expanded.value = true }
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(0.9F)) {
             Text(
                 text = selectedLabel,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F),
                 softWrap = false,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -486,7 +493,8 @@ fun OptionSelector(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
                     imageVector = Icons.Default.UnfoldMore,
                     contentDescription = "Show options",
                     modifier = Modifier.size(30.dp)
@@ -495,7 +503,7 @@ fun OptionSelector(
         }
 
         DropdownMenu(
-            expanded = expanded.value,
+            expanded = enabled && expanded.value,
             onDismissRequest = { expanded.value = false },
         ) {
             options.forEach { (label, value) ->
