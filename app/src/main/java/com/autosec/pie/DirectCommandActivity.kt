@@ -100,7 +100,7 @@ class DirectCommandActivity : ComponentActivity() {
                                     File(it.logFile)
                                 )
 
-                                if(callerType == "EXTERNAL_APP" && isAsync){
+                                if(callerType == "EXTERNAL_APP" && isAsync && it.command.multiStage != true){
                                     delay(900)
                                     val result = Intent().apply {
                                         putExtra("status", "running")
@@ -118,6 +118,9 @@ class DirectCommandActivity : ComponentActivity() {
 
                         //For synchronous requests
                         is ViewModelEvent.CommandCompleted -> {
+                            if (it.partial) {
+                                return@collect
+                            }
                             try {
                                 val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
                                     File(it.logFile)
@@ -211,7 +214,6 @@ class DirectCommandActivity : ComponentActivity() {
     }
 
 }
-
 
 
 

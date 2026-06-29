@@ -228,6 +228,9 @@ class ForegroundService : Service() {
 
                     useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
 
+                        if (command.multiStage == true) {
+                            mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
 
@@ -237,10 +240,23 @@ class ForegroundService : Service() {
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
                             autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
-                            mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
+                            if (command.multiStage == true && !receipt.partial) {
+                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                            }
+                            mainViewModel.dispatchEvent(
+                                ViewModelEvent.CommandCompleted(
+                                    processId,
+                                    command,
+                                    logsFile.absolutePath,
+                                    partial = receipt.partial
+                                )
+                            )
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
+                            if (command.multiStage == true) {
+                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                            }
                             autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         }
@@ -248,6 +264,9 @@ class ForegroundService : Service() {
 
                 }catch (e: Exception){
                     Timber.e(e)
+                    if (command?.multiStage == true) {
+                        mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                    }
                     //TODO: Could change the !! operator
                     autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath, processId)
                     mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))

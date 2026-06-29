@@ -71,6 +71,7 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
@@ -382,7 +383,8 @@ fun ShareCard(
     }
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
-    val hasUserFacingExtras = card.extras?.any {
+    val activeCard = card.firstStepOrSelf()
+    val hasUserFacingExtras = activeCard.extras?.any {
         !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
     } == true
 
@@ -398,22 +400,24 @@ fun ShareCard(
                         return@combinedClickable
                     }
 
-                    if (card.extras?.any {
+                    if (activeCard.multiStage == true || activeCard.extras?.any {
                             !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
                                 it.type == "STRING" &&
                                 it.default.isEmpty() &&
                                 it.required
                         } == true
                     ) {
-                        shareReceiverViewModel.currentExtrasDetails.value =
-                            Triple(true, card, ShareInputs(currentLink, fileUris))
+                        shareReceiverViewModel.openCommandExtras(
+                            activeCard,
+                            ShareInputs(currentLink, fileUris)
+                        )
                     } else {
-                        shareReceiverViewModel.onCommandClick(card, fileUris, currentLink) {
+                        shareReceiverViewModel.onCommandClick(activeCard, fileUris, currentLink) {
                             shareReceiverViewModel.viewModelScope.launch {
                                 isLoading = true
                                 //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
                                 //TODO: Switch from exec.
-                                val delayTime = if (getCommandExec(card.command) == "am") 2000.milliseconds else 900.milliseconds
+                                val delayTime = if (getCommandExec(activeCard.command) == "am") 2000.milliseconds else 900.milliseconds
                                 delay(delayTime)
                                 Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
                                 activity?.finish()
@@ -424,9 +428,11 @@ fun ShareCard(
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
-                    if (hasUserFacingExtras) {
-                        shareReceiverViewModel.currentExtrasDetails.value =
-                            Triple(true, card, ShareInputs(currentLink, fileUris))
+                    if (activeCard.multiStage == true || hasUserFacingExtras) {
+                        shareReceiverViewModel.openCommandExtras(
+                            activeCard,
+                            ShareInputs(currentLink, fileUris)
+                        )
                     }
                 }
             ),
@@ -446,8 +452,10 @@ fun ShareCard(
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
                 CommandCard(card = card) {
-                    shareReceiverViewModel.currentExtrasDetails.value =
-                        Triple(true, card, ShareInputs(currentLink, fileUris))
+                    shareReceiverViewModel.openCommandExtras(
+                        activeCard,
+                        ShareInputs(currentLink, fileUris)
+                    )
                 }
             }
         }
@@ -457,9 +465,10 @@ fun ShareCard(
 @Composable
 fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
 
-    val hasUserFacingExtras = card.extras?.any {
+    val activeCard = card.firstStepOrSelf()
+    val hasUserFacingExtras = activeCard.extras?.any {
         !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
-    } == true
+    } == true || activeCard.multiStage == true
 
 
     Box(
@@ -499,7 +508,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = card.command,
+                text = activeCard.command,
                 maxLines = 2,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,

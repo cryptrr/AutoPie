@@ -16,8 +16,8 @@ import java.lang.reflect.Type
 data class CommandModel(
     override val type: CommandType? = null,
     override val name: String = "",
-    override val path: String,
-    override val command: String,
+    override val path: String = "",
+    override val command: String = "",
     //TODO: Exec - Marked for deletion
     override val exec: String = "",
     override val selectors: List<String>? = emptyList(),
@@ -25,7 +25,34 @@ data class CommandModel(
     override val flags: List<String>? = null,
     override val extras: List<CommandExtra>? = null,
     override val multiStage: Boolean? = false,
+    override val steps: List<CommandStep> = emptyList(),
     ) : CommandInterface
+
+data class CommandStep(
+    val path: String = "",
+    val command: String = "",
+    val extras: List<CommandExtra>? = null
+)
+
+fun CommandModel.firstStepOrSelf(): CommandModel {
+    if (multiStage != true) return this
+    val step = steps.firstOrNull() ?: return this
+    return copy(path = step.path, command = step.command, extras = step.extras)
+}
+
+fun CommandModel.nextStepOrNull(): CommandModel? {
+    if (multiStage != true || steps.size <= 1) return null
+    val remainingSteps = steps.drop(1)
+    val nextStep = remainingSteps.first()
+    return copy(
+        path = nextStep.path,
+        command = nextStep.command,
+        extras = nextStep.extras,
+        steps = remainingSteps
+    )
+}
+
+fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 
 data class CommandCreationModel(
     val selectedCommandType: String,
@@ -48,6 +75,7 @@ interface CommandInterface {
     val selectors: List<String>?
     val cronInterval: String?
     val multiStage: Boolean?
+    val steps: List<CommandStep>
     val flags: List<String>?
     val extras: List<CommandExtra>?
 }
@@ -119,6 +147,7 @@ data class ProcessResult(
     val processId: Int,
     val success: Boolean,
     val output: String,
+    val partial: Boolean = false,
 )
 
 data class CommandResult(
@@ -128,6 +157,7 @@ data class CommandResult(
     val output: String,
     val jobType: JobType,
     val jobKey: String,
+    val partial: Boolean = false,
 )
 
 data class InputParsedData(

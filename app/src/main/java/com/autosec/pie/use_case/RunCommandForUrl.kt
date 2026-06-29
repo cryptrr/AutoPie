@@ -99,7 +99,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
 
 
-            val processResult = if(Utils.isInteractiveCommand(item.command)){
+            val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true){
                 processManagerService.runCommandInTermuxShell(
                     item,
                     fullExecPath,

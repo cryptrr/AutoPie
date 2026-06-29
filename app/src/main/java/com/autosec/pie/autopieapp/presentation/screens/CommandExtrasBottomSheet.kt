@@ -61,9 +61,12 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.hasNextStep
 import com.autopi.autopieapp.data.matchesExtraValues
+import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
@@ -145,8 +148,10 @@ fun CommandExtrasBottomSheet(
                 }
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState, open, state, callerName, isAsync
-                    )
+                    val activeCommand = it.second.firstStepOrSelf()
+                    key(activeCommand.steps.size, activeCommand.path, activeCommand.command) {
+                        CommandExtraInputs(activeCommand, parentSheetState, open, state, callerName, isAsync)
+                    }
                 }
 
             }
@@ -162,6 +167,13 @@ fun CommandExtrasBottomSheet(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         onDismissRequest = {
             scope.launch {
+                viewModel.currentExtrasDetails.value?.let { (_, command, inputs) ->
+                    if (command.multiStage == true) {
+                        inputs.processId?.let { processId ->
+                            viewModel.main.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
+                    }
+                }
                 if(callerName == "DIRECT_ICON" || callerName == "EXTERNAL_APP"){
                     activity?.finish()
                 }
@@ -196,13 +208,27 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     }
 
 
-    var isLoading by remember {
+    var isLoading by remember(command) {
         mutableStateOf(false)
     }
 
     val requestedProcessId = viewModel.currentExtrasDetails.value?.third?.processId
     val processId = remember(command, requestedProcessId) {
         requestedProcessId ?: (100000..999999).random()
+    }
+
+    LaunchedEffect(command, processId) {
+        if (command.multiStage == true) {
+            val currentDetails = viewModel.currentExtrasDetails.value
+            if (currentDetails != null && currentDetails.third.processId == null) {
+                viewModel.currentExtrasDetails.value = Triple(
+                    currentDetails.first,
+                    currentDetails.second,
+                    currentDetails.third.copy(processId = processId)
+                )
+            }
+            viewModel.main.dispatchEvent(ViewModelEvent.CreateShell(processId))
+        }
     }
 
 
@@ -570,6 +596,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         isLoading = true
 
                         viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
+
+                        if (command.hasNextStep()) {
+                            return@launch
+                        }
 
                         //Don't close the activity if intent is started with async false.
                         //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity

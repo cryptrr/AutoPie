@@ -170,6 +170,13 @@ class MainViewModel(
         Timber.d("Event Fired: $event")
         viewModelScope.launch(dispatchers.main) {
             when (event) {
+                is ViewModelEvent.CreateShell -> withContext(dispatchers.io) {
+                    processManagerService.createShell(event.processId)
+                }
+
+                is ViewModelEvent.StopShell -> withContext(dispatchers.io) {
+                    processManagerService.stopShell(event.processId)
+                }
 
                 else -> {
 

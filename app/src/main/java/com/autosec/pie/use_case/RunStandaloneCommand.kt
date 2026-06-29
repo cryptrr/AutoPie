@@ -55,7 +55,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
 
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
-            val processResult = if(Utils.isInteractiveCommand(item.command)) {
+            val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true) {
                 processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, JobType.STANDALONE, usePython, isShellScript)
             }else{
                 processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, JobType.STANDALONE, usePython, isShellScript)
