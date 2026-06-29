@@ -512,7 +512,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 addToExtraInputs(
                                     CommandExtraInput(
                                         extra.name,
-                                        extra.default,
+                                        selectedOption.value,
                                         selectedOption.value,
                                         extra.type,
                                         extra.defaultBoolean,
