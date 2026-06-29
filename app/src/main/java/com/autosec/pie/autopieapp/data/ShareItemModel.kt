@@ -4,7 +4,13 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
+import com.google.gson.annotations.JsonAdapter
+import java.lang.reflect.Type
 
 
 data class CommandModel(
@@ -55,8 +61,36 @@ data class CommandExtra(
     val required: Boolean = true,
     val flags: List<String>? = null,
     val visibleWhen: ExtraVisibilityRule? = null,
-    val selectableOptions: List<String> = emptyList()
+    @field:JsonAdapter(SelectableOptionsAdapter::class)
+    val selectableOptions: Map<String, String> = emptyMap()
 )
+
+class SelectableOptionsAdapter :
+    JsonDeserializer<Map<String, String>>,
+    JsonSerializer<Map<String, String>> {
+
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type,
+        context: JsonDeserializationContext
+    ): Map<String, String> = when {
+        json.isJsonObject -> json.asJsonObject.entrySet().associateTo(linkedMapOf()) { (label, value) ->
+            label to value.asString
+        }
+
+        json.isJsonArray -> json.asJsonArray.associateTo(linkedMapOf()) { option ->
+            option.asString to option.asString
+        }
+
+        else -> emptyMap()
+    }
+
+    override fun serialize(
+        src: Map<String, String>,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement = context.serialize(src)
+}
 
 data class ExtraVisibilityRule(
     val all: List<ExtraVisibilityRule>? = null,
