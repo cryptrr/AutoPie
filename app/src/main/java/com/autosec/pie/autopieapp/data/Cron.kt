@@ -9,5 +9,6 @@ data class CronCommandModel(
     override var path: String,
     override val flags: List<String>? = null,
     override val extras: List<CommandExtra>? = null,
-    override val selectors: List<String> = emptyList()
+    override val selectors: List<String> = emptyList(),
+    override val multiStage: Boolean? = false
 ): CommandInterface
