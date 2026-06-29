@@ -174,18 +174,29 @@ class ProcessManagerService(
                 return@withContext null
             }
 
-            val runningShell = shells[processId] ?: return@withContext null
+            val runningShell = shells[processId]
+            if (runningShell == null) {
+                Timber.w("No shell found for processId $processId while resolving $variableName")
+                return@withContext null
+            }
             if (!runningShell.isAlive()) {
                 shells.remove(processId, runningShell)
+                Timber.w("Shell for processId $processId is not alive while resolving $variableName")
                 return@withContext null
             }
 
             try {
                 val result = runningShell.run(
-                    "if [[ -v $variableName ]]; then printf '%s' \"\${$variableName}\"; else exit 1; fi",
+                    "if [[ -v $variableName ]]; then printf '%s\\n' \"\${$variableName}\"; else false; fi",
                     Shell.Command.Config.silent()
                 )
-                result.stdout().takeIf { result.isSuccess }
+                if (result.isSuccess) {
+                    Timber.d("Resolved $variableName from shell for processId $processId")
+                    result.stdout()
+                } else {
+                    Timber.w("Variable $variableName is not set in shell for processId $processId")
+                    null
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to read $variableName from shell for processId $processId")
                 null
@@ -481,7 +492,13 @@ class ProcessManagerService(
             //TODO: Do this on condition.
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             scriptFile.appendText(fullCommand)
-            scriptFile.appendText("\nset +x\n")
+            scriptFile.appendText(
+                if (commandObject.multiStage == true) {
+                    "\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n"
+                } else {
+                    "\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n"
+                }
+            )
 
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
@@ -563,7 +580,7 @@ class ProcessManagerService(
                 processId,
                 result.isSuccess,
                 output,
-                partial = commandObject.multiStage == true && commandObject.steps.size > 1
+                partial = result.isSuccess && commandObject.multiStage == true && commandObject.steps.size > 1
             )
 
         }
