@@ -84,6 +84,8 @@ import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 import kotlin.math.roundToInt
 
+private val ENVIRONMENT_DEFAULT = Regex("\\$\\$([A-Za-z_][A-Za-z0-9_]*)")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommandExtrasBottomSheet(
@@ -198,6 +200,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         mutableStateOf(false)
     }
 
+    val requestedProcessId = viewModel.currentExtrasDetails.value?.third?.processId
+    val processId = remember(command, requestedProcessId) {
+        requestedProcessId ?: (100000..999999).random()
+    }
+
+
     val commandExtraInputs = remember(command.extras) {
         mutableStateOf(
             command.extras.orEmpty()
@@ -288,8 +296,20 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                             val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
-                            val textValue = remember {
+                            val textValue = remember(extra.id, extra.default) {
                                 mutableStateOf(extra.default)
+                            }
+
+                            val shellEnvironmentVariable = remember(extra.default) {
+                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                            }
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.let { textValue.value = it }
+                                }
                             }
 
                             LaunchedEffect(key1 = textValue.value) {
@@ -549,7 +569,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         isLoading = true
 
-                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
+                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
 
                         //Don't close the activity if intent is started with async false.
                         //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity

@@ -19,6 +19,7 @@ import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.data.services.ForegroundService
+import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.Utils
 import com.autopi.utils.getCommandExec
@@ -49,6 +50,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     val main: MainViewModel by inject(MainViewModel::class.java)
     val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
     val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+    val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
 
     private val appPreferences: AppPreferences by inject(AppPreferences::class.java)
 
@@ -215,11 +217,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             if (command.extras?.any { !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) } == true) {
                 Timber.d("Opening Extras sheet for $commandId")
                 currentExtrasDetails.value =
-                    Triple(true, command, ShareInputs(input, null))
+                    Triple(true, command, ShareInputs(input, null, processId))
             }
             else if(callerType == "EXTERNAL_APP"){
                 currentExtrasDetails.value =
-                    Triple(true, command, ShareInputs(input, null))
+                    Triple(true, command, ShareInputs(input, null, processId))
             }
             else{
                 onCommandClick(command, emptyList(), input, processId) {

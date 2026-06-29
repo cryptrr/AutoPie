@@ -68,6 +68,7 @@ class DirectCommandActivity : ComponentActivity() {
         val commandId = intent.getStringExtra("commandId")
         val input = intent.getStringExtra("input")
         val isAsync = intent.getBooleanExtra("async", true)
+        val processId = intent.getIntExtra("processId", -1).takeIf { it >= 0 }
         val callerPackage = callingPackage
             ?: referrer?.authority ?: ""
 
@@ -164,7 +165,13 @@ class DirectCommandActivity : ComponentActivity() {
                     delay(100L)
                     if(commandId != null){
                         Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(commandId,input,callerType, this@DirectCommandActivity)
+                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(
+                            commandId,
+                            input,
+                            callerType,
+                            this@DirectCommandActivity,
+                            processId
+                        )
                     }
                 }
 
@@ -204,7 +211,6 @@ class DirectCommandActivity : ComponentActivity() {
     }
 
 }
-
 
 
 

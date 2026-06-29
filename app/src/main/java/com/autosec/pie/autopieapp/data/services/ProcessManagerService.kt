@@ -31,6 +31,7 @@ import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
@@ -46,6 +47,8 @@ class ProcessManagerService(
     private val activity: Application,
     private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
 ){
+
+    private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
     private var shell: Shell? = null
 
@@ -165,6 +168,31 @@ class ProcessManagerService(
     fun getConfigRelativePath(path: String): String {
         return File(autoPieConfigPathProvider.getCommandBaseDirectory(), path).absolutePath
     }
+
+    suspend fun getShellEnvironmentVariable(processId: Int, variableName: String): String? =
+        withContext(dispatchers.io) {
+            if (!environmentVariableName.matches(variableName)) {
+                Timber.w("Invalid environment variable name requested: $variableName")
+                return@withContext null
+            }
+
+            val runningShell = shells[processId] ?: return@withContext null
+            if (!runningShell.isAlive()) {
+                shells.remove(processId, runningShell)
+                return@withContext null
+            }
+
+            try {
+                val result = runningShell.run(
+                    "if [[ -v $variableName ]]; then printf '%s' \"\${$variableName}\"; else exit 1; fi",
+                    Shell.Command.Config.silent()
+                )
+                result.stdout().takeIf { result.isSuccess }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to read $variableName from shell for processId $processId")
+                null
+            }
+        }
 
 
     private fun initShell() {

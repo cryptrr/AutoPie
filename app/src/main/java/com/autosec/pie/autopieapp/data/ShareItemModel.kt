@@ -18,6 +18,7 @@ data class CommandModel(
     override val name: String = "",
     override val path: String,
     override val command: String,
+    //TODO: Exec - Marked for deletion
     override val exec: String = "",
     override val selectors: List<String>? = emptyList(),
     override val cronInterval: String? = "",
