@@ -54,6 +54,10 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 
+fun CommandModel.hasUserFacingExtras(): Boolean = extras.orEmpty().any {
+    !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
+}
+
 data class CommandCreationModel(
     val selectedCommandType: String,
     val commandName: String,

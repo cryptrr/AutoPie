@@ -64,4 +64,24 @@ class MultiStageCommandTest {
         assertEquals("one", first.path)
         assertEquals("echo first", first.command)
     }
+
+    @Test
+    fun onlyStepsWithVisibleExtrasNeedUserInput() {
+        val noExtras = CommandModel(extras = null)
+        val internalOnly = CommandModel(
+            extras = listOf(
+                CommandExtra(
+                    id = "internal",
+                    name = "INTERNAL",
+                    type = "STRING",
+                    flags = listOf(ExtraFlags.INTERNAL_CONFIG.value)
+                )
+            )
+        )
+        val visible = CommandModel(extras = listOf(firstExtra))
+
+        assertFalse(noExtras.hasUserFacingExtras())
+        assertFalse(internalOnly.hasUserFacingExtras())
+        assertTrue(visible.hasUserFacingExtras())
+    }
 }

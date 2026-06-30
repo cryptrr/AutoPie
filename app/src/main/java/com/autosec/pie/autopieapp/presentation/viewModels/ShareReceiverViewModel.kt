@@ -14,6 +14,7 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.hasUserFacingExtras
 import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.domain.ViewModelError
@@ -88,12 +89,23 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                                     val currentInputs = currentExtrasDetails.value?.third
                                         ?.takeIf { inputs -> inputs.processId == it.processId }
                                         ?: ShareInputs(processId = it.processId)
-                                    currentExtrasDetails.value = Triple(
-                                        true,
-                                        nextCommand,
-                                        currentInputs.copy(processId = it.processId)
-                                    )
+                                    if (nextCommand.hasUserFacingExtras()) {
+                                        currentExtrasDetails.value = Triple(
+                                            true,
+                                            nextCommand,
+                                            currentInputs.copy(processId = it.processId)
+                                        )
+                                    } else {
+                                        onCommandClick(
+                                            nextCommand,
+                                            currentInputs.fileUris.orEmpty(),
+                                            currentInputs.currentLink,
+                                            it.processId
+                                        ) {}
+                                    }
                                 }
+                            } else if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                                currentExtrasDetails.value = null
                             }
                         }
                         is ViewModelEvent.CommandFailed -> {
