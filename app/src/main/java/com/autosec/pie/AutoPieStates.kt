@@ -83,7 +83,9 @@ fun rememberAutoPieStates(): AutoPieStates{
     val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
     val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
-    val runCommandBottomSheetState = rememberModalBottomSheetState(true)
+    val runCommandBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
+        it != SheetValue.Hidden
+    })
 //    val runCommandBottomSheetStateOpen = remember {
 //        derivedStateOf { shareReceiverViewModel.currentExtrasDetails.value != null }
 //    }

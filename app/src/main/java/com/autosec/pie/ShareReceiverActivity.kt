@@ -255,7 +255,9 @@ fun ShareContextMenuBottomSheet(
     val scope = rememberCoroutineScope()
 
 
-    val extrasBottomSheetState = rememberModalBottomSheetState(true)
+    val extrasBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
+        it != SheetValue.Hidden
+    })
     val extrasBottomSheetStateOpen = remember {
         mutableStateOf(false)
     }
