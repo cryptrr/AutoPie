@@ -65,6 +65,8 @@ import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasNextStep
 import com.autopi.autopieapp.data.matchesExtraValues
+import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
+import com.autopi.autopieapp.data.toMultiSelectableValue
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
@@ -73,6 +75,7 @@ import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.FlagSelector
 import com.autopi.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autopi.autopieapp.presentation.elements.MultiFilePicker
+import com.autopi.autopieapp.presentation.elements.MultiOptionSelector
 import com.autopi.autopieapp.presentation.elements.OptionSelectorBoolean
 import com.autopi.autopieapp.presentation.elements.PasswordFormField
 import com.autopi.autopieapp.presentation.elements.SingleFilePicker
@@ -326,7 +329,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             for(extra in visibleExtras.filter { it.type != "FLAG" }) {
                 key(extra.id) {
-                    Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
+                    val useSmallWidth = extra.description.isEmpty() &&
+                        !extra.flags.hasFlag(ExtraFlags.LARGE)
+                    Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
                     when (extra.type) {
                         "STRING" -> {
 
@@ -543,6 +548,90 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 OptionSelector(
                                     options = options,
                                     selectedOption = selectedOption,
+                                    expanded = expanded,
+                                    enabled = !selectableFetchFailed
+                                )
+                            }
+                        }
+                        "MULTI_SELECTABLE" -> {
+                            val expanded = remember { mutableStateOf(false) }
+                            val configuredOptions = extra.selectableOptions
+                            val shellEnvironmentVariable = remember(configuredOptions) {
+                                configuredOptions.values.singleOrNull()
+                                    ?.let { ENVIRONMENT_DEFAULT.matchEntire(it) }
+                                    ?.groupValues
+                                    ?.get(1)
+                            }
+                            var options by remember(extra.id, configuredOptions) {
+                                mutableStateOf(configuredOptions)
+                            }
+                            var selectableFetchFailed by remember(extra.id, configuredOptions) {
+                                mutableStateOf(false)
+                            }
+                            val selectedOptions =
+                                rememberSaveable(extra.id, extra.default, configuredOptions) {
+                                    mutableStateOf(
+                                        resolveMultiSelectableDefaults(extra.default, configuredOptions)
+                                    )
+                                }
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    val resolvedOptions = viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.toSelectableOptions()
+                                        ?.takeIf { it.isNotEmpty() }
+
+                                    if (resolvedOptions == null) {
+                                        selectableFetchFailed = true
+                                        expanded.value = false
+                                        options = emptyMap()
+                                        selectedOptions.value = emptyList()
+                                    } else {
+                                        selectableFetchFailed = false
+                                        options = resolvedOptions
+                                        selectedOptions.value = resolveMultiSelectableDefaults(
+                                            extra.default,
+                                            resolvedOptions
+                                        )
+                                    }
+                                }
+                            }
+
+                            LaunchedEffect(selectedOptions.value) {
+                                val value = selectedOptions.value.toMultiSelectableValue()
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        value,
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = extra.name,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (extra.description.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = extra.description,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                MultiOptionSelector(
+                                    options = options,
+                                    selectedOptions = selectedOptions,
                                     expanded = expanded,
                                     enabled = !selectableFetchFailed
                                 )

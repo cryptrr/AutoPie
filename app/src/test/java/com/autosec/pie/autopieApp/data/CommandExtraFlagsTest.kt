@@ -60,4 +60,12 @@ class CommandExtraFlagsTest {
         assertTrue(listOf("--int").hasFlag(ExtraFlags.INT))
         assertFalse(emptyList<String>().hasFlag(ExtraFlags.INT))
     }
+
+    @Test
+    fun `extra size flags are detected`() {
+        val flags = listOf("--small", "--large")
+
+        assertTrue(flags.hasFlag(ExtraFlags.SMALL))
+        assertTrue(flags.hasFlag(ExtraFlags.LARGE))
+    }
 }

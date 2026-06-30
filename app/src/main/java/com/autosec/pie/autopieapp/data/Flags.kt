@@ -6,7 +6,9 @@ enum class ExtraFlags(val value: String) {
     MULTI_FILE_PICKER("--multi-file-picker"),
     FILE_PICKER("--file-picker"),
     MIME_TYPE("--mime-type"),
-    INT("--int")
+    INT("--int"),
+    SMALL("--small"),
+    LARGE("--large")
 }
 
 enum class ScriptFlags(val value: String) {

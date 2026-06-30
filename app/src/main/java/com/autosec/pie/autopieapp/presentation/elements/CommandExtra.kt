@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -145,7 +146,7 @@ fun CommandExtraInputElement(
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
-    val options = listOf("STRING", "SELECTABLE","FLAG", "BOOLEAN","SLIDER")
+    val options = listOf("STRING", "SELECTABLE", "MULTI_SELECTABLE", "FLAG", "BOOLEAN", "SLIDER")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
@@ -187,7 +188,9 @@ fun CommandExtraInputElement(
             name = name.value,
             type = selectedCommandType.value,
             default = when{
-                command.type == "SELECTABLE" -> parsedSelectableOptions.values.firstOrNull() ?: ""
+                selectedCommandType.value == "SELECTABLE" ||
+                    selectedCommandType.value == "MULTI_SELECTABLE" ->
+                    parsedSelectableOptions.values.firstOrNull() ?: ""
                 else -> default.value
             },
             description = description.value,
@@ -323,7 +326,7 @@ fun CommandExtraInputElement(
                 )
             }
 
-            "SELECTABLE" -> {
+            "SELECTABLE", "MULTI_SELECTABLE" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -333,7 +336,11 @@ fun CommandExtraInputElement(
                     text = selectableOptions,
                     "",
                     placeholder = "OPTIONS",
-                    subtitle = "Separate options with commas. Use Label=raw value for a user-friendly label. The first value is the default.",
+                    subtitle = if (selectedCommandType.value == "MULTI_SELECTABLE") {
+                        "Separate options with commas. Users can select multiple values; selected raw values are joined with a new line."
+                    } else {
+                        "Separate options with commas. Use Label=raw value for a user-friendly label. The first value is the default."
+                    },
                     isError = selectableOptions.value.isBlank()
                 )
                 GenericTextFormField(
@@ -511,6 +518,93 @@ fun OptionSelector(
                     onClick = {
                         selectedOption.value = value
                         expanded.value = false
+                    },
+                    text = { Text(label) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MultiOptionSelector(
+    options: Map<String, String>,
+    selectedOptions: MutableState<List<String>>,
+    expanded: MutableState<Boolean>,
+    enabled: Boolean = true,
+) {
+    val selectedLabels = options
+        .filterValues { it in selectedOptions.value }
+        .keys
+        .joinToString(", ")
+        .ifEmpty { if (enabled) "Select options" else "Error fetching" }
+
+    Column(
+        modifier = Modifier
+            .border(
+                2.dp,
+                if (enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(
+                if (enabled) Color.Black.copy(alpha = 0.15F)
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08F)
+            )
+            .clickable(enabled = enabled) { expanded.value = true }
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(0.9F)
+        ) {
+            Text(
+                text = selectedLabels,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F),
+                softWrap = false,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth(0.85F)
+                    .padding(top = 16.dp, bottom = 16.dp, start = 16.dp)
+            )
+            Box(
+                Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(1F),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                    imageVector = Icons.Default.UnfoldMore,
+                    contentDescription = "Show options",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = enabled && expanded.value,
+            onDismissRequest = { expanded.value = false },
+        ) {
+            options.forEach { (label, value) ->
+                val selected = value in selectedOptions.value
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOptions.value = if (selected) {
+                            selectedOptions.value - value
+                        } else {
+                            selectedOptions.value + value
+                        }
+                    },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = selected,
+                            onCheckedChange = null
+                        )
                     },
                     text = { Text(label) }
                 )
