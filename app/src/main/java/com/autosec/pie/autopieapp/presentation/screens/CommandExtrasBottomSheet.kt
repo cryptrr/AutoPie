@@ -211,11 +211,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val viewModel: ShareReceiverViewModel = koinViewModel()
 
-    val fileUris by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.fileUris)
+    val inputFiles by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputFiles)
     }
-    val currentLink by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.currentLink)
+    val inputText by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputText)
     }
 
     val extraInput = remember {
@@ -322,7 +322,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(bottom = 90.dp)
         ) {
 
-            if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
+            if(inputFiles == null && inputText == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
                 GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.", useRelativePaths = false)
             }
 
@@ -793,7 +793,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         isLoading = true
 
-                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value, processId)
+                        viewModel.onCommandClickWithExtras(command, inputText ?: extraInput.value, inputFiles ?: extraInputList.value, commandExtraInputs.value, processId)
 
                         if (command.hasNextStep()) {
                             return@launch

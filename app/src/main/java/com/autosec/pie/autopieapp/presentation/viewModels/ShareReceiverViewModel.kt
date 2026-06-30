@@ -108,8 +108,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                                         }
                                         onCommandClick(
                                             nextCommand,
-                                            currentInputs.fileUris.orEmpty(),
-                                            currentInputs.currentLink,
+                                            currentInputs.inputFiles.orEmpty(),
+                                            currentInputs.inputText,
                                             it.processId
                                         ) {}
                                     }
@@ -221,11 +221,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun runShareCommand(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
+    fun runShareCommand(item: CommandModel, inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
 
 
         Timber.d(item.toString())
-        Timber.d(currentLink.toString())
+        Timber.d(inputText.toString())
 
 
         viewModelScope.launch(dispatchers.io){
@@ -233,7 +233,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
                 val logsFile = Utils.getFileWithPrefix(application1.cacheDir.absolutePath, processId.toString()) ?: File(application1.cacheDir, "dummy")
 
-                useCases.runCommand(item, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
+                useCases.runCommand(item, inputText, inputFiles, commandExtraInputs, processId).catch { e ->
 
                     if (item.multiStage == true) {
                         main.dispatchEvent(ViewModelEvent.StopShell(processId))
@@ -360,7 +360,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, processId: Int? = null, onComplete: () -> Unit){
+    fun onCommandClick(card: CommandModel, inputFiles: List<String>, inputText: String?, processId: Int? = null, onComplete: () -> Unit){
         viewModelScope.launch {
             try {
                 val resolvedProcessId = processId ?: (100000..999999).random()
@@ -368,20 +368,20 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     ?: return@launch
                 if (runnableCard.multiStage == true && multiStageInputs[resolvedProcessId] == null) {
                     multiStageInputs[resolvedProcessId] = ShareInputs(
-                        currentLink = currentLink,
-                        fileUris = fileUris,
+                        inputText,
+                        inputFiles,
                         processId = resolvedProcessId
                     )
                     multiStageCompletionCallbacks[resolvedProcessId] = onComplete
                     main.dispatchEvent(ViewModelEvent.CreateShell(resolvedProcessId))
                 }
                 val commandJson = Gson().toJson(runnableCard)
-                val fileUrisJson = Gson().toJson(fileUris)
+                val inputFilesJson = Gson().toJson(inputFiles)
 
                 val intent = Intent(application1, ForegroundService::class.java).apply {
                     putExtra("command", commandJson)
-                    putExtra("currentLink", currentLink)
-                    putExtra("fileUris", fileUrisJson)
+                    putExtra("inputText", inputText)
+                    putExtra("inputFiles", inputFilesJson)
                     //Optional
                     putExtra("processId", resolvedProcessId)
                 }
@@ -398,7 +398,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun onCommandClickWithExtras(command: CommandModel,currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput>, processId: Int? = null){
+    fun onCommandClickWithExtras(command: CommandModel,inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput>, processId: Int? = null){
         viewModelScope.launch {
 
             try {
@@ -408,7 +408,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
                 val gson = Gson()
                 val commandJson = gson.toJson(runnableCommand)
-                val fileUrisJson = gson.toJson(fileUris)
+                val inputFilesJson = gson.toJson(inputFiles)
 
                 val commandExtraInputsJson = gson.toJson(commandExtraInputs)
 
@@ -416,8 +416,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
                 val intent = Intent(application1, ForegroundService::class.java).apply {
                     putExtra("command", commandJson)
-                    putExtra("currentLink", currentLink)
-                    putExtra("fileUris", fileUrisJson)
+                    putExtra("inputText", inputText)
+                    putExtra("inputFiles", inputFilesJson)
                     putExtra("commandExtraInputs", commandExtraInputsJson)
                     //Optional
                     putExtra("processId", resolvedProcessId)

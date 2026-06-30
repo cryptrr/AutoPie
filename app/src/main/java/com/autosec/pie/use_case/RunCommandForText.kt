@@ -20,7 +20,7 @@ import timber.log.Timber
 import java.io.File
 
 class RunCommandForText(private val processManagerService: ProcessManagerService){
-    operator fun invoke(item: CommandModel, text: String, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
+    operator fun invoke(item: CommandModel, inputText: String, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
 
         return flow {
             Timber.d("RunCommandForText")
@@ -52,11 +52,11 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
             //TODO: Make this more robust
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
-                it.add(InputParsedData(name = "INPUT_TEXT", value = "$text"))
-                it.add(InputParsedData(name = "INPUT_FILE", value = "${if(text.containsValidUrl()) text.extractFirstUrl() else ""}"))
-                it.add(InputParsedData(name = "INPUT_FILES", value = "${if(text.containsValidUrl()) text.extractAllUrls() else ""}"))
-                it.add(InputParsedData(name = "INPUT_URL", value = "${if(text.containsValidHttpUrl()) text.extractFirstUrl() else ""}"))
-                it.add(InputParsedData(name = "INPUT_URLS", value = "${if(text.containsValidHttpUrl()) text.extractAllUrls() else ""}"))
+                it.add(InputParsedData(name = "INPUT_TEXT", value = "$inputText"))
+                it.add(InputParsedData(name = "INPUT_FILE", value = "${if(inputText.containsValidUrl()) inputText.extractFirstUrl() else ""}"))
+                it.add(InputParsedData(name = "INPUT_FILES", value = "${if(inputText.containsValidUrl()) inputText.extractAllUrls() else ""}"))
+                it.add(InputParsedData(name = "INPUT_URL", value = "${if(inputText.containsValidHttpUrl()) inputText.extractFirstUrl() else ""}"))
+                it.add(InputParsedData(name = "INPUT_URLS", value = "${if(inputText.containsValidHttpUrl()) inputText.extractAllUrls() else ""}"))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
@@ -68,14 +68,14 @@ class RunCommandForText(private val processManagerService: ProcessManagerService
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
             val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true) {
-                processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
+                processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,inputText,processId,  JobType.TEXT,usePython, isShellScript)
 
             }else{
-                processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,text,processId,  JobType.TEXT,usePython, isShellScript)
+                processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,inputText,processId,  JobType.TEXT,usePython, isShellScript)
             }
 
 
-            val result = processResult.toCommandResult(JobType.TEXT, text)
+            val result = processResult.toCommandResult(JobType.TEXT, inputText)
 
 
             emit(result)

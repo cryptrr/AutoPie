@@ -103,14 +103,14 @@ class ShareReceiverActivity : ComponentActivity() {
         Timber.d(this.intent.extras.toString())
 
 
-        val data = intent?.getStringExtra(Intent.EXTRA_TEXT)
+        val inputText = intent?.getStringExtra(Intent.EXTRA_TEXT)
 
         val viewData = intent?.data
 
         Timber.d("View data: $viewData")
 
 
-        val files = mutableListOf<String>()
+        val inputFiles = mutableListOf<String>()
 
 
         when {
@@ -124,17 +124,17 @@ class ShareReceiverActivity : ComponentActivity() {
                     sharedPath.path.let {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath!!)
+                        inputFiles.add(fullPath!!)
                     }
                 }
 
-                if(sharedPaths == null && data == null){
+                if(sharedPaths == null && inputText == null){
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
 
@@ -153,17 +153,17 @@ class ShareReceiverActivity : ComponentActivity() {
                     if (it != null) {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath)
+                        inputFiles.add(fullPath)
                     }
                 }
 
-                if(sharedPath == null && data == null) {
+                if(sharedPath == null && inputText == null) {
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_SEND CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
 
@@ -179,25 +179,25 @@ class ShareReceiverActivity : ComponentActivity() {
                     if (it != null) {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath)
+                        inputFiles.add(fullPath)
                     }
                 }
 
-                if(sharedPath == null && data == null){
+                if(sharedPath == null && inputText == null){
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_VIEW CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
             }
 
         }
 
-        Timber.d("Intent EXTRA_TEXT: ${data.toString()}")
-        Timber.d("Intent FILES: : ${files}")
+        Timber.d("Intent EXTRA_TEXT: ${inputText.toString()}")
+        Timber.d("Intent FILES: : $inputFiles")
 
 
 
@@ -206,7 +206,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
             AutoPieTheme {
 
-                ShareContextMenuBottomSheet(currentLink = data, fileUris = files)
+                ShareContextMenuBottomSheet(inputText = inputText, inputFiles = inputFiles)
 
             }
         }
@@ -219,8 +219,8 @@ class ShareReceiverActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareContextMenuBottomSheet(
-    currentLink: String?,
-    fileUris: List<String>,
+    inputText: String?,
+    inputFiles: List<String>,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
@@ -234,7 +234,7 @@ fun ShareContextMenuBottomSheet(
     val activity = LocalContext.current.getActivity()
 
 
-    LaunchedEffect(key1 = currentLink, fileUris) {
+    LaunchedEffect(key1 = inputText, inputFiles) {
         shareReceiverViewModel.main.eventFlow.collect {
             when (it) {
                 is ViewModelEvent.CloseShareReceiverSheet -> activity?.finish()
@@ -334,7 +334,7 @@ fun ShareContextMenuBottomSheet(
                     items(
                         filteredShareItemsResult.value,
                         key = { it.name ?: it }) { item ->
-                        ShareCard(card = item, currentLink, fileUris, state)
+                        ShareCard(card = item, inputText, inputFiles, state)
                     }
                 }
 
@@ -374,8 +374,8 @@ fun ShareContextMenuBottomSheet(
 @Composable
 fun ShareCard(
     card: CommandModel,
-    currentLink: String?,
-    fileUris: List<String>,
+    inputText: String?,
+    inputFiles: List<String>,
     sheetState: SheetState,
 ) {
 
@@ -409,11 +409,11 @@ fun ShareCard(
                     if (runnableCard.hasUnsetRequiredExtras()) {
                         shareReceiverViewModel.openCommandExtras(
                             runnableCard,
-                            ShareInputs(currentLink, fileUris)
+                            ShareInputs(inputText, inputFiles)
                         )
                     } else {
                         isLoading = true
-                        shareReceiverViewModel.onCommandClick(runnableCard, fileUris, currentLink) {
+                        shareReceiverViewModel.onCommandClick(runnableCard, inputFiles, inputText) {
                             shareReceiverViewModel.viewModelScope.launch {
                                 //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
                                 //TODO: Switch from exec.
@@ -431,7 +431,7 @@ fun ShareCard(
                     if (activeCard.multiStage == true || hasUserFacingExtras) {
                         shareReceiverViewModel.openCommandExtras(
                             activeCard,
-                            ShareInputs(currentLink, fileUris)
+                            ShareInputs(inputText, inputFiles)
                         )
                     }
                 }
@@ -454,7 +454,7 @@ fun ShareCard(
                 CommandCard(card = card) {
                     shareReceiverViewModel.openCommandExtras(
                         activeCard,
-                        ShareInputs(currentLink, fileUris)
+                        ShareInputs(inputText, inputFiles)
                     )
                 }
             }

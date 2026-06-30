@@ -11,40 +11,40 @@ import timber.log.Timber
 import java.io.File
 
 class RunCommand() {
-    suspend operator fun invoke(item: CommandModel, currentLink: String?, fileUris: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
-        val inputDir = fileUris.firstOrNull()?.let { File(it) }
+    suspend operator fun invoke(item: CommandModel, inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int) : Flow<CommandResult> {
+        val inputDir = inputFiles.firstOrNull()?.let { File(it) }
 
         val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
-        Timber.d("currentLink: $currentLink, fileUris: $fileUris")
+        Timber.d("inputText: $inputText, inputFiles: $inputFiles")
 
         when {
 
             inputDir?.isDirectory == true -> {
                 Timber.d("directory detected")
                 return  useCases.runCommandForDirectory(item,inputDir, commandExtraInputs, processId).onEach { result ->
-                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+                    useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
-            currentLink.isValidUrl() -> {
+            inputText.isValidUrl() -> {
                 Timber.d("Is a valid url")
-                return useCases.runCommandForUrl(item, currentLink!!, fileUris, commandExtraInputs, processId).onEach { result ->
-                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+                return useCases.runCommandForUrl(item, inputText!!, inputFiles, commandExtraInputs, processId).onEach { result ->
+                    useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
 
-            fileUris.isNotEmpty() -> {
+            inputFiles.isNotEmpty() -> {
                 Timber.d("file uris not empty")
-                return useCases.runCommandForFiles(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
-                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+                return useCases.runCommandForFiles(item, inputText, inputFiles, commandExtraInputs, processId).onEach { result ->
+                    useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
 
-            currentLink?.isNotEmpty() == true -> {
+            inputText?.isNotEmpty() == true -> {
                 Timber.d("text is present")
 
-                return useCases.runCommandForText(item, currentLink, fileUris, commandExtraInputs, processId).onEach { result ->
-                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+                return useCases.runCommandForText(item, inputText, inputFiles, commandExtraInputs, processId).onEach { result ->
+                    useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
 
@@ -53,7 +53,7 @@ class RunCommand() {
                 Timber.d("No text or files present")
 
                 return useCases.runStandaloneCommand(item, commandExtraInputs, processId).onEach { result ->
-                    useCases.addCommandToHistory(item, currentLink, fileUris, commandExtraInputs, result.success ,processId)
+                    useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
         }

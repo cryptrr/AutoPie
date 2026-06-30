@@ -19,8 +19,8 @@ import java.net.URL
 class RunCommandForUrl(private val processManagerService: ProcessManagerService) {
     suspend operator fun invoke(
         item: CommandModel,
-        currentLink: String,
-        fileUris: List<String>,
+        inputUrl: String,
+        inputFiles: List<String>,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
     ): Flow<CommandResult> {
@@ -29,11 +29,11 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             Timber.d("runCommandForUrl")
 
 
-            val inputUrl = URL(currentLink)
+            val inputUrlObj = URL(inputUrl)
 
-            val host = inputUrl.host
+            val host = inputUrlObj.host
 
-            val filename = inputUrl.file
+            val filename = inputUrlObj.file
 
             val path = processManagerService.getCommandWorkingDirectory(item.path)
 
@@ -70,13 +70,13 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 it.add(
                     InputParsedData(
                         name = "INPUT_FILE",
-                        value = if (useQuotes) "\"$currentLink\"" else currentLink
+                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
                     )
                 )
                 it.add(
                     InputParsedData(
                         name = "INPUT_URL",
-                        value = if (useQuotes) "\"$currentLink\"" else currentLink
+                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
                     )
                 )
                 it.add(InputParsedData(name = "HOST", value = if (useQuotes) "\"$host\"" else host))
@@ -107,7 +107,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     path,
                     inputParsedData,
                     if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
-                    currentLink,
+                    inputUrl,
                     processId,
                     JobType.URL,
                     usePython,
@@ -121,7 +121,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     path,
                     inputParsedData,
                     if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
-                    currentLink,
+                    inputUrl,
                     processId,
                     JobType.URL,
                     usePython,
@@ -129,7 +129,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 )
             }
 
-            val result = processResult.toCommandResult(JobType.URL, currentLink)
+            val result = processResult.toCommandResult(JobType.URL, inputUrl)
 
             emit(result)
         }
