@@ -67,6 +67,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         AutoPieNotification::class.java)
 
     val currentExtrasDetails = mutableStateOf<Triple<Boolean, CommandModel, ShareInputs>?>(null)
+    private val multiStageInputs = mutableMapOf<Int, ShareInputs>()
+    private val multiStageCompletionCallbacks = mutableMapOf<Int, () -> Unit>()
     val commandNotFound = mutableStateOf<Boolean?>(false)
 
     init {
@@ -84,9 +86,12 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             if (it.partial) {
                                 val nextCommand = it.command.nextStepOrNull()
                                 if (nextCommand == null) {
+                                    multiStageInputs.remove(it.processId)
+                                    multiStageCompletionCallbacks.remove(it.processId)?.invoke()
                                     main.dispatchEvent(ViewModelEvent.StopShell(it.processId))
                                 } else {
-                                    val currentInputs = currentExtrasDetails.value?.third
+                                    val currentInputs = multiStageInputs[it.processId]
+                                        ?: currentExtrasDetails.value?.third
                                         ?.takeIf { inputs -> inputs.processId == it.processId }
                                         ?: ShareInputs(processId = it.processId)
                                     if (nextCommand.hasUserFacingExtras()) {
@@ -96,6 +101,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                                             currentInputs.copy(processId = it.processId)
                                         )
                                     } else {
+                                        if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                                            currentExtrasDetails.value = null
+                                        }
                                         onCommandClick(
                                             nextCommand,
                                             currentInputs.fileUris.orEmpty(),
@@ -107,13 +115,21 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             } else if (currentExtrasDetails.value?.third?.processId == it.processId) {
                                 currentExtrasDetails.value = null
                             }
+                            if (!it.partial) {
+                                multiStageInputs.remove(it.processId)
+                                multiStageCompletionCallbacks.remove(it.processId)?.invoke()
+                            }
                         }
                         is ViewModelEvent.CommandFailed -> {
+                            multiStageInputs.remove(it.processId)
+                            multiStageCompletionCallbacks.remove(it.processId)?.invoke()
                             if (currentExtrasDetails.value?.third?.processId == it.processId) {
                                 currentExtrasDetails.value = null
                             }
                         }
                         is ViewModelEvent.CommandStoppedByUser -> {
+                            multiStageInputs.remove(it.processId)
+                            multiStageCompletionCallbacks.remove(it.processId)?.invoke()
                             if (currentExtrasDetails.value?.third?.processId == it.processId) {
                                 currentExtrasDetails.value = null
                             }
@@ -269,6 +285,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         val resolvedProcessId = processId ?: (100000..999999).random()
         val activeCommand = command.firstStepOrSelf()
         if (activeCommand.multiStage == true) {
+            multiStageInputs[resolvedProcessId] = inputs.copy(processId = resolvedProcessId)
             main.dispatchEvent(ViewModelEvent.CreateShell(resolvedProcessId))
         }
         currentExtrasDetails.value = Triple(
@@ -320,6 +337,16 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, processId: Int? = null, onComplete: () -> Unit){
         viewModelScope.launch {
             try {
+                val resolvedProcessId = processId ?: (100000..999999).random()
+                if (card.multiStage == true && multiStageInputs[resolvedProcessId] == null) {
+                    multiStageInputs[resolvedProcessId] = ShareInputs(
+                        currentLink = currentLink,
+                        fileUris = fileUris,
+                        processId = resolvedProcessId
+                    )
+                    multiStageCompletionCallbacks[resolvedProcessId] = onComplete
+                    main.dispatchEvent(ViewModelEvent.CreateShell(resolvedProcessId))
+                }
                 val commandJson = Gson().toJson(card)
                 val fileUrisJson = Gson().toJson(fileUris)
 
@@ -328,12 +355,14 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     putExtra("currentLink", currentLink)
                     putExtra("fileUris", fileUrisJson)
                     //Optional
-                    putExtra("processId", processId)
+                    putExtra("processId", resolvedProcessId)
                 }
 
                 startForegroundService(application1, intent)
 
-                onComplete()
+                if (card.multiStage != true) {
+                    onComplete()
+                }
 
             }catch (e: Exception){
                 Timber.e(e)

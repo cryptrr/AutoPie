@@ -73,6 +73,7 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.hasUnsetRequiredExtras
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SearchBar
@@ -402,21 +403,15 @@ fun ShareCard(
                         return@combinedClickable
                     }
 
-                    if (activeCard.multiStage == true || activeCard.extras?.any {
-                            !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
-                                it.type == "STRING" &&
-                                it.default.isEmpty() &&
-                                it.required
-                        } == true
-                    ) {
+                    if (activeCard.hasUnsetRequiredExtras()) {
                         shareReceiverViewModel.openCommandExtras(
                             activeCard,
                             ShareInputs(currentLink, fileUris)
                         )
                     } else {
+                        isLoading = true
                         shareReceiverViewModel.onCommandClick(activeCard, fileUris, currentLink) {
                             shareReceiverViewModel.viewModelScope.launch {
-                                isLoading = true
                                 //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
                                 //TODO: Switch from exec.
                                 val delayTime = if (getCommandExec(activeCard.command) == "am") 2000.milliseconds else 900.milliseconds

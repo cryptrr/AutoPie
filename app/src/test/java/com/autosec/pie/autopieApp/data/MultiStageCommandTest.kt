@@ -84,4 +84,16 @@ class MultiStageCommandTest {
         assertFalse(internalOnly.hasUserFacingExtras())
         assertTrue(visible.hasUserFacingExtras())
     }
+
+    @Test
+    fun multiStageDoesNotRequireSheetWithoutUnsetRequiredExtras() {
+        val optionalExtra = firstExtra.copy(required = false, default = "")
+        val populatedRequiredExtra = firstExtra.copy(required = true, default = "ready")
+        val unsetRequiredExtra = firstExtra.copy(required = true, default = "")
+
+        assertFalse(CommandModel(multiStage = true).hasUnsetRequiredExtras())
+        assertFalse(CommandModel(multiStage = true, extras = listOf(optionalExtra)).hasUnsetRequiredExtras())
+        assertFalse(CommandModel(multiStage = true, extras = listOf(populatedRequiredExtra)).hasUnsetRequiredExtras())
+        assertTrue(CommandModel(multiStage = true, extras = listOf(unsetRequiredExtra)).hasUnsetRequiredExtras())
+    }
 }

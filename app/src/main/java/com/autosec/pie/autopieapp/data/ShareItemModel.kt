@@ -58,6 +58,13 @@ fun CommandModel.hasUserFacingExtras(): Boolean = extras.orEmpty().any {
     !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
 }
 
+fun CommandModel.hasUnsetRequiredExtras(): Boolean = extras.orEmpty().any {
+    !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
+        it.type == "STRING" &&
+        it.default.isEmpty() &&
+        it.required
+}
+
 data class CommandCreationModel(
     val selectedCommandType: String,
     val commandName: String,
