@@ -488,7 +488,7 @@ class ProcessManagerService(
             }
 
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
-            scriptFile.writeText("set -x\n")
+            scriptFile.writeText(commandScriptPreamble(commandObject.multiStage == true))
             //TODO: Do this on condition.
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             scriptFile.appendText(fullCommand)
@@ -1020,4 +1020,14 @@ private fun String.shellExportValue(): String {
             (trimmed.startsWith("\"") && trimmed.endsWith("\""))
 
     return if (alreadyQuoted) this else shellQuote()
+}
+
+internal fun commandScriptPreamble(multiStage: Boolean): String = buildString {
+    if (multiStage) {
+        append("if [ \"\${OUTPUT+x}\" = x ]; then\n")
+        append("    export INPUT=\"\$OUTPUT\"\n")
+        append("    unset OUTPUT\n")
+        append("fi\n")
+    }
+    append("set -x\n")
 }

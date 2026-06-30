@@ -45,6 +45,7 @@ class RunCronCommand(private val processManagerService: ProcessManagerService){
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                it.add(InputParsedData(name = "INPUT", value = ""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
