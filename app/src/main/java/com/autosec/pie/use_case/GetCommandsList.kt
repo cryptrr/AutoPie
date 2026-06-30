@@ -44,9 +44,13 @@ class GetCommandsList(private val jsonService: JsonService) {
             onCommandsSkipped(skippedCommands)
         }
 
-        val commandsData = sharesData.values.map { it.value.copy(type = CommandType.SHARE, name = it.key) } +
-                cronData.values.map { it.value.copy(type = CommandType.CRON, name = it.key) } +
-                observerData.values.map { it.value.copy(type = CommandType.FILE_OBSERVER, name = it.key) }
+        val commandsData = sharesData.values.map {
+            it.value.copy(id = it.value.id.ifBlank { it.key }, type = CommandType.SHARE, name = it.key)
+        } + cronData.values.map {
+            it.value.copy(id = it.value.id.ifBlank { it.key }, type = CommandType.CRON, name = it.key)
+        } + observerData.values.map {
+            it.value.copy(id = it.value.id.ifBlank { it.key }, type = CommandType.FILE_OBSERVER, name = it.key)
+        }
 
         return commandsData
 

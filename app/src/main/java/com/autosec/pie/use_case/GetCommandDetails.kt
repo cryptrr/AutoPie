@@ -40,6 +40,10 @@ class GetCommandDetails(private val jsonService: JsonService) {
 
         Timber.d("commandType: $commandType")
 
-        return commandModel.copy(type = commandType, name = key)
+        return commandModel.copy(
+            id = commandModel.id.ifBlank { key },
+            type = commandType,
+            name = key
+        )
     }
 }

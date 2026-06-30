@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
-import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
@@ -265,8 +264,7 @@ fun CommandCard(
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
-                    shareReceiverViewModel.currentExtrasDetails.value =
-                        Triple(true, card, ShareInputs())
+                    shareReceiverViewModel.openCommandExtras(card)
                 }
             ),
 
@@ -348,4 +346,3 @@ fun CommandCard(
         }
     }
 }
-

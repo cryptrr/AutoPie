@@ -10,12 +10,14 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandStepResolutionException
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasUserFacingExtras
 import com.autopi.autopieapp.data.nextStepOrNull
+import com.autopi.autopieapp.data.resolveCommandSteps
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.AppNotification
@@ -283,7 +285,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         processId: Int? = inputs.processId
     ): Int {
         val resolvedProcessId = processId ?: (100000..999999).random()
-        val activeCommand = command.firstStepOrSelf()
+        val activeCommand = prepareCommand(command, resolvedProcessId)?.firstStepOrSelf()
+            ?: return resolvedProcessId
         if (activeCommand.multiStage == true) {
             multiStageInputs[resolvedProcessId] = inputs.copy(processId = resolvedProcessId)
             main.dispatchEvent(ViewModelEvent.CreateShell(resolvedProcessId))
@@ -298,7 +301,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
     fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?, processId: Int? = null): Boolean{
         try {
-            val command = shareItemsResult.value.find { it.name == commandId }
+            val command = shareItemsResult.value.find { it.id == commandId || it.name == commandId }
 
             if(command == null){
                 Timber.d("Command not found: $commandId")
@@ -308,7 +311,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
             commandNotFound.value = null
 
-            val activeCommand = command.firstStepOrSelf()
+            val activeCommand = prepareCommand(command, processId)?.firstStepOrSelf()
+                ?: return false
 
             if (activeCommand.multiStage == true || activeCommand.extras?.any { !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) } == true) {
                 Timber.d("Opening Extras sheet for $commandId")
@@ -333,12 +337,36 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
+    fun prepareCommand(command: CommandModel, processId: Int? = null): CommandModel? {
+        return try {
+            val commandsById = shareItemsResult.value
+                .filter { it.id.isNotBlank() }
+                .associateBy { it.id }
+            command.resolveCommandSteps(commandsById)
+        } catch (exception: CommandStepResolutionException) {
+            val resolvedProcessId = processId ?: (100000..999999).random()
+            val logsFile = File(application1.cacheDir, "$resolvedProcessId.log")
+            runCatching { logsFile.writeText(exception.message.orEmpty()) }
+            autoPieNotification.sendNotification(
+                "Command Failed",
+                exception.message.orEmpty(),
+                command,
+                logsFile.absolutePath,
+                resolvedProcessId
+            )
+            Timber.e(exception)
+            null
+        }
+    }
+
 
     fun onCommandClick(card: CommandModel, fileUris: List<String>, currentLink: String?, processId: Int? = null, onComplete: () -> Unit){
         viewModelScope.launch {
             try {
                 val resolvedProcessId = processId ?: (100000..999999).random()
-                if (card.multiStage == true && multiStageInputs[resolvedProcessId] == null) {
+                val runnableCard = prepareCommand(card, resolvedProcessId)?.firstStepOrSelf()
+                    ?: return@launch
+                if (runnableCard.multiStage == true && multiStageInputs[resolvedProcessId] == null) {
                     multiStageInputs[resolvedProcessId] = ShareInputs(
                         currentLink = currentLink,
                         fileUris = fileUris,
@@ -347,7 +375,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     multiStageCompletionCallbacks[resolvedProcessId] = onComplete
                     main.dispatchEvent(ViewModelEvent.CreateShell(resolvedProcessId))
                 }
-                val commandJson = Gson().toJson(card)
+                val commandJson = Gson().toJson(runnableCard)
                 val fileUrisJson = Gson().toJson(fileUris)
 
                 val intent = Intent(application1, ForegroundService::class.java).apply {
@@ -360,7 +388,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
                 startForegroundService(application1, intent)
 
-                if (card.multiStage != true) {
+                if (runnableCard.multiStage != true) {
                     onComplete()
                 }
 
@@ -374,9 +402,12 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         viewModelScope.launch {
 
             try {
+                val resolvedProcessId = processId ?: (100000..999999).random()
+                val runnableCommand = prepareCommand(command, resolvedProcessId)?.firstStepOrSelf()
+                    ?: return@launch
 
                 val gson = Gson()
-                val commandJson = gson.toJson(command)
+                val commandJson = gson.toJson(runnableCommand)
                 val fileUrisJson = gson.toJson(fileUris)
 
                 val commandExtraInputsJson = gson.toJson(commandExtraInputs)
@@ -389,7 +420,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     putExtra("fileUris", fileUrisJson)
                     putExtra("commandExtraInputs", commandExtraInputsJson)
                     //Optional
-                    putExtra("processId", processId)
+                    putExtra("processId", resolvedProcessId)
                 }
 
 

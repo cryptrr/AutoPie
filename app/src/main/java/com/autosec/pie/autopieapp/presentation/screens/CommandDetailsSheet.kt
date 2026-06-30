@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.DirectCommandActivity
 import com.autopi.R
-import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPiePrimaryButton
 import com.autopi.autopieapp.presentation.elements.OptionItem
@@ -233,8 +232,7 @@ fun CommandDetailsSheet(
                 Spacer(Modifier.height(7.dp))
 
                 AutoPiePrimaryButton("RUN") {
-                    shareReceiverViewModel.currentExtrasDetails.value =
-                        Triple(true, card, ShareInputs())
+                    shareReceiverViewModel.openCommandExtras(card)
                     open.value = false
                 }
 

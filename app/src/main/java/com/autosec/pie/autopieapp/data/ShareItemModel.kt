@@ -14,6 +14,7 @@ import java.lang.reflect.Type
 
 
 data class CommandModel(
+    override val id: String = "",
     override val type: CommandType? = null,
     override val name: String = "",
     override val path: String = "",
@@ -29,10 +30,30 @@ data class CommandModel(
     ) : CommandInterface
 
 data class CommandStep(
+    val commandId: String? = null,
     val path: String = "",
     val command: String = "",
     val extras: List<CommandExtra>? = null
 )
+
+class CommandStepResolutionException(val commandId: String) :
+    IllegalArgumentException("Command not found: $commandId")
+
+fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): CommandModel {
+    if (multiStage != true) return this
+    return copy(
+        steps = steps.map { step ->
+            val referencedId = step.commandId?.takeIf(String::isNotBlank) ?: return@map step
+            val referencedCommand = commandsById[referencedId]
+                ?: throw CommandStepResolutionException(referencedId)
+            step.copy(
+                path = referencedCommand.path,
+                command = referencedCommand.command,
+                extras = referencedCommand.extras
+            )
+        }
+    )
+}
 
 fun CommandModel.firstStepOrSelf(): CommandModel {
     if (multiStage != true) return this
@@ -78,6 +99,7 @@ data class CommandCreationModel(
 )
 
 interface CommandInterface {
+    val id: String
     val type: CommandType?
     val name: String
     val path: String

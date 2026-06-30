@@ -1,6 +1,7 @@
 package com.autopi.autopieapp.data
 
 data class CronCommandModel(
+    override val id: String= "",
     override val cronInterval: String,
     override val command: String,
     override val type: CommandType,

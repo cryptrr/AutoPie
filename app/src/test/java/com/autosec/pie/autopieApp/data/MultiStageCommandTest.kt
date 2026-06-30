@@ -6,6 +6,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class MultiStageCommandTest {
@@ -95,5 +96,51 @@ class MultiStageCommandTest {
         assertFalse(CommandModel(multiStage = true, extras = listOf(optionalExtra)).hasUnsetRequiredExtras())
         assertFalse(CommandModel(multiStage = true, extras = listOf(populatedRequiredExtra)).hasUnsetRequiredExtras())
         assertTrue(CommandModel(multiStage = true, extras = listOf(unsetRequiredExtra)).hasUnsetRequiredExtras())
+    }
+
+    @Test
+    fun commandIdStepsResolveFromExistingCommands() {
+        val referenced = CommandModel(
+            id = "autopie/yt-dlp-get-direct-url",
+            path = "downloads",
+            command = "export URL=resolved",
+            extras = listOf(firstExtra)
+        )
+        val pipeline = Gson().fromJson(
+            """
+                {
+                  "id": "autopie/multi-pipeline-demo",
+                  "multiStage": true,
+                  "steps": [
+                    {"commandId": "autopie/yt-dlp-get-direct-url"}
+                  ]
+                }
+            """.trimIndent(),
+            CommandModel::class.java
+        )
+
+        val resolved = pipeline.resolveCommandSteps(mapOf(referenced.id to referenced))
+        val step = resolved.steps.single()
+
+        assertEquals("autopie/multi-pipeline-demo", resolved.id)
+        assertEquals(referenced.id, step.commandId)
+        assertEquals(referenced.path, step.path)
+        assertEquals(referenced.command, step.command)
+        assertEquals(referenced.extras, step.extras)
+    }
+
+    @Test
+    fun missingCommandIdFailsResolution() {
+        val pipeline = CommandModel(
+            multiStage = true,
+            steps = listOf(CommandStep(commandId = "autopie/missing"))
+        )
+
+        try {
+            pipeline.resolveCommandSteps(emptyMap())
+            fail("Expected missing command resolution to fail")
+        } catch (exception: CommandStepResolutionException) {
+            assertEquals("autopie/missing", exception.commandId)
+        }
     }
 }
