@@ -54,4 +54,10 @@ class CommandExtraFlagsTest {
         assertNull(listOf("--file-picker").flagValue(ExtraFlags.MIME_TYPE))
         assertNull(listOf("--mime-type").flagValue(ExtraFlags.MIME_TYPE))
     }
+
+    @Test
+    fun `int flag is detected`() {
+        assertTrue(listOf("--int").hasFlag(ExtraFlags.INT))
+        assertFalse(emptyList<String>().hasFlag(ExtraFlags.INT))
+    }
 }

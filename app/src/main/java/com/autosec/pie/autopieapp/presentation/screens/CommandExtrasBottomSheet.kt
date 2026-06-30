@@ -52,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,6 +77,7 @@ import com.autopi.autopieapp.presentation.elements.OptionSelectorBoolean
 import com.autopi.autopieapp.presentation.elements.PasswordFormField
 import com.autopi.autopieapp.presentation.elements.SingleFilePicker
 import com.autopi.autopieapp.presentation.elements.SliderSelector
+import com.autopi.autopieapp.presentation.elements.toSliderValue
 import com.autopi.utils.getActivity
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -259,8 +259,14 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         when {
                             extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> extra.default
                             extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
-                            extra.type == "SLIDER" ->
-                                extra.default.split(",").getOrNull(1) ?: extra.default
+                            extra.type == "SLIDER" -> {
+                                val value = extra.default.split(",").getOrNull(1) ?: extra.default
+                                if (extra.flags.hasFlag(ExtraFlags.INT)) {
+                                    value.trim().toFloatOrNull()?.roundToInt()?.toString() ?: value
+                                } else {
+                                    value
+                                }
+                            }
                             extra.type == "FLAG" -> ""
                             else -> extra.default
                         },
@@ -543,6 +549,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                         }
                         "SLIDER" -> {
+                            val isIntegerSlider = extra.flags.hasFlag(ExtraFlags.INT)
                             val shellEnvironmentVariable = remember(extra.default) {
                                 ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
                             }
@@ -559,23 +566,34 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
 
                             val sliderValues = sliderConfiguration.split(",")
-                            val startValue = sliderValues.elementAtOrNull(0)?.trim()?.toFloatOrNull() ?: 0F
-                            val endValue = sliderValues.elementAtOrNull(2)?.trim()?.toFloatOrNull() ?: 100F
-                            val defaultValue = sliderValues.elementAtOrNull(1)
+                            val configuredStart = sliderValues.elementAtOrNull(0)?.trim()?.toFloatOrNull() ?: 0F
+                            val configuredEnd = sliderValues.elementAtOrNull(2)?.trim()?.toFloatOrNull() ?: 100F
+                            val startValue = if (isIntegerSlider) configuredStart.roundToInt().toFloat() else configuredStart
+                            val endValue = if (isIntegerSlider) configuredEnd.roundToInt().toFloat() else configuredEnd
+                            val rangeStart = minOf(startValue, endValue)
+                            val rangeEnd = maxOf(startValue, endValue).takeIf { it > rangeStart } ?: rangeStart + 1F
+                            val configuredDefault = sliderValues.elementAtOrNull(1)
                                 ?.trim()
                                 ?.toFloatOrNull()
-                                ?.coerceIn(startValue, endValue)
-                                ?: 57F.coerceIn(startValue, endValue)
+                                ?: 57F
+                            val defaultValue = (if (isIntegerSlider) {
+                                configuredDefault.roundToInt().toFloat()
+                            } else {
+                                configuredDefault
+                            }).coerceIn(rangeStart, rangeEnd)
 
                             //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
 
 
-                            val sliderState = remember(sliderConfiguration) {
+                            val sliderState = remember(sliderConfiguration, isIntegerSlider) {
                                 SliderState(
-                                    value = defaultValue
-                                    ,
-                                    valueRange = startValue..endValue,
-                                    steps = (endValue - startValue).toInt() - 1
+                                    value = defaultValue,
+                                    valueRange = rangeStart..rangeEnd,
+                                    steps = if (isIntegerSlider) {
+                                        (rangeEnd - rangeStart).roundToInt().minus(1).coerceAtLeast(0)
+                                    } else {
+                                        0
+                                    }
                                 )
                             }
 
@@ -584,7 +602,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     CommandExtraInput(
                                         extra.name,
                                         extra.default,
-                                        sliderState.value.toString(),
+                                        sliderState.value.toSliderValue(isIntegerSlider),
                                         extra.type,
                                         extra.defaultBoolean,
                                         extra.id,
@@ -603,10 +621,13 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     Spacer(modifier = Modifier.height(3.dp))
                                     Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
                                 }
-                                Text(text = "VALUE: ${sliderState.value}", fontSize = 14.sp, fontWeight = FontWeight.Normal, fontStyle = FontStyle.Italic)
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                SliderSelector(sliderState)
+                                SliderSelector(
+                                    state = sliderState,
+                                    value = sliderState.value.toSliderValue(isIntegerSlider),
+                                    isInteger = isIntegerSlider
+                                )
 
                             }
                         }

@@ -5,7 +5,8 @@ enum class ExtraFlags(val value: String) {
     PASSWORD("--password"),
     MULTI_FILE_PICKER("--multi-file-picker"),
     FILE_PICKER("--file-picker"),
-    MIME_TYPE("--mime-type")
+    MIME_TYPE("--mime-type"),
+    INT("--int")
 }
 
 enum class ScriptFlags(val value: String) {
