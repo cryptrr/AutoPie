@@ -206,6 +206,32 @@ class ProcessManagerService(
             }
         }
 
+    suspend fun setShellEnvironmentVariable(
+        processId: Int,
+        variableName: String,
+        value: String
+    ): Boolean = withContext(dispatchers.io) {
+        if (!environmentVariableName.matches(variableName)) {
+            Timber.w("Invalid environment variable name requested: $variableName")
+            return@withContext false
+        }
+
+        try {
+            val runningShell = getOrCreateShell(processId)
+            val result = runningShell.run(
+                "export $variableName=${value.shellExportValue()}",
+                Shell.Command.Config.silent()
+            )
+            if (!result.isSuccess) {
+                Timber.e("Failed to set $variableName for processId $processId")
+            }
+            result.isSuccess
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to set $variableName for processId $processId")
+            false
+        }
+    }
+
 
     private fun initShell() {
         Timber.d("Initializing Shell")

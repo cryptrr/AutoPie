@@ -12,6 +12,7 @@ import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,16 +53,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ScriptFlags
+import com.autopi.autopieapp.data.firstStepOrSelf
+import com.autopi.autopieapp.data.nextStepOrNull
+import com.autopi.autopieapp.data.resolveCommandSteps
+import com.autopi.autopieapp.data.services.ForegroundService
+import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.ui.theme.AutoPieTheme
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.Utils
+import com.google.gson.Gson
+import com.google.gson.JsonParser
+import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
 class BrowserActivity : AppCompatActivity() {
 
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+    private val processManagerService: ProcessManagerService by inject(
+        ProcessManagerService::class.java
+    )
     private lateinit var webView: WebView
+    private var commandsById: Map<String, CommandModel> = emptyMap()
 
     private var address by mutableStateOf(
         TextFieldValue(DEFAULT_URL, selection = TextRange(DEFAULT_URL.length))
@@ -73,8 +86,19 @@ class BrowserActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val browserCommands = runCatching {
-            useCases.getCommandsList()
-                .filter { Utils.hasScriptHeader(it.command, ScriptFlags.BROWSER) }
+            val allCommands = useCases.getCommandsList()
+            commandsById = allCommands
+                .filter { it.id.isNotBlank() }
+                .associateBy { it.id }
+            allCommands
+                .filter { command ->
+                    runCatching {
+                        val activeCommand = command
+                            .resolveCommandSteps(commandsById)
+                            .firstStepOrSelf()
+                        Utils.hasScriptHeader(activeCommand.command, ScriptFlags.BROWSER)
+                    }.getOrDefault(false)
+                }
                 .sortedBy { it.name.lowercase() }
         }.onFailure { error ->
             Timber.e(error, "Unable to load browser commands")
@@ -86,6 +110,7 @@ class BrowserActivity : AppCompatActivity() {
                 domStorageEnabled = true
                 allowFileAccess = false
                 allowContentAccess = false
+                userAgentString = chromeUserAgent(userAgentString)
             }
 
             webChromeClient = object : WebChromeClient() {
@@ -175,6 +200,12 @@ class BrowserActivity : AppCompatActivity() {
         return "$GOOGLE_SEARCH_URL${Uri.encode(query)}"
     }
 
+    private fun chromeUserAgent(webViewUserAgent: String): String {
+        return webViewUserAgent
+            .replace("; wv", "")
+            .replace(" Version/4.0", "")
+    }
+
     private fun sharedUrlFrom(intent: Intent?): String? {
         if (intent?.action != Intent.ACTION_SEND) return null
         if (intent.type?.startsWith("text/") != true) return null
@@ -186,9 +217,38 @@ class BrowserActivity : AppCompatActivity() {
     }
 
     private fun runBrowserCommand(command: CommandModel) {
-        val script = Utils.stripScriptHeaders(command.command)
-        webView.evaluateJavascript(script) { result ->
+        val activeCommand = runCatching {
+            command.resolveCommandSteps(commandsById).firstStepOrSelf()
+        }.onFailure { error ->
+            Timber.e(error, "Unable to resolve browser command %s", command.name)
+        }.getOrNull() ?: return
+
+        val script = Utils.stripScriptHeaders(activeCommand.command)
+        webView.evaluateJavascript(script) { rawResult ->
+            val result = decodeBrowserJavascriptResult(rawResult)
             Timber.d("Browser command %s returned %s", command.name, result)
+
+            val nextCommand = activeCommand.nextStepOrNull() ?: return@evaluateJavascript
+            val processId = (100000..999999).random()
+            lifecycleScope.launch {
+                val outputWasSet = processManagerService.setShellEnvironmentVariable(
+                    processId = processId,
+                    variableName = "OUTPUT",
+                    value = result
+                )
+                if (!outputWasSet) {
+                    Timber.e("Unable to hand browser output to processId %s", processId)
+                    processManagerService.stopShell(processId)
+                    return@launch
+                }
+
+                val intent = Intent(this@BrowserActivity, ForegroundService::class.java).apply {
+                    putExtra("command", Gson().toJson(nextCommand))
+                    putExtra("inputFiles", Gson().toJson(emptyList<String>()))
+                    putExtra("processId", processId)
+                }
+                startForegroundService(intent)
+            }
         }
     }
 
@@ -211,6 +271,17 @@ class BrowserActivity : AppCompatActivity() {
         const val GOOGLE_SEARCH_URL = "https://www.google.com/search?q="
         val HTTP_URL = Regex("""https?://[^\s]+""", RegexOption.IGNORE_CASE)
     }
+}
+
+internal fun decodeBrowserJavascriptResult(rawResult: String): String {
+    return runCatching {
+        val json = JsonParser.parseString(rawResult)
+        when {
+            json.isJsonNull -> ""
+            json.isJsonPrimitive && json.asJsonPrimitive.isString -> json.asString
+            else -> json.toString()
+        }
+    }.getOrDefault(rawResult)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
