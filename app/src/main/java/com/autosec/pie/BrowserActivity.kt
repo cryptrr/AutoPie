@@ -226,17 +226,16 @@ class BrowserActivity : AppCompatActivity() {
         val script = Utils.stripScriptHeaders(activeCommand.command)
         webView.evaluateJavascript(script) { rawResult ->
             val result = decodeBrowserJavascriptResult(rawResult)
-            Timber.d("Browser command %s returned %s", command.name, result)
+            Timber.d("Browser command %s returned %s", command.name, result.output)
 
             val nextCommand = activeCommand.nextStepOrNull() ?: return@evaluateJavascript
             val processId = (100000..999999).random()
             lifecycleScope.launch {
-                val outputWasSet = processManagerService.setShellEnvironmentVariable(
+                val environmentWasSet = processManagerService.setShellEnvironmentVariables(
                     processId = processId,
-                    variableName = "OUTPUT",
-                    value = result
+                    variables = result.environment + ("OUTPUT" to result.output)
                 )
-                if (!outputWasSet) {
+                if (!environmentWasSet) {
                     Timber.e("Unable to hand browser output to processId %s", processId)
                     processManagerService.stopShell(processId)
                     return@launch
@@ -273,15 +272,34 @@ class BrowserActivity : AppCompatActivity() {
     }
 }
 
-internal fun decodeBrowserJavascriptResult(rawResult: String): String {
+internal data class BrowserJavascriptResult(
+    val output: String,
+    val environment: Map<String, String>
+)
+
+internal fun decodeBrowserJavascriptResult(rawResult: String): BrowserJavascriptResult {
     return runCatching {
         val json = JsonParser.parseString(rawResult)
-        when {
+        val output = when {
             json.isJsonNull -> ""
             json.isJsonPrimitive && json.asJsonPrimitive.isString -> json.asString
             else -> json.toString()
         }
-    }.getOrDefault(rawResult)
+        val environment = if (json.isJsonObject) {
+            json.asJsonObject.entrySet().associate { (key, value) ->
+                key to when {
+                    value.isJsonNull -> ""
+                    value.isJsonPrimitive -> value.asString
+                    else -> value.toString()
+                }
+            }
+        } else {
+            emptyMap()
+        }
+        BrowserJavascriptResult(output, environment)
+    }.getOrElse {
+        BrowserJavascriptResult(rawResult, emptyMap())
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
