@@ -15,7 +15,8 @@ enum class ScriptFlags(val value: String) {
     PYTHON("#@PYTHON"),
     INTERACTIVE("#@INTERACTIVE"),
     OPEN_LOGS("#@OPEN_LOGS"),
-    SHELL("#@SHELL")
+    SHELL("#@SHELL"),
+    BROWSER("//@BROWSER")
 }
 
 enum class CommandFlags(val value: String) {

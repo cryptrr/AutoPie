@@ -96,22 +96,27 @@ class Utils{
 
         fun stripScriptHeaders(command: String): String {
             return command.lineSequence()
-                .dropWhile { it.trim().startsWith("#@") }
+                .dropWhile { it.isScriptHeaderLine() }
                 .joinToString("\n")
         }
 
         private fun scriptHeaders(command: String): List<String> {
             return command.lineSequence()
                 .map { it.trim() }
-                .takeWhile { it.startsWith("#@") }
+                .takeWhile { it.isScriptHeaderLine() }
                 .toList()
+        }
+
+        private fun String.isScriptHeaderLine(): Boolean {
+            val trimmed = trim()
+            return trimmed.startsWith("#@") || trimmed.startsWith("//@")
         }
 
         private fun String.withScriptHeader(header: String): String {
             if (scriptHeaders(this).any { it.startsWith(header) }) return this
 
             val lines = lines().toMutableList()
-            val insertIndex = lines.indexOfFirst { !it.trim().startsWith("#@") }
+            val insertIndex = lines.indexOfFirst { !it.isScriptHeaderLine() }
                 .let { if (it == -1) lines.size else it }
 
             lines.add(insertIndex, header)
@@ -123,7 +128,7 @@ class Utils{
             return lineSequence()
                 .filter { line ->
                     val trimmedLine = line.trim()
-                    if (readingHeaders && trimmedLine.startsWith("#@")) {
+                    if (readingHeaders && trimmedLine.isScriptHeaderLine()) {
                         !trimmedLine.startsWith(header)
                     } else {
                         readingHeaders = false

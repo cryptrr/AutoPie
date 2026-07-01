@@ -1,100 +1,119 @@
 package com.autosec.pie
 
 import android.annotation.SuppressLint
-import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
-import android.view.KeyEvent
-import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.EditText
-import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ScriptFlags
+import com.autopi.ui.theme.AutoPieTheme
+import com.autopi.use_case.AutoPieUseCases
+import com.autopi.utils.Utils
+import org.koin.java.KoinJavaComponent.inject
+import timber.log.Timber
 
 class BrowserActivity : AppCompatActivity() {
 
+    private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
     private lateinit var webView: WebView
+
+    private var address by mutableStateOf(DEFAULT_URL)
+    private var loadingProgress by mutableIntStateOf(0)
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val addressBar = EditText(this).apply {
-            hint = "Enter URL"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            imeOptions = EditorInfo.IME_ACTION_GO
-            setSingleLine(true)
-            setText(DEFAULT_URL)
-        }
+        val browserCommands = runCatching {
+            useCases.getCommandsList()
+                .filter { Utils.hasScriptHeader(it.command, ScriptFlags.BROWSER) }
+                .sortedBy { it.name.lowercase() }
+        }.onFailure { error ->
+            Timber.e(error, "Unable to load browser commands")
+        }.getOrDefault(emptyList())
 
         webView = WebView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f
-            )
-
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 allowFileAccess = false
                 allowContentAccess = false
             }
-        }
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(
-                addressBar,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
-            addView(webView)
-        }
-        setContentView(root)
+            webChromeClient = object : WebChromeClient() {
+                override fun onProgressChanged(view: WebView, newProgress: Int) {
+                    loadingProgress = newProgress
+                    this@BrowserActivity.title = if (newProgress < 100) {
+                        "Loading $newProgress%"
+                    } else {
+                        view.title ?: "AutoPie Browser"
+                    }
+                }
 
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onProgressChanged(view: WebView, newProgress: Int) {
-                title = if (newProgress < 100) {
-                    "Loading $newProgress%"
-                } else {
-                    view.title ?: "AutoPie Browser"
+                override fun onReceivedTitle(view: WebView, pageTitle: String?) {
+                    if (!pageTitle.isNullOrBlank()) this@BrowserActivity.title = pageTitle
                 }
             }
 
-            override fun onReceivedTitle(view: WebView, pageTitle: String?) {
-                if (!pageTitle.isNullOrBlank()) title = pageTitle
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    super.onPageFinished(view, url)
+                    address = url
+                }
             }
         }
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView, url: String) {
-                super.onPageFinished(view, url)
-                addressBar.setText(url)
-                injectUserScript()
-            }
-        }
-
-        addressBar.setOnEditorActionListener { _, actionId, event ->
-            val enterPressed = event?.let {
-                it.keyCode == KeyEvent.KEYCODE_ENTER && it.action == KeyEvent.ACTION_DOWN
-            } == true
-
-            if (actionId == EditorInfo.IME_ACTION_GO || enterPressed) {
-                loadUrl(addressBar.text.toString())
-                addressBar.clearFocus()
-                hideKeyboard(addressBar)
-                true
-            } else {
-                false
+        setContent {
+            AutoPieTheme {
+                BrowserScreen(
+                    browserCommands = browserCommands,
+                    webView = webView,
+                    address = address,
+                    loadingProgress = loadingProgress,
+                    onAddressChange = { address = it },
+                    onNavigate = ::loadUrl,
+                    onRunCommand = ::runBrowserCommand
+                )
             }
         }
 
@@ -110,13 +129,19 @@ class BrowserActivity : AppCompatActivity() {
         })
 
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
-            webView.loadUrl(DEFAULT_URL)
+            loadUrl(sharedUrlFrom(intent) ?: DEFAULT_URL)
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        sharedUrlFrom(intent)?.let(::loadUrl)
+    }
+
     private fun loadUrl(input: String) {
-        val url = normalizeUrl(input) ?: return
-        webView.loadUrl(url)
+        val normalizedUrl = normalizeUrl(input) ?: return
+        webView.loadUrl(normalizedUrl)
     }
 
     private fun normalizeUrl(input: String): String? {
@@ -133,72 +158,21 @@ class BrowserActivity : AppCompatActivity() {
         }
     }
 
-    private fun injectUserScript() {
-        operateOnCurrentDom(
-            operation = """
-                if (window.__userScriptInjected) return false;
+    private fun sharedUrlFrom(intent: Intent?): String? {
+        if (intent?.action != Intent.ACTION_SEND) return null
+        if (intent.type?.startsWith("text/") != true) return null
 
-                const body = dom.querySelector("body");
-                if (!body) return false;
+        val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)?.trim().orEmpty()
+        if (sharedText.isEmpty()) return null
 
-                window.__userScriptInjected = true;
-                body.style.background = "#FF0000";
-                body.style.color = "#00FF00";
-
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    const originalWriteText = navigator.clipboard.writeText.bind(navigator.clipboard);
-                    try {
-                        navigator.clipboard.writeText = function(text) {
-                            console.log("Intercepted clipboard text:", text);
-                            return originalWriteText(text);
-                        };
-                    } catch (error) {
-                        console.warn("Unable to intercept clipboard writes", error);
-                    }
-                }
-
-                if (!dom.querySelector("#autopie-injected-button")) {
-                    const button = document.createElement("button");
-                    button.id = "autopie-injected-button";
-                    button.textContent = "Injected Button";
-                    button.style.position = "fixed";
-                    button.style.bottom = "20px";
-                    button.style.right = "20px";
-                    button.style.zIndex = "999999";
-                    button.onclick = function() { alert("Hello from injected JS"); };
-                    body.appendChild(button);
-                }
-
-                return true;
-            """.trimIndent()
-        )
+        return HTTP_URL.find(sharedText)?.value ?: sharedText
     }
 
-    /** Runs [operation] against the live DOM of the page currently displayed by the WebView. */
-    private fun operateOnCurrentDom(
-        operation: String,
-        onResult: (String?) -> Unit = {}
-    ) {
-        val script = """
-            (function() {
-                const dom = document.documentElement;
-                if (!dom) return null;
-
-                return (function(dom) {
-                    $operation
-                })(dom);
-            })();
-        """.trimIndent()
-
-        webView.post {
-            webView.evaluateJavascript(script) { result -> onResult(result) }
+    private fun runBrowserCommand(command: CommandModel) {
+        val script = Utils.stripScriptHeaders(command.command)
+        webView.evaluateJavascript(script) { result ->
+            Timber.d("Browser command %s returned %s", command.name, result)
         }
-    }
-
-    private fun hideKeyboard(view: View) {
-        val inputMethodManager =
-            getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -216,6 +190,102 @@ class BrowserActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val DEFAULT_URL = "https://stackoverflow.com"
+        const val DEFAULT_URL = "https://google.com"
+        val HTTP_URL = Regex("""https?://[^\s]+""", RegexOption.IGNORE_CASE)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BrowserScreen(
+    browserCommands: List<CommandModel>,
+    webView: WebView,
+    address: String,
+    loadingProgress: Int,
+    onAddressChange: (String) -> Unit,
+    onNavigate: (String) -> Unit,
+    onRunCommand: (CommandModel) -> Unit
+) {
+    var commandMenuExpanded by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Scaffold(
+        bottomBar = {
+            Column {
+                if (loadingProgress in 0..99) {
+                    LinearProgressIndicator(
+                        progress = { loadingProgress / 100f },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                BottomAppBar {
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = onAddressChange,
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(15.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        placeholder = { Text("Search or type URL") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Uri,
+                            imeAction = ImeAction.Go
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onGo = {
+                                onNavigate(address)
+                                keyboardController?.hide()
+                            }
+                        )
+                    )
+
+                    Box {
+                        IconButton(onClick = { commandMenuExpanded = true }, modifier = Modifier.padding(horizontal = 10.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Terminal,
+                                contentDescription = "Browser commands"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = commandMenuExpanded,
+                            onDismissRequest = { commandMenuExpanded = false },
+                            modifier = Modifier.widthIn(min = 240.dp, max = 340.dp)
+                        ) {
+                            if (browserCommands.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("No browser commands") },
+                                    onClick = {},
+                                    enabled = false
+                                )
+                            } else {
+                                browserCommands.forEach { command ->
+                                    DropdownMenuItem(
+                                        text = { Text(command.name) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Terminal,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            commandMenuExpanded = false
+                                            onRunCommand(command)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ) { contentPadding ->
+        AndroidView(
+            factory = { webView },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+        )
     }
 }
