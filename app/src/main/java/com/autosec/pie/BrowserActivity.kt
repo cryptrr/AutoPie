@@ -2,7 +2,9 @@ package com.autosec.pie
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Patterns
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,9 +42,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.autopi.autopieapp.data.CommandModel
@@ -57,7 +63,9 @@ class BrowserActivity : AppCompatActivity() {
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
     private lateinit var webView: WebView
 
-    private var address by mutableStateOf(DEFAULT_URL)
+    private var address by mutableStateOf(
+        TextFieldValue(DEFAULT_URL, selection = TextRange(DEFAULT_URL.length))
+    )
     private var loadingProgress by mutableIntStateOf(0)
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -98,7 +106,7 @@ class BrowserActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String) {
                     super.onPageFinished(view, url)
-                    address = url
+                    address = TextFieldValue(url, selection = TextRange(url.length))
                 }
             }
         }
@@ -148,14 +156,23 @@ class BrowserActivity : AppCompatActivity() {
         val trimmed = input.trim()
         if (trimmed.isEmpty()) return null
 
-        return if (
+        if (
             trimmed.startsWith("http://", ignoreCase = true) ||
             trimmed.startsWith("https://", ignoreCase = true)
         ) {
-            trimmed
-        } else {
-            "https://$trimmed"
+            return trimmed.takeIf { Uri.parse(it).host?.isNotBlank() == true }
+                ?: googleSearchUrl(trimmed)
         }
+
+        return if (Patterns.WEB_URL.matcher(trimmed).matches()) {
+            "https://$trimmed"
+        } else {
+            googleSearchUrl(trimmed)
+        }
+    }
+
+    private fun googleSearchUrl(query: String): String {
+        return "$GOOGLE_SEARCH_URL${Uri.encode(query)}"
     }
 
     private fun sharedUrlFrom(intent: Intent?): String? {
@@ -191,6 +208,7 @@ class BrowserActivity : AppCompatActivity() {
 
     private companion object {
         const val DEFAULT_URL = "https://google.com"
+        const val GOOGLE_SEARCH_URL = "https://www.google.com/search?q="
         val HTTP_URL = Regex("""https?://[^\s]+""", RegexOption.IGNORE_CASE)
     }
 }
@@ -200,9 +218,9 @@ class BrowserActivity : AppCompatActivity() {
 private fun BrowserScreen(
     browserCommands: List<CommandModel>,
     webView: WebView,
-    address: String,
+    address: TextFieldValue,
     loadingProgress: Int,
-    onAddressChange: (String) -> Unit,
+    onAddressChange: (TextFieldValue) -> Unit,
     onNavigate: (String) -> Unit,
     onRunCommand: (CommandModel) -> Unit
 ) {
@@ -211,7 +229,7 @@ private fun BrowserScreen(
 
     Scaffold(
         bottomBar = {
-            Column {
+            Column(modifier = Modifier.imePadding()) {
                 if (loadingProgress in 0..99) {
                     LinearProgressIndicator(
                         progress = { loadingProgress / 100f },
@@ -223,18 +241,28 @@ private fun BrowserScreen(
                     OutlinedTextField(
                         value = address,
                         onValueChange = onAddressChange,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    onAddressChange(
+                                        address.copy(
+                                            selection = TextRange(0, address.text.length)
+                                        )
+                                    )
+                                }
+                            },
                         singleLine = true,
                         shape = RoundedCornerShape(15.dp),
                         textStyle = MaterialTheme.typography.bodyMedium,
                         placeholder = { Text("Search or type URL") },
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Uri,
+                            keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Go
                         ),
                         keyboardActions = KeyboardActions(
                             onGo = {
-                                onNavigate(address)
+                                onNavigate(address.text)
                                 keyboardController?.hide()
                             }
                         )
