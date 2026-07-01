@@ -104,6 +104,7 @@ class MultiStageCommandTest {
             id = "autopie/yt-dlp-get-direct-url",
             path = "downloads",
             command = "export URL=resolved",
+            flags = listOf("--referenced-command-flag"),
             extras = listOf(firstExtra)
         )
         val pipeline = Gson().fromJson(
@@ -111,6 +112,7 @@ class MultiStageCommandTest {
                 {
                   "id": "autopie/multi-pipeline-demo",
                   "multiStage": true,
+                  "flags": ["--show-loading-screen"],
                   "steps": [
                     {"commandId": "autopie/yt-dlp-get-direct-url"}
                   ]
@@ -126,7 +128,33 @@ class MultiStageCommandTest {
         assertEquals(referenced.id, step.commandId)
         assertEquals(referenced.path, step.path)
         assertEquals(referenced.command, step.command)
+        assertEquals(referenced.flags, step.flags)
         assertEquals(referenced.extras, step.extras)
+        assertEquals(
+            listOf(CommandFlags.SHOW_LOADING_SCREEN.value, "--referenced-command-flag"),
+            resolved.firstStepOrSelf().flags
+        )
+    }
+
+    @Test
+    fun pipelineFlagsApplyToFirstStepWithoutLeakingIntoLaterSteps() {
+        val pipeline = CommandModel(
+            multiStage = true,
+            flags = listOf(CommandFlags.SHOW_LOADING_SCREEN.value),
+            steps = listOf(
+                CommandStep(command = "echo first", flags = listOf("--first-step")),
+                CommandStep(command = "echo second")
+            )
+        )
+
+        val first = pipeline.firstStepOrSelf()
+        val second = first.nextStepOrNull()
+
+        assertEquals(
+            listOf(CommandFlags.SHOW_LOADING_SCREEN.value, "--first-step"),
+            first.flags
+        )
+        assertTrue(second?.flags.isNullOrEmpty())
     }
 
     @Test

@@ -33,6 +33,7 @@ data class CommandStep(
     val commandId: String? = null,
     val path: String = "",
     val command: String = "",
+    val flags: List<String>? = null,
     val extras: List<CommandExtra>? = null
 )
 
@@ -49,6 +50,7 @@ fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): C
             step.copy(
                 path = referencedCommand.path,
                 command = referencedCommand.command,
+                flags = referencedCommand.flags,
                 extras = referencedCommand.extras
             )
         }
@@ -58,7 +60,14 @@ fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): C
 fun CommandModel.firstStepOrSelf(): CommandModel {
     if (multiStage != true) return this
     val step = steps.firstOrNull() ?: return this
-    return copy(path = step.path, command = step.command, extras = step.extras)
+    return copy(
+        path = step.path,
+        command = step.command,
+        flags = (flags.orEmpty() + step.flags.orEmpty())
+            .distinct()
+            .takeIf { it.isNotEmpty() },
+        extras = step.extras
+    )
 }
 
 fun CommandModel.nextStepOrNull(): CommandModel? {
@@ -68,6 +77,7 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
     return copy(
         path = nextStep.path,
         command = nextStep.command,
+        flags = nextStep.flags,
         extras = nextStep.extras,
         steps = remainingSteps
     )

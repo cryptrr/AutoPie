@@ -18,12 +18,16 @@ enum class ScriptFlags(val value: String) {
     SHELL("#@SHELL")
 }
 
-// Reserved for flags stored in CommandModel.flags. No command flags are implemented yet.
-enum class CommandFlags
+enum class CommandFlags(val value: String) {
+    SHOW_LOADING_SCREEN("--show-loading-screen")
+}
 
 
 
 fun List<String>?.hasFlag(flag: ExtraFlags): Boolean =
+    orEmpty().any { value -> value.substringBefore("=").trim() == flag.value }
+
+fun List<String>?.hasFlag(flag: CommandFlags): Boolean =
     orEmpty().any { value -> value.substringBefore("=").trim() == flag.value }
 
 fun List<String>?.flagValue(flag: ExtraFlags): String? =

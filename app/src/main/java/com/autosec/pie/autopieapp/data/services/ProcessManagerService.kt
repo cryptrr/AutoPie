@@ -6,15 +6,18 @@ import android.content.Intent
 import android.os.Environment
 import android.system.Os
 import androidx.lifecycle.viewModelScope
+import com.autopi.LoadingActivity
 import com.autopi.OutputViewerActivity
 import com.autopi.autopieapp.data.AutoPieError
 import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandInterface
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -507,6 +510,10 @@ class ProcessManagerService(
 
             if (Utils.isOpenLogsCommand(commandObject.command)) {
                 openOutputViewer(logFile.absolutePath, commandObject.name)
+            }
+
+            if (commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN)) {
+                LoadingActivity.start(activity)
             }
 
             //checkForUnsafeCommands(commandObject, command)

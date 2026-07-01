@@ -1,6 +1,7 @@
 package com.autopi.autopieApp.data
 
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
@@ -67,5 +68,11 @@ class CommandExtraFlagsTest {
 
         assertTrue(flags.hasFlag(ExtraFlags.SMALL))
         assertTrue(flags.hasFlag(ExtraFlags.LARGE))
+    }
+
+    @Test
+    fun `loading screen command flag is detected`() {
+        assertTrue(listOf("--show-loading-screen").hasFlag(CommandFlags.SHOW_LOADING_SCREEN))
+        assertFalse(emptyList<String>().hasFlag(CommandFlags.SHOW_LOADING_SCREEN))
     }
 }
