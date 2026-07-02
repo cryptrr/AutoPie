@@ -334,8 +334,7 @@ class ProcessManagerService(
             "HOME" to activity.filesDir.absolutePath,
             "PREFIX" to prefix,
             "PATH" to "$prefix/bin:${activity.filesDir.absolutePath}/bin:$defaultPath",
-            "LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
-            "SSL_CERT_FILE" to "$prefix/etc/ssl/cert.pem",
+            //"LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
             "TERMINFO" to "$prefix/share/terminfo",
         )
     }
@@ -349,11 +348,7 @@ class ProcessManagerService(
             export HOME=${activity.filesDir.absolutePath.shellQuote()}
             export PREFIX=${prefix.shellQuote()}
             export PATH=${"$prefix/bin".shellQuote()}:${appBin.shellQuote()}:${'$'}PATH
-            export LD_LIBRARY_PATH=${"$prefix/lib".shellQuote()}:${'$'}LD_LIBRARY_PATH
-            export SSL_CERT_FILE=${"$prefix/etc/ssl/cert.pem".shellQuote()}
             export TERMINFO=${"$prefix/share/terminfo".shellQuote()}
-            unset PYTHONHOME
-            unset PYTHONPATH
         """.trimIndent()
     }
 
@@ -749,7 +744,7 @@ class ProcessManagerService(
             envMap["HOME"] = activity.filesDir.absolutePath
             envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
             envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
-            envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
+            //envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
             envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
 
             val shell = com.jaredrummler.ktsh.Shell(
