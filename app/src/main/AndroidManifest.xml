@@ -74,6 +74,19 @@
             </intent-filter>
 
         </activity>
+
+        <activity-alias
+            android:name=".BrowserLauncher"
+            android:exported="true"
+            android:label="AutoPie Browser"
+            android:targetActivity="com.autosec.pie.BrowserActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <activity
             android:name=".ShareReceiverActivity"
             android:excludeFromRecents="true"
