@@ -31,10 +31,6 @@
         tools:replace="android:name,android:allowBackup,android:icon,android:label,android:roundIcon,android:supportsRtl,android:theme"
         tools:targetApi="28">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
-<!--        <provider-->
-<!--            android:name="androidx.startup.InitializationProvider"-->
-<!--            android:authorities="com.termux..androidx-startup"-->
-<!--            tools:node="remove" />-->
 
         <provider
             android:name="com.termux.app.TermuxOpenReceiver$ContentProvider"
@@ -57,35 +53,35 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.autosec.pie.BrowserActivity"
-            android:exported="true"
-            android:label="AutoPie Browser"
-            android:launchMode="singleTop"
-            android:taskAffinity="${applicationId}.browser"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
+<!--        <activity-->
+<!--            android:name="com.autosec.pie.BrowserActivity"-->
+<!--            android:exported="true"-->
+<!--            android:label="AutoPie Browser"-->
+<!--            android:launchMode="singleTop"-->
+<!--            android:taskAffinity="${applicationId}.browser"-->
+<!--            android:theme="@style/Theme.AppCompat.NoActionBar">-->
 
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.SEND" />-->
 
-                <category android:name="android.intent.category.DEFAULT" />
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
 
-                <data android:mimeType="text/plain" />
-            </intent-filter>
+<!--                <data android:mimeType="text/plain" />-->
+<!--            </intent-filter>-->
 
-        </activity>
+<!--        </activity>-->
 
-        <activity-alias
-            android:name=".BrowserLauncher"
-            android:exported="true"
-            android:label="AutoPie Browser"
-            android:targetActivity="com.autosec.pie.BrowserActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--        <activity-alias-->
+<!--            android:name=".BrowserLauncher"-->
+<!--            android:exported="true"-->
+<!--            android:label="AutoPie Browser"-->
+<!--            android:targetActivity="com.autosec.pie.BrowserActivity">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity-alias>-->
 
         <activity
             android:name=".ShareReceiverActivity"
