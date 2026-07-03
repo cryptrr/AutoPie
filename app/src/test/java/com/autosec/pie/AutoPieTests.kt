@@ -60,6 +60,40 @@ class CommandTests : KoinTest {
     }
 
     @Test
+    fun `incompatible command is skipped without hiding compatible commands`() = runTest {
+        val jsonService = FakeJSONService()
+        jsonService.writeSharesConfig(
+            """
+            {
+              "Compatible": {
+                "path": "",
+                "command": "echo ok",
+                "exec": ""
+              },
+              "Requires newer app": {
+                "path": "",
+                "command": "echo new",
+                "exec": "",
+                "extras": [{
+                  "id": "1",
+                  "type": "SELECTABLE",
+                  "selectableOptions": {"Friendly label": "--raw-value"}
+                }]
+              }
+            }
+            """.trimIndent()
+        )
+        var skippedCommands = emptyList<String>()
+
+        val commands = GetCommandsList(jsonService).invoke { skippedCommands = it }
+        val compatibleCommand = GetCommandDetails(jsonService)("Compatible")
+
+        assertEquals(listOf("Compatible"), commands.map { it.name })
+        assertEquals(listOf("Share: Requires newer app"), skippedCommands)
+        assertEquals("echo ok", compatibleCommand.command)
+    }
+
+    @Test
     fun `adding a command makes it 3`() = runTest {
 
         mockkStatic(Environment::class)
@@ -134,5 +168,3 @@ class MainDispatcherRule : TestWatcher() {
         Dispatchers.resetMain()
     }
 }
-
-

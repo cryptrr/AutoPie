@@ -42,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,6 +59,15 @@ import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.firstStepOrSelf
+import com.autopi.autopieapp.data.flagValue
+import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.hasNextStep
+import com.autopi.autopieapp.data.matchesExtraValues
+import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
+import com.autopi.autopieapp.data.toMultiSelectableValue
+import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
@@ -66,10 +75,12 @@ import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.FlagSelector
 import com.autopi.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autopi.autopieapp.presentation.elements.MultiFilePicker
+import com.autopi.autopieapp.presentation.elements.MultiOptionSelector
 import com.autopi.autopieapp.presentation.elements.OptionSelectorBoolean
 import com.autopi.autopieapp.presentation.elements.PasswordFormField
 import com.autopi.autopieapp.presentation.elements.SingleFilePicker
 import com.autopi.autopieapp.presentation.elements.SliderSelector
+import com.autopi.autopieapp.presentation.elements.toSliderValue
 import com.autopi.utils.getActivity
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.google.gson.Gson
@@ -78,6 +89,24 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 import kotlin.math.roundToInt
+
+private val ENVIRONMENT_DEFAULT = Regex("\\$\\$([A-Za-z_][A-Za-z0-9_]*)")
+
+private fun String.toShellBooleanOrNull(): String? = when (trim().lowercase()) {
+    "true", "1", "yes", "on" -> "true"
+    "false", "0", "no", "off" -> "false"
+    else -> null
+}
+
+private fun String.toSelectableOptions(): Map<String, String> =
+    split(',')
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .associateTo(linkedMapOf()) { option ->
+            val label = option.substringBefore("=").trim()
+            val value = option.substringAfter("=", option).trim()
+            label to value
+        }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,8 +167,10 @@ fun CommandExtrasBottomSheet(
                 }
 
                 viewModel.currentExtrasDetails.value?.let {
-                    CommandExtraInputs(it.second, parentSheetState, open, state, callerName, isAsync
-                    )
+                    val activeCommand = it.second.firstStepOrSelf()
+                    key(activeCommand.steps.size, activeCommand.path, activeCommand.command) {
+                        CommandExtraInputs(activeCommand, parentSheetState, open, state, callerName, isAsync)
+                    }
                 }
 
             }
@@ -155,6 +186,13 @@ fun CommandExtrasBottomSheet(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         onDismissRequest = {
             scope.launch {
+                viewModel.currentExtrasDetails.value?.let { (_, command, inputs) ->
+                    if (command.multiStage == true) {
+                        inputs.processId?.let { processId ->
+                            viewModel.main.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
+                    }
+                }
                 if(callerName == "DIRECT_ICON" || callerName == "EXTERNAL_APP"){
                     activity?.finish()
                 }
@@ -168,18 +206,16 @@ fun CommandExtrasBottomSheet(
 @Composable
 fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = null, openState: MutableState<Boolean>,sheetState: SheetState, callerName: String,isAsync: Boolean,) {
 
-    val context = LocalContext.current
-
     val activity = LocalContext.current.getActivity()
 
 
     val viewModel: ShareReceiverViewModel = koinViewModel()
 
-    val fileUris by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.fileUris)
+    val inputFiles by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputFiles)
     }
-    val currentLink by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.currentLink)
+    val inputText by remember {
+        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputText)
     }
 
     val extraInput = remember {
@@ -191,18 +227,72 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     }
 
 
-    var isLoading by remember {
+    var isLoading by remember(command) {
         mutableStateOf(false)
     }
 
-    val commandExtraInputs = remember {
-        mutableStateOf<List<CommandExtraInput>>(emptyList())
+    val requestedProcessId = viewModel.currentExtrasDetails.value?.third?.processId
+    val processId = remember(command, requestedProcessId) {
+        requestedProcessId ?: (100000..999999).random()
     }
 
+    LaunchedEffect(command, processId) {
+        if (command.multiStage == true) {
+            val currentDetails = viewModel.currentExtrasDetails.value
+            if (currentDetails != null && currentDetails.third.processId == null) {
+                viewModel.currentExtrasDetails.value = Triple(
+                    currentDetails.first,
+                    currentDetails.second,
+                    currentDetails.third.copy(processId = processId)
+                )
+            }
+            viewModel.main.dispatchEvent(ViewModelEvent.CreateShell(processId))
+        }
+    }
+
+
+    val commandExtraInputs = remember(command.extras) {
+        mutableStateOf(
+            command.extras.orEmpty()
+                .map { extra ->
+                    CommandExtraInput(
+                        extra.name,
+                        extra.default,
+                        //TODO: Check if this is necessary
+                        when {
+                            extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> extra.default
+                            extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
+                            extra.type == "SLIDER" -> {
+                                val value = extra.default.split(",").getOrNull(1) ?: extra.default
+                                if (extra.flags.hasFlag(ExtraFlags.INT)) {
+                                    value.trim().toFloatOrNull()?.roundToInt()?.toString() ?: value
+                                } else {
+                                    value
+                                }
+                            }
+                            extra.type == "FLAG" -> ""
+                            else -> extra.default
+                        },
+                        extra.type,
+                        extra.defaultBoolean,
+                        extra.id,
+                        extra.description
+                    )
+                }
+        )
+    }
+
+    val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
+    val visibleExtras = command.extras.orEmpty()
+        .filterNot { it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) }
+        .filter { extra ->
+            extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
+        }
+
     fun addToExtraInputs(commandExtraInput: CommandExtraInput) {
-        if (commandExtraInputs.value.any { it.name == commandExtraInput.name }) {
+        if (commandExtraInputs.value.any { it.id == commandExtraInput.id }) {
             commandExtraInputs.value = commandExtraInputs.value.toMutableList().also {
-                val index = it.indexOfFirst { it.name == commandExtraInput.name }
+                val index = it.indexOfFirst { it.id == commandExtraInput.id }
 
                 it.set(index, commandExtraInput)
             }
@@ -232,21 +322,47 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(bottom = 90.dp)
         ) {
 
-            if(fileUris == null && currentLink == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
+            if(inputFiles == null && inputText == null && listOf("INPUT_FILE", "INPUT_URL", "INPUT_URLS", "INPUT_FILES").any{command.command.contains(it)}){
                 GenericTextAndSelectorFormField(text = extraInput, title = "INPUT", subtitle = "Put file, url or text here to set as INPUT for the command.", useRelativePaths = false)
             }
 
 
-            for(extra in command.extras?.filter { it.type != "FLAG" } ?: emptyList()) {
-
-                Column(Modifier.fillMaxWidth(if(extra.description.isNotEmpty()) 1F else 0.47F)) {
+            for(extra in visibleExtras.filter { it.type != "FLAG" }) {
+                key(extra.id) {
+                    val useSmallWidth = extra.description.isEmpty() &&
+                        !extra.flags.hasFlag(ExtraFlags.LARGE)
+                    Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
                     when (extra.type) {
                         "STRING" -> {
 
-                            val isPasswordField = remember{extra.name.endsWith("PASSWORD") || extra.name.endsWith("PASSWD") || extra.name.endsWith("SECRET")}
+                            val isPasswordField = remember(extra.name, extra.flags) {
+                                extra.flags.hasFlag(ExtraFlags.PASSWORD) ||
+                                    extra.name.endsWith("PASSWORD") ||
+                                    extra.name.endsWith("PASSWD") ||
+                                    extra.name.endsWith("SECRET")
+                            }
+                            val useMultiFilePicker = remember(extra.name, extra.flags) {
+                                extra.flags.hasFlag(ExtraFlags.MULTI_FILE_PICKER) || extra.name.endsWith("FILES")
+                            }
+                            val useSingleFilePicker = remember(extra.name, extra.flags) {
+                                extra.flags.hasFlag(ExtraFlags.FILE_PICKER) || extra.name.endsWith("FILE")
+                            }
+                            val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
-                            val textValue = remember {
+                            val textValue = remember(extra.id, extra.default) {
                                 mutableStateOf(extra.default)
+                            }
+
+                            val shellEnvironmentVariable = remember(extra.default) {
+                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                            }
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.let { textValue.value = it }
+                                }
                             }
 
                             LaunchedEffect(key1 = textValue.value) {
@@ -272,19 +388,25 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     text = textValue,
                                     title = extra.name,
                                     subtitle = extra.description,
-                                    trailingIcon = if(extra.name.endsWith("FILES")){
+                                    trailingIcon = if(useMultiFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                                MultiFilePicker(useRelativePaths = true){
+                                                MultiFilePicker(
+                                                    useRelativePaths = true,
+                                                    mimeType = pickerMimeType
+                                                ) {
                                                     textValue.value = it.joinToString(",")
                                                 }
                                             }
                                         }
                                     }
-                                    else if(extra.name.endsWith("FILE")){
+                                    else if(useSingleFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                                SingleFilePicker(useRelativePaths = true){
+                                                SingleFilePicker(
+                                                    useRelativePaths = true,
+                                                    mimeType = pickerMimeType
+                                                ) {
                                                     textValue.value = it
                                                 }
                                             }
@@ -302,11 +424,23 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         "BOOLEAN" -> {
                             val booleanExpanded = remember { mutableStateOf(false) }
+                            val shellEnvironmentVariable = remember(extra.default) {
+                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                            }
                             val selectedOptionForBoolean =
-                                rememberSaveable {
+                                rememberSaveable(extra.id, extra.default, extra.defaultBoolean) {
                                     mutableStateOf(extra.defaultBoolean.toString())
                                 }
                             val booleanOptions = listOf("TRUE", "FALSE")
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.toShellBooleanOrNull()
+                                        ?.let { selectedOptionForBoolean.value = it }
+                                }
+                            }
 
                             LaunchedEffect(key1 = selectedOptionForBoolean.value) {
                                 addToExtraInputs(
@@ -339,17 +473,57 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         "SELECTABLE" -> {
                             val expanded = remember { mutableStateOf(false) }
+                            val configuredOptions = extra.selectableOptions
+                            val shellEnvironmentVariable = remember(configuredOptions) {
+                                configuredOptions.values.singleOrNull()
+                                    ?.let { ENVIRONMENT_DEFAULT.matchEntire(it) }
+                                    ?.groupValues
+                                    ?.get(1)
+                            }
+                            var options by remember(extra.id, configuredOptions) {
+                                mutableStateOf(configuredOptions)
+                            }
+                            var selectableFetchFailed by remember(extra.id, configuredOptions) {
+                                mutableStateOf(false)
+                            }
                             val selectedOption =
-                                rememberSaveable {
-                                    mutableStateOf(extra.default)
+                                rememberSaveable(extra.id, extra.default, configuredOptions) {
+                                    mutableStateOf(
+                                        configuredOptions[extra.default]
+                                            ?: extra.default.ifEmpty {
+                                                configuredOptions.values.firstOrNull().orEmpty()
+                                            }
+                                    )
                                 }
-                            val options = extra.selectableOptions
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    val resolvedOptions = viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.toSelectableOptions()
+                                        ?.takeIf { it.isNotEmpty() }
+
+                                    if (resolvedOptions == null) {
+                                        selectableFetchFailed = true
+                                        expanded.value = false
+                                        options = emptyMap()
+                                        selectedOption.value = "Error fetching"
+                                    } else {
+                                        selectableFetchFailed = false
+                                        options = resolvedOptions
+                                        selectedOption.value = resolvedOptions[extra.default]
+                                            ?: extra.default.ifEmpty {
+                                                resolvedOptions.values.firstOrNull().orEmpty()
+                                            }
+                                    }
+                                }
+                            }
 
                             LaunchedEffect(key1 = selectedOption.value) {
                                 addToExtraInputs(
                                     CommandExtraInput(
                                         extra.name,
-                                        extra.default,
+                                        selectedOption.value,
                                         selectedOption.value,
                                         extra.type,
                                         extra.defaultBoolean,
@@ -374,25 +548,141 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 OptionSelector(
                                     options = options,
                                     selectedOption = selectedOption,
-                                    expanded = expanded
+                                    expanded = expanded,
+                                    enabled = !selectableFetchFailed
+                                )
+                            }
+                        }
+                        "MULTI_SELECTABLE" -> {
+                            val expanded = remember { mutableStateOf(false) }
+                            val configuredOptions = extra.selectableOptions
+                            val shellEnvironmentVariable = remember(configuredOptions) {
+                                configuredOptions.values.singleOrNull()
+                                    ?.let { ENVIRONMENT_DEFAULT.matchEntire(it) }
+                                    ?.groupValues
+                                    ?.get(1)
+                            }
+                            var options by remember(extra.id, configuredOptions) {
+                                mutableStateOf(configuredOptions)
+                            }
+                            var selectableFetchFailed by remember(extra.id, configuredOptions) {
+                                mutableStateOf(false)
+                            }
+                            val selectedOptions =
+                                rememberSaveable(extra.id, extra.default, configuredOptions) {
+                                    mutableStateOf(
+                                        resolveMultiSelectableDefaults(extra.default, configuredOptions)
+                                    )
+                                }
+
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    val resolvedOptions = viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.toSelectableOptions()
+                                        ?.takeIf { it.isNotEmpty() }
+
+                                    if (resolvedOptions == null) {
+                                        selectableFetchFailed = true
+                                        expanded.value = false
+                                        options = emptyMap()
+                                        selectedOptions.value = emptyList()
+                                    } else {
+                                        selectableFetchFailed = false
+                                        options = resolvedOptions
+                                        selectedOptions.value = resolveMultiSelectableDefaults(
+                                            extra.default,
+                                            resolvedOptions
+                                        )
+                                    }
+                                }
+                            }
+
+                            LaunchedEffect(selectedOptions.value) {
+                                val value = selectedOptions.value.toMultiSelectableValue()
+                                addToExtraInputs(
+                                    CommandExtraInput(
+                                        extra.name,
+                                        extra.default,
+                                        value,
+                                        extra.type,
+                                        extra.defaultBoolean,
+                                        extra.id,
+                                        extra.description
+                                    )
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = extra.name,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (extra.description.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = extra.description,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                MultiOptionSelector(
+                                    options = options,
+                                    selectedOptions = selectedOptions,
+                                    expanded = expanded,
+                                    enabled = !selectableFetchFailed
                                 )
                             }
                         }
                         "SLIDER" -> {
+                            val isIntegerSlider = extra.flags.hasFlag(ExtraFlags.INT)
+                            val shellEnvironmentVariable = remember(extra.default) {
+                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                            }
+                            var sliderConfiguration by remember(extra.id, extra.default) {
+                                mutableStateOf(extra.default)
+                            }
 
-                            val defaultValue = remember { extra.default.split(",").elementAtOrNull(1)?.toFloatOrNull() ?: 57F }
-                            val startValue = remember {extra.default.split(",").elementAtOrNull(0)?.toFloatOrNull() ?: 0F}
-                            val endValue = remember { extra.default.split(",").elementAtOrNull(2)?.toFloatOrNull() ?: 100F }
+                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
+                                shellEnvironmentVariable?.let { variableName ->
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, variableName)
+                                        ?.let { sliderConfiguration = it }
+                                }
+                            }
+
+                            val sliderValues = sliderConfiguration.split(",")
+                            val configuredStart = sliderValues.elementAtOrNull(0)?.trim()?.toFloatOrNull() ?: 0F
+                            val configuredEnd = sliderValues.elementAtOrNull(2)?.trim()?.toFloatOrNull() ?: 100F
+                            val startValue = if (isIntegerSlider) configuredStart.roundToInt().toFloat() else configuredStart
+                            val endValue = if (isIntegerSlider) configuredEnd.roundToInt().toFloat() else configuredEnd
+                            val rangeStart = minOf(startValue, endValue)
+                            val rangeEnd = maxOf(startValue, endValue).takeIf { it > rangeStart } ?: rangeStart + 1F
+                            val configuredDefault = sliderValues.elementAtOrNull(1)
+                                ?.trim()
+                                ?.toFloatOrNull()
+                                ?: 57F
+                            val defaultValue = (if (isIntegerSlider) {
+                                configuredDefault.roundToInt().toFloat()
+                            } else {
+                                configuredDefault
+                            }).coerceIn(rangeStart, rangeEnd)
 
                             //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
 
 
-                            val sliderState = remember {
+                            val sliderState = remember(sliderConfiguration, isIntegerSlider) {
                                 SliderState(
-                                    value = defaultValue
-                                    ,
-                                    valueRange = startValue..endValue,
-                                    steps = (endValue - startValue).toInt() - 1
+                                    value = defaultValue,
+                                    valueRange = rangeStart..rangeEnd,
+                                    steps = if (isIntegerSlider) {
+                                        (rangeEnd - rangeStart).roundToInt().minus(1).coerceAtLeast(0)
+                                    } else {
+                                        0
+                                    }
                                 )
                             }
 
@@ -401,7 +691,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     CommandExtraInput(
                                         extra.name,
                                         extra.default,
-                                        sliderState.value.toString(),
+                                        sliderState.value.toSliderValue(isIntegerSlider),
                                         extra.type,
                                         extra.defaultBoolean,
                                         extra.id,
@@ -420,23 +710,25 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     Spacer(modifier = Modifier.height(3.dp))
                                     Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
                                 }
-                                Text(text = "VALUE: ${sliderState.value}", fontSize = 14.sp, fontWeight = FontWeight.Normal, fontStyle = FontStyle.Italic)
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                SliderSelector(sliderState)
+                                SliderSelector(
+                                    state = sliderState,
+                                    value = sliderState.value.toSliderValue(isIntegerSlider),
+                                    isInteger = isIntegerSlider
+                                )
 
                             }
                         }
                     }
-
-
+                    }
                 }
             }
 
             val horizontalScrollState = rememberScrollState()
 
 
-            if(!command.extras?.filter { it.type == "FLAG" }.isNullOrEmpty()){
+            if(visibleExtras.any { it.type == "FLAG" }){
                 Column {
                     Text(
                         text = "FLAGS",
@@ -451,18 +743,18 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
             Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
-                for(flag in command.extras?.filter { it.type == "FLAG" } ?: emptyList()){
+                for(flag in visibleExtras.filter { it.type == "FLAG" }){
+                    key(flag.id) {
                     val isChecked = remember { mutableStateOf(false) }
-                    val defaultValue = remember { mutableStateOf(flag.default) }
 
                     //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
 
-                    LaunchedEffect(key1 = defaultValue.value) {
+                    LaunchedEffect(key1 = isChecked.value) {
                         addToExtraInputs(
                             CommandExtraInput(
                                 flag.name,
                                 flag.default,
-                                defaultValue.value,
+                                if (isChecked.value) flag.default else "",
                                 flag.type,
                                 flag.defaultBoolean,
                                 flag.id,
@@ -477,6 +769,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                     }
 
+                }
                 }
             }
 
@@ -500,7 +793,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                         isLoading = true
 
-                        viewModel.onCommandClickWithExtras(command, currentLink ?: extraInput.value, fileUris ?: extraInputList.value, commandExtraInputs.value)
+                        viewModel.onCommandClickWithExtras(command, inputText ?: extraInput.value, inputFiles ?: extraInputList.value, commandExtraInputs.value, processId)
+
+                        if (command.hasNextStep()) {
+                            return@launch
+                        }
 
                         //Don't close the activity if intent is started with async false.
                         //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity

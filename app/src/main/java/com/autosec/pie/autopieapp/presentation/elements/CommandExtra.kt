@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.flagValue
 
 
 @Composable
@@ -125,7 +128,11 @@ fun CommandExtraInputElement(
     }
 
     val selectableOptions = rememberSaveable {
-        mutableStateOf(command.selectableOptions.joinToString(","))
+        mutableStateOf(
+            command.selectableOptions.entries.joinToString(",") { (label, value) ->
+                if (label == value) label else "$label=$value"
+            }
+        )
     }
 
     val description = rememberSaveable {
@@ -139,7 +146,7 @@ fun CommandExtraInputElement(
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
-    val options = listOf("STRING", "SELECTABLE","FLAG", "BOOLEAN","SLIDER")
+    val options = listOf("STRING", "SELECTABLE", "MULTI_SELECTABLE", "FLAG", "BOOLEAN", "SLIDER")
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
@@ -150,6 +157,8 @@ fun CommandExtraInputElement(
     val sliderOptions = rememberSaveable {
         mutableStateOf(command.default)
     }
+
+    val pickerMimeType = command.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
 
     LaunchedEffect(
@@ -164,18 +173,32 @@ fun CommandExtraInputElement(
         )
     ) {
 
+        val parsedSelectableOptions = selectableOptions.value
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .associateTo(linkedMapOf()) { option ->
+                val label = option.substringBefore("=").trim()
+                val value = option.substringAfter("=", option).trim()
+                label to value
+            }
+
         val commandExtra = CommandExtra(
             id = command.id,
             name = name.value,
             type = selectedCommandType.value,
             default = when{
-                command.type == "SELECTABLE" -> selectableOptions.value.split(",").firstOrNull() ?: ""
+                selectedCommandType.value == "SELECTABLE" ||
+                    selectedCommandType.value == "MULTI_SELECTABLE" ->
+                    parsedSelectableOptions.values.firstOrNull() ?: ""
                 else -> default.value
             },
             description = description.value,
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
-            selectableOptions = selectableOptions.value.split(","),
-            required = isRequired.value
+            selectableOptions = parsedSelectableOptions,
+            required = isRequired.value,
+            flags = command.flags,
+            visibleWhen = command.visibleWhen
         )
 
         onAddCommandExtra(commandExtra)
@@ -244,7 +267,10 @@ fun CommandExtraInputElement(
                     trailingIcon = if(name.value.endsWith("FILE")){
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                SingleFilePicker(useRelativePaths = true){
+                                SingleFilePicker(
+                                    useRelativePaths = true,
+                                    mimeType = pickerMimeType
+                                ) {
                                     default.value = it
                                 }
                             }
@@ -252,7 +278,10 @@ fun CommandExtraInputElement(
                     }else if(name.value.endsWith("FILES")) {
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                MultiFilePicker(useRelativePaths = true){
+                                MultiFilePicker(
+                                    useRelativePaths = true,
+                                    mimeType = pickerMimeType
+                                ) {
                                     default.value = it.joinToString(",")
                                 }
                             }
@@ -297,7 +326,7 @@ fun CommandExtraInputElement(
                 )
             }
 
-            "SELECTABLE" -> {
+            "SELECTABLE", "MULTI_SELECTABLE" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -307,7 +336,11 @@ fun CommandExtraInputElement(
                     text = selectableOptions,
                     "",
                     placeholder = "OPTIONS",
-                    subtitle = "Options for this field. Separate options with commas. First Option will be considered default.",
+                    subtitle = if (selectedCommandType.value == "MULTI_SELECTABLE") {
+                        "Separate options with commas. Users can select multiple values; selected raw values are joined with a new line."
+                    } else {
+                        "Separate options with commas. Use Label=raw value for a user-friendly label. The first value is the default."
+                    },
                     isError = selectableOptions.value.isBlank()
                 )
                 GenericTextFormField(
@@ -414,6 +447,166 @@ fun OptionSelectorBoolean(
                         expanded.value = false
                     },
                     text = { Text(option) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun OptionSelector(
+    options: Map<String, String>,
+    selectedOption: MutableState<String>,
+    expanded: MutableState<Boolean>,
+    enabled: Boolean = true
+) {
+    val selectedLabel = options.entries
+        .firstOrNull { it.value == selectedOption.value }
+        ?.key
+        ?: selectedOption.value
+
+    Column(
+        modifier = Modifier
+            .border(
+                2.dp,
+                if (enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(
+                if (enabled) Color.Black.copy(alpha = 0.15F)
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08F)
+            )
+            .clickable(enabled = enabled) { expanded.value = true }
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(0.9F)) {
+            Text(
+                text = selectedLabel,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F),
+                softWrap = false,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth(0.85F)
+                    .padding(top = 16.dp, bottom = 16.dp, start = 16.dp)
+            )
+            Box(
+                Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(1F),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                    imageVector = Icons.Default.UnfoldMore,
+                    contentDescription = "Show options",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = enabled && expanded.value,
+            onDismissRequest = { expanded.value = false },
+        ) {
+            options.forEach { (label, value) ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOption.value = value
+                        expanded.value = false
+                    },
+                    text = { Text(label) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MultiOptionSelector(
+    options: Map<String, String>,
+    selectedOptions: MutableState<List<String>>,
+    expanded: MutableState<Boolean>,
+    enabled: Boolean = true,
+) {
+    val selectedLabels = options
+        .filterValues { it in selectedOptions.value }
+        .keys
+        .joinToString(", ")
+        .ifEmpty { if (enabled) "Select options" else "Error fetching" }
+
+    Column(
+        modifier = Modifier
+            .border(
+                2.dp,
+                if (enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                RoundedCornerShape(15.dp)
+            )
+            .height(57.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(
+                if (enabled) Color.Black.copy(alpha = 0.15F)
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08F)
+            )
+            .clickable(enabled = enabled) { expanded.value = true }
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(0.9F)
+        ) {
+            Text(
+                text = selectedLabels,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F),
+                softWrap = false,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth(0.85F)
+                    .padding(top = 16.dp, bottom = 16.dp, start = 16.dp)
+            )
+            Box(
+                Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(1F),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25F),
+                    imageVector = Icons.Default.UnfoldMore,
+                    contentDescription = "Show options",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = enabled && expanded.value,
+            onDismissRequest = { expanded.value = false },
+        ) {
+            options.forEach { (label, value) ->
+                val selected = value in selectedOptions.value
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOptions.value = if (selected) {
+                            selectedOptions.value - value
+                        } else {
+                            selectedOptions.value + value
+                        }
+                    },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = selected,
+                            onCheckedChange = null
+                        )
+                    },
+                    text = { Text(label) }
                 )
             }
         }

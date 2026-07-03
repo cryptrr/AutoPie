@@ -22,8 +22,8 @@ import kotlin.io.path.nameWithoutExtension
 class RunCommandForFiles(private val processManagerService: ProcessManagerService){
     operator fun invoke(
         item: CommandModel,
-        currentLink: String?,
-        fileUris: List<String>,
+        inputText: String?,
+        inputFiles: List<String>,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
     ) : Flow<CommandResult> {
@@ -31,7 +31,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
 
         return flow{
-            val currentItems = fileUris
+            val currentItems = inputFiles
 
             if (item.command.contains("INPUT_FILES")) {
 
@@ -76,18 +76,19 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 //                    currentItems.joinToString(" ")
 //                }
 
-                val inputFiles = currentItems.joinToString("\n")
+                val inputFilesString = currentItems.joinToString("\n")
 
                 val parsedPath = Path(currentItems.firstOrNull() ?: "")
 
-                Timber.d("Input Files: $inputFiles")
+                Timber.d("Input Files: $inputFilesString")
                 Timber.d("Parsed Path: ${parsedPath.absolutePathString()}")
                 val sanitizedFilename = Utils.sanitizeAndroidFilename(parsedPath.fileName.toString())
                 val sanitizedFilenameNoExt = Utils.sanitizeAndroidFilename(parsedPath.nameWithoutExtension)
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
-                    it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
+                    it.add(InputParsedData(name = "INPUT", value = inputFilesString))
+                    it.add(InputParsedData(name = "INPUT_FILES", value = inputFilesString))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
                     it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
@@ -102,16 +103,16 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 Timber.d("Result Command: $resultCommand")
 
-                val processResult = if(Utils.isInteractiveCommand(item.command)){
+                val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true){
                     processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand, path,
-                        inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
+                        inputParsedData,commandExtraInputs,inputFiles.toString(),processId,  JobType.FILES,usePython, isShellScript)
                 }else{
                     processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand, path,
-                        inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILES,usePython, isShellScript)
+                        inputParsedData,commandExtraInputs,inputFiles.toString(),processId,  JobType.FILES,usePython, isShellScript)
                 }
 
 
-                val result = processResult.toCommandResult(JobType.FILES, fileUris.toString())
+                val result = processResult.toCommandResult(JobType.FILES, inputFiles.toString())
 
                 emit(result)
 
@@ -160,6 +161,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                        it.add(InputParsedData(name = "INPUT", value = parsedPath.absolutePathString()))
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.map {item -> "\"$item\"" }.joinToString(" ")))
                         it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                         it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
@@ -172,12 +174,12 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                     Timber.d("Replaced String $replacedString")
 
-                    val processResult = if(Utils.isInteractiveCommand(item.command)){
+                    val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true){
                        processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,dirPath,
-                            inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
+                            inputParsedData,commandExtraInputs,inputFiles.toString(),processId,  JobType.FILE,usePython, isShellScript)
                     }else{
                         processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,dirPath,
-                            inputParsedData,commandExtraInputs,fileUris.toString(),processId,  JobType.FILE,usePython, isShellScript)
+                            inputParsedData,commandExtraInputs,inputFiles.toString(),processId,  JobType.FILE,usePython, isShellScript)
                     }
 
 

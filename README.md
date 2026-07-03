@@ -212,6 +212,12 @@ The current bootstrap includes `python`, `pip`, `binutils`, `openssh`, and
 `sshpass` so package installation works from a fresh app install without Docker
 or the old Python/busybox build scripts.
 
+To build that bootstrap entirely from source with the native
+`termux-generator` pipeline, run `./build_from_source.sh` on a compatible
+Ubuntu x86_64 host. The script installs the generated archive at
+`app/src/main/assets/bootstrap-aarch64.zip`; afterward, use the normal Android
+Studio or Gradle build.
+
 
 ## Support
 * Supports only aarch64/arm-v8 as of now. It should run on most newer phones.

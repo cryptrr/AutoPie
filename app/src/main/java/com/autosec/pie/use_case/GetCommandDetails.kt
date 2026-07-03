@@ -5,9 +5,8 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.fromJsonObjectEntries
 import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -25,11 +24,10 @@ class GetCommandDetails(private val jsonService: JsonService) {
 
 
 
-        val mapType = object : TypeToken<Map<String, CommandModel>>() {}.type
-
-        val sharesData: Map<String, CommandModel> = Gson().fromJson(shareCommands, mapType)
-        val cronData: Map<String, CommandModel> = Gson().fromJson(cronCommands, mapType)
-        val observerData: Map<String, CommandModel> = Gson().fromJson(observerCommands, mapType)
+        val gson = Gson()
+        val sharesData = gson.fromJsonObjectEntries(shareCommands, CommandModel::class.java).values
+        val cronData = gson.fromJsonObjectEntries(cronCommands, CommandModel::class.java).values
+        val observerData = gson.fromJsonObjectEntries(observerCommands, CommandModel::class.java).values
 
         val (commandModel, commandType) = when {
             sharesData[key] != null -> Pair(sharesData[key]!!, CommandType.SHARE)
@@ -42,6 +40,10 @@ class GetCommandDetails(private val jsonService: JsonService) {
 
         Timber.d("commandType: $commandType")
 
-        return commandModel.copy(type = commandType, name = key)
+        return commandModel.copy(
+            id = commandModel.id.ifBlank { key },
+            type = commandType,
+            name = key
+        )
     }
 }

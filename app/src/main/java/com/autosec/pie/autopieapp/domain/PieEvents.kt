@@ -20,10 +20,12 @@ sealed class ViewModelEvent {
     data class CancelProcess(val processId: Int) : ViewModelEvent()
     data object CancelAllProcesses : ViewModelEvent()
     data class CommandStoppedByUser(val processId: Int) : ViewModelEvent()
+    data class CreateShell(val processId: Int) : ViewModelEvent()
+    data class StopShell(val processId: Int) : ViewModelEvent()
 
     data object StopAutoPie : ViewModelEvent()
     data class CommandStarted(val processId: Int,val command: CommandModel, val logFile: String, val input: String, val jobType: JobType) : ViewModelEvent()
-    data class CommandCompleted(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
+    data class CommandCompleted(val processId: Int,val command: CommandModel, val logFile: String, val partial: Boolean = false) : ViewModelEvent()
     data class CommandFailed(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
     data object AuthTokenExpired: ViewModelEvent()
 

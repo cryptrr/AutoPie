@@ -70,6 +70,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                    it.add(InputParsedData(name = "INPUT", value = inputDir.absolutePath))
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${path.absolutePath}\"" else path.absolutePath))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
@@ -80,7 +81,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
-                val processResult = if(Utils.isInteractiveCommand(item.command)) {
+                val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true) {
                    processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand, cwdPath,
                         inputParsedData,commandExtraInputs,inputDir.absolutePath,processId,  JobType.DIRECTORY,usePython, isShellScript)
                 }else{

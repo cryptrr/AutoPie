@@ -152,25 +152,37 @@ fun GenericTextAndSelectorFormField(text: MutableState<String>,title: String, mo
 @Composable
 fun MultiFilePicker(
     useRelativePaths: Boolean = false,
+    mimeType: String = "*/*",
     onFilesPicked: (List<String>) -> Unit
 ) {
     val context = LocalContext.current
+    val requestedMimeType = mimeType.ifBlank { "*/*" }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
+        Timber.tag("UriResolver").d("Multi-file picker returned %d URI(s): %s", uris.size, uris)
         val paths = uris.mapNotNull { uri ->
-            Timber.d("SELECTED FILE: $uri")
+            Timber.tag("UriResolver").d(
+                "Processing selected URI: uri=%s mimeType=%s useRelativePaths=%s",
+                uri,
+                context.contentResolver.getType(uri),
+                useRelativePaths
+            )
             val path = if(useRelativePaths) Utils.getRelativePathFromUri(context ,uri) else Utils.getAbsolutePathFromUri2(context ,uri)
-            Timber.d("ABSOLUTE PATH: $path")
+            Timber.tag("UriResolver").d("Multi-file picker resolved URI: uri=%s path=%s", uri, path)
             path
         }
+        Timber.tag("UriResolver").d("Multi-file picker final paths: %s", paths)
         onFilesPicked(paths)
     }
 
     // Call this when you want to launch the picker, for example on button click
     remember { launcher }
 
-    IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
+    IconButton(onClick = {
+        Timber.tag("UriResolver").d("Launching multi-file picker with MIME type: %s", requestedMimeType)
+        launcher.launch(arrayOf(requestedMimeType))
+    }) {
         Icon(
             imageVector = Icons.Rounded.FilePresent,
             contentDescription = "File Picker",
@@ -184,24 +196,39 @@ fun MultiFilePicker(
 @Composable
 fun SingleFilePicker(
     useRelativePaths: Boolean = false,
+    mimeType: String = "*/*",
     onFilesPicked: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val requestedMimeType = mimeType.ifBlank { "*/*" }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
+        Timber.tag("UriResolver").d(
+            "Single-file picker returned URI: uri=%s mimeType=%s useRelativePaths=%s",
+            uri,
+            uri?.let(context.contentResolver::getType),
+            useRelativePaths
+        )
         uri?.let{
             val path =  if(useRelativePaths) Utils.getRelativePathFromUri(context ,uri) else Utils.getAbsolutePathFromUri2(context ,uri)
 
+            Timber.tag("UriResolver").d("Single-file picker resolved URI: uri=%s path=%s", uri, path)
+
             path?.let {
                 onFilesPicked(it)
-            }
+            } ?: Timber.tag("UriResolver").w("Single-file picker dropped unresolved URI: %s", uri)
+        } ?: run {
+            Timber.tag("UriResolver").w("Single-file picker was dismissed without a URI")
         }
     }
 
     remember { launcher }
 
-    IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
+    IconButton(onClick = {
+        Timber.tag("UriResolver").d("Launching single-file picker with MIME type: %s", requestedMimeType)
+        launcher.launch(arrayOf(requestedMimeType))
+    }) {
         Icon(
             imageVector = Icons.Rounded.FilePresent,
             contentDescription = "File Picker",

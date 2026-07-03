@@ -1,6 +1,7 @@
 package com.autopi.use_case
 
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ScriptFlags
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.domain.ViewModelError
@@ -26,7 +27,7 @@ class ToggleCommandDebugMode(private val jsonService: JsonService) {
                 ?: cronCommands.getAsJsonObject(command.name)
         } ?: throw ViewModelError.CommandNotFound
 
-        val updatedCommand = Utils.setCommandHeader(command.command, "#@INTERACTIVE", enabled)
+        val updatedCommand = Utils.setScriptHeader(command.command, ScriptFlags.INTERACTIVE, enabled)
         commandObject.addProperty("command", updatedCommand)
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()

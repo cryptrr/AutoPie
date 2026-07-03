@@ -69,7 +69,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
+import com.autopi.autopieapp.data.firstStepOrSelf
+import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.hasUnsetRequiredExtras
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SearchBar
@@ -99,14 +103,14 @@ class ShareReceiverActivity : ComponentActivity() {
         Timber.d(this.intent.extras.toString())
 
 
-        val data = intent?.getStringExtra(Intent.EXTRA_TEXT)
+        val inputText = intent?.getStringExtra(Intent.EXTRA_TEXT)
 
         val viewData = intent?.data
 
         Timber.d("View data: $viewData")
 
 
-        val files = mutableListOf<String>()
+        val inputFiles = mutableListOf<String>()
 
 
         when {
@@ -120,17 +124,17 @@ class ShareReceiverActivity : ComponentActivity() {
                     sharedPath.path.let {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath!!)
+                        inputFiles.add(fullPath!!)
                     }
                 }
 
-                if(sharedPaths == null && data == null){
+                if(sharedPaths == null && inputText == null){
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
 
@@ -149,17 +153,17 @@ class ShareReceiverActivity : ComponentActivity() {
                     if (it != null) {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath)
+                        inputFiles.add(fullPath)
                     }
                 }
 
-                if(sharedPath == null && data == null) {
+                if(sharedPath == null && inputText == null) {
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_SEND CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
 
@@ -175,25 +179,25 @@ class ShareReceiverActivity : ComponentActivity() {
                     if (it != null) {
                         val fragment = sharedPath?.fragment
                         val fullPath = if (fragment != null) "$it#$fragment" else it
-                        files.add(fullPath)
+                        inputFiles.add(fullPath)
                     }
                 }
 
-                if(sharedPath == null && data == null){
+                if(sharedPath == null && inputText == null){
                     val clipData = getPathsFromClipData(this.applicationContext, intent)
 
                     Timber.d("ACTION_VIEW CLIP: $clipData")
 
                     clipData.forEach {
-                        files.add(it)
+                        inputFiles.add(it)
                     }
                 }
             }
 
         }
 
-        Timber.d("Intent EXTRA_TEXT: ${data.toString()}")
-        Timber.d("Intent FILES: : ${files}")
+        Timber.d("Intent EXTRA_TEXT: ${inputText.toString()}")
+        Timber.d("Intent FILES: : $inputFiles")
 
 
 
@@ -202,7 +206,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
             AutoPieTheme {
 
-                ShareContextMenuBottomSheet(currentLink = data, fileUris = files)
+                ShareContextMenuBottomSheet(inputText = inputText, inputFiles = inputFiles)
 
             }
         }
@@ -215,8 +219,8 @@ class ShareReceiverActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareContextMenuBottomSheet(
-    currentLink: String?,
-    fileUris: List<String>,
+    inputText: String?,
+    inputFiles: List<String>,
     onHide: () -> Unit = {},
     onExpand: () -> Unit = {}
 ) {
@@ -230,7 +234,7 @@ fun ShareContextMenuBottomSheet(
     val activity = LocalContext.current.getActivity()
 
 
-    LaunchedEffect(key1 = currentLink, fileUris) {
+    LaunchedEffect(key1 = inputText, inputFiles) {
         shareReceiverViewModel.main.eventFlow.collect {
             when (it) {
                 is ViewModelEvent.CloseShareReceiverSheet -> activity?.finish()
@@ -252,7 +256,9 @@ fun ShareContextMenuBottomSheet(
     val scope = rememberCoroutineScope()
 
 
-    val extrasBottomSheetState = rememberModalBottomSheetState(true)
+    val extrasBottomSheetState = rememberModalBottomSheetState(true,confirmValueChange = {
+        it != SheetValue.Hidden
+    })
     val extrasBottomSheetStateOpen = remember {
         mutableStateOf(false)
     }
@@ -328,7 +334,7 @@ fun ShareContextMenuBottomSheet(
                     items(
                         filteredShareItemsResult.value,
                         key = { it.name ?: it }) { item ->
-                        ShareCard(card = item, currentLink, fileUris, state)
+                        ShareCard(card = item, inputText, inputFiles, state)
                     }
                 }
 
@@ -368,8 +374,8 @@ fun ShareContextMenuBottomSheet(
 @Composable
 fun ShareCard(
     card: CommandModel,
-    currentLink: String?,
-    fileUris: List<String>,
+    inputText: String?,
+    inputFiles: List<String>,
     sheetState: SheetState,
 ) {
 
@@ -380,6 +386,10 @@ fun ShareCard(
     }
 
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+    val activeCard = card.firstStepOrSelf()
+    val hasUserFacingExtras = activeCard.extras?.any {
+        !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
+    } == true
 
     Card(
         modifier = Modifier
@@ -393,16 +403,21 @@ fun ShareCard(
                         return@combinedClickable
                     }
 
-                    if (card.extras?.any { it.type == "STRING" && it.default.isEmpty() && it.required } == true) {
-                        shareReceiverViewModel.currentExtrasDetails.value =
-                            Triple(true, card, ShareInputs(currentLink, fileUris))
+                    val runnableCard = shareReceiverViewModel.prepareCommand(card)?.firstStepOrSelf()
+                        ?: return@combinedClickable
+
+                    if (runnableCard.hasUnsetRequiredExtras()) {
+                        shareReceiverViewModel.openCommandExtras(
+                            runnableCard,
+                            ShareInputs(inputText, inputFiles)
+                        )
                     } else {
-                        shareReceiverViewModel.onCommandClick(card, fileUris, currentLink) {
+                        isLoading = true
+                        shareReceiverViewModel.onCommandClick(runnableCard, inputFiles, inputText) {
                             shareReceiverViewModel.viewModelScope.launch {
-                                isLoading = true
                                 //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
                                 //TODO: Switch from exec.
-                                val delayTime = if (getCommandExec(card.command) == "am") 2000.milliseconds else 900.milliseconds
+                                val delayTime = if (getCommandExec(runnableCard.command) == "am") 2000.milliseconds else 900.milliseconds
                                 delay(delayTime)
                                 Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
                                 activity?.finish()
@@ -413,9 +428,11 @@ fun ShareCard(
                 onLongClick = {
                     Timber.d("LONG PRESS DETECTED")
 
-                    if (card.extras?.isNotEmpty() == true) {
-                        shareReceiverViewModel.currentExtrasDetails.value =
-                            Triple(true, card, ShareInputs(currentLink, fileUris))
+                    if (activeCard.multiStage == true || hasUserFacingExtras) {
+                        shareReceiverViewModel.openCommandExtras(
+                            activeCard,
+                            ShareInputs(inputText, inputFiles)
+                        )
                     }
                 }
             ),
@@ -435,8 +452,10 @@ fun ShareCard(
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
                 CommandCard(card = card) {
-                    shareReceiverViewModel.currentExtrasDetails.value =
-                        Triple(true, card, ShareInputs(currentLink, fileUris))
+                    shareReceiverViewModel.openCommandExtras(
+                        activeCard,
+                        ShareInputs(inputText, inputFiles)
+                    )
                 }
             }
         }
@@ -446,6 +465,11 @@ fun ShareCard(
 @Composable
 fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
 
+    val activeCard = card.firstStepOrSelf()
+    val hasUserFacingExtras = activeCard.extras?.any {
+        !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
+    } == true || activeCard.multiStage == true
+
 
     Box(
         Modifier
@@ -454,7 +478,7 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         //verticalArrangement = Arrangement.Center
         contentAlignment = Alignment.Center
     ) {
-        if (card.extras?.isNotEmpty() == true) {
+        if (hasUserFacingExtras) {
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
@@ -479,12 +503,12 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
                     text = card.name ?: "",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(if (card.extras?.isNotEmpty() == true) 0.9F else 1F)
+                    modifier = Modifier.fillMaxWidth(if (hasUserFacingExtras) 0.9F else 1F)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = card.command,
+                text = activeCard.command,
                 maxLines = 2,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -495,6 +519,3 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
         }
     }
 }
-
-
-

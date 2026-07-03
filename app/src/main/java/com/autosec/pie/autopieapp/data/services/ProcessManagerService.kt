@@ -6,15 +6,18 @@ import android.content.Intent
 import android.os.Environment
 import android.system.Os
 import androidx.lifecycle.viewModelScope
+import com.autopi.LoadingActivity
 import com.autopi.OutputViewerActivity
 import com.autopi.autopieapp.data.AutoPieError
 import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandInterface
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -31,6 +34,7 @@ import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
@@ -46,6 +50,8 @@ class ProcessManagerService(
     private val activity: Application,
     private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
 ){
+
+    private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
     private var shell: Shell? = null
 
@@ -94,9 +100,8 @@ class ProcessManagerService(
 
                             if (runningShell != null) {
                                 runningShell.process.destroyForcibly()
-
-                                Timber.d("Process terminated: ${it.processId}")
                                 shells.remove(it.processId)
+                                Timber.d("Process terminated: ${it.processId}")
                                 main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(it.processId))
                             } else {
                                 Timber.d("processId not match")
@@ -112,9 +117,8 @@ class ProcessManagerService(
 
                             for(runningShell in shells.entries){
                                 runningShell.value.process.destroyForcibly()
-
-                                Timber.d("Process terminated: ${runningShell.key}")
                                 shells.remove(runningShell.key)
+                                Timber.d("Process terminated: ${runningShell.key}")
                                 main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(runningShell.key))
                             }
 
@@ -164,6 +168,82 @@ class ProcessManagerService(
 
     fun getConfigRelativePath(path: String): String {
         return File(autoPieConfigPathProvider.getCommandBaseDirectory(), path).absolutePath
+    }
+
+    suspend fun getShellEnvironmentVariable(processId: Int, variableName: String): String? =
+        withContext(dispatchers.io) {
+            if (!environmentVariableName.matches(variableName)) {
+                Timber.w("Invalid environment variable name requested: $variableName")
+                return@withContext null
+            }
+
+            val runningShell = shells[processId]
+            if (runningShell == null) {
+                Timber.w("No shell found for processId $processId while resolving $variableName")
+                return@withContext null
+            }
+            if (!runningShell.isAlive()) {
+                shells.remove(processId, runningShell)
+                Timber.w("Shell for processId $processId is not alive while resolving $variableName")
+                return@withContext null
+            }
+
+            try {
+                val result = runningShell.run(
+                    "if [[ -v $variableName ]]; then printf '%s\\n' \"\${$variableName}\"; else false; fi",
+                    Shell.Command.Config.silent()
+                )
+                if (result.isSuccess) {
+                    Timber.d("Resolved $variableName from shell for processId $processId")
+                    result.stdout()
+                } else {
+                    Timber.w("Variable $variableName is not set in shell for processId $processId")
+                    null
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to read $variableName from shell for processId $processId")
+                null
+            }
+        }
+
+    suspend fun setShellEnvironmentVariable(
+        processId: Int,
+        variableName: String,
+        value: String
+    ): Boolean = setShellEnvironmentVariables(
+        processId = processId,
+        variables = mapOf(variableName to value)
+    )
+
+    suspend fun setShellEnvironmentVariables(
+        processId: Int,
+        variables: Map<String, String>
+    ): Boolean = withContext(dispatchers.io) {
+        val validVariables = variables.filterKeys { variableName ->
+            val isValid = environmentVariableName.matches(variableName)
+            if (!isValid) {
+                Timber.w("Invalid environment variable name requested: $variableName")
+            }
+            isValid
+        }
+        if (validVariables.isEmpty()) return@withContext variables.isEmpty()
+
+        try {
+            val runningShell = getOrCreateShell(processId)
+            val result = runningShell.run(
+                validVariables.entries.joinToString("\n") { (key, value) ->
+                    "export $key=${value.shellExportValue()}"
+                },
+                Shell.Command.Config.silent()
+            )
+            if (!result.isSuccess) {
+                Timber.e("Failed to set shell environment for processId $processId")
+            }
+            result.isSuccess
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to set shell environment for processId $processId")
+            false
+        }
     }
 
 
@@ -228,6 +308,22 @@ class ProcessManagerService(
 
     }
 
+    private fun getOrCreateShell(processId: Int): Shell =
+        shells.computeIfAbsent(processId) { getNewShell() }
+
+    fun createShell(processId: Int) {
+        getOrCreateShell(processId)
+        Timber.d("Shell created for processId $processId")
+    }
+
+    fun stopShell(processId: Int) {
+        val runningShell = shells.remove(processId) ?: return
+        if (runningShell.isAlive()) {
+            runningShell.shutdown()
+        }
+        Timber.d("Shell stopped and removed for processId $processId")
+    }
+
     private fun getTermuxShellEnvironment(): HashMap<String, String> {
         val defaultPath = System.getenv("PATH") ?: ""
         val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
@@ -238,8 +334,7 @@ class ProcessManagerService(
             "HOME" to activity.filesDir.absolutePath,
             "PREFIX" to prefix,
             "PATH" to "$prefix/bin:${activity.filesDir.absolutePath}/bin:$defaultPath",
-            "LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
-            "SSL_CERT_FILE" to "$prefix/etc/ssl/cert.pem",
+            //"LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
             "TERMINFO" to "$prefix/share/terminfo",
         )
     }
@@ -253,11 +348,7 @@ class ProcessManagerService(
             export HOME=${activity.filesDir.absolutePath.shellQuote()}
             export PREFIX=${prefix.shellQuote()}
             export PATH=${"$prefix/bin".shellQuote()}:${appBin.shellQuote()}:${'$'}PATH
-            export LD_LIBRARY_PATH=${"$prefix/lib".shellQuote()}:${'$'}LD_LIBRARY_PATH
-            export SSL_CERT_FILE=${"$prefix/etc/ssl/cert.pem".shellQuote()}
             export TERMINFO=${"$prefix/share/terminfo".shellQuote()}
-            unset PYTHONHOME
-            unset PYTHONPATH
         """.trimIndent()
     }
 
@@ -343,126 +434,6 @@ class ProcessManagerService(
         return envMap
     }
 
-    private fun getShell(
-        inputParsedData: List<InputParsedData>,
-        commandObject: CommandInterface,
-        commandExtraInputs: List<CommandExtraInput> = emptyList(),
-        logWriter: BufferedWriter
-    ): Shell {
-        val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
-        val defaultPath = System.getenv("PATH") ?: ""
-        val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
-
-        val envMap = HashMap<String, String>()
-
-        envMap["HOME"] = activity.filesDir.absolutePath
-        envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
-        envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
-        envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
-        envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
-
-
-        for (inputData in inputParsedData) {
-            envMap[inputData.name] = inputData.value
-        }
-
-        Timber.d("INPUT_FILE DATA: ${envMap["INPUT_FILE"]}")
-
-        //This is for when "Extra Inputs" are not passed in ie when the CommandExtrasBottomSheet is not opened or edited.
-        if (commandExtraInputs.isEmpty()) {
-            for (extra in commandObject.extras ?: emptyList()) {
-                //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
-
-                //Check if the field is not string type. Then don't do all of this shit with the file paths.
-                if(extra.type != "STRING"){
-                    envMap[extra.name] = extra.default
-                }
-                //TEMP FIX for multi user envs where fully qualified paths for extras don't work
-                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extra.default).isAbsolute){
-                        envMap[extra.name] = extra.default
-                    }else{
-                        val fullPath = getConfigRelativePath(extra.default)
-                        envMap[extra.name] = fullPath
-                    }
-                }
-                else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extra.default.split(",").map {
-                        if(Path(extra.default).isAbsolute){
-                            it
-                        }else{
-                            getConfigRelativePath(it)
-                        }
-                    }.joinToString(",")
-                }
-                else{
-                    envMap[extra.name] = extra.default
-                }
-            }
-        }
-        //This is when the command extra inputs are passed. That is when the CommandExtrasBottomSheet is opened, all the extras including the defaults are passed as commandExtraInputs
-        else {
-            for (extra in commandExtraInputs) {
-
-                if(extra.type != "STRING"){
-                    envMap[extra.name] = extra.value
-                }
-                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extra.default).isAbsolute){
-                        envMap[extra.name] = extra.value
-                    }else{
-                        val fullPath = getConfigRelativePath(extra.value)
-                        envMap[extra.name] = fullPath
-                    }
-                }
-                else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extra.value.split(",").map {
-                        if(Path(extra.value).isAbsolute){
-                            it
-                        }else{
-                            getConfigRelativePath(it)
-                        }
-                    }.joinToString(",")
-                }
-                else{
-                    envMap[extra.name] = extra.value
-                }
-            }
-        }
-
-        //Adding the command at last to get the env included result command
-        envMap["resultCommand"] = commandObject.command
-
-        Timber.d("ENV MAP: $envMap")
-
-        val shell = Shell(
-            shellPath,
-            envMap
-        )
-
-        //val setEnvResult = shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
-        shell.addOnStderrLineListener(object : Shell.OnLineListener {
-            override fun onLine(line: String) {
-                writeLogLine(logWriter, line)
-            }
-        }).addOnStdoutLineListener(object : Shell.OnLineListener {
-            override fun onLine(line: String) {
-                writeLogLine(logWriter, line)
-            }
-        })
-
-
-//        Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
-//
-//
-//        val setEnvResult =
-//            shell.run(". .${activity.filesDir.absolutePath}/env.sh ${activity.filesDir.absolutePath} ${activity.packageName}")
-
-        return shell
-
-    }
-
-
     fun checkShell(): Boolean {
         try {
             val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
@@ -514,88 +485,6 @@ class ProcessManagerService(
     }
 
 
-    fun runCommandForShareWithEnv2a(
-        commandObject: CommandInterface,
-        exec: String,
-        command: String,
-        cwd: String,
-        inputParsedData: List<InputParsedData> = emptyList(),
-        commandExtraInputs: List<CommandExtraInput>,
-        rawInput: String,
-        processId: Int,
-        jobType: JobType,
-        usePython: Boolean = true,
-        isShellScript: Boolean = false
-    ): ProcessResult {
-
-        try {
-
-            val logFile = File(activity.cacheDir, "${processId}.log")
-            logFile.createNewFile()
-
-            val logWriter = BufferedWriter(FileWriter(logFile, true))
-            Timber.d("Logs written to ${logFile.absolutePath}")
-
-            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
-
-            if (Utils.isOpenLogsCommand(commandObject.command)) {
-                openOutputViewer(logFile.absolutePath, commandObject.name)
-            }
-
-            //checkForUnsafeCommands(commandObject, command)
-
-            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
-
-            Timber.d("Received processId in Command Start: $processId")
-            shells.set(processId, shell)
-
-            val cwdSuccess = shell.run("cd ${cwd}")
-
-            if(!cwdSuccess.isSuccess){
-                Timber.e("CWD unsuccessful ${cwdSuccess.output}")
-            }else{
-                Timber.d("current working directory is $cwd")
-            }
-
-            val fullCommand = when {
-                usePython -> "python $exec $command"
-                isShellScript -> "sh $exec $command"
-                else -> "$exec $command"
-            }
-
-            Timber.d("FULL COMMAND: $fullCommand")
-
-            //Timber.d("Env dump: ${shell.environment}")
-
-            val result = shell.run(fullCommand)
-
-            Timber.d("Exit Code ${result.exitCode}")
-
-            val checkPwd = shell.run("pwd")
-
-
-            val output = result.output()
-
-            Timber.d(output)
-
-            Timber.d("Command Run: ${result.details.command}")
-
-
-            shell.shutdown()
-
-            closeLog(logWriter)
-
-            shells.remove(processId)
-
-            return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
-
-
-        }
-        catch (e: Exception) {
-            Timber.e(e.toString())
-            throw e
-        }
-    }
 
     fun runCommandForShareWithEnv2(
         commandObject: CommandInterface,
@@ -623,7 +512,7 @@ class ProcessManagerService(
                 usePython && Utils.isPythonScript(commandObject.command) -> {
                     Timber.d("Running Python Script")
                     val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                    pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
+                    pythonScriptFile.writeText(Utils.stripScriptHeaders(commandObject.command))
                     "python ${pythonScriptFile.absolutePath.shellQuote()}"
                 }
                 usePython -> {
@@ -637,10 +526,17 @@ class ProcessManagerService(
             }
 
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
-            scriptFile.writeText("set -x\n")
+            scriptFile.writeText(commandScriptPreamble(commandObject.multiStage == true))
             //TODO: Do this on condition.
             scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             scriptFile.appendText(fullCommand)
+            scriptFile.appendText(
+                if (commandObject.multiStage == true) {
+                    "\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n"
+                } else {
+                    "\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n"
+                }
+            )
 
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
@@ -651,14 +547,35 @@ class ProcessManagerService(
                 openOutputViewer(logFile.absolutePath, commandObject.name)
             }
 
+            if (commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN)) {
+                LoadingActivity.start(activity)
+            }
+
             //checkForUnsafeCommands(commandObject, command)
 
-            val shell = getShell(inputParsedData, commandObject, commandExtraInputs, logWriter)
+            val shell = getOrCreateShell(processId)
 
             Timber.d("Received processId in Command Start: $processId")
-            shells.set(processId, shell)
 
-            val cwdSuccess = shell.run("cd ${cwd}")
+            val commandEnvironment = getEnvsFromCommand(
+                inputParsedData,
+                commandExtraInputs,
+                commandObject
+            )
+            val exportResult = shell.run(
+                commandEnvironment.entries.joinToString("\n") { (key, value) ->
+                    "export $key=${value.shellExportValue()}"
+                },
+                Shell.Command.Config.silent()
+            )
+            if (!exportResult.isSuccess) {
+                Timber.e("Failed to export command environment: ${exportResult.stderr()}")
+            }
+
+            val cwdSuccess = shell.run(
+                "cd ${cwd.shellQuote()}",
+                Shell.Command.Config.silent()
+            )
 
             if(!cwdSuccess.isSuccess){
                 Timber.e("CWD unsuccessful ${cwdSuccess.output}")
@@ -672,7 +589,16 @@ class ProcessManagerService(
             //Timber.d("Env dump: ${shell.environment}")
 
 
-            val result = shell.run("bash ${scriptFile.absolutePath.shellQuote()} < /dev/null")
+            val executionCommand = if (commandObject.multiStage == true) {
+                ". ${scriptFile.absolutePath.shellQuote()} < /dev/null"
+            } else {
+                "bash ${scriptFile.absolutePath.shellQuote()} < /dev/null"
+            }
+            val result = shell.run(executionCommand) {
+                notify = false
+                onStdOut = { line -> writeLogLine(logWriter, line) }
+                onStdErr = { line -> writeLogLine(logWriter, line) }
+            }
 
             Timber.d("Exit Code ${result.exitCode}")
 
@@ -684,14 +610,20 @@ class ProcessManagerService(
             Timber.d("Command Run: ${result.details.command}")
 
 
-            shell.shutdown()
-
             closeLog(logWriter)
 
-            shells.remove(processId)
+            if(commandObject.multiStage != true){
+                shell.shutdown()
+                shells.remove(processId)
+            }
 
-            return ProcessResult(commandObject.name, processId ,result.isSuccess, output)
-
+            return ProcessResult(
+                commandObject.name,
+                processId,
+                result.isSuccess,
+                output,
+                partial = result.isSuccess && commandObject.multiStage == true && commandObject.steps.size > 1
+            )
 
         }
         catch (e: Exception) {
@@ -730,7 +662,7 @@ class ProcessManagerService(
 
             if (usePython && Utils.isPythonScript(commandObject.command)) {
                 val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                pythonScriptFile.writeText(Utils.stripCommandHeaders(commandObject.command))
+                pythonScriptFile.writeText(Utils.stripScriptHeaders(commandObject.command))
                 scriptFile.appendText("python ${pythonScriptFile.absolutePath.shellQuote()}")
             } else {
                 scriptFile.appendText(command)
@@ -782,7 +714,13 @@ class ProcessManagerService(
                 Timber.d("Starting Termux Activity: $it")
             }
 
-            return ProcessResult(commandObject.name, processId , true, "Command Opened in Termux Shell")
+            return ProcessResult(
+                commandObject.name,
+                processId,
+                true,
+                "Command Opened in Termux Shell",
+                partial = commandObject.multiStage == true && commandObject.steps.size > 1
+            )
 
 
         }catch (e: Exception){
@@ -806,7 +744,7 @@ class ProcessManagerService(
             envMap["HOME"] = activity.filesDir.absolutePath
             envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
             envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
-            envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
+            //envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"
             envMap["ANDROID_PACKAGE_NAME"] = activity.packageName
 
             val shell = com.jaredrummler.ktsh.Shell(
@@ -1124,4 +1062,14 @@ private fun String.shellExportValue(): String {
             (trimmed.startsWith("\"") && trimmed.endsWith("\""))
 
     return if (alreadyQuoted) this else shellQuote()
+}
+
+internal fun commandScriptPreamble(multiStage: Boolean): String = buildString {
+    if (multiStage) {
+        append("if [ \"\${OUTPUT+x}\" = x ]; then\n")
+        append("    export INPUT=\"\$OUTPUT\"\n")
+        append("    unset OUTPUT\n")
+        append("fi\n")
+    }
+    append("set -x\n")
 }

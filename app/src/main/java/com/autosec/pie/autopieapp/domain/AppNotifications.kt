@@ -106,6 +106,7 @@ sealed class AppNotification : Notification {
     data object MCPServerStopped : AppNotification()
     data object MCPServerStartError : AppNotification()
     data object CommandDeleted : AppNotification()
+    data class CommandsSkipped(val names: List<String>) : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
     data class PackageUpdatesAvailable(val url: String) : AppNotification()
 
@@ -114,6 +115,7 @@ sealed class AppNotification : Notification {
     override val title : String
         get() = when(this){
             is PackageUpdatesAvailable -> "Package Updates Available"
+            is CommandsSkipped -> "Some commands were skipped"
             else -> "Notification"
         }
 
@@ -138,6 +140,7 @@ sealed class AppNotification : Notification {
             is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
             is CommandDeleted -> "Command Deleted"
+            is CommandsSkipped -> "This AutoPie version cannot read: ${names.joinToString()}."
             else -> "Unknown Event Occurred"
         }
 
@@ -147,6 +150,7 @@ sealed class AppNotification : Notification {
             is InstallingPythonPackagesSuccess -> BannerType.Success
             is UpdatesAvailable -> BannerType.Warning
             is PackageUpdatesAvailable -> BannerType.Warning
+            is CommandsSkipped -> BannerType.Warning
             else -> BannerType.Info
         }
 
@@ -157,6 +161,7 @@ sealed class AppNotification : Notification {
             is UpdatesAvailable -> true
             is PackageUpdatesAvailable -> true
             is DownloadingInitPackages -> true
+            is CommandsSkipped -> true
             else -> false
         }
     override val hasAction: Boolean

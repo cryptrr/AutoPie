@@ -19,8 +19,8 @@ import java.net.URL
 class RunCommandForUrl(private val processManagerService: ProcessManagerService) {
     suspend operator fun invoke(
         item: CommandModel,
-        currentLink: String,
-        fileUris: List<String>,
+        inputUrl: String,
+        inputFiles: List<String>,
         commandExtraInputs: List<CommandExtraInput> = emptyList(),
         processId: Int
     ): Flow<CommandResult> {
@@ -29,11 +29,11 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             Timber.d("runCommandForUrl")
 
 
-            val inputUrl = URL(currentLink)
+            val inputUrlObj = URL(inputUrl)
 
-            val host = inputUrl.host
+            val host = inputUrlObj.host
 
-            val filename = inputUrl.file
+            val filename = inputUrlObj.file
 
             val path = processManagerService.getCommandWorkingDirectory(item.path)
 
@@ -67,16 +67,17 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                 it.add(InputParsedData(name = "COOKIE_JAR", value = processManagerService.getCookieJarPath()))
+                it.add(InputParsedData(name = "INPUT", value = inputUrl))
                 it.add(
                     InputParsedData(
                         name = "INPUT_FILE",
-                        value = if (useQuotes) "\"$currentLink\"" else currentLink
+                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
                     )
                 )
                 it.add(
                     InputParsedData(
                         name = "INPUT_URL",
-                        value = if (useQuotes) "\"$currentLink\"" else currentLink
+                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
                     )
                 )
                 it.add(InputParsedData(name = "HOST", value = if (useQuotes) "\"$host\"" else host))
@@ -99,7 +100,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
 
 
-            val processResult = if(Utils.isInteractiveCommand(item.command)){
+            val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true){
                 processManagerService.runCommandInTermuxShell(
                     item,
                     fullExecPath,
@@ -107,7 +108,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     path,
                     inputParsedData,
                     if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
-                    currentLink,
+                    inputUrl,
                     processId,
                     JobType.URL,
                     usePython,
@@ -121,7 +122,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     path,
                     inputParsedData,
                     if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
-                    currentLink,
+                    inputUrl,
                     processId,
                     JobType.URL,
                     usePython,
@@ -129,7 +130,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 )
             }
 
-            val result = processResult.toCommandResult(JobType.URL, currentLink)
+            val result = processResult.toCommandResult(JobType.URL, inputUrl)
 
             emit(result)
         }

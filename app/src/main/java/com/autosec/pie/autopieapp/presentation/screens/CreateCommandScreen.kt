@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.ScriptFlags
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.CommandExtraElement
@@ -348,9 +349,9 @@ private fun CommandLanguageSelector(
 private fun String.withPythonHeader(): String {
     val commandWithoutHeader = withoutPythonHeader()
     return if (commandWithoutHeader.isBlank()) {
-        "#@PYTHON\n"
+        "${ScriptFlags.PYTHON.value}\n"
     } else {
-        "#@PYTHON\n$commandWithoutHeader"
+        "${ScriptFlags.PYTHON.value}\n$commandWithoutHeader"
     }
 }
 
@@ -360,7 +361,7 @@ private fun String.withoutPythonHeader(): String {
         .filter { line ->
             val trimmedLine = line.trim()
             if (readingHeaders && trimmedLine.startsWith("#@")) {
-                !trimmedLine.startsWith("#@PYTHON")
+                !trimmedLine.startsWith(ScriptFlags.PYTHON.value)
             } else {
                 readingHeaders = false
                 true

@@ -15,6 +15,7 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
@@ -90,7 +91,9 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
             delay(500L)
 
             try {
-                useCases.getCommandsList().let { newCommands ->
+                useCases.getCommandsList { skippedCommands ->
+                    main.showNotification(AppNotification.CommandsSkipped(skippedCommands))
+                }.let { newCommands ->
                     withContext(dispatchers.main){
                         fullListOfCommands.update {
                             newCommands.sortedBy { it.name }

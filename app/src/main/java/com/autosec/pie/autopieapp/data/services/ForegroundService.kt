@@ -205,8 +205,8 @@ class ForegroundService : Service() {
                     Timber.d("ProcessIds at starting command: $processIds")
 
                     val commandString = it.getStringExtra("command")
-                    val currentLink = it.getStringExtra("currentLink")
-                    val fileUrisString = it.getStringExtra("fileUris")
+                    val inputText = it.getStringExtra("inputText")
+                    val inputFilesString = it.getStringExtra("inputFiles")
                     val commandExtraInputsString = it.getStringExtra("commandExtraInputs")
 
                     val listType = object : TypeToken<List<String>>() {}.type
@@ -214,7 +214,7 @@ class ForegroundService : Service() {
 
                     command = Gson().fromJson(commandString, CommandModel::class.java)
 
-                    val fileUris: List<String> = Gson().fromJson(fileUrisString, listType)
+                    val inputFiles: List<String> = Gson().fromJson(inputFilesString, listType)
 
                     val commandExtraInputs: List<CommandExtraInput> = try {
                         Gson().fromJson(commandExtraInputsString, commandExtraInputListType)
@@ -226,8 +226,11 @@ class ForegroundService : Service() {
                     //The logs file is created with processId as its prefix in the caches directory when the command starts.
                     logsFile = File(application.cacheDir, "${processId}.log")
 
-                    useCases.runCommand(command, currentLink, fileUris, commandExtraInputs, processId).catch { e ->
+                    useCases.runCommand(command, inputText, inputFiles, commandExtraInputs, processId).catch { e ->
 
+                        if (command.multiStage == true) {
+                            mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
                         mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         Timber.e(e)
 
@@ -237,10 +240,23 @@ class ForegroundService : Service() {
                         if (receipt.success) {
                             Timber.d("Process Success".uppercase())
                             autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
-                            mainViewModel.dispatchEvent(ViewModelEvent.CommandCompleted(processId, command, logsFile.absolutePath))
+                            if (command.multiStage == true && !receipt.partial) {
+                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                            }
+                            mainViewModel.dispatchEvent(
+                                ViewModelEvent.CommandCompleted(
+                                    processId,
+                                    command,
+                                    logsFile.absolutePath,
+                                    partial = receipt.partial
+                                )
+                            )
 
                         } else {
                             Timber.d("Process FAILED".uppercase())
+                            if (command.multiStage == true) {
+                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                            }
                             autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
                             mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command, logsFile.absolutePath))
                         }
@@ -248,6 +264,9 @@ class ForegroundService : Service() {
 
                 }catch (e: Exception){
                     Timber.e(e)
+                    if (command?.multiStage == true) {
+                        mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                    }
                     //TODO: Could change the !! operator
                     autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath, processId)
                     mainViewModel.dispatchEvent(ViewModelEvent.CommandFailed(processId, command!!, logsFile.absolutePath))

@@ -45,6 +45,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                it.add(InputParsedData(name = "INPUT", value = ""))
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
 
@@ -55,7 +56,7 @@ class RunStandaloneCommand(private val processManagerService: ProcessManagerServ
 
             Timber.d("Command to run: ${item.exec} $resultCommand")
 
-            val processResult = if(Utils.isInteractiveCommand(item.command)) {
+            val processResult = if(Utils.isInteractiveCommand(item.command) && item.multiStage != true) {
                 processManagerService.runCommandInTermuxShell(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, JobType.STANDALONE, usePython, isShellScript)
             }else{
                 processManagerService.runCommandForShareWithEnv2(item, fullExecPath, resultCommand,path ,inputParsedData,commandExtraInputs,"",processId, JobType.STANDALONE, usePython, isShellScript)

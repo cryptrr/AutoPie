@@ -15,7 +15,6 @@ import com.autopi.utils.Utils
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -80,9 +79,11 @@ class CronService(private val jsonService: JsonService){
                 main.schedulerConfigAvailable = true
             }
 
-            val mapType = object : TypeToken<Map<String, CronCommandModel>>() {}.type
-
-            val data: Map<String, CronCommandModel> = Gson().fromJson(cronConfig, mapType)
+            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CronCommandModel::class.java)
+            val data = parsedData.values
+            if (parsedData.skippedKeys.isNotEmpty()) {
+                Timber.w("Skipped incompatible cron commands: ${parsedData.skippedKeys}")
+            }
 
             for(cronJob in data.entries){
 
@@ -139,9 +140,11 @@ class CronService(private val jsonService: JsonService){
                 main.schedulerConfigAvailable = true
             }
 
-            val mapType = object : TypeToken<Map<String, CronCommandModel>>() {}.type
-
-            val data: Map<String, CronCommandModel> = Gson().fromJson(cronConfig, mapType)
+            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CronCommandModel::class.java)
+            val data = parsedData.values
+            if (parsedData.skippedKeys.isNotEmpty()) {
+                Timber.w("Skipped incompatible cron commands: ${parsedData.skippedKeys}")
+            }
 
             for(cronJob in data.entries){
 
