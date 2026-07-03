@@ -16,6 +16,7 @@ local.properties
 app/release
 /termux-app/
 /.termux-app.*
+/.termux-generator.*
 /app/src/main/assets/bootstrap-aarch64.zip
 /base.apk
 /.kotlin/errors/
