@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSETS_DIR="${AUTOPIE_ASSETS_DIR:-$ROOT_DIR/app/src/main/assets}"
 GENERATOR_REPOSITORY="${TERMUX_GENERATOR_REPOSITORY:-https://github.com/cryptrr/termux-generator.git}"
 # This revision contains the native, Docker-free bootstrap builder used here.
-GENERATOR_REF="${TERMUX_GENERATOR_REF:-e701b22dc1e7909a92b195dc2428f24b93e519b9}"
+GENERATOR_REF="${TERMUX_GENERATOR_REF:-cc2faa16caf78537a89a56128e3b03d87d406c54}"
 
 WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-generator.XXXXXX")"
 GENERATOR_DIR="$WORK_DIR/termux-generator"
