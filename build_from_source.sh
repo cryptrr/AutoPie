@@ -42,7 +42,7 @@ TERMUX_NATIVE_OUTPUT_DIR="$OUTPUT_DIR" \
     "$GENERATOR_DIR/build-bootstraps-native.sh" \
         --name com.autopi \
         --architectures aarch64 \
-        --add python-pip,openssh,sshpass
+        --add python-pip,openssh,sshpass,binutils
 
 SOURCE_ARTIFACT="$OUTPUT_DIR/bootstrap-aarch64.tar.xz"
 if [[ ! -s "$SOURCE_ARTIFACT" ]]; then
