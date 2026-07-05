@@ -50,6 +50,11 @@ android {
         release {
             manifestPlaceholders += mapOf()
             isMinifyEnabled = false
+            optimization {
+                baselineProfile {
+                    ignoreFromAllExternalDependencies = true
+                }
+            }
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_round"
             buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
@@ -58,7 +63,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            //signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -174,13 +179,14 @@ val apkSignerExecutable = androidComponents.sdkComponents.sdkDirectory.map { sdk
 
 tasks.register<Exec>("signReleaseApk") {
     group = "build"
-    description = "Signs the release APK using the AutoPie signing environment variables."
-    dependsOn("assembleRelease")
+    description = "Signs an existing unsigned release APK using the AutoPie signing environment variables."
 
     val unsignedApk = layout.buildDirectory.file("outputs/apk/release/app-release-unsigned.apk")
     val signedApk = layout.buildDirectory.file("outputs/apk/release/app-release.apk")
 
     inputs.file(unsignedApk)
+    inputs.file(signingStoreFile).optional().withPropertyName("signingStoreFile")
+    inputs.property("signingKeyAlias", signingKeyAlias.orElse(""))
     outputs.file(signedApk)
 
     doFirst {

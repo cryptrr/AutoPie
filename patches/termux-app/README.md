@@ -37,3 +37,8 @@ the generated source does not trigger F-Droid's missing checksum warning.
 
 Patch 21 recognizes `login` as a supported login shell binary and preserves the
 configured `LD_PRELOAD` value when constructing the Termux shell environment.
+
+Patch 22 makes `RunCommandService` internal to AutoPie and removes Termux's
+package-scoped `RUN_COMMAND` permission declaration. AutoPie invokes the service
+with an explicit in-process intent, so separate package variants can coexist
+without attempting to own the same permission.
