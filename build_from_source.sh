@@ -28,6 +28,9 @@ for command in 7z find git mktemp mv readlink rm tar; do
     fi
 done
 
+echo "Preparing patched Termux Android modules"
+"$ROOT_DIR/scripts/prepare-termux-app.sh"
+
 echo "Fetching termux-generator revision $GENERATOR_REF"
 git init --quiet "$GENERATOR_DIR"
 git -C "$GENERATOR_DIR" remote add origin "$GENERATOR_REPOSITORY"
