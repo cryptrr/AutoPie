@@ -7,11 +7,15 @@ ASSETS_DIR="${AUTOPIE_ASSETS_DIR:-$ROOT_DIR/app/src/main/assets}"
 GENERATOR_REPOSITORY="${TERMUX_GENERATOR_REPOSITORY:-https://github.com/cryptrr/termux-generator.git}"
 # This revision contains the native, Docker-free bootstrap builder used here.
 GENERATOR_REF="${TERMUX_GENERATOR_REF:-270253313379aaf99a534d413a9d2736d94f747d}"
+DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
+TARGET_ROOT_DIR="/data/data/com.autopi"
+TARGET_PREFIX="$TARGET_ROOT_DIR/files/usr"
 
 WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-generator.XXXXXX")"
 GENERATOR_DIR="$WORK_DIR/termux-generator"
 OUTPUT_DIR="$WORK_DIR/output"
 CONVERSION_DIR="$WORK_DIR/bootstrap-aarch64"
+PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
 DESTINATION="$ASSETS_DIR/bootstrap-aarch64.zip"
 TEMP_DESTINATION="$DESTINATION.tmp"
 
@@ -21,12 +25,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for command in 7z find git mktemp mv readlink rm tar; do
+for command in 7z find git install mktemp mv python3 readlink rm tar; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "Missing required command: $command" >&2
         exit 1
     fi
 done
+
+if [[ ! -f "$DPKG_WRAPPER" ]]; then
+    echo "Missing dpkg wrapper: $DPKG_WRAPPER" >&2
+    exit 1
+fi
 
 echo "Preparing patched Termux Android modules"
 "$ROOT_DIR/scripts/prepare-termux-app.sh"
@@ -53,6 +62,41 @@ fi
 mkdir -p "$ASSETS_DIR"
 mkdir -p "$CONVERSION_DIR"
 tar -xJf "$SOURCE_ARTIFACT" -C "$CONVERSION_DIR"
+
+echo "Installing dpkg wrapper"
+if [[ ! -f "$CONVERSION_DIR/bin/dpkg" ]]; then
+    echo "Missing dpkg binary in source-built bootstrap: $CONVERSION_DIR/bin/dpkg" >&2
+    exit 1
+fi
+if [[ -e "$CONVERSION_DIR/bin/dpkg.real" ]]; then
+    echo "Unexpected existing dpkg.real in source-built bootstrap: $CONVERSION_DIR/bin/dpkg.real" >&2
+    exit 1
+fi
+mv "$CONVERSION_DIR/bin/dpkg" "$CONVERSION_DIR/bin/dpkg.real"
+python3 - "$DPKG_WRAPPER" "$PATCHED_DPKG_WRAPPER" "$TARGET_ROOT_DIR" "$TARGET_PREFIX" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1])
+dest = Path(sys.argv[2])
+target_root = sys.argv[3].rstrip("/")
+target_prefix = sys.argv[4].rstrip("/")
+
+text = source.read_text(encoding="utf-8")
+lines = text.splitlines(keepends=True)
+if not lines or not lines[0].startswith("#!"):
+    raise SystemExit(f"dpkg wrapper has no shebang: {source}")
+
+line_ending = "\n" if lines[0].endswith("\n") else ""
+lines[0] = f"#!{target_prefix}/bin/env python{line_ending}"
+text = "".join(lines)
+text = text.replace("/data/data/com.autopi/files/usr", target_prefix)
+text = text.replace("/data/data/com.autopi", target_root)
+
+dest.write_text(text, encoding="utf-8")
+PY
+install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
+
 (
     cd "$CONVERSION_DIR"
     : > SYMLINKS.txt
