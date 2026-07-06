@@ -462,7 +462,7 @@ def rewrite_deb_inplace(input_deb, output_deb, old_prefix, new_prefix):
         input_deb_path = os.path.abspath(input_deb)
 
         # Extract ar members without decompressing data.tar.xz
-        subprocess.run(["ar", "x", input_deb_path], cwd=tempdir, check=True)
+        subprocess.run(["gar", "x", input_deb_path], cwd=tempdir, check=True)
 
         data_tar_xz = find_data_archive(tempdir)
         new_data_tar_xz = os.path.join(
@@ -506,11 +506,11 @@ def rewrite_deb_inplace(input_deb, output_deb, old_prefix, new_prefix):
         
         # Repack .deb with same order
         # subprocess.run(
-        #     ["ar", "r", output_deb, "debian-binary", control_file, data_tar_xz],
+        #     ["gar", "r", output_deb, "debian-binary", control_file, data_tar_xz],
         #     cwd=tempdir, check=True
         # )
         subprocess.run(
-            ["ar", "cr", output_deb, "debian-binary", os.path.basename(control_file), os.path.basename(data_tar_xz),],
+            ["gar", "cr", output_deb, "debian-binary", os.path.basename(control_file), os.path.basename(data_tar_xz),],
             cwd=tempdir, check=True
         )
         
