@@ -2,8 +2,6 @@ name: Build release APK
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "v*"
 
