@@ -41,7 +41,9 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Build release APK
-        run: ./build_with_termux.sh :app:assembleRelease
+        run: |
+          ./build_from_source.sh
+          ./gradlew :app:assembleRelease
 
       - name: Decode release keystore
         env:
