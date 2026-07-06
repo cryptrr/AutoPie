@@ -25,7 +25,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for command in 7z find git install mktemp mv python3 readlink rm tar; do
+for command in 7z find git install ln mktemp mv python3 readlink rm tar; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "Missing required command: $command" >&2
         exit 1
@@ -99,6 +99,22 @@ install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
 
 (
     cd "$CONVERSION_DIR"
+    if [[ ! -f bin/gar ]]; then
+        echo "Missing binutils executable: $CONVERSION_DIR/bin/gar" >&2
+        exit 1
+    fi
+    if [[ -L bin/ar ]]; then
+        if [[ "$(readlink bin/ar)" != "gar" ]]; then
+            echo "Unexpected bin/ar symlink target: $(readlink bin/ar)" >&2
+            exit 1
+        fi
+    elif [[ -e bin/ar ]]; then
+        echo "Cannot create bin/ar symlink; path already exists" >&2
+        exit 1
+    else
+        ln -s gar bin/ar
+    fi
+
     : > SYMLINKS.txt
     while read -r -d '' link; do
         echo "$(readlink "$link")←${link}" >> SYMLINKS.txt
