@@ -14,16 +14,20 @@ jobs:
   build-release:
     name: Build release APK
     runs-on: ubuntu-latest
-    container:
-      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie
     timeout-minutes: 360
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/local/share/boost
+          df -h /
 
       - name: Set up Java 21
         uses: actions/setup-java@v4
@@ -44,10 +48,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Refresh Debian package indexes
-        run: apt-get update
-
+WS
       - name: Build release APK
         run: |
           ./build_from_source.sh
