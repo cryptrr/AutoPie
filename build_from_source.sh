@@ -25,7 +25,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for command in 7z find git install mktemp mv python3 readlink rm tar; do
+for command in 7z find git install mktemp mv python3 readlink rm sort tar; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "Missing required command: $command" >&2
         exit 1
@@ -103,7 +103,7 @@ install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
     while read -r -d '' link; do
         echo "$(readlink "$link")←${link}" >> SYMLINKS.txt
         rm -f "$link"
-    done < <(find . -type l -print0)
+    done < <(find . -type l -print0 | LC_ALL=C sort -z)
     7z a bootstrap-aarch64.zip ./* -mfb=258 -mpass=15
     mv bootstrap-aarch64.zip "$TEMP_DESTINATION"
 )
