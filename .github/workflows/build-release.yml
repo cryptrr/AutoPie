@@ -45,6 +45,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Refresh Debian package indexes
+        run: apt-get update
+
       - name: Build release APK
         run: |
           ./build_from_source.sh
