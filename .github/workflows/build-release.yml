@@ -2,6 +2,8 @@ name: Build release APK
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -93,22 +95,22 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-      - name: Publish GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          release_apk="app/build/outputs/apk/release/AutoPie-${GITHUB_REF_NAME}-aarch64.apk"
-          cp app/build/outputs/apk/release/app-release.apk "$release_apk"
-
-          prerelease_args=()
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
-            prerelease_args+=(--prerelease)
-          fi
-
-          gh release create "$GITHUB_REF_NAME" \
-            "$release_apk" \
-            --verify-tag \
-            --generate-notes \
-            --title "AutoPie $GITHUB_REF_NAME" \
-            "${prerelease_args[@]}"
+#      - name: Publish GitHub release
+#        if: startsWith(github.ref, 'refs/tags/v')
+#        env:
+#          GH_TOKEN: ${{ github.token }}
+#        run: |
+#          release_apk="app/build/outputs/apk/release/AutoPie-${GITHUB_REF_NAME}-aarch64.apk"
+#          cp app/build/outputs/apk/release/app-release.apk "$release_apk"
+#
+#          prerelease_args=()
+#          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+#            prerelease_args+=(--prerelease)
+#          fi
+#
+#          gh release create "$GITHUB_REF_NAME" \
+#            "$release_apk" \
+#            --verify-tag \
+#            --generate-notes \
+#            --title "AutoPie $GITHUB_REF_NAME" \
+#            "${prerelease_args[@]}"
