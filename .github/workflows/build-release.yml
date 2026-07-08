@@ -155,17 +155,13 @@ jobs:
 
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          prerelease_args=()
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
-            prerelease_args+=(--prerelease)
-          fi
-
-          gh release create "$GITHUB_REF_NAME" \
-            "release-output/AutoPie-${GITHUB_REF_NAME}-aarch64.apk" \
-            --verify-tag \
-            --generate-notes \
-            --title "AutoPie $GITHUB_REF_NAME" \
-            "${prerelease_args[@]}"
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          name: AutoPie ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: release-output/AutoPie-${{ github.ref_name }}-aarch64.apk
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
