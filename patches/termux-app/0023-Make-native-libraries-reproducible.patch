@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: amal <amalshaji645@gmail.com>
+Date: Wed, 8 Jul 2026 00:00:00 +0530
+Subject: [PATCH 23/23] Make native libraries reproducible
+
+---
+ terminal-emulator/src/main/jni/Android.mk | 4 ++++
+ termux-shared/src/main/cpp/Android.mk     | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/terminal-emulator/src/main/jni/Android.mk b/terminal-emulator/src/main/jni/Android.mk
+index 0d342778..d226e446 100644
+--- a/terminal-emulator/src/main/jni/Android.mk
++++ b/terminal-emulator/src/main/jni/Android.mk
+@@ -2,4 +2,8 @@ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
+ LOCAL_MODULE:= libtermux
+ LOCAL_SRC_FILES:= termux.c
++LOCAL_CFLAGS += -g0
++LOCAL_CFLAGS += -ffile-prefix-map=$(LOCAL_PATH)=. -fdebug-prefix-map=$(LOCAL_PATH)=.
++LOCAL_CFLAGS += -fmacro-prefix-map=$(LOCAL_PATH)=.
++LOCAL_LDFLAGS += -Wl,--build-id=none
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/termux-shared/src/main/cpp/Android.mk b/termux-shared/src/main/cpp/Android.mk
+index 843fc0fa..889db53a 100644
+--- a/termux-shared/src/main/cpp/Android.mk
++++ b/termux-shared/src/main/cpp/Android.mk
+@@ -3,4 +3,8 @@ include $(CLEAR_VARS)
+ LOCAL_LDLIBS := -llog
+ LOCAL_MODULE := local-socket
+ LOCAL_SRC_FILES := local-socket.cpp
++LOCAL_CFLAGS += -g0
++LOCAL_CFLAGS += -ffile-prefix-map=$(LOCAL_PATH)=. -fdebug-prefix-map=$(LOCAL_PATH)=.
++LOCAL_CFLAGS += -fmacro-prefix-map=$(LOCAL_PATH)=.
++LOCAL_LDFLAGS += -Wl,--build-id=none
+ include $(BUILD_SHARED_LIBRARY)
+-- 
+2.50.1
