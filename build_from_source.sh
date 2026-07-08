@@ -50,6 +50,10 @@ echo "Building AutoPie aarch64 bootstrap from source"
 native_host_setup_args=()
 if [[ "${TERMUX_NATIVE_SKIP_HOST_SETUP:-false}" == "true" ]]; then
     native_host_setup_args+=(--skip-host-setup)
+    # F-Droid's buildserver image exports a provisioned SDK path without a
+    # usable sdkmanager. Let termux-generator install its pinned SDK and NDK
+    # in the build user's home, matching its automatic no-sudo path.
+    unset ANDROID_HOME ANDROID_SDK_ROOT NDK
 fi
 TERMUX_NATIVE_OUTPUT_DIR="$OUTPUT_DIR" \
     "$GENERATOR_DIR/build-bootstraps-native.sh" \
