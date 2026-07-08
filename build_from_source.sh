@@ -47,10 +47,15 @@ git -C "$GENERATOR_DIR" fetch --quiet --depth 1 origin "$GENERATOR_REF"
 git -C "$GENERATOR_DIR" checkout --quiet --detach FETCH_HEAD
 
 echo "Building AutoPie aarch64 bootstrap from source"
+native_host_setup_args=()
+if [[ "${TERMUX_NATIVE_SKIP_HOST_SETUP:-false}" == "true" ]]; then
+    native_host_setup_args+=(--skip-host-setup)
+fi
 TERMUX_NATIVE_OUTPUT_DIR="$OUTPUT_DIR" \
     "$GENERATOR_DIR/build-bootstraps-native.sh" \
         --name com.autopi \
         --architectures aarch64 \
+        "${native_host_setup_args[@]}" \
         --add python-pip,openssh,sshpass,binutils
 
 SOURCE_ARTIFACT="$OUTPUT_DIR/bootstrap-aarch64.tar.xz"

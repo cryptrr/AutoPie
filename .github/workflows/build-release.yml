@@ -15,7 +15,7 @@ jobs:
     name: Build release APK in F-Droid Trixie
     runs-on: ubuntu-latest
     container:
-      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie
+      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:dc522fdce601ec80fb1ed420dd0301262a0c7747e8a769c7975629944e8b46c4
     timeout-minutes: 360
     defaults:
       run:
@@ -25,6 +25,7 @@ jobs:
       FDROID_BUILD_DIR: /home/vagrant/build/com.autopi
       HOME: /home/vagrant
       LC_ALL: C.UTF-8
+      TERMUX_NATIVE_SKIP_HOST_SETUP: "true"
       TERMUX_REF: 401bbe54b8f4e68302b1ff70678015a24628fb1d
       TZ: UTC
 
@@ -55,7 +56,7 @@ jobs:
         working-directory: /home/vagrant/build/com.autopi
         run: |
           source /etc/profile.d/bsenv.sh
-          printf 'Image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie\n'
+          printf 'Image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:dc522fdce601ec80fb1ed420dd0301262a0c7747e8a769c7975629944e8b46c4\n'
           printf 'Build directory: %s\n' "$PWD"
           printf 'Java: '
           sudo -u vagrant -H java -version
@@ -68,13 +69,10 @@ jobs:
       - name: Build unsigned release APK
         working-directory: /home/vagrant/build/com.autopi
         run: |
-          # F-Droid executes recipe build commands without sudo. The image
-          # contains sudo for provisioning, so hide it after provisioning to
-          # exercise the generator's no-host-setup/F-Droid path.
-          chmod a-x /usr/bin/sudo
           runuser -u vagrant -- env \
             HOME=/home/vagrant \
             LC_ALL=C.UTF-8 \
+            TERMUX_NATIVE_SKIP_HOST_SETUP="$TERMUX_NATIVE_SKIP_HOST_SETUP" \
             TERMUX_REF="$TERMUX_REF" \
             TZ=UTC \
             bash -lc '
