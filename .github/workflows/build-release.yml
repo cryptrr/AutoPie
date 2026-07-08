@@ -102,7 +102,6 @@ jobs:
           AUTOPIE_SIGNING_KEY_ALIAS: ${{ secrets.AUTOPIE_SIGNING_KEY_ALIAS }}
           AUTOPIE_SIGNING_KEY_PASSWORD: ${{ secrets.AUTOPIE_SIGNING_KEY_PASSWORD }}
         run: |
-          source /etc/profile.d/bsenv.sh
           for secret_name in AUTOPIE_SIGNING_STORE_PASSWORD AUTOPIE_SIGNING_KEY_ALIAS AUTOPIE_SIGNING_KEY_PASSWORD; do
             if [[ -z "${!secret_name:-}" ]]; then
               echo "::error::Missing GitHub Actions secret $secret_name"
@@ -110,11 +109,23 @@ jobs:
             fi
           done
 
-          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
-          if [[ ! -x "$APKSIGNER" ]]; then
-            echo "::error::F-Droid image does not provide $APKSIGNER"
+          APKSIGNER=""
+          while IFS= read -r candidate; do
+            build_tools_version="$(basename "$(dirname "$candidate")")"
+            build_tools_major="${build_tools_version%%.*}"
+            if [[ "$build_tools_major" =~ ^[0-9]+$ ]] && ((build_tools_major <= 34)); then
+              APKSIGNER="$candidate"
+            fi
+          done < <(
+            find /home/vagrant/lib /opt/android-sdk \
+              -type f -path '*/build-tools/*/apksigner' -perm -u+x 2>/dev/null \
+              | sort -V
+          )
+          if [[ -z "$APKSIGNER" ]]; then
+            echo "::error::No installed apksigner from Android build-tools 34 or older was found"
             exit 1
           fi
+          echo "Using $APKSIGNER"
 
           "$APKSIGNER" sign \
             --ks "$RUNNER_TEMP/autopie-release.jks" \
@@ -142,19 +153,19 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-#      - name: Publish GitHub release
-#        if: startsWith(github.ref, 'refs/tags/v')
-#        env:
-#          GH_TOKEN: ${{ github.token }}
-#        run: |
-#          prerelease_args=()
-#          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
-#            prerelease_args+=(--prerelease)
-#          fi
-#
-#          gh release create "$GITHUB_REF_NAME" \
-#            "release-output/AutoPie-${GITHUB_REF_NAME}-aarch64.apk" \
-#            --verify-tag \
-#            --generate-notes \
-#            --title "AutoPie $GITHUB_REF_NAME" \
-#            "${prerelease_args[@]}"
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease_args=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            prerelease_args+=(--prerelease)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" \
+            "release-output/AutoPie-${GITHUB_REF_NAME}-aarch64.apk" \
+            --verify-tag \
+            --generate-notes \
+            --title "AutoPie $GITHUB_REF_NAME" \
+            "${prerelease_args[@]}"
