@@ -121,6 +121,90 @@ install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
 
 (
     cd "$CONVERSION_DIR"
+    find var/lib/dpkg/info -type f \( -name '*.md5sums' -o -name '*.conffiles' \) -print0 |
+        while read -r -d '' metadata_file; do
+            LC_ALL=C sort -o "$metadata_file" "$metadata_file"
+        done
+    python3 - <<'PY'
+from pathlib import Path
+import os
+
+root = Path(".")
+info_dir = root / "var/lib/dpkg/info"
+status_path = root / "var/lib/dpkg/status"
+
+if not status_path.is_file():
+    raise SystemExit(f"Missing dpkg status file: {status_path}")
+
+def installed_size_kib(package):
+    list_path = info_dir / f"{package}.list"
+    if not list_path.is_file():
+        return None
+
+    total = 0
+    for raw_path in list_path.read_text(encoding="utf-8").splitlines():
+        installed_path = raw_path.strip()
+        if not installed_path:
+            continue
+        local_path = root / installed_path.lstrip("/")
+        try:
+            stat = os.lstat(local_path)
+        except FileNotFoundError:
+            continue
+
+        if local_path.is_symlink():
+            try:
+                total += len(os.readlink(local_path).encode())
+            except OSError:
+                pass
+        elif local_path.is_file():
+            total += stat.st_size
+
+    return (total + 1023) // 1024
+
+paragraphs = status_path.read_text(encoding="utf-8").split("\n\n")
+normalized = []
+for paragraph in paragraphs:
+    if not paragraph:
+        continue
+
+    lines = paragraph.splitlines()
+    package = None
+    for line in lines:
+        if line.startswith("Package: "):
+            package = line[len("Package: "):].strip()
+            break
+
+    if package is None:
+        normalized.append(paragraph)
+        continue
+
+    size = installed_size_kib(package)
+    if size is None:
+        normalized.append(paragraph)
+        continue
+
+    replaced = False
+    updated = []
+    for line in lines:
+        if line.startswith("Installed-Size: "):
+            updated.append(f"Installed-Size: {size}")
+            replaced = True
+        else:
+            updated.append(line)
+
+    if not replaced:
+        for index, line in enumerate(updated):
+            if line.startswith("Version: "):
+                updated.insert(index + 1, f"Installed-Size: {size}")
+                break
+        else:
+            updated.append(f"Installed-Size: {size}")
+
+    normalized.append("\n".join(updated))
+
+status_path.write_text("\n\n".join(normalized) + "\n", encoding="utf-8")
+PY
     : > SYMLINKS.txt
     while read -r -d '' link; do
         echo "$(readlink "$link")←${link}" >> SYMLINKS.txt
