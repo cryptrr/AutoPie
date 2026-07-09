@@ -11,7 +11,9 @@ DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
 TARGET_ROOT_DIR="/data/data/com.autopi"
 TARGET_PREFIX="$TARGET_ROOT_DIR/files/usr"
 
-WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-generator.XXXXXX")"
+umask 022
+
+WORK_DIR="$ROOT_DIR/.termux-generator.reproducible"
 GENERATOR_DIR="$WORK_DIR/termux-generator"
 OUTPUT_DIR="$WORK_DIR/output"
 CONVERSION_DIR="$WORK_DIR/bootstrap-aarch64"
@@ -19,13 +21,23 @@ PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
 DESTINATION="$ASSETS_DIR/bootstrap-aarch64.zip"
 TEMP_DESTINATION="$DESTINATION.tmp"
 
+SOURCE_DATE_EPOCH="${AUTOPIE_SOURCE_DATE_EPOCH:-$(git -C "$ROOT_DIR" log -1 --format=%ct 2>/dev/null || true)}"
+if [[ ! "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]]; then
+    SOURCE_DATE_EPOCH=315532800
+fi
+export SOURCE_DATE_EPOCH
+export TZ="${TZ:-UTC}"
+
 cleanup() {
     rm -f "$TEMP_DESTINATION"
     rm -rf "$WORK_DIR"
 }
 trap cleanup EXIT
 
-for command in 7z find git install mktemp mv python3 readlink rm sort tar; do
+rm -rf "$WORK_DIR"
+mkdir -p "$WORK_DIR"
+
+for command in 7z find git install mkdir mv python3 readlink rm sort tar touch; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "Missing required command: $command" >&2
         exit 1
@@ -47,6 +59,7 @@ git -C "$GENERATOR_DIR" fetch --quiet --depth 1 origin "$GENERATOR_REF"
 git -C "$GENERATOR_DIR" checkout --quiet --detach FETCH_HEAD
 
 echo "Building AutoPie aarch64 bootstrap from source"
+echo "Using SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
 native_host_setup_args=()
 if [[ "${TERMUX_NATIVE_SKIP_HOST_SETUP:-false}" == "true" ]]; then
     native_host_setup_args+=(--skip-host-setup)
@@ -113,6 +126,8 @@ install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
         echo "$(readlink "$link")←${link}" >> SYMLINKS.txt
         rm -f "$link"
     done < <(find . -type l -print0 | LC_ALL=C sort -z)
+    chmod -R go-w .
+    find . -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
     7z a bootstrap-aarch64.zip ./* -mfb=258 -mpass=15
     mv bootstrap-aarch64.zip "$TEMP_DESTINATION"
 )
