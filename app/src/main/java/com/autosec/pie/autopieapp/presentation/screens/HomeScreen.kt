@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
@@ -332,7 +333,10 @@ fun CommandCard(
                     Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = card.command,
+                        text = card.firstStepOrSelf().command
+                            .lines()
+                            .filter { it.isNotBlank() }
+                            .joinToString("\n").ifBlank { card.steps.map{it.commandId}.joinToString("\n") },
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,

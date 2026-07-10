@@ -508,7 +508,10 @@ fun CommandCard(card: CommandModel, onExpandButtonClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = activeCard.command,
+                text = activeCard.command
+                    .lines()
+                    .filter { it.isNotBlank() }
+                    .joinToString("\n").ifBlank { card.steps.map{it.commandId}.joinToString("\n") },
                 maxLines = 2,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
