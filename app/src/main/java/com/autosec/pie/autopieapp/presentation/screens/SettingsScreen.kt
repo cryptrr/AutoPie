@@ -317,6 +317,33 @@ fun SettingsToggles() {
             color = MaterialTheme.colorScheme.onSurface.copy(0.7f),
             modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)
         )
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp)
+                .clickable(
+                    indication = null,
+                    enabled = true,
+                    interactionSource = remember { MutableInteractionSource() })
+                {
+                    mainViewModel.editConfigFile()
+                }
+        ) {
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Edit Config File")
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "Open shares.conf in nano.",
+                    softWrap = true,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                )
+            }
+            GoToPageIcon()
+        }
     }
 
     Spacer(modifier = Modifier.height(20.dp))

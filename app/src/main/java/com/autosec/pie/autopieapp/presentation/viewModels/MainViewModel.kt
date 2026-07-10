@@ -16,6 +16,8 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.BuildConfig
 import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.JobType
 import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigLocation
@@ -202,6 +204,40 @@ class MainViewModel(
         }
     }
 
+    fun editConfigFile() {
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val configFile = autoPieConfigPathProvider.getConfigFile("shares.json")
+                configFile.parentFile?.mkdirs()
+
+                val command = CommandModel(
+                    id = "autopie/edit-config-file",
+                    type = CommandType.SHARE,
+                    name = "Edit Config File",
+                    path = autoPieConfigPathProvider.getAutoSecDirectory().absolutePath,
+                    exec = "nano",
+                    command = "nano ${configFile.absolutePath.shellQuote()}"
+                )
+
+                processManagerService.runCommandInTermuxShell(
+                    commandObject = command,
+                    exec = "nano",
+                    command = command.command,
+                    cwd = autoPieConfigPathProvider.getAutoSecDirectory().absolutePath,
+                    commandExtraInputs = emptyList(),
+                    rawInput = "",
+                    processId = (1000..9999).random(),
+                    jobType = JobType.STANDALONE,
+                    usePython = false,
+                    isShellScript = false
+                )
+            } catch (e: Exception) {
+                Timber.e(e)
+                showError(ViewModelError.Unknown)
+            }
+        }
+    }
+
     private fun scheduleJob(context: Context) {
         val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         val builder = JobInfo.Builder(123, ComponentName(context, FileObserverJobService::class.java))
@@ -333,4 +369,8 @@ class MainViewModel(
 
 
 
+}
+
+private fun String.shellQuote(): String {
+    return "'${replace("'", "'\\''")}'"
 }
