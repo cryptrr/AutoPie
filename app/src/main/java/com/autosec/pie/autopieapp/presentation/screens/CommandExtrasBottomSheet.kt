@@ -678,7 +678,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val startValue = if (isIntegerSlider) configuredStart.roundToInt().toFloat() else configuredStart
                             val endValue = if (isIntegerSlider) configuredEnd.roundToInt().toFloat() else configuredEnd
                             val rangeStart = minOf(startValue, endValue)
-                            val rangeEnd = maxOf(startValue, endValue).takeIf { it > rangeStart } ?: rangeStart + 1F
+                            val rangeEnd = maxOf(startValue, endValue).takeIf { it > rangeStart }
+                                ?: (rangeStart + 1F)
                             val configuredDefault = sliderValues.elementAtOrNull(1)
                                 ?.trim()
                                 ?.toFloatOrNull()
