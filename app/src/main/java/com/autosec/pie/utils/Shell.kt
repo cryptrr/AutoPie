@@ -338,12 +338,15 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     fun shutdown() {
         try {
             write("exit")
-            process.waitFor()
+            if (!process.waitFor(2, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                process.waitFor(2, TimeUnit.SECONDS)
+            }
             stdin.closeQuietly()
             onStdOutListeners.clear()
             onStdErrListeners.clear()
-            stdoutReader.join()
-            stderrReader.join()
+            stdoutReader.join(1000)
+            stderrReader.join(1000)
             process.destroy()
         } catch (ignored: IOException) {
         } finally {

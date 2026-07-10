@@ -231,9 +231,7 @@ class ProcessManagerService(
         try {
             val runningShell = getOrCreateShell(processId)
             val result = runningShell.run(
-                validVariables.entries.joinToString("\n") { (key, value) ->
-                    "export $key=${value.shellExportValue()}"
-                },
+                validVariables.toShellExportCommands(),
                 Shell.Command.Config.silent()
             )
             if (!result.isSuccess) {
@@ -501,6 +499,7 @@ class ProcessManagerService(
     ): ProcessResult {
 
         try {
+            checkForUnsafeCommands(commandObject, command)
 
             val logFile = File(activity.cacheDir, "${processId}.log")
             logFile.createNewFile()
@@ -508,35 +507,22 @@ class ProcessManagerService(
             val logWriter = BufferedWriter(FileWriter(logFile, true))
             Timber.d("Logs written to ${logFile.absolutePath}")
 
-            val fullCommand = when {
-                usePython && Utils.isPythonScript(commandObject.command) -> {
-                    Timber.d("Running Python Script")
-                    val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
-                    pythonScriptFile.writeText(Utils.stripScriptHeaders(commandObject.command))
-                    "python ${pythonScriptFile.absolutePath.shellQuote()}"
-                }
-                usePython -> {
-                    Timber.d("Running Python Package")
-                    "python $exec $command"
-                }
-                //TODO: shellScript Marked for deletion
-                isShellScript -> "bash $command"
-                //This is the default branch for modern AutoPie
-                else -> "$command"
-            }
+            val scriptPlan = buildCommandScript(
+                commandObject = commandObject,
+                exec = exec,
+                command = command,
+                processId = processId,
+                cacheDir = activity.cacheDir,
+                usePython = usePython,
+                isShellScript = isShellScript
+            )
+            val fullCommand = scriptPlan.fullCommand
 
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
-            scriptFile.writeText(commandScriptPreamble(commandObject.multiStage == true))
-            //TODO: Do this on condition.
-            scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
-            scriptFile.appendText(fullCommand)
-            scriptFile.appendText(
-                if (commandObject.multiStage == true) {
-                    "\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n"
-                } else {
-                    "\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n"
-                }
-            )
+            scriptPlan.pythonScript?.let { pythonScript ->
+                File(activity.cacheDir, "${processId}.py").writeText(pythonScript)
+            }
+            scriptFile.writeText(scriptPlan.shellScript)
 
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
@@ -551,8 +537,6 @@ class ProcessManagerService(
                 LoadingActivity.start(activity)
             }
 
-            //checkForUnsafeCommands(commandObject, command)
-
             val shell = getOrCreateShell(processId)
 
             Timber.d("Received processId in Command Start: $processId")
@@ -563,9 +547,7 @@ class ProcessManagerService(
                 commandObject
             )
             val exportResult = shell.run(
-                commandEnvironment.entries.joinToString("\n") { (key, value) ->
-                    "export $key=${value.shellExportValue()}"
-                },
+                commandEnvironment.toShellExportCommands(),
                 Shell.Command.Config.silent()
             )
             if (!exportResult.isSuccess) {
@@ -589,11 +571,8 @@ class ProcessManagerService(
             //Timber.d("Env dump: ${shell.environment}")
 
 
-            val executionCommand = if (commandObject.multiStage == true) {
-                ". ${scriptFile.absolutePath.shellQuote()} < /dev/null"
-            } else {
-                "bash ${scriptFile.absolutePath.shellQuote()} < /dev/null"
-            }
+            val executionCommand = buildExecutionCommand(scriptFile, commandObject.multiStage == true)
+
             val result = shell.run(executionCommand) {
                 notify = false
                 onStdOut = { line -> writeLogLine(logWriter, line) }
@@ -1064,6 +1043,61 @@ private fun String.shellExportValue(): String {
     return if (alreadyQuoted) this else shellQuote()
 }
 
+internal data class CommandScriptPlan(
+    val fullCommand: String,
+    val shellScript: String,
+    val pythonScript: String? = null
+)
+
+internal fun buildCommandScript(
+    commandObject: CommandInterface,
+    exec: String,
+    command: String,
+    processId: Int,
+    cacheDir: File,
+    usePython: Boolean,
+    isShellScript: Boolean
+): CommandScriptPlan {
+    val pythonScriptFile = File(cacheDir, "${processId}.py")
+    val pythonScript = if (usePython && Utils.isPythonScript(commandObject.command)) {
+        Utils.stripScriptHeaders(commandObject.command)
+    } else {
+        null
+    }
+    val fullCommand = when {
+        pythonScript != null -> {
+            Timber.d("Running Python Script")
+            "python ${pythonScriptFile.absolutePath.shellQuote()}"
+        }
+        usePython -> {
+            Timber.d("Running Python Package")
+            "python $exec $command"
+        }
+        isShellScript -> "bash $command"
+        else -> command
+    }
+
+    return CommandScriptPlan(
+        fullCommand = fullCommand,
+        shellScript = buildString {
+            append(commandScriptPreamble(commandObject.multiStage == true))
+            append("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            append(fullCommand)
+            if (commandObject.multiStage == true) {
+                append("\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n")
+            } else {
+                append("\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n")
+            }
+        },
+        pythonScript = pythonScript
+    )
+}
+
+internal fun Map<String, String>.toShellExportCommands(): String =
+    entries.joinToString("\n") { (key, value) ->
+        "export $key=${value.shellExportValue()}"
+    }
+
 internal fun commandScriptPreamble(multiStage: Boolean): String = buildString {
     if (multiStage) {
         append("if [ \"\${OUTPUT+x}\" = x ]; then\n")
@@ -1073,3 +1107,10 @@ internal fun commandScriptPreamble(multiStage: Boolean): String = buildString {
     }
     append("set -x\n")
 }
+
+internal fun buildExecutionCommand(scriptFile: File, multiStage: Boolean): String =
+    if (multiStage) {
+        ". ${scriptFile.absolutePath.shellQuote()} < /dev/null"
+    } else {
+        "bash ${scriptFile.absolutePath.shellQuote()} < /dev/null"
+    }
