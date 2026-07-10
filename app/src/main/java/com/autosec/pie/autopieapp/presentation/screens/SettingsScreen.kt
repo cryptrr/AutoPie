@@ -278,6 +278,33 @@ fun SettingsToggles() {
                 }
             )
         }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp)
+                .clickable(
+                    indication = null,
+                    enabled = true,
+                    interactionSource = remember { MutableInteractionSource() })
+                {
+                    mainViewModel.openLogsFile()
+                }
+        ) {
+            Column(Modifier.fillMaxWidth(0.8F)){
+                Text("Open Logs File")
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "Open autopie.log with less.",
+                    softWrap = true,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                )
+            }
+            GoToPageIcon()
+        }
     }
 
     Spacer(modifier = Modifier.height(20.dp))

@@ -238,6 +238,41 @@ class MainViewModel(
         }
     }
 
+    fun openLogsFile() {
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val logFile = autoPieConfigPathProvider.getLogFile()
+                logFile.parentFile?.mkdirs()
+                logFile.createNewFile()
+
+                val command = CommandModel(
+                    id = "autopie/open-logs-file",
+                    type = CommandType.SHARE,
+                    name = "Open Logs File",
+                    path = autoPieConfigPathProvider.getLogsDirectory().absolutePath,
+                    exec = "less",
+                    command = "less +F ${logFile.absolutePath.shellQuote()}"
+                )
+
+                processManagerService.runCommandInTermuxShell(
+                    commandObject = command,
+                    exec = "less",
+                    command = command.command,
+                    cwd = autoPieConfigPathProvider.getLogsDirectory().absolutePath,
+                    commandExtraInputs = emptyList(),
+                    rawInput = "",
+                    processId = (1000..9999).random(),
+                    jobType = JobType.STANDALONE,
+                    usePython = false,
+                    isShellScript = false
+                )
+            } catch (e: Exception) {
+                Timber.e(e)
+                showError(ViewModelError.Unknown)
+            }
+        }
+    }
+
     private fun scheduleJob(context: Context) {
         val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         val builder = JobInfo.Builder(123, ComponentName(context, FileObserverJobService::class.java))
