@@ -8,6 +8,7 @@ GENERATOR_REPOSITORY="${TERMUX_GENERATOR_REPOSITORY:-https://github.com/cryptrr/
 # This revision contains the native, Docker-free bootstrap builder used here.
 GENERATOR_REF="${TERMUX_GENERATOR_REF:-b4bc1208f51d687323d5ae1d0ce14d393f9dea0e}"
 DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
+AUTOPIE_SECRET_WRAPPER="${AUTOPIE_SECRET_WRAPPER:-$ROOT_DIR/scripts/bootstrap/autopie-secret}"
 TARGET_ROOT_DIR="/data/data/com.autopi"
 TARGET_PREFIX="$TARGET_ROOT_DIR/files/usr"
 
@@ -46,6 +47,11 @@ done
 
 if [[ ! -f "$DPKG_WRAPPER" ]]; then
     echo "Missing dpkg wrapper: $DPKG_WRAPPER" >&2
+    exit 1
+fi
+
+if [[ ! -f "$AUTOPIE_SECRET_WRAPPER" ]]; then
+    echo "Missing autopie-secret wrapper: $AUTOPIE_SECRET_WRAPPER" >&2
     exit 1
 fi
 
@@ -118,6 +124,9 @@ text = text.replace("/data/data/com.autopi", target_root)
 dest.write_text(text, encoding="utf-8")
 PY
 install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
+
+echo "Installing autopie-secret wrapper"
+install -m 0700 "$AUTOPIE_SECRET_WRAPPER" "$CONVERSION_DIR/bin/autopie-secret"
 
 (
     cd "$CONVERSION_DIR"

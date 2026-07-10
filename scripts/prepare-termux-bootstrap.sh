@@ -9,6 +9,7 @@ ASSETS_DIR="${AUTOPIE_ASSETS_DIR:-$ROOT_DIR/app/src/main/assets}"
 GRADLE_USER_HOME="${GRADLE_USER_HOME:-$ROOT_DIR/.gradle}"
 FS_REWRITER="${AUTOPIE_FS_REWRITER:-$ROOT_DIR/scripts/bootstrap/fs-rewriter.py}"
 DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
+AUTOPIE_SECRET_WRAPPER="${AUTOPIE_SECRET_WRAPPER:-$ROOT_DIR/scripts/bootstrap/autopie-secret}"
 BOOTSTRAP_EXTENDER="${AUTOPIE_BOOTSTRAP_EXTENDER:-$ROOT_DIR/scripts/bootstrap/extend-bootstrap.py}"
 EXTRA_BOOTSTRAP_PACKAGES="${AUTOPIE_BOOTSTRAP_PACKAGES:-python,python-pip,binutils,openssh,sshpass}"
 ARCH="${TERMUX_BOOTSTRAP_ARCH:-aarch64}"
@@ -114,6 +115,11 @@ if [[ ! -f "$DPKG_WRAPPER" ]]; then
     exit 1
 fi
 
+if [[ ! -f "$AUTOPIE_SECRET_WRAPPER" ]]; then
+    echo "Missing autopie-secret wrapper at $AUTOPIE_SECRET_WRAPPER" >&2
+    exit 1
+fi
+
 if [[ ! -f "$BOOTSTRAP_EXTENDER" ]]; then
     echo "Missing bootstrap package extender at $BOOTSTRAP_EXTENDER" >&2
     exit 1
@@ -197,6 +203,9 @@ text = text.replace("/data/data/com.autopi", target_root)
 dest.write_text(text, encoding="utf-8")
 PY
 install -m 0700 "$PATCHED_DPKG_WRAPPER" "$EXTRACTED_DIR/bin/dpkg"
+
+echo "Installing autopie-secret wrapper"
+install -m 0700 "$AUTOPIE_SECRET_WRAPPER" "$EXTRACTED_DIR/bin/autopie-secret"
 
 echo "Repacking patched bootstrap"
 if command -v 7z >/dev/null 2>&1; then

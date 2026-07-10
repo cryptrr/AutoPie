@@ -16,6 +16,7 @@ import com.autopi.autopieapp.data.services.CronService
 import com.autopi.autopieapp.data.services.JSONServiceImpl
 import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.autopi.autopieapp.presentation.viewModels.CommandHistoryViewModel
@@ -46,6 +47,7 @@ val appModule = module {
 
     single<MainViewModel> { MainViewModel(get(), get(), get(), get()) }
     single<ProcessManagerService> { ProcessManagerService(get(), get(), get(), get()) }
+    single<SecretsService> { SecretsService(get()) }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
     viewModel<CommandHistoryViewModel> { CommandHistoryViewModel(get())}

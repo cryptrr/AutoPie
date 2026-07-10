@@ -13,6 +13,7 @@ import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.data.services.CronService
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
@@ -80,6 +81,7 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
         single<DispatcherProvider> { dispatcher }
 
         single<MainViewModel> { mockMainViewModel(get()) }
+        single<SecretsService> { SecretsService(get()) }
         viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
         viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
         viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
