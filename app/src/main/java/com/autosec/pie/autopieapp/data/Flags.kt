@@ -3,6 +3,7 @@ package com.autopi.autopieapp.data
 enum class ExtraFlags(val value: String) {
     INTERNAL_CONFIG("--internal-config"),
     PASSWORD("--password"),
+    SECRET("--secret"),
     MULTI_FILE_PICKER("--multi-file-picker"),
     FILE_PICKER("--file-picker"),
     MIME_TYPE("--mime-type"),

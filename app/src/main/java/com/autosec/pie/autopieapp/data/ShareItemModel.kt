@@ -91,6 +91,7 @@ fun CommandModel.hasUserFacingExtras(): Boolean = extras.orEmpty().any {
 
 fun CommandModel.hasUnsetRequiredExtras(): Boolean = extras.orEmpty().any {
     !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
+        !it.isSecretExtra() &&
         it.type == "STRING" &&
         it.default.isEmpty() &&
         it.required
@@ -136,6 +137,14 @@ data class CommandExtra(
     @field:JsonAdapter(SelectableOptionsAdapter::class)
     val selectableOptions: Map<String, String> = emptyMap()
 )
+
+fun CommandExtra.isSecretExtra(): Boolean =
+    flags.hasFlag(ExtraFlags.PASSWORD) || flags.hasFlag(ExtraFlags.SECRET)
+
+fun CommandExtra.secretKey(commandId: String): String = "$commandId@$name"
+
+fun CommandExtra.withoutStoredSecretDefault(): CommandExtra =
+    if (isSecretExtra()) copy(default = "") else this
 
 class SelectableOptionsAdapter :
     JsonDeserializer<Map<String, String>>,

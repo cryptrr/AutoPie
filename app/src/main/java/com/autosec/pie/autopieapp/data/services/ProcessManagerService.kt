@@ -14,11 +14,14 @@ import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandInterface
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandResult
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
+import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -49,6 +52,8 @@ class ProcessManagerService(
     private val dispatchers: DispatcherProvider,
     private val activity: Application,
     private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
+    private val shellTimeout: Shell.Timeout? = null,
+    private val secretsService: SecretsService = SecretsService(activity),
 ){
 
     private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
@@ -368,23 +373,28 @@ class ProcessManagerService(
         if (commandExtraInputs.isEmpty()) {
             for (extra in commandObject.extras ?: emptyList()) {
                 //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
+                val extraValue = if (extra.isSecretExtra()) {
+                    secretsService.get(extra.secretKey(commandObject.secretCommandId())) ?: extra.default
+                } else {
+                    extra.default
+                }
 
                 //Check if the field is not string type. Then don't do all of this shit with the file paths.
                 if(extra.type != "STRING"){
-                    envMap[extra.name] = extra.default
+                    envMap[extra.name] = extraValue
                 }
                 //TEMP FIX for multi user envs where fully qualified paths for extras don't work
                 else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extra.default).isAbsolute){
-                        envMap[extra.name] = extra.default
+                    if(Path(extraValue).isAbsolute){
+                        envMap[extra.name] = extraValue
                     }else{
-                        val fullPath = getConfigRelativePath(extra.default)
+                        val fullPath = getConfigRelativePath(extraValue)
                         envMap[extra.name] = fullPath
                     }
                 }
                 else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extra.default.split(",").map {
-                        if(Path(extra.default).isAbsolute){
+                    envMap[extra.name] = extraValue.split(",").map {
+                        if(Path(extraValue).isAbsolute){
                             it
                         }else{
                             getConfigRelativePath(it)
@@ -392,28 +402,35 @@ class ProcessManagerService(
                     }.joinToString(",")
                 }
                 else{
-                    envMap[extra.name] = extra.default
+                    envMap[extra.name] = extraValue
                 }
             }
         }
         //This is when the command extra inputs are passed. That is when the CommandExtrasBottomSheet is opened, all the extras including the defaults are passed as commandExtraInputs
         else {
             for (extra in commandExtraInputs) {
+                val commandExtra = commandObject.extras
+                    ?.firstOrNull { it.id == extra.id || it.name == extra.name }
+                val extraValue = if (commandExtra?.isSecretExtra() == true) {
+                    secretsService.get(commandExtra.secretKey(commandObject.secretCommandId())) ?: extra.value
+                } else {
+                    extra.value
+                }
 
                 if(extra.type != "STRING"){
-                    envMap[extra.name] = extra.value
+                    envMap[extra.name] = extraValue
                 }
                 else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extra.default).isAbsolute){
-                        envMap[extra.name] = extra.value
+                    if(Path(extraValue).isAbsolute){
+                        envMap[extra.name] = extraValue
                     }else{
-                        val fullPath = getConfigRelativePath(extra.value)
+                        val fullPath = getConfigRelativePath(extraValue)
                         envMap[extra.name] = fullPath
                     }
                 }
                 else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extra.value.split(",").map {
-                        if(Path(extra.value).isAbsolute){
+                    envMap[extra.name] = extraValue.split(",").map {
+                        if(Path(extraValue).isAbsolute){
                             it
                         }else{
                             getConfigRelativePath(it)
@@ -421,7 +438,7 @@ class ProcessManagerService(
                     }.joinToString(",")
                 }
                 else{
-                    envMap[extra.name] = extra.value
+                    envMap[extra.name] = extraValue
                 }
             }
         }
@@ -431,6 +448,8 @@ class ProcessManagerService(
 
         return envMap
     }
+
+    private fun CommandInterface.secretCommandId(): String = id.ifBlank { name }
 
     fun checkShell(): Boolean {
         try {

@@ -30,7 +30,7 @@ val useCaseModule = module {
         AutoPieUseCases(
             getCommandsList = GetCommandsList(get()),
             getShareCommands = GetShareCommands(get()),
-            createCommand = CreateCommand(get()),
+            createCommand = CreateCommand(get(), get()),
             getCommandDetails = GetCommandDetails(get()),
             runCommand = RunCommand(),
             runCommandForUrl = RunCommandForUrl(get()),
@@ -38,7 +38,7 @@ val useCaseModule = module {
             runCommandForDirectory = RunCommandForDirectory(get()),
             runCommandForText = RunCommandForText(get()),
             runStandaloneCommand =  RunStandaloneCommand(get()),
-            changeCommandDetails = ChangeCommandDetails(get()),
+            changeCommandDetails = ChangeCommandDetails(get(), get()),
             deleteCommand = DeleteCommand(get()),
             addCommandToHistory = AddCommandToHistory(get()),
             getHistoryOfCommand = GetHistoryOfCommand(get()),

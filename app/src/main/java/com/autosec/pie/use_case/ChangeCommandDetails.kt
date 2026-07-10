@@ -2,14 +2,21 @@ package com.autopi.use_case
 
 import androidx.compose.runtime.MutableState
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.isSecretExtra
+import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.SecretsService
+import com.autopi.autopieapp.data.withoutStoredSecretDefault
 import com.autopi.autopieapp.domain.ViewModelError
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 import timber.log.Timber
 
-class ChangeCommandDetails(private val jsonService: JsonService) {
+class ChangeCommandDetails(
+    private val jsonService: JsonService,
+    private val secretsService: SecretsService? = null
+) {
     suspend operator fun invoke(key: String, commandExtras: MutableState<List<CommandExtra>>, oldCommandName: MutableState<String>, selectors: MutableState<String>, commandName: MutableState<String>, directory: MutableState<String>, execFile: MutableState<String>, command: MutableState<String>, type: MutableState<String>, cronInterval: MutableState<String>) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
@@ -19,7 +26,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
         val validationError = if (commandExtras.value.isEmpty()) {
             false
         } else {
-            commandExtras.value.any { it.name.isBlank() } || commandExtras.value.any { it.default.isBlank() }
+            commandExtras.value.any { it.name.isBlank() } ||
+                commandExtras.value.any { !it.isSecretExtra() && it.default.isBlank() }
         }
 
         Timber.d("${commandExtras.value.any { it.name.isBlank() }}")
@@ -61,6 +69,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
         }
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+        storeSecretExtras(commandName.value, commandExtras.value, oldCommandName.value)
+        val configExtras = commandExtras.value.map { it.withoutStoredSecretDefault() }
 
 
         Timber.d("commandObject: $commandObject")
@@ -76,8 +86,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
 
             when (type.value) {
                 "SHARE" -> {
-                    if (commandExtras.value.isNotEmpty()) {
-                        commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
                     } else {
                         commandObject.remove("extras")
                     }
@@ -87,8 +97,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
                 }
 
                 "FILE_OBSERVER" -> {
-                    if (commandExtras.value.isNotEmpty()) {
-                        commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
                     } else {
                         commandObject.remove("extras")
                     }
@@ -100,8 +110,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
                 }
 
                 "CRON" -> {
-                    if (commandExtras.value.isNotEmpty()) {
-                        commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
                     } else {
                         commandObject.remove("extras")
                     }
@@ -124,8 +134,8 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
 
             when (type.value) {
                 "SHARE" -> {
-                    if (commandExtras.value.isNotEmpty()) {
-                        commandObject.add("extras", gson.toJsonTree(commandExtras.value))
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
                     } else {
                         commandObject.remove("extras")
                     }
@@ -136,6 +146,12 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
                 }
 
                 "FILE_OBSERVER" -> {
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
+                    } else {
+                        commandObject.remove("extras")
+                    }
+
                     commandObject.add("selectors", selectorsJson)
 
 
@@ -144,6 +160,12 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
                 }
 
                 "CRON" -> {
+                    if (configExtras.isNotEmpty()) {
+                        commandObject.add("extras", gson.toJsonTree(configExtras))
+                    } else {
+                        commandObject.remove("extras")
+                    }
+
                     commandObject.addProperty("cronInterval", cronInterval.value)
 
 
@@ -177,6 +199,22 @@ class ChangeCommandDetails(private val jsonService: JsonService) {
         }
 
 
+    }
+
+    private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>, previousCommandId: String) {
+        val service = secretsService ?: return
+        extras.filter { it.isSecretExtra() }.forEach { extra ->
+            val newKey = extra.secretKey(commandId)
+            val oldKey = extra.secretKey(previousCommandId)
+            val value = extra.default.ifBlank {
+                if (oldKey != newKey) service.get(oldKey).orEmpty() else service.get(newKey).orEmpty()
+            }
+
+            if (value.isNotEmpty()) {
+                service.set(newKey, value)
+                if (oldKey != newKey) service.delete(oldKey)
+            }
+        }
     }
 
 }

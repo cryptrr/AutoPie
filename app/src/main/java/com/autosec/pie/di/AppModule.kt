@@ -46,7 +46,7 @@ val appModule = module {
     }
 
     single<MainViewModel> { MainViewModel(get(), get(), get(), get()) }
-    single<ProcessManagerService> { ProcessManagerService(get(), get(), get(), get()) }
+    single<ProcessManagerService> { ProcessManagerService(get(), get(), get(), get(), secretsService = get()) }
     single<SecretsService> { SecretsService(get()) }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
