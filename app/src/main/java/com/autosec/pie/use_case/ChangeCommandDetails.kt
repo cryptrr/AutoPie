@@ -2,6 +2,7 @@ package com.autopi.use_case
 
 import androidx.compose.runtime.MutableState
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.JsonService
@@ -206,7 +207,8 @@ class ChangeCommandDetails(
         extras.filter { it.isSecretExtra() }.forEach { extra ->
             val newKey = extra.secretKey(commandId)
             val oldKey = extra.secretKey(previousCommandId)
-            val value = extra.default.ifBlank {
+            val submittedValue = extra.default.takeUnless { it == SECRET_VALUE_PLACEHOLDER }.orEmpty()
+            val value = submittedValue.ifBlank {
                 if (oldKey != newKey) service.get(oldKey).orEmpty() else service.get(newKey).orEmpty()
             }
 

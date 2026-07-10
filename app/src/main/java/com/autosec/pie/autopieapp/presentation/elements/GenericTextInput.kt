@@ -296,7 +296,7 @@ fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>,modifier:
 
 
 @Composable
-fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, trailingIcon: (@Composable (() -> Unit))? = null){
+fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, trailingIcon: (@Composable (() -> Unit))? = null, mask: Char = '⬤'){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -313,7 +313,7 @@ fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifi
         OutlinedTextField(
             shape = RoundedCornerShape(15.dp),
             value = text.value,
-            visualTransformation = PasswordVisualTransformation(mask = '⬤'),
+            visualTransformation = PasswordVisualTransformation(mask = mask),
             onValueChange = {
                 text.value = it
                 onValueChange(it)

@@ -49,7 +49,12 @@ import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.flagValue
+import com.autopi.autopieapp.data.isSecretExtra
+import com.autopi.autopieapp.data.secretKey
+import com.autopi.autopieapp.data.services.SecretsService
+import org.koin.java.KoinJavaComponent
 
 
 @Composable
@@ -57,6 +62,7 @@ fun CommandExtraElement(
     extrasElements: MutableState<List<CommandExtra>>,
     onAddCommandExtra: (CommandExtra) -> Unit,
     onRemoveCommandExtra: (String) -> Unit,
+    commandId: String? = null,
 ) {
 
     val rowState = rememberLazyListState()
@@ -100,7 +106,7 @@ fun CommandExtraElement(
         ) {
             for (item in extrasElements.value.reversed()) {
                 key(item.id){
-                    CommandExtraInputElement(item,extrasElements, onAddCommandExtra, onRemoveCommandExtra)
+                    CommandExtraInputElement(item, extrasElements, onAddCommandExtra, onRemoveCommandExtra, commandId)
                 }
             }
         }
@@ -114,8 +120,11 @@ fun CommandExtraInputElement(
     command: CommandExtra,
     extrasElements: MutableState<List<CommandExtra>>,
     onAddCommandExtra: (CommandExtra) -> Unit,
-    onRemoveCommandExtra: (String) -> Unit
+    onRemoveCommandExtra: (String) -> Unit,
+    commandId: String? = null
 ) {
+    val secretsService: SecretsService by KoinJavaComponent.inject(SecretsService::class.java)
+
 
     val name = rememberSaveable {
         mutableStateOf(command.name)
@@ -123,8 +132,20 @@ fun CommandExtraInputElement(
         it.value = it.value.uppercase()
     }
 
-    val default = rememberSaveable {
-        mutableStateOf(command.default)
+    val displayedDefault = remember(command.id, command.name, command.default, commandId) {
+        if (
+            commandId != null &&
+            command.isSecretExtra() &&
+            secretsService.get(command.secretKey(commandId)) != null
+        ) {
+            SECRET_VALUE_PLACEHOLDER
+        } else {
+            command.default
+        }
+    }
+
+    val default = rememberSaveable(command.id, displayedDefault) {
+        mutableStateOf(displayedDefault)
     }
 
     val selectableOptions = rememberSaveable {

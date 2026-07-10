@@ -206,11 +206,15 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
             Spacer(modifier = Modifier.height(20.dp))
 
             if (viewModel.commandExtras.value.isNotEmpty()) {
-                CommandExtraElement(extrasElements = viewModel.commandExtras, {
-                    viewModel.addCommandExtra(it)
-                }){
-                    viewModel.removeCommandExtra(it)
-                }
+                CommandExtraElement(
+                    extrasElements = viewModel.commandExtras,
+                    onAddCommandExtra = {
+                        viewModel.addCommandExtra(it)
+                    },
+                    onRemoveCommandExtra = {
+                        viewModel.removeCommandExtra(it)
+                    }
+                )
             }
 
             OutlinedButton(

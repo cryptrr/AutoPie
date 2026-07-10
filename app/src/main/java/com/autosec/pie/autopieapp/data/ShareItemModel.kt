@@ -12,6 +12,7 @@ import com.google.gson.JsonSerializer
 import com.google.gson.annotations.JsonAdapter
 import java.lang.reflect.Type
 
+const val SECRET_VALUE_PLACEHOLDER = "⬤⬤⬤⬤⬤⬤⬤⬤"
 
 data class CommandModel(
     override val id: String = "",

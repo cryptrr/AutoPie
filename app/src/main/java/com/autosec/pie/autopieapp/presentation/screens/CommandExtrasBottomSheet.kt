@@ -60,12 +60,16 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasNextStep
+import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.matchesExtraValues
 import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
+import com.autopi.autopieapp.data.secretKey
+import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.data.toMultiSelectableValue
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
@@ -87,6 +91,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import kotlin.math.roundToInt
 
@@ -210,6 +215,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
     val viewModel: ShareReceiverViewModel = koinViewModel()
+    val secretsService: SecretsService by KoinJavaComponent.inject(SecretsService::class.java)
 
     val inputFiles by remember {
         mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputFiles)
@@ -349,8 +355,20 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                             val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
-                            val textValue = remember(extra.id, extra.default) {
-                                mutableStateOf(extra.default)
+                            val displayedDefault = remember(command.id, command.name, extra.id, extra.default) {
+                                val commandId = command.id.ifBlank { command.name }
+                                if (
+                                    extra.isSecretExtra() &&
+                                    secretsService.get(extra.secretKey(commandId)) != null
+                                ) {
+                                    SECRET_VALUE_PLACEHOLDER
+                                } else {
+                                    extra.default
+                                }
+                            }
+
+                            val textValue = remember(extra.id, displayedDefault) {
+                                mutableStateOf(displayedDefault)
                             }
 
                             val shellEnvironmentVariable = remember(extra.default) {
@@ -381,7 +399,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
                             if(isPasswordField){
-                                PasswordFormField(text = textValue , title = extra.name, subtitle = extra.description)
+                                PasswordFormField(text = textValue, title = extra.name, subtitle = extra.description, mask = '⬤')
                             }
                             else{
                                 GenericTextFormField(

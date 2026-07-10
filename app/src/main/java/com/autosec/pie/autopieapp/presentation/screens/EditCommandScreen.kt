@@ -312,11 +312,16 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
 
             if (extrasElements.value.isNotEmpty()) {
-                CommandExtraElement(extrasElements = extrasElements, {
-                    viewModel.addCommandExtra(it)
-                }){
-                    viewModel.removeCommandExtra(it)
-                }
+                CommandExtraElement(
+                    extrasElements = extrasElements,
+                    onAddCommandExtra = {
+                        viewModel.addCommandExtra(it)
+                    },
+                    onRemoveCommandExtra = {
+                        viewModel.removeCommandExtra(it)
+                    },
+                    commandId = viewModel.oldCommandName.value.ifBlank { commandKey }
+                )
             }
 
             OutlinedButton(

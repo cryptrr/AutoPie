@@ -3,6 +3,7 @@ package com.autopi.use_case
 import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.SecretsService
@@ -115,7 +116,9 @@ class CreateCommand(
     private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>) {
         val service = secretsService ?: return
         extras.filter { it.isSecretExtra() }.forEach { extra ->
-            service.set(extra.secretKey(commandId), extra.default)
+            if (extra.default != SECRET_VALUE_PLACEHOLDER) {
+                service.set(extra.secretKey(commandId), extra.default)
+            }
         }
     }
 }
