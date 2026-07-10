@@ -121,6 +121,32 @@ install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
 
 (
     cd "$CONVERSION_DIR"
+    echo "Replacing generated command-not-found database with deterministic stub"
+    python3 - "$TARGET_PREFIX" <<'PY'
+from pathlib import Path
+import hashlib
+import os
+import sys
+
+target_prefix = sys.argv[1].rstrip("/")
+command_not_found = Path("libexec/termux/command-not-found")
+md5sums_path = Path("var/lib/dpkg/info/command-not-found.md5sums")
+installed_path = "data/data/com.autopi/files/usr/libexec/termux/command-not-found"
+
+if command_not_found.exists() or md5sums_path.exists():
+    command_not_found.parent.mkdir(parents=True, exist_ok=True)
+    command_not_found.write_text(
+        f"#!{target_prefix}/bin/sh\n"
+        "printf '%s\\n' \"AutoPie: command-not-found lookup is unavailable in the reproducible bootstrap.\" >&2\n"
+        "exit 127\n",
+        encoding="utf-8",
+    )
+    os.chmod(command_not_found, 0o700)
+
+    digest = hashlib.md5(command_not_found.read_bytes()).hexdigest()
+    md5sums_path.parent.mkdir(parents=True, exist_ok=True)
+    md5sums_path.write_text(f"{digest}  {installed_path}\n", encoding="utf-8")
+PY
     find var/lib/dpkg/info -type f \( -name '*.md5sums' -o -name '*.conffiles' \) -print0 |
         while read -r -d '' metadata_file; do
             LC_ALL=C sort -o "$metadata_file" "$metadata_file"
