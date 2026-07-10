@@ -86,6 +86,19 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 
+fun CommandModel.matchesSearch(query: String): Boolean {
+    if (query.isBlank()) return true
+
+    return name.contains(query, ignoreCase = true) ||
+        command.contains(query, ignoreCase = true) ||
+        exec.contains(query, ignoreCase = true) ||
+        type.toString().contains(query, ignoreCase = true) ||
+        steps.any { step ->
+            step.command.contains(query, ignoreCase = true) ||
+                step.commandId.orEmpty().contains(query, ignoreCase = true)
+        }
+}
+
 fun CommandModel.hasUserFacingExtras(): Boolean = extras.orEmpty().any {
     !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)
 }

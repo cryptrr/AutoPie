@@ -15,6 +15,7 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.matchesSearch
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.getCommandExec
@@ -130,9 +131,10 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
 
     fun searchInCommands(query: String){
+        val trimmedQuery = query.trim()
 
         filteredListOfCommands.update {
-            fullListOfCommands.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+            fullListOfCommands.value.filter { it.matchesSearch(trimmedQuery) }
         }
 
     }

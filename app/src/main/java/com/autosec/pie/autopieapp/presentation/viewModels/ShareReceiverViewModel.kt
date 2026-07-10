@@ -16,6 +16,7 @@ import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasUserFacingExtras
+import com.autopi.autopieapp.data.matchesSearch
 import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.resolveCommandSteps
 import com.autopi.autopieapp.data.preferences.AppPreferences
@@ -148,9 +149,10 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     fun search(query: String) {
 
         Timber.d("Searching ${query}")
+        val trimmedQuery = query.trim()
 
         filteredShareItemsResult.update {
-            shareItemsResult.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.exec.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+            shareItemsResult.value.filter { it.matchesSearch(trimmedQuery) }
         }
 
     }
