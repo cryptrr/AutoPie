@@ -25,14 +25,14 @@ class FileLoggingTree(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
-    private var fileLoggingEnabled = appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, true)
+    private var fileLoggingEnabled = appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, false)
 
     @Volatile
     private var logsDirectory = autoPieConfigPathProvider.getLogsDirectory()
 
     init {
         scope.launch {
-            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, true).collectLatest {
+            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, false).collectLatest {
                 fileLoggingEnabled = it
             }
         }

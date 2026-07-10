@@ -103,9 +103,9 @@ class MainViewModel(
         }
     }
 
-    var fileLoggingEnabled by mutableStateOf(appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, true)).also { state ->
+    var fileLoggingEnabled by mutableStateOf(appPreferences.getBoolSync(AppPreferences.FILE_LOGGING_ENABLED, false)).also { state ->
         viewModelScope.launch {
-            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, true).collectLatest{
+            appPreferences.getBool(AppPreferences.FILE_LOGGING_ENABLED, false).collectLatest{
                 state.value = it
             }
         }
