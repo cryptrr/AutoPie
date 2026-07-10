@@ -12,7 +12,7 @@ enum class AutoPieConfigLocation(val preferenceValue: String) {
 
     companion object {
         fun fromPreferenceValue(value: String): AutoPieConfigLocation {
-            return values().firstOrNull { it.preferenceValue == value } ?: EXTERNAL_STORAGE
+            return values().firstOrNull { it.preferenceValue == value } ?: APP_DATA_HOME
         }
     }
 }
