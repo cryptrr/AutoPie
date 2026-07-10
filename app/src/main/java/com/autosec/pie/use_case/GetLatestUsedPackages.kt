@@ -13,7 +13,7 @@ class GetLatestUsedPackages(private val dbService: AppDatabase){
 
         return dbService.commandHistoryDao().getLatestUsedCommands(count).map {
             //Timber.d("Latest used commands: ${it}")
-            it.map { getCommandExec(it.command) }
+            it.mapNotNull { it.exec.ifEmpty { getCommandExec(it.command) } }
         }
 
     }

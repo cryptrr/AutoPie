@@ -417,7 +417,7 @@ fun ShareCard(
                             shareReceiverViewModel.viewModelScope.launch {
                                 //FIX: Increased delay for am triggered Activities to appear before the AutoPie activity is destroyed.
                                 //TODO: Switch from exec.
-                                val delayTime = if (getCommandExec(runnableCard.command) == "am") 2000.milliseconds else 900.milliseconds
+                                val delayTime = if (getCommandExec(runnableCard) == "am") 2000.milliseconds else 900.milliseconds
                                 delay(delayTime)
                                 Timber.d("CLOSING THE AUTOPIE COMMANDS SHEET.")
                                 activity?.finish()

@@ -585,7 +585,7 @@ fun Modifier.conditional(
     }
 }
 
-fun getCommandExec(command: String) : String {
+fun getCommandExec(command: String) : String? {
     return if(Utils.hasScriptHeader(command, ScriptFlags.SHELL)){
         "Shell"
     }
@@ -593,6 +593,34 @@ fun getCommandExec(command: String) : String {
         "Python"
     }
     else{
-        command.lines().first { !it.startsWith("#") }.split(" ").first()
+        command.lines()
+            .first { !it.startsWith("#") }
+            .split(" ")
+            .first()
+            .takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }
+    }
+}
+
+fun getCommandExec(command: CommandInterface) : String? {
+    return if(!command.exec.isNullOrBlank()){
+        return command.exec
+    }else if(Utils.hasScriptHeader(command.command, ScriptFlags.SHELL)){
+        "Shell"
+    }
+    else if(Utils.hasScriptHeader(command.command, ScriptFlags.PYTHON)){
+        "Python"
+    }
+    else{
+        val cmd = if(command.multiStage == true && command.steps.isNotEmpty()){
+            command.steps.firstOrNull()?.command ?: return null
+        }else{
+            command.command
+        }
+
+        cmd.lines()
+            .first { !it.startsWith("#") }
+            .split(" ")
+            .first()
+            .takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }
     }
 }
