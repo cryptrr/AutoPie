@@ -65,6 +65,7 @@ import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
@@ -119,6 +120,30 @@ private fun String.toSelectableOptions(): Map<String, String> =
             val value = option.substringAfter("=", option).trim()
             label to value
         }
+
+private fun CommandExtra.toInitialInput(): CommandExtraInput =
+    CommandExtraInput(
+        name,
+        default,
+        when {
+            flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> default
+            type == "BOOLEAN" -> defaultBoolean.toString()
+            type == "SLIDER" -> {
+                val value = default.split(",").getOrNull(1) ?: default
+                if (flags.hasFlag(ExtraFlags.INT)) {
+                    value.trim().toFloatOrNull()?.roundToInt()?.toString() ?: value
+                } else {
+                    value
+                }
+            }
+            type == "FLAG" -> ""
+            else -> default
+        },
+        type,
+        defaultBoolean,
+        id,
+        description
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -267,31 +292,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     val commandExtraInputs = remember(command.extras) {
         mutableStateOf(
             command.extras.orEmpty()
-                .map { extra ->
-                    CommandExtraInput(
-                        extra.name,
-                        extra.default,
-                        //TODO: Check if this is necessary
-                        when {
-                            extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> extra.default
-                            extra.type == "BOOLEAN" -> extra.defaultBoolean.toString()
-                            extra.type == "SLIDER" -> {
-                                val value = extra.default.split(",").getOrNull(1) ?: extra.default
-                                if (extra.flags.hasFlag(ExtraFlags.INT)) {
-                                    value.trim().toFloatOrNull()?.roundToInt()?.toString() ?: value
-                                } else {
-                                    value
-                                }
-                            }
-                            extra.type == "FLAG" -> ""
-                            else -> extra.default
-                        },
-                        extra.type,
-                        extra.defaultBoolean,
-                        extra.id,
-                        extra.description
-                    )
-                }
+                .map { extra -> extra.toInitialInput() }
         )
     }
 
@@ -332,6 +333,24 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                 commandExtraInputs.value.toMutableList().also { it.add(0, commandExtraInput) }
         }
         Timber.d("Extra commands list: $commandExtraInputs")
+    }
+
+    val isRealtimeCommand = command.flags.hasFlag(CommandFlags.REALTIME)
+    val realtimeInputs = commandExtraInputs.value
+    LaunchedEffect(isRealtimeCommand, realtimeInputs, inputText, inputFiles, extraInput.value, extraInputList.value) {
+        if (!isRealtimeCommand) return@LaunchedEffect
+
+        delay(350L)
+        viewModel.runCommandDirectly(
+            command,
+            inputText ?: extraInput.value,
+            inputFiles ?: extraInputList.value,
+            realtimeInputs,
+            processId,
+            sendNotifications = false,
+            closeExtrasOnComplete = false,
+            keepShellAlive = true
+        )
     }
 
     val scrollState = rememberScrollState()

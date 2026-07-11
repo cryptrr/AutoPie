@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autopi.core.DispatcherProvider
+import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandStepResolutionException
@@ -27,7 +28,6 @@ import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.use_case.AutoPieUseCases
-import com.autopi.utils.Utils
 import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
@@ -72,7 +72,15 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     val currentExtrasDetails = mutableStateOf<Triple<Boolean, CommandModel, ShareInputs>?>(null)
     private val multiStageInputs = mutableMapOf<Int, ShareInputs>()
     private val multiStageCompletionCallbacks = mutableMapOf<Int, () -> Unit>()
+    private val realtimeProcessIds = mutableSetOf<Int>()
     val commandNotFound = mutableStateOf<Boolean?>(false)
+
+    private fun isOpenRealtimeExtrasProcess(processId: Int): Boolean {
+        val currentDetails = currentExtrasDetails.value ?: return false
+        return processId in realtimeProcessIds ||
+            currentDetails.third.processId == processId &&
+            currentDetails.second.flags.hasFlag(CommandFlags.REALTIME)
+    }
 
     init {
         try {
@@ -91,7 +99,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                                 if (nextCommand == null) {
                                     multiStageInputs.remove(it.processId)
                                     multiStageCompletionCallbacks.remove(it.processId)?.invoke()
-                                    main.dispatchEvent(ViewModelEvent.StopShell(it.processId))
+                                    if (!isOpenRealtimeExtrasProcess(it.processId)) {
+                                        main.dispatchEvent(ViewModelEvent.StopShell(it.processId))
+                                    }
                                 } else {
                                     val currentInputs = multiStageInputs[it.processId]
                                         ?: currentExtrasDetails.value?.third
@@ -104,18 +114,36 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                                             currentInputs.copy(processId = it.processId)
                                         )
                                     } else {
-                                        if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                                        if (
+                                            currentExtrasDetails.value?.third?.processId == it.processId &&
+                                            !isOpenRealtimeExtrasProcess(it.processId)
+                                        ) {
                                             currentExtrasDetails.value = null
                                         }
-                                        onCommandClick(
-                                            nextCommand,
-                                            currentInputs.inputFiles.orEmpty(),
-                                            currentInputs.inputText,
-                                            it.processId
-                                        ) {}
+                                        if (isOpenRealtimeExtrasProcess(it.processId)) {
+                                            runCommandDirectly(
+                                                nextCommand,
+                                                currentInputs.inputText,
+                                                currentInputs.inputFiles.orEmpty(),
+                                                processId = it.processId,
+                                                sendNotifications = false,
+                                                closeExtrasOnComplete = false,
+                                                keepShellAlive = true
+                                            )
+                                        } else {
+                                            onCommandClick(
+                                                nextCommand,
+                                                currentInputs.inputFiles.orEmpty(),
+                                                currentInputs.inputText,
+                                                it.processId
+                                            ) {}
+                                        }
                                     }
                                 }
-                            } else if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                            } else if (
+                                currentExtrasDetails.value?.third?.processId == it.processId &&
+                                !isOpenRealtimeExtrasProcess(it.processId)
+                            ) {
                                 currentExtrasDetails.value = null
                             }
                             if (!it.partial) {
@@ -126,14 +154,20 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                         is ViewModelEvent.CommandFailed -> {
                             multiStageInputs.remove(it.processId)
                             multiStageCompletionCallbacks.remove(it.processId)?.invoke()
-                            if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                            if (
+                                currentExtrasDetails.value?.third?.processId == it.processId &&
+                                !isOpenRealtimeExtrasProcess(it.processId)
+                            ) {
                                 currentExtrasDetails.value = null
                             }
                         }
                         is ViewModelEvent.CommandStoppedByUser -> {
                             multiStageInputs.remove(it.processId)
                             multiStageCompletionCallbacks.remove(it.processId)?.invoke()
-                            if (currentExtrasDetails.value?.third?.processId == it.processId) {
+                            if (
+                                currentExtrasDetails.value?.third?.processId == it.processId &&
+                                !isOpenRealtimeExtrasProcess(it.processId)
+                            ) {
                                 currentExtrasDetails.value = null
                             }
                         }
@@ -223,31 +257,54 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun runCommandDirectly(item: CommandModel, inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
-
+    fun runCommandDirectly(
+        item: CommandModel,
+        inputText: String?,
+        inputFiles: List<String>,
+        commandExtraInputs: List<CommandExtraInput> = emptyList(),
+        processId: Int,
+        sendNotifications: Boolean = true,
+        closeExtrasOnComplete: Boolean = true,
+        keepShellAlive: Boolean = false
+    )  {
 
         Timber.d(item.toString())
         Timber.d(inputText.toString())
 
+        if (keepShellAlive) {
+            realtimeProcessIds.add(processId)
+        }
 
         viewModelScope.launch(dispatchers.io){
             try {
 
-                val logsFile = Utils.getFileWithPrefix(application1.cacheDir.absolutePath, processId.toString()) ?: File(application1.cacheDir, "dummy")
+                val logsFile = File(application1.cacheDir, "${processId}.log")
 
                 useCases.runCommand(item, inputText, inputFiles, commandExtraInputs, processId).catch { e ->
 
-                    if (item.multiStage == true) {
+                    if (item.multiStage == true && !keepShellAlive) {
                         main.dispatchEvent(ViewModelEvent.StopShell(processId))
                     }
                     main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     Timber.e(e)
 
+                    if (sendNotifications) {
+                        autoPieNotification.sendNotification(
+                            "Command Failed",
+                            "${item.name}  ${e.message}",
+                            item,
+                            logsFile.absolutePath,
+                            processId
+                        )
+                    }
+
                 }.collect{ receipt ->
                     if (receipt.success) {
                         Timber.d("Process Success".uppercase())
-                        autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, receipt.output, processId)
-                        if (item.multiStage == true && !receipt.partial) {
+                        if (sendNotifications) {
+                            autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, logsFile.absolutePath, processId)
+                        }
+                        if (item.multiStage == true && !receipt.partial && !keepShellAlive) {
                             main.dispatchEvent(ViewModelEvent.StopShell(processId))
                         }
                         main.dispatchEvent(
@@ -260,10 +317,12 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                         )
                     } else {
                         Timber.d("Process FAILED".uppercase())
-                        if (item.multiStage == true) {
+                        if (item.multiStage == true && !keepShellAlive) {
                             main.dispatchEvent(ViewModelEvent.StopShell(processId))
                         }
-                        autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, receipt.output, processId)
+                        if (sendNotifications) {
+                            autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, logsFile.absolutePath, processId)
+                        }
                         main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     }
 
@@ -273,7 +332,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             }
         }
 
-        if (item.multiStage != true) {
+        if (closeExtrasOnComplete && item.multiStage != true) {
             viewModelScope.launch {
                 delay(900L)
                 currentExtrasDetails.value = null

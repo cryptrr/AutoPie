@@ -611,6 +611,7 @@ class ProcessManagerService(
             closeLog(logWriter)
 
             if(commandObject.multiStage != true){
+                Timber.d("Removing shell for non multistage commannd")
                 shell.shutdown()
                 shells.remove(processId)
             }
