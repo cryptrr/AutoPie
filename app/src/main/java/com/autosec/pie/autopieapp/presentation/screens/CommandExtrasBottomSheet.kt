@@ -337,10 +337,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val isRealtimeCommand = command.flags.hasFlag(CommandFlags.REALTIME)
     val realtimeInputs = commandExtraInputs.value
-    LaunchedEffect(isRealtimeCommand, realtimeInputs, inputText, inputFiles, extraInput.value, extraInputList.value) {
+    val userFacingRealtimeInputs = realtimeInputs.filter { input ->
+        command.extras.orEmpty()
+            .firstOrNull { extra -> extra.id == input.id || extra.name == input.name }
+            ?.flags
+            .hasFlag(ExtraFlags.INTERNAL_CONFIG) != true
+    }
+    LaunchedEffect(isRealtimeCommand, userFacingRealtimeInputs, inputText, inputFiles, extraInput.value, extraInputList.value) {
         if (!isRealtimeCommand) return@LaunchedEffect
 
-        delay(350L)
+        delay(150L)
         viewModel.runCommandDirectly(
             command,
             inputText ?: extraInput.value,
