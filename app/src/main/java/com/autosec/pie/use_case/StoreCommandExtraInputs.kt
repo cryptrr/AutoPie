@@ -13,6 +13,9 @@ import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.data.withoutStoredSecretDefault
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 
 data class StoreCommandExtraInputsResult(
     val command: CommandModel,
@@ -97,8 +100,24 @@ class StoreCommandExtraInputs(
         val (commands, writeConfig) = target
         val commandObject = commands.getAsJsonObject(commandKey) ?: return false
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-        commandObject.add("extras", gson.toJsonTree(extras.map { it.withoutStoredSecretDefault() }))
+        val storedExtras = gson.toJsonTree(extras.map { it.withoutStoredSecretDefault() })
+        if (command.multiStage == true) {
+            val steps = commandObject.getAsJsonArray("steps") ?: return false
+            val step = steps.findStep(commandKey, command.id) ?: return false
+            step.add("extras", storedExtras)
+        } else {
+            commandObject.add("extras", storedExtras)
+        }
         writeConfig(gson.toJson(commands))
         return true
     }
+
+    private fun JsonArray.findStep(parentId: String, namespacedStepId: String): JsonObject? =
+        mapIndexedNotNull { index, element ->
+            element.takeIf(JsonElement::isJsonObject)?.asJsonObject?.let { step ->
+                val stepId = step.get("id")?.asString?.takeIf(String::isNotBlank)
+                    ?: index.toString()
+                step.takeIf { "$parentId.$stepId" == namespacedStepId }
+            }
+        }.firstOrNull()
 }

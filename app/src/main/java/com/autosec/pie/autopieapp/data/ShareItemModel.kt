@@ -31,6 +31,7 @@ data class CommandModel(
     ) : CommandInterface
 
 data class CommandStep(
+    val id: String = "",
     val commandId: String? = null,
     val path: String = "",
     val command: String = "",
@@ -60,14 +61,20 @@ fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): C
 
 fun CommandModel.firstStepOrSelf(): CommandModel {
     if (multiStage != true) return this
-    val step = steps.firstOrNull() ?: return this
+    val parentId = name.ifBlank { id }
+    val identifiedSteps = steps.mapIndexed { index, step ->
+        if (step.id.isBlank()) step.copy(id = index.toString()) else step
+    }
+    val step = identifiedSteps.firstOrNull() ?: return this
     return copy(
+        id = step.namespacedId(parentId),
         path = step.path,
         command = step.command,
         flags = (flags.orEmpty() + step.flags.orEmpty())
             .distinct()
             .takeIf { it.isNotEmpty() },
-        extras = step.extras
+        extras = step.extras,
+        steps = identifiedSteps
     )
 }
 
@@ -75,7 +82,9 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
     if (multiStage != true || steps.size <= 1) return null
     val remainingSteps = steps.drop(1)
     val nextStep = remainingSteps.first()
+    val parentId = name.ifBlank { id.substringBeforeLast('.', id) }
     return copy(
+        id = nextStep.namespacedId(parentId),
         path = nextStep.path,
         command = nextStep.command,
         flags = nextStep.flags,
@@ -83,6 +92,9 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
         steps = remainingSteps
     )
 }
+
+fun CommandStep.namespacedId(parentId: String): String =
+    if (parentId.isBlank()) id else "$parentId.$id"
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 

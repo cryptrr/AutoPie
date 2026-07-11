@@ -27,6 +27,7 @@ class MultiStageCommandTest {
     fun firstStepOverridesExecutableFieldsAndKeepsRemainingSteps() {
         val first = command.firstStepOrSelf()
 
+        assertEquals("Multi stage.0", first.id)
         assertEquals("one", first.path)
         assertEquals("export RESULT=ready", first.command)
         assertEquals(listOf(firstExtra), first.extras)
@@ -39,11 +40,23 @@ class MultiStageCommandTest {
         val second = command.firstStepOrSelf().nextStepOrNull()
 
         assertNotNull(second)
+        assertEquals("Multi stage.1", second?.id)
         assertEquals("two", second?.path)
         assertEquals(listOf(secondExtra), second?.extras)
         assertEquals(1, second?.steps?.size)
         assertFalse(second!!.hasNextStep())
         assertNull(second.nextStepOrNull())
+    }
+
+    @Test
+    fun explicitStepIdsAreNamespacedUnderParentCommandName() {
+        val identified = command.copy(
+            steps = command.steps.mapIndexed { index, step ->
+                if (index == 0) step.copy(id = "prepare") else step
+            }
+        )
+
+        assertEquals("Multi stage.prepare", identified.firstStepOrSelf().id)
     }
 
     @Test
