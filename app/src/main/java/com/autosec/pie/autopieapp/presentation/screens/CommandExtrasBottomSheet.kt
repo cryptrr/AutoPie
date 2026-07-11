@@ -351,7 +351,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         if (internalConfigExtras.isNotEmpty()) {
             IconButton(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(28.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.secondaryContainer)
                     .border(
