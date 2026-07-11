@@ -320,7 +320,7 @@ fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifi
             },
             trailingIcon = trailingIcon,
             isError = isError,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             minLines = 2,
             maxLines = Int.MAX_VALUE,
             colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),

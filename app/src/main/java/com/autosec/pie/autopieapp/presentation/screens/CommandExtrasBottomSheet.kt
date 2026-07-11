@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Space
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -53,6 +55,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -347,9 +350,18 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         )
         if (internalConfigExtras.isNotEmpty()) {
             IconButton(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
                 onClick = {
                     showInternalConfigExtras = !showInternalConfigExtras
-                }
+                },
             ) {
                 Icon(
                     imageVector = if (showInternalConfigExtras) {
@@ -362,7 +374,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     } else {
                         "Show internal config extras"
                     },
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
