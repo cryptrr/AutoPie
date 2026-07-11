@@ -25,12 +25,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -58,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandExtraInput
+import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
@@ -288,9 +292,27 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         )
     }
 
+    fun isUnsetInternalConfigExtra(extra: CommandExtra): Boolean {
+        if (!extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) return false
+        if (extra.isSecretExtra()) {
+            val commandId = command.id.ifBlank { command.name }
+            return secretsService.get(extra.secretKey(commandId)).isNullOrBlank()
+        }
+        return extra.default.isBlank()
+    }
+
+    val internalConfigExtras = command.extras.orEmpty()
+        .filter { it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) }
+    val hasEmptyInternalConfigExtra = internalConfigExtras.any(::isUnsetInternalConfigExtra)
+    var showInternalConfigExtras by rememberSaveable(command.id, internalConfigExtras.map { it.id }.joinToString()) {
+        mutableStateOf(hasEmptyInternalConfigExtra)
+    }
+
     val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
     val visibleExtras = command.extras.orEmpty()
-        .filterNot { it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) }
+        .filter { extra ->
+            !extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) || showInternalConfigExtras
+        }
         .filter { extra ->
             extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
         }
@@ -311,13 +333,40 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val scrollState = rememberScrollState()
 
-    Text(
-        text = command.name,
-        lineHeight = 32.sp,
-        fontSize = 28.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onPrimaryContainer
-    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = command.name,
+            modifier = Modifier.weight(1F),
+            lineHeight = 32.sp,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        if (internalConfigExtras.isNotEmpty()) {
+            IconButton(
+                onClick = {
+                    showInternalConfigExtras = !showInternalConfigExtras
+                }
+            ) {
+                Icon(
+                    imageVector = if (showInternalConfigExtras) {
+                        Icons.Default.KeyboardArrowDown
+                    } else {
+                        Icons.Default.KeyboardArrowUp
+                    },
+                    contentDescription = if (showInternalConfigExtras) {
+                        "Hide internal config extras"
+                    } else {
+                        "Show internal config extras"
+                    },
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+    }
     
     Spacer(modifier = Modifier.height(20.dp))
 

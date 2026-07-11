@@ -22,5 +22,6 @@ data class AutoPieUseCases (
     val deleteUserTag: DeleteUserTag,
     val getInstalledPackages: GetInstalledPackages,
     val runInteractiveCommand: RunInteractiveCommand,
-    val toggleCommandDebugMode: ToggleCommandDebugMode
+    val toggleCommandDebugMode: ToggleCommandDebugMode,
+    val storeCommandExtraInputs: StoreCommandExtraInputs
 )
