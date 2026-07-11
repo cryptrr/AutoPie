@@ -48,7 +48,7 @@ class AutoPieCoreService {
 
         fun ensureTermuxBootstrapTriggered(context: Context) {
             if (isTermuxBootstrapInstalled(context)) {
-                installOtherPackages()
+                //installOtherPackages()
                 return
             }
 
@@ -64,7 +64,7 @@ class AutoPieCoreService {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
-                installOtherPackagesAfterBootstrap(context)
+                //installOtherPackagesAfterBootstrap(context)
             } catch (e: Exception) {
                 termuxBootstrapTriggered = false
                 Timber.e(e, "Failed to launch TermuxActivity for bootstrap setup")
@@ -257,7 +257,7 @@ class AutoPieCoreService {
                         //Toast.makeText(activity.applicationContext, "Python installation complete", Toast.LENGTH_LONG).show()
                     }
 
-                    installOtherPackages()
+                    //installOtherPackages()
 
                 } catch (e: IOException) {
                     Timber.e(e)

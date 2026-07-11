@@ -518,7 +518,7 @@ class ProcessManagerService(
     ): ProcessResult {
 
         try {
-            checkForUnsafeCommands(commandObject, command)
+            //checkForUnsafeCommands(commandObject, command)
 
             val logFile = File(activity.cacheDir, "${processId}.log")
             logFile.createNewFile()

@@ -223,7 +223,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun runShareCommand(item: CommandModel, inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
+    fun runCommandDirectly(item: CommandModel, inputText: String?, inputFiles: List<String>, commandExtraInputs: List<CommandExtraInput> = emptyList(), processId: Int)  {
 
 
         Timber.d(item.toString())
