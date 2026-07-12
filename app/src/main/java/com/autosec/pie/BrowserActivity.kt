@@ -12,6 +12,10 @@ import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.JavaScriptReplyProxy
+import androidx.webkit.WebMessageCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +71,8 @@ import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 
+private const val BROWSER_BRIDGE_NAME = "AutoPieBridge"
+
 class BrowserActivity : AppCompatActivity() {
 
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
@@ -75,6 +81,7 @@ class BrowserActivity : AppCompatActivity() {
     )
     private lateinit var webView: WebView
     private var commandsById: Map<String, CommandModel> = emptyMap()
+    private var pendingBrowserBridgeCommand: CommandModel? = null
 
     private var address by mutableStateOf(
         TextFieldValue(DEFAULT_URL, selection = TextRange(DEFAULT_URL.length))
@@ -112,6 +119,7 @@ class BrowserActivity : AppCompatActivity() {
                 allowContentAccess = false
                 userAgentString = chromeUserAgent(userAgentString)
             }
+            registerBrowserMessageBridge(this)
 
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView, newProgress: Int) {
@@ -224,30 +232,71 @@ class BrowserActivity : AppCompatActivity() {
         }.getOrNull() ?: return
 
         val script = Utils.stripScriptHeaders(activeCommand.command)
+        val nextCommand = activeCommand.nextStepOrNull()
+        val waitForBridgeMessage = nextCommand != null && script.usesBrowserBridge()
+        pendingBrowserBridgeCommand = if (waitForBridgeMessage) {
+            nextCommand
+        } else {
+            null
+        }
+
         webView.evaluateJavascript(script) { rawResult ->
             val result = decodeBrowserJavascriptResult(rawResult)
             Timber.d("Browser command %s returned %s", command.name, result.output)
 
-            val nextCommand = activeCommand.nextStepOrNull() ?: return@evaluateJavascript
-            val processId = (100000..999999).random()
-            lifecycleScope.launch {
-                val environmentWasSet = processManagerService.setShellEnvironmentVariables(
-                    processId = processId,
-                    variables = result.environment + ("OUTPUT" to result.output)
-                )
-                if (!environmentWasSet) {
-                    Timber.e("Unable to hand browser output to processId %s", processId)
-                    processManagerService.stopShell(processId)
-                    return@launch
-                }
+            if (waitForBridgeMessage) return@evaluateJavascript
+            nextCommand ?: return@evaluateJavascript
+            startNextCommand(nextCommand, result)
+        }
+    }
 
-                val intent = Intent(this@BrowserActivity, ForegroundService::class.java).apply {
-                    putExtra("command", Gson().toJson(nextCommand))
-                    putExtra("inputFiles", Gson().toJson(emptyList<String>()))
-                    putExtra("processId", processId)
+    private fun registerBrowserMessageBridge(webView: WebView) {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            Timber.w("WebMessageListener is not supported by the installed WebView")
+            return
+        }
+
+        WebViewCompat.addWebMessageListener(
+            webView,
+            BROWSER_BRIDGE_NAME,
+            setOf("*"),
+            object : WebViewCompat.WebMessageListener {
+                override fun onPostMessage(
+                    view: WebView,
+                    message: WebMessageCompat,
+                    sourceOrigin: Uri,
+                    isMainFrame: Boolean,
+                    replyProxy: JavaScriptReplyProxy
+                ) {
+                    if (!isMainFrame) return
+                    val nextCommand = pendingBrowserBridgeCommand ?: return
+                    pendingBrowserBridgeCommand = null
+
+                    val inputText = message.data.orEmpty()
+                    Timber.d("Browser bridge received %s", inputText)
+                    startNextCommand(
+                        nextCommand,
+                        BrowserJavascriptResult(
+                            output = inputText,
+                            environment = emptyMap()
+                        )
+                    )
                 }
-                startForegroundService(intent)
             }
+        )
+    }
+
+    private fun startNextCommand(nextCommand: CommandModel, result: BrowserJavascriptResult) {
+        val processId = (100000..999999).random()
+        lifecycleScope.launch {
+
+            val intent = Intent(this@BrowserActivity, ForegroundService::class.java).apply {
+                putExtra("command", Gson().toJson(nextCommand))
+                putExtra("inputText", result.output)
+                putExtra("inputFiles", Gson().toJson(listOf(result.output)))
+                putExtra("processId", processId)
+            }
+            startForegroundService(intent)
         }
     }
 
@@ -270,6 +319,10 @@ class BrowserActivity : AppCompatActivity() {
         const val GOOGLE_SEARCH_URL = "https://www.google.com/search?q="
         val HTTP_URL = Regex("""https?://[^\s]+""", RegexOption.IGNORE_CASE)
     }
+}
+
+private fun String.usesBrowserBridge(): Boolean {
+    return contains("$BROWSER_BRIDGE_NAME.postMessage")
 }
 
 internal data class BrowserJavascriptResult(

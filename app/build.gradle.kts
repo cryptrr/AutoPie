@@ -114,6 +114,7 @@ dependencies {
     implementation(libs.editorkit)
     implementation(libs.language.shell)
     implementation(libs.work.runtime.ktx)
+    implementation(libs.webkit)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.serialization.kotlinx.json)
