@@ -1,23 +1,19 @@
 package com.autopi.autopieapp.presentation.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,99 +24,45 @@ import androidx.compose.material.icons.rounded.List
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autopi.utils.getActivity
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
-import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
-import com.autopi.core.*
-import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.ui.theme.GreenGrey60
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
-import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommandsSearchBottomSheet(
-    state: SheetState,
-    open : MutableState<Boolean>,
-    onHide: () -> Unit = {},
-    onExpand: () -> Unit = {}
-) {
-
-    val scope = rememberCoroutineScope()
-
-    val activity = LocalContext.current.getActivity()
-
-    @Composable
-    fun bottomSheetContent() {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                //.height(700.dp)
-                .fillMaxHeight(0.75F)
-            ,
-            contentAlignment = Alignment.TopStart
-
-        )
-        {
-
-
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 15.dp)){
-
-
-                CloudCommandsScreen()
-
-
-            }
-        }
+fun CloudCommandsPage(innerPadding: PaddingValues) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .padding(horizontal = 15.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        CloudCommandsScreen()
     }
-
-    ModalBottomSheet(
-        sheetState = state,
-        content = { bottomSheetContent() },
-        shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        onDismissRequest = {
-            scope.launch {
-                open.value = false
-            }
-        }
-    )
 }
 
 
@@ -161,7 +103,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                         .padding(vertical = 0.dp)
                 ) {
                     Text(
-                        text = "Explore Commands",
+                        text = "Install New",
                         fontSize = 33.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -216,7 +158,6 @@ fun CloudCommandCard(
     card: CloudCommandModel
 ) {
 
-    val activity = LocalContext.current.getActivity()
     var isLoading by remember {
         mutableStateOf(false)
     }
@@ -323,5 +264,3 @@ fun CloudCommandCard(
         }
     }
 }
-
-

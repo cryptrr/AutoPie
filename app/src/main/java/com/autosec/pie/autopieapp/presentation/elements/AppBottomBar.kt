@@ -99,12 +99,12 @@ fun AppBottomBar(selectedItem: MutableIntState){
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = Icons.Outlined.InstallDesktop,
-                                contentDescription = "Installed",
+                                contentDescription = "Install New",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(30.dp)
                             )
                             Spacer(Modifier.height(3.dp))
-                            Text("Installed", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Install New", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }

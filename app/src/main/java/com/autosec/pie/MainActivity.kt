@@ -1,6 +1,5 @@
 package com.autopi
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AddBox
-import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -67,7 +65,6 @@ import com.autopi.autopieapp.presentation.screens.AddShareCommandBottomSheet
 import com.autopi.autopieapp.presentation.screens.CloudCommandDetails
 import com.autopi.autopieapp.presentation.screens.CloudPackageDetails
 import com.autopi.autopieapp.presentation.screens.CommandExtrasBottomSheet
-import com.autopi.autopieapp.presentation.screens.CommandsSearchBottomSheet
 import com.autopi.autopieapp.presentation.screens.EditCommandBottomSheet
 import com.autopi.autopieapp.presentation.screens.HomeScreen
 import com.autopi.autopieapp.presentation.screens.InstallNewPackageBottomSheet
@@ -80,7 +77,6 @@ import com.autopi.autopieapp.presentation.screens.CommandHistorySheet
 import com.autopi.ui.theme.AutoPieTheme
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
-import com.termux.app.TermuxActivity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -256,8 +252,7 @@ class MainActivity : ComponentActivity() {
                                                             interactionSource = remember { MutableInteractionSource() },
                                                             indication = null
                                                         ) {
-                                                            autoPieStates.commandsSearchBottomSheetStateOpen.value =
-                                                                true
+                                                            selectedItem.intValue = 1
                                                         }
                                                 ) {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -279,47 +274,6 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
 
-                                        }
-                                    }
-
-                                    1 -> {
-                                        FloatingActionButton(
-                                            onClick = {
-                                                try {
-                                                    val intent = Intent(context, TermuxActivity::class.java)
-                                                    context.startActivity(intent)
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                }
-
-                                            },
-                                            containerColor = MaterialTheme.colorScheme.primary
-
-                                        ) {
-                                            Box(
-                                                Modifier.padding(
-                                                    vertical = 10.dp,
-                                                    horizontal = 15.dp
-                                                )
-                                            ) {
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Icon(
-                                                        imageVector = Icons.Outlined.Download,
-                                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                                        contentDescription = "Install package",
-                                                        modifier = Modifier.size(28.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(5.dp))
-                                                    Text(
-
-                                                        "Install New",
-                                                        fontSize = 15.7.sp,
-                                                        color = MaterialTheme.colorScheme.onPrimary,
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-
-                                                }
-                                            }
                                         }
                                     }
 
@@ -369,12 +323,6 @@ class MainActivity : ComponentActivity() {
                         AddShareCommandBottomSheet(
                             state = autoPieStates.addShareBottomSheetState,
                             open = autoPieStates.addShareBottomSheetStateOpen
-                        )
-                    }
-                    if (autoPieStates.commandsSearchBottomSheetStateOpen.value) {
-                        CommandsSearchBottomSheet(
-                            state = autoPieStates.commandsSearchBottomSheetState,
-                            open = autoPieStates.commandsSearchBottomSheetStateOpen
                         )
                     }
                     if (autoPieStates.installNewPackageBottomSheetOpen.value) {
