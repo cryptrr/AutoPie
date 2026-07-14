@@ -107,6 +107,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.gson)
     implementation(libs.commons.compress)
+    implementation(libs.snakeyaml)
     implementation(libs.datastore.preferences)
     implementation(libs.xz)
     implementation(libs.ktsh)

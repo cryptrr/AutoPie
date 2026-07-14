@@ -1,7 +1,5 @@
 package com.autopi.autopieapp.presentation.screens
 
-import android.content.Intent
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,24 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startForegroundService
-import androidx.lifecycle.viewModelScope
-import com.autopi.autopieapp.presentation.elements.SearchBar
-import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
-import com.autopi.autopieapp.presentation.viewModels.EditCommandViewModel
-import com.google.gson.Gson
-import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
-import com.mikepenz.markdown.compose.LocalMarkdownComponents
-import com.mikepenz.markdown.compose.components.MarkdownComponents
-import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.compose.elements.MarkdownImage
-import com.mikepenz.markdown.m3.Markdown
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import org.koin.java.KoinJavaComponent
-import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,22 +146,33 @@ fun CloudCommandDetails(
                                 .padding(vertical = 15.dp)
                                 .height(52.dp)
                                 .fillMaxWidth(),
+                            enabled = !viewModel.installInProgress.value,
                             shape = RoundedCornerShape(20),
                             //contentPadding = PaddingValues(vertical = 20.dp),
                             onClick = {
-                                open.value = false
+                                viewModel.installSelectedCommand {
+                                    open.value = false
+                                }
                             },
 
                             ) {
 
 
                             Column {
-                                Text(
-                                    text = "DONE",
-                                    //modifier = Modifier.align(Alignment.Center),
-                                    letterSpacing = 1.11.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                if (viewModel.installInProgress.value) {
+                                    CircularProgressIndicator(
+                                        strokeWidth = 3.dp,
+                                        modifier = Modifier.size(24.dp),
+                                        color = Color.Black.copy(alpha = 0.4F)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "INSTALL",
+                                        //modifier = Modifier.align(Alignment.Center),
+                                        letterSpacing = 1.11.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
 
                         }

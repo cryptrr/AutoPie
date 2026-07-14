@@ -15,6 +15,7 @@ import com.autopi.use_case.GetLatestUsedPackages
 import com.autopi.use_case.GetRepoCommandsList
 import com.autopi.use_case.GetShareCommands
 import com.autopi.use_case.GetUserTags
+import com.autopi.use_case.InstallCloudCommand
 import com.autopi.use_case.RunCommand
 import com.autopi.use_case.RunCommandForDirectory
 import com.autopi.use_case.RunCommandForFiles
@@ -51,7 +52,8 @@ val useCaseModule = module {
             getRepoCommandsList = GetRepoCommandsList(get()),
             runInteractiveCommand = RunInteractiveCommand(get()),
             toggleCommandDebugMode = ToggleCommandDebugMode(get()),
-            storeCommandExtraInputs = StoreCommandExtraInputs(get(), get())
+            storeCommandExtraInputs = StoreCommandExtraInputs(get(), get()),
+            installCloudCommand = InstallCloudCommand(get(), get(), get())
         )
     }
 }

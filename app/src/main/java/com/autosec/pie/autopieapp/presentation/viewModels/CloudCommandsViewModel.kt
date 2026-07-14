@@ -57,6 +57,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
     val searchCommandQuery = mutableStateOf("")
     val isLoading = mutableStateOf(false)
+    val installInProgress = mutableStateOf(false)
 
     init {
         viewModelScope.launch {
@@ -124,6 +125,30 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             }
         }
 
+    }
+
+    fun installSelectedCommand(onInstalled: () -> Unit = {}) {
+        val command = selectedCommand.value ?: return
+        if (installInProgress.value) return
+
+        installInProgress.value = true
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                useCases.installCloudCommand(command.id)
+                withContext(dispatchers.main) {
+                    installInProgress.value = false
+                    main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                    main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
+                    onInstalled()
+                }
+            } catch (error: Exception) {
+                Timber.e(error)
+                withContext(dispatchers.main) {
+                    installInProgress.value = false
+                    main.showError(error as? ViewModelError ?: ViewModelError.Unknown)
+                }
+            }
+        }
     }
 
 

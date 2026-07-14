@@ -9,6 +9,7 @@ import com.autopi.use_case.CreateCommand
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
+import com.autopi.use_case.cloudManifestToShareCommandJson
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
@@ -123,6 +124,94 @@ class CommandTests : KoinTest {
         assertEquals("AutoPie command for Change Volume on Mac", commands.first().summary)
         assertEquals(listOf("openssh"), commands.first().tags)
         assertEquals("", commands.first().command)
+    }
+
+    @Test
+    fun `cloud manifest converts to share command`() = runTest {
+        val manifest = cloudManifestToShareCommandJson(
+            """
+            schemaVersion: "2026.6.1"
+            version: "1.0.0"
+            id: "autopie.change-volume-on-mac"
+            namespace: "autopie"
+            name: "Change Volume on Mac"
+            commandSlug: "openssh"
+            summary: "AutoPie command for Change Volume on Mac"
+            type: "PACKAGE"
+            tags: ["openssh"]
+            runtime:
+              path: "AutoSec/scripts"
+              command: "sshpass -p \"${'$'}PASSWORD\" ssh \"${'$'}USER@${'$'}HOST\" \"osascript -e \\\"set volume output volume ${'$'}{VOLUME}\\\"\""
+              extras:
+              - id: "574538"
+                name: "VOLUME"
+                type: "SLIDER"
+                default: "0,50,100"
+                description: "Slider to set volume."
+                required: true
+                flags: ["--int", "--realtime"]
+            install:
+              script: "install.sh"
+            """.trimIndent()
+        )
+
+        val command = manifest.commandObject
+        val extra = command.getAsJsonArray("extras").first().asJsonObject
+
+        assertEquals("Change Volume on Mac", manifest.commandKey)
+        assertEquals("install.sh", manifest.installScript)
+        assertEquals("autopie.change-volume-on-mac", command.get("id").asString)
+        assertEquals("AutoSec/scripts", command.get("path").asString)
+        assertEquals("openssh", command.get("exec").asString)
+        assertEquals("VOLUME", extra.get("name").asString)
+        assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
+    }
+
+    @Test
+    fun `cloud multistage manifest converts steps to share command`() = runTest {
+        val manifest = cloudManifestToShareCommandJson(
+            """
+            schemaVersion: "2026.6.1"
+            version: "1.0.0"
+            id: "autopie.change-volume-on-mac-autofetch"
+            namespace: "autopie"
+            name: "Change Volume on Mac - AutoFetch"
+            commandSlug: "change-volume-on-mac-autofetch"
+            summary: "AutoPie command for Change Volume on Mac - AutoFetch"
+            type: "PACKAGE"
+            tags: ["openssh"]
+            runtime:
+              multiStage: true
+              steps:
+              - path: "AutoSec/scripts"
+                commandSlug: "openssh"
+                command: "export SLIDER_OPTIONS=0,50,100"
+              - path: "AutoSec/scripts"
+                commandSlug: "openssh"
+                command: "sshpass -p \"${'$'}PASSWORD\" ssh \"${'$'}USER@${'$'}HOST\""
+                extras:
+                - id: "574538"
+                  name: "VOLUME"
+                  type: "SLIDER"
+                  default: "${'$'}${'$'}SLIDER_OPTIONS"
+                  description: "Slider to set volume."
+                  required: true
+                  flags: ["--int", "--realtime"]
+            install:
+              script: "install.sh"
+            """.trimIndent()
+        )
+
+        val command = manifest.commandObject
+        val steps = command.getAsJsonArray("steps")
+        val secondStep = steps[1].asJsonObject
+
+        assertEquals("Change Volume on Mac - AutoFetch", manifest.commandKey)
+        assertEquals(true, command.get("multiStage").asBoolean)
+        assertEquals("openssh", command.get("exec").asString)
+        assertEquals("0", steps[0].asJsonObject.get("id").asString)
+        assertEquals("1", secondStep.get("id").asString)
+        assertEquals("VOLUME", secondStep.getAsJsonArray("extras")[0].asJsonObject.get("name").asString)
     }
 
     @Test
