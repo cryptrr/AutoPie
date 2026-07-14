@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.apiService.ApiService
+import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.ViewModelError
@@ -49,7 +50,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     var fullListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
-    var installedCommandIds = MutableStateFlow<Set<String>>(emptySet())
+    var installedCommandVersions = MutableStateFlow<Map<String, String>>(emptyMap())
 
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
@@ -81,17 +82,18 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             delay(500L)
 
             try {
-                val installedIds = getInstalledCommandIds()
+                val installedVersions = getInstalledCommandVersions()
                 useCases.getRepoCommandsList("${application.filesDir.absolutePath}/repolist.json").let { newCommands ->
                     withContext(dispatchers.main){
-                        installedCommandIds.update { installedIds }
+                        val sortedCommands = sortCloudCommandsForCatalog(newCommands, installedVersions)
+                        installedCommandVersions.update { installedVersions }
 
                         fullListOfCommands.update {
-                            newCommands.sortedBy { it.name }
+                            sortedCommands
                         }
 
                         filteredListOfCommands.update {
-                            newCommands.sortedBy { it.name }
+                            sortedCommands
                         }
 
                         if(searchCommandQuery.value.isNotEmpty()){
@@ -122,7 +124,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
         filteredListOfCommands.update {
             val trimmedQuery = query.trim()
-            fullListOfCommands.value.filter {
+            val filteredCommands = fullListOfCommands.value.filter {
                 it.id.contains(trimmedQuery, ignoreCase = true) ||
                     it.name.contains(trimmedQuery, ignoreCase = true) ||
                     it.namespace.contains(trimmedQuery, ignoreCase = true) ||
@@ -131,6 +133,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                     it.version.contains(trimmedQuery, ignoreCase = true) ||
                     it.tags.any { tag -> tag.contains(trimmedQuery, ignoreCase = true) }
             }
+            sortCloudCommandsForCatalog(filteredCommands, installedCommandVersions.value)
         }
 
     }
@@ -150,7 +153,11 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                 )
                 withContext(dispatchers.main) {
                     installInProgress.value = false
-                    installedCommandIds.update { it + command.id }
+                    installedCommandVersions.update { it + (command.id to command.version) }
+                    fullListOfCommands.update {
+                        sortCloudCommandsForCatalog(it, installedCommandVersions.value)
+                    }
+                    searchInCommands(searchCommandQuery.value)
                     main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
                     main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
                     onInstalled()
@@ -192,15 +199,35 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
         }
     }
 
-    private suspend fun getInstalledCommandIds(): Set<String> =
+    private suspend fun getInstalledCommandVersions(): Map<String, String> =
         try {
-            useCases.getShareCommands().map { it.id }.filter(String::isNotBlank).toSet()
+            useCases.getShareCommands()
+                .filter { it.id.isNotBlank() }
+                .associate { it.id to it.version }
         } catch (error: Exception) {
-            Timber.w(error, "Unable to read installed share command ids")
-            emptySet()
+            Timber.w(error, "Unable to read installed share command versions")
+            emptyMap()
         }
 
 
 
 
 }
+
+internal fun isCloudCommandUpdateAvailable(catalogVersion: String, installedVersion: String): Boolean {
+    if (catalogVersion.isBlank()) return false
+    val comparableInstalledVersion = installedVersion.ifBlank { "0" }
+    return GithubApiService.compareVersions(catalogVersion, comparableInstalledVersion) > 0
+}
+
+internal fun sortCloudCommandsForCatalog(
+    commands: List<CloudCommandModel>,
+    installedVersions: Map<String, String>
+): List<CloudCommandModel> =
+    commands.sortedWith(
+        compareByDescending<CloudCommandModel> { command ->
+            installedVersions[command.id]?.let { installedVersion ->
+                isCloudCommandUpdateAvailable(command.version, installedVersion)
+            } == true
+        }.thenBy { it.name.lowercase() }
+    )

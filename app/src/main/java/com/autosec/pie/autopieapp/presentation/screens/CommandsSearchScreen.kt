@@ -48,6 +48,7 @@ import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
 import com.autopi.ui.theme.GreenGrey60
 import com.autopi.ui.theme.PastelGreen
 import com.autopi.ui.theme.PastelPurple
@@ -87,7 +88,7 @@ fun CloudCommandsScreen() {
 fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCommandsViewModel) {
 
     val state = rememberLazyListState()
-    val installedCommandIds = viewModel.installedCommandIds.collectAsState()
+    val installedCommandVersions = viewModel.installedCommandVersions.collectAsState()
 
     val isAtBottom = !state.canScrollForward
 
@@ -146,9 +147,13 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             } else {
 
                 items(cloudCommands) {
+                    val installedVersion = installedCommandVersions.value[it.id]
                     CloudCommandCard(
                         card = it,
-                        isInstalled = installedCommandIds.value.contains(it.id)
+                        isInstalled = installedVersion != null,
+                        updateAvailable = installedVersion?.let { version ->
+                            isCloudCommandUpdateAvailable(it.version, version)
+                        } == true
                     )
                 }
             }
@@ -163,7 +168,8 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 @Composable
 fun CloudCommandCard(
     card: CloudCommandModel,
-    isInstalled: Boolean
+    isInstalled: Boolean,
+    updateAvailable: Boolean
 ) {
 
     var isLoading by remember {
@@ -197,8 +203,13 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                val status = if (isInstalled) "installed" else card.status.ifBlank { "catalog" }
+                val status = when {
+                    updateAvailable -> "update"
+                    isInstalled -> "installed"
+                    else -> card.status.ifBlank { "catalog" }
+                }
                 val badgeColor = when (status.lowercase()) {
+                    "update" -> Color(0xFFFFD166)
                     "installed" -> PastelGreen
                     "stable" -> GreenGrey60
                     "beta" -> PastelPurple

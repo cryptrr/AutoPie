@@ -12,5 +12,6 @@ data class CronCommandModel(
     override val extras: List<CommandExtra>? = null,
     override val selectors: List<String> = emptyList(),
     override val multiStage: Boolean? = false,
-    override val steps: List<CommandStep> = emptyList()
+    override val steps: List<CommandStep> = emptyList(),
+    override val version: String = ""
 ): CommandInterface

@@ -5,10 +5,13 @@ import android.os.Environment
 import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.CreateCommand
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
+import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
+import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
 import io.mockk.every
@@ -162,10 +165,38 @@ class CommandTests : KoinTest {
         assertEquals("Change Volume on Mac", manifest.commandKey)
         assertEquals("install.sh", manifest.installScript)
         assertEquals("autopie.change-volume-on-mac", command.get("id").asString)
+        assertEquals("1.0.0", command.get("version").asString)
         assertEquals("AutoSec/scripts", command.get("path").asString)
         assertEquals("openssh", command.get("exec").asString)
         assertEquals("VOLUME", extra.get("name").asString)
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
+    }
+
+    @Test
+    fun `cloud command update is available when catalog version is newer`() = runTest {
+        assertEquals(true, isCloudCommandUpdateAvailable("1.1.0", "1.0.0"))
+        assertEquals(false, isCloudCommandUpdateAvailable("1.0.0", "1.0.0"))
+        assertEquals(false, isCloudCommandUpdateAvailable("1.0.0", "1.1.0"))
+        assertEquals(true, isCloudCommandUpdateAvailable("1.0.0", ""))
+    }
+
+    @Test
+    fun `cloud commands with updates are sorted first`() = runTest {
+        val commands = listOf(
+            CloudCommandModel(id = "autopie.z-current", name = "Z Current", version = "1.0.0"),
+            CloudCommandModel(id = "autopie.a-update", name = "A Update", version = "1.1.0"),
+            CloudCommandModel(id = "autopie.b-new", name = "B New", version = "1.0.0")
+        )
+
+        val sorted = sortCloudCommandsForCatalog(
+            commands,
+            mapOf(
+                "autopie.z-current" to "1.0.0",
+                "autopie.a-update" to "1.0.0"
+            )
+        )
+
+        assertEquals(listOf("autopie.a-update", "autopie.b-new", "autopie.z-current"), sorted.map { it.id })
     }
 
     @Test

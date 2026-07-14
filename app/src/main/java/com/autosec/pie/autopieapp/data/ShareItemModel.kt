@@ -28,6 +28,7 @@ data class CommandModel(
     override val extras: List<CommandExtra>? = null,
     override val multiStage: Boolean? = false,
     override val steps: List<CommandStep> = emptyList(),
+    override val version: String = "",
     ) : CommandInterface
 
 data class CommandStep(
@@ -148,6 +149,7 @@ interface CommandInterface {
     val steps: List<CommandStep>
     val flags: List<String>?
     val extras: List<CommandExtra>?
+    val version: String
 }
 
 data class CommandExtra(
