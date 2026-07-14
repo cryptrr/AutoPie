@@ -9,7 +9,8 @@ enum class ExtraFlags(val value: String) {
     MIME_TYPE("--mime-type"),
     INT("--int"),
     SMALL("--small"),
-    LARGE("--large")
+    LARGE("--large"),
+    REALTIME("--realtime")
 }
 
 enum class ScriptFlags(val value: String) {

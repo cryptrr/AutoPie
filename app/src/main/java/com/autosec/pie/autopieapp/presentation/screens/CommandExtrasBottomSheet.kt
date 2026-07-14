@@ -337,14 +337,26 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val isRealtimeCommand = command.flags.hasFlag(CommandFlags.REALTIME)
     val realtimeInputs = commandExtraInputs.value
-    val userFacingRealtimeInputs = realtimeInputs.filter { input ->
-        command.extras.orEmpty()
+    val realtimeTriggerInputs = realtimeInputs.filter { input ->
+        val extra = command.extras.orEmpty()
             .firstOrNull { extra -> extra.id == input.id || extra.name == input.name }
-            ?.flags
-            .hasFlag(ExtraFlags.INTERNAL_CONFIG) != true
+        extra?.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) != true &&
+            (isRealtimeCommand || extra?.flags.hasFlag(ExtraFlags.REALTIME) == true)
     }
-    LaunchedEffect(isRealtimeCommand, userFacingRealtimeInputs, inputText, inputFiles, extraInput.value, extraInputList.value) {
-        if (!isRealtimeCommand) return@LaunchedEffect
+    val isRealtimeEnabled = isRealtimeCommand || realtimeTriggerInputs.isNotEmpty()
+    val realtimeInputTextKey = if (isRealtimeCommand) inputText else null
+    val realtimeInputFilesKey = if (isRealtimeCommand) inputFiles else null
+    val realtimeExtraInputKey = if (isRealtimeCommand) extraInput.value else null
+    val realtimeExtraInputListKey = if (isRealtimeCommand) extraInputList.value else null
+    LaunchedEffect(
+        isRealtimeEnabled,
+        realtimeTriggerInputs,
+        realtimeInputTextKey,
+        realtimeInputFilesKey,
+        realtimeExtraInputKey,
+        realtimeExtraInputListKey
+    ) {
+        if (!isRealtimeEnabled) return@LaunchedEffect
 
         delay(150L)
         viewModel.runCommandDirectly(
