@@ -49,6 +49,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     var fullListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CloudCommandModel>>(emptyList())
+    var installedCommandIds = MutableStateFlow<Set<String>>(emptySet())
 
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
@@ -80,8 +81,11 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             delay(500L)
 
             try {
+                val installedIds = getInstalledCommandIds()
                 useCases.getRepoCommandsList("${application.filesDir.absolutePath}/repolist.json").let { newCommands ->
                     withContext(dispatchers.main){
+                        installedCommandIds.update { installedIds }
+
                         fullListOfCommands.update {
                             newCommands.sortedBy { it.name }
                         }
@@ -146,6 +150,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                 )
                 withContext(dispatchers.main) {
                     installInProgress.value = false
+                    installedCommandIds.update { it + command.id }
                     main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
                     main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
                     onInstalled()
@@ -186,6 +191,14 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             }
         }
     }
+
+    private suspend fun getInstalledCommandIds(): Set<String> =
+        try {
+            useCases.getShareCommands().map { it.id }.filter(String::isNotBlank).toSet()
+        } catch (error: Exception) {
+            Timber.w(error, "Unable to read installed share command ids")
+            emptySet()
+        }
 
 
 

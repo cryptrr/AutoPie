@@ -87,6 +87,7 @@ fun CloudCommandsScreen() {
 fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCommandsViewModel) {
 
     val state = rememberLazyListState()
+    val installedCommandIds = viewModel.installedCommandIds.collectAsState()
 
     val isAtBottom = !state.canScrollForward
 
@@ -145,7 +146,10 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             } else {
 
                 items(cloudCommands) {
-                    CloudCommandCard(card = it)
+                    CloudCommandCard(
+                        card = it,
+                        isInstalled = installedCommandIds.value.contains(it.id)
+                    )
                 }
             }
 
@@ -158,7 +162,8 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CloudCommandCard(
-    card: CloudCommandModel
+    card: CloudCommandModel,
+    isInstalled: Boolean
 ) {
 
     var isLoading by remember {
@@ -192,8 +197,9 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                val status = card.status.ifBlank { "catalog" }
+                val status = if (isInstalled) "installed" else card.status.ifBlank { "catalog" }
                 val badgeColor = when (status.lowercase()) {
+                    "installed" -> PastelGreen
                     "stable" -> GreenGrey60
                     "beta" -> PastelPurple
                     "experimental" -> Purple10
