@@ -16,6 +16,7 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.CloudCommandsListDto
+import com.autopi.use_case.CloudCommandDocumentation
 import com.autopi.core.Result
 import com.autopi.core.asResult
 import com.autopi.autopieapp.domain.model.GenericResponseDTO
@@ -58,6 +59,9 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     val searchCommandQuery = mutableStateOf("")
     val isLoading = mutableStateOf(false)
     val installInProgress = mutableStateOf(false)
+    val detailsLoading = mutableStateOf(false)
+    val selectedCommandDocumentation = mutableStateOf<CloudCommandDocumentation?>(null)
+    private var loadedDocumentationCommandId: String? = null
 
     init {
         viewModelScope.launch {
@@ -134,7 +138,12 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
         installInProgress.value = true
         viewModelScope.launch(dispatchers.io) {
             try {
-                useCases.installCloudCommand(command.id)
+                useCases.installCloudCommand(
+                    command.id,
+                    selectedCommandDocumentation.value
+                        ?.takeIf { loadedDocumentationCommandId == command.id }
+                        ?.manifestYaml
+                )
                 withContext(dispatchers.main) {
                     installInProgress.value = false
                     main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
@@ -145,6 +154,33 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                 Timber.e(error)
                 withContext(dispatchers.main) {
                     installInProgress.value = false
+                    main.showError(error as? ViewModelError ?: ViewModelError.Unknown)
+                }
+            }
+        }
+    }
+
+    fun loadSelectedCommandDocumentation() {
+        val command = selectedCommand.value ?: return
+        if (loadedDocumentationCommandId == command.id && selectedCommandDocumentation.value != null) return
+        if (detailsLoading.value) return
+
+        detailsLoading.value = true
+        selectedCommandDocumentation.value = null
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val docs = useCases.getCloudCommandDocumentation(command.id)
+                withContext(dispatchers.main) {
+                    loadedDocumentationCommandId = command.id
+                    selectedCommandDocumentation.value = docs
+                    detailsLoading.value = false
+                }
+            } catch (error: Exception) {
+                Timber.e(error)
+                withContext(dispatchers.main) {
+                    loadedDocumentationCommandId = null
+                    selectedCommandDocumentation.value = null
+                    detailsLoading.value = false
                     main.showError(error as? ViewModelError ?: ViewModelError.Unknown)
                 }
             }

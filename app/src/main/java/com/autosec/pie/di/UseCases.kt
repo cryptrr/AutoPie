@@ -9,6 +9,7 @@ import com.autopi.use_case.DeleteCommand
 import com.autopi.use_case.DeleteUserTag
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
+import com.autopi.use_case.GetCloudCommandDocumentation
 import com.autopi.use_case.GetHistoryOfCommand
 import com.autopi.use_case.GetInstalledPackages
 import com.autopi.use_case.GetLatestUsedPackages
@@ -53,7 +54,8 @@ val useCaseModule = module {
             runInteractiveCommand = RunInteractiveCommand(get()),
             toggleCommandDebugMode = ToggleCommandDebugMode(get()),
             storeCommandExtraInputs = StoreCommandExtraInputs(get(), get()),
-            installCloudCommand = InstallCloudCommand(get(), get(), get())
+            installCloudCommand = InstallCloudCommand(get(), get(), get()),
+            getCloudCommandDocumentation = GetCloudCommandDocumentation()
         )
     }
 }

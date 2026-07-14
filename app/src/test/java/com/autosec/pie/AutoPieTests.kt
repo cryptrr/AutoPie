@@ -9,6 +9,7 @@ import com.autopi.use_case.CreateCommand
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
+import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -165,6 +166,26 @@ class CommandTests : KoinTest {
         assertEquals("openssh", command.get("exec").asString)
         assertEquals("VOLUME", extra.get("name").asString)
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
+    }
+
+    @Test
+    fun `cloud manifest exposes documentation paths`() = runTest {
+        val docs = cloudManifestDocs(
+            """
+            schemaVersion: "2026.6.1"
+            id: "autopie.change-volume-on-mac"
+            name: "Change Volume on Mac"
+            runtime:
+              path: "AutoSec/scripts"
+              command: "echo ok"
+            docs:
+              readme: "README.md"
+              changelog: "CHANGELOG.md"
+            """.trimIndent()
+        )
+
+        assertEquals("README.md", docs.readme)
+        assertEquals("CHANGELOG.md", docs.changelog)
     }
 
     @Test

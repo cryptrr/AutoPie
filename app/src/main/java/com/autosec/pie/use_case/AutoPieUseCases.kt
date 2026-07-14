@@ -24,5 +24,6 @@ data class AutoPieUseCases (
     val runInteractiveCommand: RunInteractiveCommand,
     val toggleCommandDebugMode: ToggleCommandDebugMode,
     val storeCommandExtraInputs: StoreCommandExtraInputs,
-    val installCloudCommand: InstallCloudCommand
+    val installCloudCommand: InstallCloudCommand,
+    val getCloudCommandDocumentation: GetCloudCommandDocumentation
 )

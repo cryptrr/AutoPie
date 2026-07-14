@@ -24,11 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
+import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
+import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -53,10 +51,12 @@ fun CloudCommandDetails(
     val scope = rememberCoroutineScope()
 
     val viewModel: CloudCommandsViewModel = koinViewModel()
+    val selectedCommandId = viewModel.selectedCommand.value?.id
 
-    LaunchedEffect(key1 = key) {
-        //viewModel.getCommandDetails(key)
-        viewModel.isLoading.value = false
+    LaunchedEffect(key1 = selectedCommandId) {
+        if (selectedCommandId != null) {
+            viewModel.loadSelectedCommandDocumentation()
+        }
     }
 
 
@@ -137,6 +137,46 @@ fun CloudCommandDetails(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.58F)
                             )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        if (viewModel.detailsLoading.value) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(strokeWidth = 2.dp)
+                            }
+                        } else {
+                            val docs = viewModel.selectedCommandDocumentation.value
+                            docs?.readme?.takeIf(String::isNotBlank)?.let { readme ->
+                                Text(
+                                    text = "README.md",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Markdown(
+                                    content = readme,
+                                    imageTransformer = Coil3ImageTransformerImpl,
+                                )
+                            }
+                            docs?.changelog?.takeIf(String::isNotBlank)?.let { changelog ->
+                                Spacer(modifier = Modifier.height(28.dp))
+                                Text(
+                                    text = "CHANGELOG.md",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Markdown(
+                                    content = changelog,
+                                    imageTransformer = Coil3ImageTransformerImpl,
+                                )
+                            }
                         }
                     }
 

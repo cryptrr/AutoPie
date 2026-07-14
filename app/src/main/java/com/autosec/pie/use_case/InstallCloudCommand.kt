@@ -21,14 +21,14 @@ class InstallCloudCommand(
     private val processManagerService: ProcessManagerService,
     private val application: Application
 ) {
-    suspend operator fun invoke(commandId: String) {
-        val folderUrl = commandFolderUrl(commandId)
-        val manifestYaml = fetchText("$folderUrl/manifest.yaml")
-        val manifest = cloudManifestToShareCommandJson(manifestYaml)
+    suspend operator fun invoke(commandId: String, manifestYaml: String? = null) {
+        val folderUrl = cloudCommandFolderUrl(commandId)
+        val resolvedManifestYaml = manifestYaml ?: fetchCloudCommandText("$folderUrl/manifest.yaml")
+        val manifest = cloudManifestToShareCommandJson(resolvedManifestYaml)
         val installScriptName = manifest.installScript?.takeIf(String::isNotBlank)
 
         if (installScriptName != null) {
-            val installScript = fetchText("$folderUrl/$installScriptName")
+            val installScript = fetchCloudCommandText("$folderUrl/$installScriptName")
             runInstallScript(manifest.commandKey, installScript)
         }
 
@@ -37,34 +37,6 @@ class InstallCloudCommand(
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         jsonService.writeSharesConfig(gson.toJson(shareCommands))
-    }
-
-    private fun commandFolderUrl(commandId: String): String {
-        val commandPath = commandId.trim().split(".")
-            .filter(String::isNotBlank)
-            .joinToString("/")
-
-        if (commandPath.isBlank()) throw ViewModelError.CommandNotFound
-
-        return "$COMMANDS_RAW_BASE/$commandPath"
-    }
-
-    private fun fetchText(url: String): String {
-        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 30_000
-            readTimeout = 30_000
-            requestMethod = "GET"
-        }
-
-        try {
-            if (connection.responseCode !in 200..299) {
-                Timber.w("Failed to fetch cloud command resource: $url (${connection.responseCode})")
-                throw ViewModelError.NetworkError
-            }
-            return connection.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            connection.disconnect()
-        }
     }
 
     private fun runInstallScript(commandName: String, installScript: String) {
@@ -92,9 +64,19 @@ class InstallCloudCommand(
         )
     }
 
-    private companion object {
-        const val COMMANDS_RAW_BASE =
-            "https://raw.githubusercontent.com/cryptrr/autopie-commands/main/commands"
+}
+
+class GetCloudCommandDocumentation {
+    operator fun invoke(commandId: String): CloudCommandDocumentation {
+        val folderUrl = cloudCommandFolderUrl(commandId)
+        val manifestYaml = fetchCloudCommandText("$folderUrl/manifest.yaml")
+        val docs = cloudManifestDocs(manifestYaml)
+
+        return CloudCommandDocumentation(
+            manifestYaml = manifestYaml,
+            readme = docs.readme?.let { fetchCloudCommandText("$folderUrl/$it") }.orEmpty(),
+            changelog = docs.changelog?.let { fetchCloudCommandText("$folderUrl/$it") }.orEmpty()
+        )
     }
 }
 
@@ -103,6 +85,28 @@ internal data class CloudManifestCommand(
     val commandObject: JsonObject,
     val installScript: String?
 )
+
+data class CloudCommandDocumentation(
+    val manifestYaml: String,
+    val readme: String,
+    val changelog: String
+)
+
+internal data class CloudManifestDocs(
+    val readme: String?,
+    val changelog: String?
+)
+
+internal fun cloudManifestDocs(manifestYaml: String): CloudManifestDocs {
+    val manifest = Yaml().load<Map<String, Any?>>(manifestYaml)
+        ?: throw ViewModelError.InvalidCommandRepoFile
+    val docs = manifest.mapValue("docs", required = false)
+
+    return CloudManifestDocs(
+        readme = docs.stringValue("readme", required = false).takeIf(String::isNotBlank),
+        changelog = docs.stringValue("changelog", required = false).takeIf(String::isNotBlank)
+    )
+}
 
 internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifestCommand {
     val manifest = Yaml().load<Map<String, Any?>>(manifestYaml)
@@ -211,3 +215,34 @@ private fun Map<String, Any?>.stringListValue(key: String): List<String>? {
 @Suppress("UNCHECKED_CAST")
 private fun Any?.asMap(): Map<String, Any?> =
     this as? Map<String, Any?> ?: throw ViewModelError.InvalidCommandRepoFile
+
+internal fun cloudCommandFolderUrl(commandId: String): String {
+    val commandPath = commandId.trim().split(".")
+        .filter(String::isNotBlank)
+        .joinToString("/")
+
+    if (commandPath.isBlank()) throw ViewModelError.CommandNotFound
+
+    return "$COMMANDS_RAW_BASE/$commandPath"
+}
+
+internal fun fetchCloudCommandText(url: String): String {
+    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+        connectTimeout = 30_000
+        readTimeout = 30_000
+        requestMethod = "GET"
+    }
+
+    try {
+        if (connection.responseCode !in 200..299) {
+            Timber.w("Failed to fetch cloud command resource: $url (${connection.responseCode})")
+            throw ViewModelError.NetworkError
+        }
+        return connection.inputStream.bufferedReader().use { it.readText() }
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private const val COMMANDS_RAW_BASE =
+    "https://raw.githubusercontent.com/cryptrr/autopie-commands/main/commands"
