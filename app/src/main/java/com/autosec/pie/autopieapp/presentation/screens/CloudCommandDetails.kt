@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startForegroundService
@@ -96,6 +97,7 @@ fun CloudCommandDetails(
                     CircularProgressIndicator()
                 }
             } else {
+                val command = viewModel.selectedCommand.value
                 Column(
                     Modifier
 
@@ -110,14 +112,49 @@ fun CloudCommandDetails(
                             .verticalScroll(rememberScrollState())){
 
                         Spacer(modifier = Modifier.height(100.dp))
-                        Markdown(
-                            content = viewModel.selectedCommand.value?.description ?: "",
-                            imageTransformer = Coil3ImageTransformerImpl,
+                        Text(
+                            text = command?.name.orEmpty(),
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                    }
-
-                    var isLoading by remember {
-                        mutableStateOf(false)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = command?.id.orEmpty(),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary.copy(0.8F)
+                        )
+                        Spacer(modifier = Modifier.height(22.dp))
+                        Text(
+                            text = command?.summary.orEmpty(),
+                            fontSize = 17.sp,
+                            lineHeight = 24.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.8F)
+                        )
+                        Spacer(modifier = Modifier.height(22.dp))
+                        Text(
+                            text = listOfNotNull(
+                                command?.namespace?.takeIf { it.isNotBlank() }?.let { "Namespace: $it" },
+                                command?.status?.takeIf { it.isNotBlank() }?.let { "Status: $it" },
+                                command?.version?.takeIf { it.isNotBlank() }?.let { "Version: $it" }
+                            ).joinToString("\n"),
+                            fontSize = 15.sp,
+                            lineHeight = 22.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.7F)
+                        )
+                        command?.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Text(
+                                text = tags.joinToString("  ") { "#$it" },
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.58F)
+                            )
+                        }
                     }
 
                     Row(){
@@ -129,40 +166,19 @@ fun CloudCommandDetails(
                             shape = RoundedCornerShape(20),
                             //contentPadding = PaddingValues(vertical = 20.dp),
                             onClick = {
-                                viewModel.main.viewModelScope.launch {
-
-                                    try {
-                                        isLoading  = true
-                                        delay(1000L)
-                                        open.value = false
-                                    }catch (e: Exception){
-                                        Timber.e(e)
-                                    }
-                                }
+                                open.value = false
                             },
 
                             ) {
 
 
                             Column {
-                                when (isLoading) {
-                                    true -> {
-                                        CircularProgressIndicator(
-                                            strokeWidth = 3.dp,
-                                            modifier = Modifier.size(24.dp),
-                                            color = Color.Black.copy(alpha = 0.4F)
-                                        )
-                                    }
-
-                                    false -> {
-                                        Text(
-                                            text = "INSTALL",
-                                            //modifier = Modifier.align(Alignment.Center),
-                                            letterSpacing = 1.11.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
+                                Text(
+                                    text = "DONE",
+                                    //modifier = Modifier.align(Alignment.Center),
+                                    letterSpacing = 1.11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
 
                         }

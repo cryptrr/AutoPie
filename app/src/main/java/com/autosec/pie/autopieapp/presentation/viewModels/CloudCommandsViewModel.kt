@@ -112,7 +112,16 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     fun searchInCommands(query: String){
 
         filteredListOfCommands.update {
-            fullListOfCommands.value.filter { it.name.contains(query.trim(), ignoreCase = true) || it.command.contains(query.trim(), ignoreCase = true) || it.type.toString().contains(query.trim(), ignoreCase = true) }
+            val trimmedQuery = query.trim()
+            fullListOfCommands.value.filter {
+                it.id.contains(trimmedQuery, ignoreCase = true) ||
+                    it.name.contains(trimmedQuery, ignoreCase = true) ||
+                    it.namespace.contains(trimmedQuery, ignoreCase = true) ||
+                    it.status.contains(trimmedQuery, ignoreCase = true) ||
+                    it.summary.contains(trimmedQuery, ignoreCase = true) ||
+                    it.version.contains(trimmedQuery, ignoreCase = true) ||
+                    it.tags.any { tag -> tag.contains(trimmedQuery, ignoreCase = true) }
+            }
         }
 
     }

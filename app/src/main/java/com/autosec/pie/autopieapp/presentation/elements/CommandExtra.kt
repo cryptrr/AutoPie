@@ -150,7 +150,7 @@ fun CommandExtraInputElement(
 
     val selectableOptions = rememberSaveable {
         mutableStateOf(
-            command.selectableOptions.entries.joinToString(",") { (label, value) ->
+            command.selectableOptions.orEmpty().entries.joinToString(",") { (label, value) ->
                 if (label == value) label else "$label=$value"
             }
         )

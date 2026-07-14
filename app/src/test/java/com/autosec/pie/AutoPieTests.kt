@@ -8,6 +8,7 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.use_case.CreateCommand
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
+import com.autopi.use_case.GetRepoCommandsList
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
@@ -91,6 +92,37 @@ class CommandTests : KoinTest {
         assertEquals(listOf("Compatible"), commands.map { it.name })
         assertEquals(listOf("Share: Requires newer app"), skippedCommands)
         assertEquals("echo ok", compatibleCommand.command)
+    }
+
+    @Test
+    fun `repo catalog command id comes from object key`() = runTest {
+        val jsonService = FakeJSONService()
+        jsonService.writeSharesConfig(
+            """
+            {
+              "${'$'}schema": "schema/2026.6.1/catalog.schema.json",
+              "commands": {
+                "autopie.change-volume-on-mac": {
+                  "name": "Change Volume on Mac",
+                  "namespace": "autopie",
+                  "status": "stable",
+                  "summary": "AutoPie command for Change Volume on Mac",
+                  "tags": ["openssh"],
+                  "version": "1.0.0"
+                }
+              }
+            }
+            """.trimIndent()
+        )
+
+        val commands = GetRepoCommandsList(jsonService).invoke("unused")
+
+        assertEquals(1, commands.size)
+        assertEquals("autopie.change-volume-on-mac", commands.first().id)
+        assertEquals("Change Volume on Mac", commands.first().name)
+        assertEquals("AutoPie command for Change Volume on Mac", commands.first().summary)
+        assertEquals(listOf("openssh"), commands.first().tags)
+        assertEquals("", commands.first().command)
     }
 
     @Test

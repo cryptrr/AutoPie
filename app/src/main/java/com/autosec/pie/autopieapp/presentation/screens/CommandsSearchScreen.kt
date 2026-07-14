@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.utils.getActivity
@@ -169,7 +170,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             }
 
             item {
-                SearchBar(viewModel.searchCommandQuery,"Search your commands"){
+                SearchBar(viewModel.searchCommandQuery,"Search command catalog"){
                     viewModel.searchInCommands(viewModel.searchCommandQuery.value)
                 }
             }
@@ -228,7 +229,7 @@ fun CloudCommandCard(
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(150.dp)
             .combinedClickable(
                 onClick = {
                     Timber.d("CLICK DETECTED")
@@ -246,6 +247,13 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
+                val status = card.status.ifBlank { "catalog" }
+                val badgeColor = when (status.lowercase()) {
+                    "stable" -> GreenGrey60
+                    "beta" -> PastelPurple
+                    "experimental" -> Purple10
+                    else -> MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)
+                }
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
@@ -253,52 +261,42 @@ fun CloudCommandCard(
                         .clip(
                             RoundedCornerShape(10.dp)
                         )
-                        .background(
-                            when (card.type) {
-                                CommandType.SHARE -> PastelPurple
-                                CommandType.FILE_OBSERVER -> Purple10
-                                CommandType.CRON -> GreenGrey60
-                            }
-                        )
+                        .background(badgeColor)
                         .padding(horizontal = 5.dp, vertical = 3.dp)
                 ) {
-                    when (card.type) {
-                        CommandType.SHARE -> {
-                            Text(
-                                text = "SHARE",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-
-                        CommandType.FILE_OBSERVER -> {
-                            Text(
-                                text = "FILE OBSERVER",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-                        CommandType.CRON -> {
-                            Text(
-                                text = "CRON",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-                    }
+                    Text(
+                        text = status.uppercase(),
+                        fontSize = 13.3.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Black
+                    )
                 }
                 Column(
                     Modifier
                         .fillMaxSize()
                         .padding(15.dp), verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = card.command,
+                        text = card.name,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(.72F)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = card.id,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary.copy(0.8F),
+                        modifier = Modifier.fillMaxWidth(.85F)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = card.summary.ifBlank { "Catalog entry" },
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -307,11 +305,23 @@ fun CloudCommandCard(
                             .fillMaxWidth()
                         //.basicMarquee()
                     )
+                    val tagsText = card.tags.take(3).joinToString("  ") { "#$it" }
+                    if (tagsText.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = tagsText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.55F),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 
 
