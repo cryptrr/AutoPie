@@ -201,6 +201,12 @@ private fun Map<String, Any?>.extrasArray(): JsonArray? {
                 addProperty("default", extra.stringValue("default", required = false))
                 addProperty("description", extra.stringValue("description", required = false))
                 addProperty("required", extra.booleanValue("required", required = false))
+                if (extra.containsKey("defaultBoolean")) {
+                    addProperty("defaultBoolean", extra.booleanValue("defaultBoolean", required = false))
+                }
+                extra["selectableOptions"]?.let { selectableOptions ->
+                    add("selectableOptions", Gson().toJsonTree(selectableOptions))
+                }
                 extra.stringListValue("flags")?.let { flags ->
                     add("flags", Gson().toJsonTree(flags))
                 }

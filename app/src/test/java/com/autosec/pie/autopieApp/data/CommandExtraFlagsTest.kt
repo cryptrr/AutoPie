@@ -6,6 +6,7 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -28,6 +29,45 @@ class CommandExtraFlagsTest {
         val extra = Gson().fromJson("""{"id":"1"}""", CommandExtra::class.java)
 
         assertTrue(extra.flags.orEmpty().isEmpty())
+    }
+
+    @Test
+    fun `missing optional extra fields use app defaults`() {
+        val extra = Gson().fromJson("""{"id":"1","type":"STRING"}""", CommandExtra::class.java)
+
+        assertTrue(extra.defaultBoolean)
+        assertTrue(extra.required)
+        assertTrue(extra.selectableOptions.isEmpty())
+    }
+
+    @Test
+    fun `selectable options still deserialize from array`() {
+        val extra = Gson().fromJson(
+            """{"id":"1","type":"SELECTABLE","selectableOptions":["one","two"]}""",
+            CommandExtra::class.java
+        )
+
+        assertEquals(
+            linkedMapOf("one" to "one", "two" to "two"),
+            extra.selectableOptions
+        )
+    }
+
+    @Test
+    fun `selectable options still serialize as object`() {
+        val json = Gson().toJson(
+            CommandExtra(
+                id = "1",
+                type = "SELECTABLE",
+                selectableOptions = linkedMapOf("Friendly label" to "--raw-value")
+            )
+        )
+
+        val selectableOptions = JsonParser.parseString(json)
+            .asJsonObject
+            .getAsJsonObject("selectableOptions")
+
+        assertEquals("--raw-value", selectableOptions["Friendly label"].asString)
     }
 
     @Test

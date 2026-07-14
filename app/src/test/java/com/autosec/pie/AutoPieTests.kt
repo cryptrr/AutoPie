@@ -154,13 +154,24 @@ class CommandTests : KoinTest {
                 description: "Slider to set volume."
                 required: true
                 flags: ["--int", "--realtime"]
+              - id: "output"
+                name: "OUTPUT_TYPE"
+                type: "SELECTABLE"
+                default: "pdf"
+                description: "Output type."
+                required: true
+                selectableOptions:
+                  PDF: "pdf"
+                  Text: "txt"
             install:
               script: "install.sh"
             """.trimIndent()
         )
 
         val command = manifest.commandObject
-        val extra = command.getAsJsonArray("extras").first().asJsonObject
+        val extras = command.getAsJsonArray("extras")
+        val extra = extras.first().asJsonObject
+        val selectableExtra = extras[1].asJsonObject
 
         assertEquals("Change Volume on Mac", manifest.commandKey)
         assertEquals("install.sh", manifest.installScript)
@@ -170,6 +181,8 @@ class CommandTests : KoinTest {
         assertEquals("openssh", command.get("exec").asString)
         assertEquals("VOLUME", extra.get("name").asString)
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
+        assertEquals("pdf", selectableExtra.getAsJsonObject("selectableOptions").get("PDF").asString)
+        assertEquals("txt", selectableExtra.getAsJsonObject("selectableOptions").get("Text").asString)
     }
 
     @Test
@@ -249,6 +262,15 @@ class CommandTests : KoinTest {
                   description: "Slider to set volume."
                   required: true
                   flags: ["--int", "--realtime"]
+                - id: "output"
+                  name: "OUTPUT_TYPE"
+                  type: "SELECTABLE"
+                  default: "pdf"
+                  description: "Output type."
+                  required: true
+                  selectableOptions:
+                    PDF: "pdf"
+                    Text: "txt"
             install:
               script: "install.sh"
             """.trimIndent()
@@ -264,6 +286,14 @@ class CommandTests : KoinTest {
         assertEquals("0", steps[0].asJsonObject.get("id").asString)
         assertEquals("1", secondStep.get("id").asString)
         assertEquals("VOLUME", secondStep.getAsJsonArray("extras")[0].asJsonObject.get("name").asString)
+        assertEquals(
+            "pdf",
+            secondStep.getAsJsonArray("extras")[1]
+                .asJsonObject
+                .getAsJsonObject("selectableOptions")
+                .get("PDF")
+                .asString
+        )
     }
 
     @Test
