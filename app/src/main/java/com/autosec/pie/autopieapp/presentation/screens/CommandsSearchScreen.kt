@@ -1,7 +1,9 @@
 package com.autopi.autopieapp.presentation.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +49,7 @@ import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.ui.theme.GreenGrey60
+import com.autopi.ui.theme.PastelGreen
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
 import org.koin.androidx.compose.koinViewModel
@@ -178,7 +181,8 @@ fun CloudCommandCard(
                     viewModel.main.dispatchEvent(ViewModelEvent.OpenCloudCommandDetails)
 
                 }
-            ),
+            ).border(BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.primary.copy(.35F)), shape= RoundedCornerShape(15.dp))
+        ,
 
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.elevatedCardColors(containerColor =  Color.Black.copy(0.13F))
