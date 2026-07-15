@@ -11,8 +11,8 @@ import java.io.File
 import java.io.FileInputStream
 
 interface JsonService {
-    fun readSharesConfig(): JsonObject?
-    fun writeSharesConfig(jsonString: String)
+    fun readCommandsConfig(): JsonObject?
+    fun writeCommandsConfig(jsonString: String)
     fun readRepoList(path: String): JsonObject?
 
 }
@@ -25,14 +25,14 @@ class JSONServiceImpl : JsonService {
 
 
 
-    override fun readSharesConfig(): JsonObject? {
+    override fun readCommandsConfig(): JsonObject? {
 
 
-        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
+        val commandsFilePath = autoPieConfigPathProvider.getConfigFile("commands.json").absolutePath
 
 
         try {
-            val file = File(sharesFilePath)
+            val file = File(commandsFilePath)
             val inputStream = FileInputStream(file)
             val size = inputStream.available()
             val buffer = ByteArray(size)
@@ -45,13 +45,13 @@ class JSONServiceImpl : JsonService {
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
             if(dataObject == null) {
-                Timber.d("Share Sheet config not available")
-                throw ViewModelError.ShareConfigUnavailable
+                Timber.d("Commands config not available")
+                throw ViewModelError.CommandConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
-                Timber.d("Share Sheet config is not valid json")
-                throw ViewModelError.InvalidShareConfig
+                Timber.d("Commands config is not valid json")
+                throw ViewModelError.InvalidCommandConfig
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
@@ -92,12 +92,12 @@ class JSONServiceImpl : JsonService {
     }
 
 
-    override fun writeSharesConfig(jsonString: String) {
+    override fun writeCommandsConfig(jsonString: String) {
 
-        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
+        val commandsFilePath = autoPieConfigPathProvider.getConfigFile("commands.json").absolutePath
 
         try {
-            val file = File(sharesFilePath)
+            val file = File(commandsFilePath)
             file.writeText(jsonString)
 
         } catch (e: Exception) {

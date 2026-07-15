@@ -34,7 +34,7 @@ class StoreCommandExtraInputsTest {
 
         assertTrue(result.updatedConfig)
         assertEquals("Pipeline.1", command.id)
-        val steps = jsonService.shares.getAsJsonObject("Pipeline").getAsJsonArray("steps")
+        val steps = jsonService.commands.getAsJsonObject("Pipeline").getAsJsonArray("steps")
         assertEquals("first", steps[0].asJsonObject.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
         assertEquals("new-value", steps[1].asJsonObject.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
         assertFalse(steps[1].asJsonObject.has("id"))
@@ -48,7 +48,7 @@ class StoreCommandExtraInputsTest {
         StoreCommandExtraInputs(jsonService)(command, listOf(input("new-value")))
 
         assertEquals("Pipeline.publish", command.id)
-        val step = jsonService.shares.getAsJsonObject("Pipeline").getAsJsonArray("steps")[1].asJsonObject
+        val step = jsonService.commands.getAsJsonObject("Pipeline").getAsJsonArray("steps")[1].asJsonObject
         assertEquals("publish", step["id"].asString)
         assertEquals("new-value", step.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
     }
@@ -91,12 +91,12 @@ class StoreCommandExtraInputsTest {
         ).asJsonObject
     }
 
-    private class MemoryJsonService(initialShares: JsonObject) : JsonService {
-        var shares: JsonObject = initialShares
+    private class MemoryJsonService(initialCommands: JsonObject) : JsonService {
+        var commands: JsonObject = initialCommands
 
-        override fun readSharesConfig(): JsonObject = shares
-        override fun writeSharesConfig(jsonString: String) {
-            shares = JsonParser.parseString(jsonString).asJsonObject
+        override fun readCommandsConfig(): JsonObject = commands
+        override fun writeCommandsConfig(jsonString: String) {
+            commands = JsonParser.parseString(jsonString).asJsonObject
         }
         override fun readRepoList(path: String): JsonObject = JsonObject()
     }

@@ -47,8 +47,8 @@ class FileObserverJobService : JobService() {
             main.viewModelScope.launch {
                 main.eventFlow.collect{
                     when(it){
-                        is ViewModelEvent.ObserversConfigChanged -> {
-                            Timber.d("Observers config changed: Restarting")
+                        is ViewModelEvent.CommandsConfigChanged -> {
+                            Timber.d("Commands config changed: Restarting observers")
                             restart()
                         }
                         else -> {}
@@ -93,16 +93,16 @@ class FileObserverJobService : JobService() {
                     return@launch
                 }
 
-                val sharesConfig = try {
-                    jsonService.readSharesConfig()
+                val commandsConfig = try {
+                    jsonService.readCommandsConfig()
                 }catch (e: Exception){
                     Timber.e(e)
                     return@launch
                 }
 
 
-                if (sharesConfig == null) {
-                    Timber.d("Shares file not available")
+                if (commandsConfig == null) {
+                    Timber.d("Commands file not available")
                     main.schedulerConfigAvailable = false
                     return@launch
                 } else {
@@ -111,7 +111,7 @@ class FileObserverJobService : JobService() {
 
 
                 val observerCommands = Gson().fromJsonObjectEntries(
-                    sharesConfig,
+                    commandsConfig,
                     CommandModel::class.java
                 ).values.filterValues { it.type == CommandType.FILE_OBSERVER }
 

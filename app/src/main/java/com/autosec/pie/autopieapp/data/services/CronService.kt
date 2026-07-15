@@ -39,8 +39,8 @@ class CronService(private val jsonService: JsonService){
             main.viewModelScope.launch {
                 main.eventFlow.collect{
                     when(it){
-                        is ViewModelEvent.CronConfigChanged -> {
-                            Timber.d("Cron config changed: Restarting")
+                        is ViewModelEvent.CommandsConfigChanged -> {
+                            Timber.d("Commands config changed: Rescheduling cron commands")
                             setUpCronJobs()
                         }
                         else -> {}
@@ -65,7 +65,7 @@ class CronService(private val jsonService: JsonService){
             Timber.d("OFF YOU GO")
 
             val cronConfig = try {
-                jsonService.readSharesConfig()
+                jsonService.readCommandsConfig()
             }catch (e: Exception){
                 Timber.e(e)
                 return@launch
@@ -126,7 +126,7 @@ class CronService(private val jsonService: JsonService){
 
         CoroutineScope(dispatchers.default).launch {
             val cronConfig = try {
-                jsonService.readSharesConfig()
+                jsonService.readCommandsConfig()
             }catch (e: Exception){
                 Timber.e(e)
                 return@launch

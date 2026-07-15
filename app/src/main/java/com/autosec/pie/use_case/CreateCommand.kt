@@ -23,9 +23,9 @@ class CreateCommand(
     suspend operator fun invoke(newCommand: CommandCreationModel) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-        val shareCommands = jsonService.readSharesConfig()
+        val commands = jsonService.readCommandsConfig()
 
-        if (shareCommands == null) throw ViewModelError.ShareConfigUnavailable
+        if (commands == null) throw ViewModelError.CommandConfigUnavailable
 
 
         val commandObject = JsonObject()
@@ -67,8 +67,8 @@ class CreateCommand(
             }
         }
 
-        shareCommands.add(newCommand.commandName, commandObject)
-        jsonService.writeSharesConfig(gson.toJson(shareCommands))
+        commands.add(newCommand.commandName, commandObject)
+        jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
     private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>) {

@@ -10,10 +10,10 @@ import timber.log.Timber
 class FakeJSONService : JsonService {
     private var inMemoryStorage = mutableMapOf<String, String>()
 
-    private val SHARES_KEY = "shares.json"
+    private val COMMANDS_KEY = "commands.json"
 
     init {
-        inMemoryStorage[SHARES_KEY] = """       
+        inMemoryStorage[COMMANDS_KEY] = """
                 {
                     "Extract Audio": {
                         "path": "",
@@ -57,7 +57,7 @@ class FakeJSONService : JsonService {
             """.trimIndent()
     }
 
-    override fun readSharesConfig(): JsonObject? {
+    override fun readCommandsConfig(): JsonObject? {
 
 
 //        if (!mainViewModel.storageManagerPermissionGranted) {
@@ -65,7 +65,7 @@ class FakeJSONService : JsonService {
 //        }
 
         try {
-            val jsonString = inMemoryStorage[SHARES_KEY] ?: return null
+            val jsonString = inMemoryStorage[COMMANDS_KEY] ?: return null
 
             Timber.d("Json str: ${jsonString}")
 
@@ -74,15 +74,14 @@ class FakeJSONService : JsonService {
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
             if(dataObject == null) {
-                Timber.d("Share Sheet config not available")
-                throw ViewModelError.ShareConfigUnavailable
+                Timber.d("Commands config not available")
+                throw ViewModelError.CommandConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
-                Timber.d("Share Sheet config is not valid json")
-                //mainViewModel.showError(ViewModelError.InvalidJson("Share"))
+                Timber.d("Commands config is not valid json")
 
-                throw ViewModelError.InvalidShareConfig
+                throw ViewModelError.InvalidCommandConfig
             }
 
             Timber.d("Json Obj: ${dataObject.asJsonObject}")
@@ -95,16 +94,16 @@ class FakeJSONService : JsonService {
         }
     }
 
-    override fun writeSharesConfig(jsonString: String) {
+    override fun writeCommandsConfig(jsonString: String) {
         try {
-            inMemoryStorage[SHARES_KEY] = jsonString
+            inMemoryStorage[COMMANDS_KEY] = jsonString
         } catch (e: Exception) {
             Timber.e(e)
         }
     }
 
     override fun readRepoList(path: String): JsonObject? {
-        return readSharesConfig()
+        return readCommandsConfig()
     }
 
     // Helper method for tests to clear storage
@@ -113,7 +112,7 @@ class FakeJSONService : JsonService {
     }
 
     // Helper method for tests to get raw storage content
-    fun getRawStorageContent(key: String = SHARES_KEY): String? {
+    fun getRawStorageContent(key: String = COMMANDS_KEY): String? {
         return inMemoryStorage[key]
     }
 

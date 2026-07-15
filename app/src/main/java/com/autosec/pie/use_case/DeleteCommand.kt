@@ -13,16 +13,16 @@ class DeleteCommand(private val jsonService: JsonService) {
     suspend operator fun invoke(key: String, commandName: MutableState<String>, oldCommandName: MutableState<String>,type: MutableState<String>) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-        val shareCommands = jsonService.readSharesConfig()
-        if (shareCommands == null) {
-            throw ViewModelError.ConfigUnavailable
+        val commands = jsonService.readCommandsConfig()
+        if (commands == null) {
+            throw ViewModelError.CommandConfigUnavailable
         }
-        shareCommands.remove(commandName.value)
+        commands.remove(commandName.value)
 
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-        jsonService.writeSharesConfig(gson.toJson(shareCommands))
+        jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
 }

@@ -35,7 +35,7 @@ fun ObserverConfigNotAvailableScreen() {
             fontSize = 30.sp,
             lineHeight = 50.sp,
             fontWeight = FontWeight.Bold,
-            text = "You can also create a share config.",
+            text = "You can also create a share command.",
         )
         Spacer(modifier = Modifier.height(10.dp))
         Button(

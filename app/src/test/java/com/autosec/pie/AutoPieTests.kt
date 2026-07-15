@@ -68,7 +68,7 @@ class CommandTests : KoinTest {
     @Test
     fun `incompatible command is skipped without hiding compatible commands`() = runTest {
         val jsonService = FakeJSONService()
-        jsonService.writeSharesConfig(
+        jsonService.writeCommandsConfig(
             """
             {
               "Compatible": {
@@ -91,14 +91,14 @@ class CommandTests : KoinTest {
         val compatibleCommand = GetCommandDetails(jsonService)("Compatible")
 
         assertEquals(listOf("Compatible"), commands.map { it.name })
-        assertEquals(listOf("Share: Requires newer app"), skippedCommands)
+        assertEquals(listOf("Command: Requires newer app"), skippedCommands)
         assertEquals("echo ok", compatibleCommand.command)
     }
 
     @Test
     fun `repo catalog command id comes from object key`() = runTest {
         val jsonService = FakeJSONService()
-        jsonService.writeSharesConfig(
+        jsonService.writeCommandsConfig(
             """
             {
               "${'$'}schema": "schema/2026.6.1/catalog.schema.json",
@@ -183,7 +183,7 @@ class CommandTests : KoinTest {
     }
 
     @Test
-    fun `observer manifest keeps observer properties in shares command`() = runTest {
+    fun `observer manifest keeps observer properties in commands config`() = runTest {
         val command = cloudManifestToShareCommandJson(
             """
             id: "autopie.watch-downloads"
@@ -201,7 +201,7 @@ class CommandTests : KoinTest {
     }
 
     @Test
-    fun `cron manifest keeps cron properties in shares command`() = runTest {
+    fun `cron manifest keeps cron properties in commands config`() = runTest {
         val command = cloudManifestToShareCommandJson(
             """
             id: "autopie.hourly-sync"

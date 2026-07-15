@@ -37,13 +37,13 @@ class ChangeCommandDetails(
 
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-        val shareCommands = jsonService.readSharesConfig()
-        if (shareCommands == null) {
-            throw ViewModelError.ConfigUnavailable
+        val commands = jsonService.readCommandsConfig()
+        if (commands == null) {
+            throw ViewModelError.CommandConfigUnavailable
         }
 
-        val commandObject = shareCommands.getAsJsonObject(oldCommandName.value)
-            ?: shareCommands.getAsJsonObject(key)
+        val commandObject = commands.getAsJsonObject(oldCommandName.value)
+            ?: commands.getAsJsonObject(key)
             ?: throw ViewModelError.CommandNotFound
 
         val selectorsJson = if (selectors.value.isNotBlank()) {
@@ -91,10 +91,10 @@ class ChangeCommandDetails(
         }
 
         if (oldCommandName.value != commandName.value) {
-            shareCommands.remove(oldCommandName.value)
+            commands.remove(oldCommandName.value)
         }
-        shareCommands.add(commandName.value, commandObject)
-        jsonService.writeSharesConfig(gson.toJson(shareCommands))
+        commands.add(commandName.value, commandObject)
+        jsonService.writeCommandsConfig(gson.toJson(commands))
 
     }
 

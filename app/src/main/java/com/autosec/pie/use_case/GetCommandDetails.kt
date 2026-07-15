@@ -13,12 +13,12 @@ import timber.log.Timber
 class GetCommandDetails(private val jsonService: JsonService) {
     suspend operator fun invoke(key: String) : CommandModel {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
-        val shareCommands = jsonService.readSharesConfig()
-        if (shareCommands == null) throw ViewModelError.ShareConfigUnavailable
+        val commands = jsonService.readCommandsConfig()
+        if (commands == null) throw ViewModelError.CommandConfigUnavailable
 
         val gson = Gson()
-        val sharesData = gson.fromJsonObjectEntries(shareCommands, CommandModel::class.java).values
-        val commandModel = sharesData[key] ?: throw ViewModelError.CommandNotFound
+        val parsedCommands = gson.fromJsonObjectEntries(commands, CommandModel::class.java).values
+        val commandModel = parsedCommands[key] ?: throw ViewModelError.CommandNotFound
 
         delay(500L)
 

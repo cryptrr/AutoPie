@@ -32,11 +32,11 @@ class InstallCloudCommand(
             runInstallScript(manifest.commandKey, installScript)
         }
 
-        val shareCommands = jsonService.readSharesConfig() ?: throw ViewModelError.ShareConfigUnavailable
-        shareCommands.add(manifest.commandKey, manifest.commandObject)
+        val commands = jsonService.readCommandsConfig() ?: throw ViewModelError.CommandConfigUnavailable
+        commands.add(manifest.commandKey, manifest.commandObject)
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-        jsonService.writeSharesConfig(gson.toJson(shareCommands))
+        jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
     private fun runInstallScript(commandName: String, installScript: String) {

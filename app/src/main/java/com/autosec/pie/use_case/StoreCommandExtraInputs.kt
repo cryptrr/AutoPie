@@ -82,8 +82,7 @@ class StoreCommandExtraInputs(
         val commandKey = command.name.ifBlank { command.id }
         if (commandKey.isBlank()) return false
 
-        val shareCommands = jsonService.readSharesConfig()
-        val commands = shareCommands ?: return false
+        val commands = jsonService.readCommandsConfig() ?: return false
         val commandObject = commands.getAsJsonObject(commandKey) ?: return false
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         val storedExtras = gson.toJsonTree(extras.map { it.withoutStoredSecretDefault() })
@@ -94,7 +93,7 @@ class StoreCommandExtraInputs(
         } else {
             commandObject.add("extras", storedExtras)
         }
-        jsonService.writeSharesConfig(gson.toJson(commands))
+        jsonService.writeCommandsConfig(gson.toJson(commands))
         return true
     }
 

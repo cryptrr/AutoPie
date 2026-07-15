@@ -69,7 +69,7 @@ class MainViewModel(
 
     var updateDetails: ReleaseInfo? by mutableStateOf(null)
 
-    var sharesConfigAvailable by mutableStateOf(false)
+    var commandsConfigAvailable by mutableStateOf(false)
     var observerConfigAvailable by mutableStateOf(false)
     var schedulerConfigAvailable by mutableStateOf(false)
     var mcpServerActive by mutableStateOf(false)
@@ -207,7 +207,7 @@ class MainViewModel(
     fun editConfigFile() {
         viewModelScope.launch(dispatchers.io) {
             try {
-                val configFile = autoPieConfigPathProvider.getConfigFile("shares.json")
+                val configFile = autoPieConfigPathProvider.getConfigFile("commands.json")
                 configFile.parentFile?.mkdirs()
 
                 val command = CommandModel(

@@ -363,7 +363,7 @@ fun SettingsToggles() {
                 Text("Edit Config File")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Open shares.conf in nano.",
+                    "Open commands.json in nano.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)

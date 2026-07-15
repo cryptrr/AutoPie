@@ -13,9 +13,7 @@ sealed class ViewModelEvent {
     data class OpenCommandHistory(var card: CommandModel) : ViewModelEvent()
 
     data object RefreshCommandsList : ViewModelEvent()
-    data object ObserversConfigChanged : ViewModelEvent()
-    data object SharesConfigChanged : ViewModelEvent()
-    data object CronConfigChanged : ViewModelEvent()
+    data object CommandsConfigChanged : ViewModelEvent()
     data object CloseShareReceiverSheet : ViewModelEvent()
     data class CancelProcess(val processId: Int) : ViewModelEvent()
     data object CancelAllProcesses : ViewModelEvent()

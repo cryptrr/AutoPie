@@ -541,7 +541,7 @@ class AutoPieCoreService {
             }
         }
 
-        fun initEmptySharesConfigIfMissing() {
+        fun initEmptyCommandsConfigIfMissing() {
             val canAccessConfigPath =
                 !autoPieConfigPathProvider.usesExternalStorage() ||
                     mainViewModel.storageManagerPermissionGranted
@@ -553,17 +553,29 @@ class AutoPieCoreService {
 
             CoroutineScope(dispatchers.io).launch {
                 try {
-                    val sharesFile = autoPieConfigPathProvider.getConfigFile("shares.json")
-                    if (sharesFile.exists()) {
-                        Timber.d("shares.json exists. Doing nothing.")
+                    val commandsFile = autoPieConfigPathProvider.getConfigFile("commands.json")
+                    if (commandsFile.exists()) {
+                        Timber.d("commands.json exists. Doing nothing.")
                         return@launch
                     }
 
-                    sharesFile.parentFile?.mkdirs()
-                    sharesFile.writeText("{}\n")
-                    Timber.d("Created empty shares.json at ${sharesFile.absolutePath}")
+                    commandsFile.parentFile?.mkdirs()
+                    val legacySharesFile = autoPieConfigPathProvider.getConfigFile("shares.json")
+                    if (legacySharesFile.exists()) {
+                        if (!legacySharesFile.renameTo(commandsFile)) {
+                            legacySharesFile.copyTo(commandsFile)
+                            if (!legacySharesFile.delete()) {
+                                Timber.w("Migrated shares.json but could not remove the legacy file")
+                            }
+                        }
+                        Timber.d("Migrated shares.json to commands.json")
+                        return@launch
+                    }
+
+                    commandsFile.writeText("{}\n")
+                    Timber.d("Created empty commands.json at ${commandsFile.absolutePath}")
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to initialize empty shares.json")
+                    Timber.e(e, "Failed to initialize empty commands.json")
                 }
             }
         }

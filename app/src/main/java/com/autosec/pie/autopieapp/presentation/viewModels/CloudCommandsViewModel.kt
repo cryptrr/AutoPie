@@ -116,9 +116,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
                 when(e){
                     is java.io.FileNotFoundException -> {}
-                    is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
-                    is ViewModelError.InvalidObserverConfig -> main.showError(ViewModelError.InvalidObserverConfig)
-                    is ViewModelError.InvalidCronConfig -> main.showError(ViewModelError.InvalidCronConfig)
+                    is ViewModelError.InvalidCommandConfig -> main.showError(ViewModelError.InvalidCommandConfig)
                 }
             }
         }
@@ -163,7 +161,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                     }
                     searchInCommands(searchCommandQuery.value)
                     main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                    main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
+                    main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
                     onInstalled()
                 }
             } catch (error: Exception) {

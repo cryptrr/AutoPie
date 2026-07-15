@@ -43,7 +43,7 @@
 
 ## Troubleshooting
 * If `pkg install` fails immediately after installation, open the AutoPie terminal once more and let the bootstrap finish before retrying.
-* Check that the `AutoSec` folder contains `shares.json` for share, observer, and cron command configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
+* Check that the `AutoSec` folder contains `commands.json` for share, observer, and cron command configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
 
 ## Command Format
 

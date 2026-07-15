@@ -10,23 +10,23 @@ import timber.log.Timber
 
 class GetCommandsList(private val jsonService: JsonService) {
     operator fun invoke(onCommandsSkipped: (List<String>) -> Unit = {}): List<CommandModel>{
-        val sharesConfig = jsonService.readSharesConfig()
-        if(sharesConfig == null){
-            Timber.d("Shares file not available")
-            throw ViewModelError.ShareConfigUnavailable
+        val commandsConfig = jsonService.readCommandsConfig()
+        if(commandsConfig == null){
+            Timber.d("Commands file not available")
+            throw ViewModelError.CommandConfigUnavailable
         }
 
         val gson = Gson()
-        val sharesData = gson.fromJsonObjectEntries(sharesConfig, CommandModel::class.java)
+        val parsedCommands = gson.fromJsonObjectEntries(commandsConfig, CommandModel::class.java)
 
-        val skippedCommands = sharesData.skippedKeys.map { "Share: $it" }
+        val skippedCommands = parsedCommands.skippedKeys.map { "Command: $it" }
 
         if (skippedCommands.isNotEmpty()) {
             Timber.w("Skipped incompatible commands: $skippedCommands")
             onCommandsSkipped(skippedCommands)
         }
 
-        val commandsData = sharesData.values.map {
+        val commandsData = parsedCommands.values.map {
             it.value.copy(
                 id = it.value.id.ifBlank { it.key },
                 type = it.value.type ?: CommandType.SHARE,

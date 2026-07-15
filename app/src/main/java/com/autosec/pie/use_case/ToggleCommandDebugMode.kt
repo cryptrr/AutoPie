@@ -10,12 +10,12 @@ import com.google.gson.GsonBuilder
 
 class ToggleCommandDebugMode(private val jsonService: JsonService) {
     suspend operator fun invoke(command: CommandModel, enabled: Boolean): CommandModel {
-        val shareCommands = jsonService.readSharesConfig()
-        if (shareCommands == null) {
-            throw ViewModelError.ConfigUnavailable
+        val commands = jsonService.readCommandsConfig()
+        if (commands == null) {
+            throw ViewModelError.CommandConfigUnavailable
         }
 
-        val commandObject = shareCommands.getAsJsonObject(command.name)
+        val commandObject = commands.getAsJsonObject(command.name)
             ?: throw ViewModelError.CommandNotFound
 
         val updatedCommand = Utils.setScriptHeader(command.command, ScriptFlags.INTERACTIVE, enabled)
@@ -23,7 +23,7 @@ class ToggleCommandDebugMode(private val jsonService: JsonService) {
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-        jsonService.writeSharesConfig(gson.toJson(shareCommands))
+        jsonService.writeCommandsConfig(gson.toJson(commands))
 
         return command.copy(command = updatedCommand)
     }

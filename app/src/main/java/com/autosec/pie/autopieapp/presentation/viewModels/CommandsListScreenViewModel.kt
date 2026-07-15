@@ -126,9 +126,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
                     when (e) {
                         is java.io.FileNotFoundException,
-                        is ViewModelError.ShareConfigUnavailable,
-                        is ViewModelError.ObserverConfigUnavailable,
-                        is ViewModelError.CronConfigUnavailable -> {
+                        is ViewModelError.CommandConfigUnavailable -> {
                             configUnavailable.value = true
                             fullListOfCommands.update { emptyList() }
                             filteredListOfCommands.update { emptyList() }
@@ -142,9 +140,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
                 when(e){
                     is java.io.FileNotFoundException -> {}
-                    is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
-                    is ViewModelError.InvalidObserverConfig -> main.showError(ViewModelError.InvalidObserverConfig)
-                    is ViewModelError.InvalidCronConfig -> main.showError(ViewModelError.InvalidCronConfig)
+                    is ViewModelError.InvalidCommandConfig -> main.showError(ViewModelError.InvalidCommandConfig)
                 }
             }
         }

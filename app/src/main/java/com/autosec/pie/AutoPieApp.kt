@@ -83,7 +83,7 @@ class MyApplication : Application() {
             scheduleCron()
             startScreenStateReceiver()
             startNotificationReceiver()
-            AutoPieCoreService.initEmptySharesConfigIfMissing()
+            AutoPieCoreService.initEmptyCommandsConfigIfMissing()
             AutoPieCoreService.fetchLatestRepositoryJson()
             checkForUpdates()
             createEmptyCookieFile()
