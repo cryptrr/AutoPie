@@ -16,18 +16,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -71,7 +75,10 @@ import timber.log.Timber
 
 
 @Composable
-fun HomeScreen(innerPadding: PaddingValues) {
+fun HomeScreen(
+    innerPadding: PaddingValues,
+    onInstallNewClick: () -> Unit = {}
+) {
 
     val commandsListScreenViewModel: CommandsListScreenViewModel = koinViewModel()
 
@@ -194,6 +201,12 @@ fun HomeScreen(innerPadding: PaddingValues) {
                     }
                 }
 
+                commandsListScreenViewModel.configUnavailable.value -> {
+                    item {
+                        MissingCommandConfigsBadge(onInstallNewClick = onInstallNewClick)
+                    }
+                }
+
                 else -> {
                     item {
                         EmptyItemsBadge(
@@ -228,6 +241,37 @@ fun HomeScreen(innerPadding: PaddingValues) {
         )
 
 
+    }
+}
+
+@Composable
+private fun MissingCommandConfigsBadge(onInstallNewClick: () -> Unit) {
+    Box(
+        Modifier
+            .height(500.dp)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .size(100.dp),
+                imageVector = Icons.Outlined.InstallDesktop,
+                contentDescription = "Install commands",
+                tint = Color.White.copy(0.4F)
+            )
+            Spacer(Modifier.height(15.dp))
+            Text(
+                text = "Command config files are not installed",
+                color = Color.White.copy(0.7F),
+                fontSize = 15.7.sp
+            )
+            Spacer(Modifier.height(18.dp))
+            Button(onClick = onInstallNewClick) {
+                Text("Install New")
+            }
+        }
     }
 }
 

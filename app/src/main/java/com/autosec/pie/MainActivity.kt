@@ -238,7 +238,12 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    selectedItem.intValue == 0 -> HomeScreen(innerPadding)
+                                    selectedItem.intValue == 0 -> HomeScreen(
+                                        innerPadding = innerPadding,
+                                        onInstallNewClick = {
+                                            selectedItem.intValue = 1
+                                        }
+                                    )
                                     selectedItem.intValue == 1 -> InstalledScreen(innerPadding)
                                     selectedItem.intValue == 2 -> SettingsScreen(innerPadding)
                                     else -> {}

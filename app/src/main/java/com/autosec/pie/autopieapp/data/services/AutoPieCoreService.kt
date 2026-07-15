@@ -112,10 +112,9 @@ class AutoPieCoreService {
                     }
 
                     if (canAccessConfigPath && !binFolderExists) {
-                        Timber.d("Starting fetching init files")
-                        downloadAndExtractAutoSecInitArchive()
+                        //Timber.d("Starting fetching init files")
+                        //downloadAndExtractAutoSecInitArchive()
                         //mainViewModel.installInitPackagesPrompt = true
-
                     } else {
                         Timber.d("Bin folder exists. Doing nothing.")
                     }
@@ -538,6 +537,33 @@ class AutoPieCoreService {
                     }
                 }catch (e: Exception){
                     Timber.e(e)
+                }
+            }
+        }
+
+        fun initEmptySharesConfigIfMissing() {
+            val canAccessConfigPath =
+                !autoPieConfigPathProvider.usesExternalStorage() ||
+                    mainViewModel.storageManagerPermissionGranted
+
+            if (!canAccessConfigPath) {
+                Timber.d("Storage permission not granted")
+                return
+            }
+
+            CoroutineScope(dispatchers.io).launch {
+                try {
+                    val sharesFile = autoPieConfigPathProvider.getConfigFile("shares.json")
+                    if (sharesFile.exists()) {
+                        Timber.d("shares.json exists. Doing nothing.")
+                        return@launch
+                    }
+
+                    sharesFile.parentFile?.mkdirs()
+                    sharesFile.writeText("{}\n")
+                    Timber.d("Created empty shares.json at ${sharesFile.absolutePath}")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to initialize empty shares.json")
                 }
             }
         }

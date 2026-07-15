@@ -60,6 +60,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     val searchCommandQuery = mutableStateOf("")
     val isLoading = mutableStateOf(false)
+    val configUnavailable = mutableStateOf(false)
 
 
     init {
@@ -84,6 +85,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
         if(!main.storageManagerPermissionGranted){
             main.showError(ViewModelError.StoragePermissionDenied)
             Timber.e(ViewModelError.StoragePermissionDenied)
+            isLoading.value = false
             return
         }
 
@@ -103,6 +105,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                         filteredListOfCommands.update {
                             newCommands.sortedBy { it.name }
                         }
+                        configUnavailable.value = false
 
                         if(searchCommandQuery.value.isNotEmpty()){
                             searchInCommands(searchCommandQuery.value)
@@ -117,6 +120,25 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 }
             }catch (e: Exception){
                 Timber.e(e)
+
+                withContext(dispatchers.main) {
+                    isLoading.value = false
+
+                    when (e) {
+                        is java.io.FileNotFoundException,
+                        is ViewModelError.ShareConfigUnavailable,
+                        is ViewModelError.ObserverConfigUnavailable,
+                        is ViewModelError.CronConfigUnavailable -> {
+                            configUnavailable.value = true
+                            fullListOfCommands.update { emptyList() }
+                            filteredListOfCommands.update { emptyList() }
+                        }
+
+                        else -> {
+                            configUnavailable.value = false
+                        }
+                    }
+                }
 
                 when(e){
                     is java.io.FileNotFoundException -> {}
