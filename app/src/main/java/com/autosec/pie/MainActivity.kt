@@ -5,29 +5,24 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -47,10 +42,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
@@ -120,9 +116,34 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
                         val selectedItem = remember { mutableIntStateOf(0) }
+                        val fabVisible = remember { mutableStateOf(true) }
+                        val fabScrollConnection = remember {
+                            object : NestedScrollConnection {
+                                override fun onPreScroll(
+                                    available: Offset,
+                                    source: NestedScrollSource
+                                ): Offset {
+                                    if (selectedItem.intValue == 0) {
+                                        when {
+                                            available.y < -1f -> fabVisible.value = false
+                                            available.y > 1f -> fabVisible.value = true
+                                        }
+                                    }
+                                    return Offset.Zero
+                                }
+                            }
+                        }
+
+                        LaunchedEffect(selectedItem.intValue) {
+                            if (selectedItem.intValue == 0) {
+                                fabVisible.value = true
+                            }
+                        }
 
                         Scaffold(
-                            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                            modifier = Modifier
+                                .nestedScroll(fabScrollConnection)
+                                .nestedScroll(scrollBehavior.nestedScrollConnection),
 
                             snackbarHost = {
                                 SnackbarHostCustom()
@@ -180,100 +201,27 @@ class MainActivity : ComponentActivity() {
                             floatingActionButton = {
                                 when (selectedItem.intValue) {
                                     0 -> {
-                                        FloatingActionButton(
-                                            modifier = Modifier.height(65.dp),
-                                            onClick = { },
-                                            containerColor = MaterialTheme.colorScheme.primary
-
+                                        AnimatedVisibility(
+                                            visible = fabVisible.value,
+                                            enter = fadeIn() + scaleIn(),
+                                            exit = fadeOut() + scaleOut()
                                         ) {
-                                            Row(
-                                                Modifier.padding(
-                                                    vertical = 10.dp,
-                                                    horizontal = 15.dp
-                                                ), verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            indication = null
-                                                        ) {
-                                                            mainViewModel.viewModelScope.launch {
-                                                                autoPieStates.addShareBottomSheetStateOpen.value = true
-                                                                //addShareBottomSheetState.show()
-                                                            }
-                                                        }
-                                                )
-                                                {
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                                            imageVector = Icons.Outlined.AddBox,
-                                                            contentDescription = "Create command",
-                                                            modifier = Modifier.size(28.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(5.dp))
-                                                        Text(
-                                                            "Add",
-                                                            fontSize = 15.7.sp,
-                                                            color = MaterialTheme.colorScheme.onPrimary,
-                                                            fontWeight = FontWeight.SemiBold
-                                                        )
-
+                                            ExtendedFloatingActionButton(
+                                                onClick = {
+                                                    mainViewModel.viewModelScope.launch {
+                                                        autoPieStates.addShareBottomSheetStateOpen.value = true
                                                     }
-                                                }
-
-                                                Spacer(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight(0.8f)
-                                                        .width(10.dp)
-                                                )
-                                                Box(
-                                                    Modifier
-                                                        .fillMaxHeight()
-                                                        .clip(RoundedCornerShape(100))
-                                                        .width(3.dp)
-                                                        .background(
-                                                            MaterialTheme.colorScheme.onPrimary.copy(
-                                                                0.06f
-                                                            )
-                                                        )
-                                                )
-                                                Spacer(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight(0.8f)
-                                                        .width(10.dp)
-                                                )
-
-
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            indication = null
-                                                        ) {
-                                                            selectedItem.intValue = 1
-                                                        }
-                                                ) {
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Search,
-                                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                                            contentDescription = "Search",
-                                                            modifier = Modifier.size(28.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(5.dp))
-                                                        Text(
-                                                            "Search",
-                                                            color = MaterialTheme.colorScheme.onPrimary,
-                                                            fontSize = 15.7.sp,
-                                                            fontWeight = FontWeight.SemiBold
-                                                        )
-
-                                                    }
-                                                }
-                                            }
-
+                                                },
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                icon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Add,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                text = { Text("Create", fontSize = 15.7.sp) }
+                                            )
                                         }
                                     }
 
