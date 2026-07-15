@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Patterns
 import android.view.ViewGroup
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -67,9 +68,12 @@ import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.Utils
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
+import java.io.File
+import java.net.URI
 
 private const val BROWSER_BRIDGE_NAME = "AutoPieBridge"
 
@@ -82,6 +86,7 @@ class BrowserActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private var commandsById: Map<String, CommandModel> = emptyMap()
     private var pendingBrowserBridgeCommand: CommandModel? = null
+    private val cookieFileLock = Any()
 
     private var address by mutableStateOf(
         TextFieldValue(DEFAULT_URL, selection = TextRange(DEFAULT_URL.length))
@@ -140,6 +145,7 @@ class BrowserActivity : AppCompatActivity() {
                 override fun onPageFinished(view: WebView, url: String) {
                     super.onPageFinished(view, url)
                     address = TextFieldValue(url, selection = TextRange(url.length))
+                    syncCookiesToFile(url)
                 }
             }
         }
@@ -300,18 +306,50 @@ class BrowserActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        syncCookiesToFile(webView.url)
+        CookieManager.getInstance().flush()
+        super.onPause()
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         webView.saveState(outState)
         super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
+        syncCookiesToFile(webView.url)
         (webView.parent as? ViewGroup)?.removeView(webView)
         webView.stopLoading()
         webView.webChromeClient = null
         webView.webViewClient = WebViewClient()
         webView.destroy()
         super.onDestroy()
+    }
+
+    private fun syncCookiesToFile(url: String?) {
+        if (url.isNullOrBlank()) return
+
+        val cookieHeader = CookieManager.getInstance().getCookie(url).orEmpty()
+        val entries = netscapeCookieEntries(url, cookieHeader)
+        if (entries.isEmpty()) return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                val cookieFile = File(processManagerService.getCookieJarPath())
+                synchronized(cookieFileLock) {
+                    cookieFile.parentFile?.mkdirs()
+                    val existingLines = if (cookieFile.exists()) {
+                        cookieFile.readLines()
+                    } else {
+                        emptyList()
+                    }
+                    cookieFile.writeText(mergeNetscapeCookieFile(existingLines, entries))
+                }
+            }.onFailure { error ->
+                Timber.e(error, "Unable to sync BrowserActivity cookies to cookie jar")
+            }
+        }
     }
 
     private companion object {
@@ -329,6 +367,30 @@ internal data class BrowserJavascriptResult(
     val output: String,
     val environment: Map<String, String>
 )
+
+internal data class NetscapeCookieEntry(
+    val domain: String,
+    val includeSubdomains: Boolean,
+    val path: String,
+    val secure: Boolean,
+    val expiresAt: Long,
+    val name: String,
+    val value: String
+) {
+    val key: String = listOf(domain, path, name).joinToString("\t")
+
+    fun toFileLine(): String {
+        return listOf(
+            domain,
+            includeSubdomains.toString().uppercase(),
+            path,
+            secure.toString().uppercase(),
+            expiresAt.toString(),
+            name,
+            value
+        ).joinToString("\t")
+    }
+}
 
 internal fun decodeBrowserJavascriptResult(rawResult: String): BrowserJavascriptResult {
     return runCatching {
@@ -353,6 +415,72 @@ internal fun decodeBrowserJavascriptResult(rawResult: String): BrowserJavascript
     }.getOrElse {
         BrowserJavascriptResult(rawResult, emptyMap())
     }
+}
+
+internal fun netscapeCookieEntries(url: String, cookieHeader: String): List<NetscapeCookieEntry> {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return emptyList()
+    val host = uri.host?.takeIf { it.isNotBlank() } ?: return emptyList()
+    val secure = uri.scheme.equals("https", ignoreCase = true)
+
+    return cookieHeader.split(";")
+        .mapNotNull { rawCookie ->
+            val separatorIndex = rawCookie.indexOf('=')
+            if (separatorIndex <= 0) return@mapNotNull null
+
+            val name = rawCookie.substring(0, separatorIndex).trim()
+            if (name.isBlank()) return@mapNotNull null
+
+            NetscapeCookieEntry(
+                domain = host,
+                includeSubdomains = false,
+                path = "/",
+                secure = secure,
+                expiresAt = 0,
+                name = name,
+                value = rawCookie.substring(separatorIndex + 1).trim()
+            )
+        }
+}
+
+internal fun mergeNetscapeCookieFile(
+    existingLines: List<String>,
+    newEntries: List<NetscapeCookieEntry>
+): String {
+    val newEntriesByKey = newEntries.associateBy { it.key }
+    val mergedLines = mutableListOf<String>()
+    val writtenKeys = mutableSetOf<String>()
+    var hasHeader = false
+
+    existingLines.forEach { line ->
+        if (line.startsWith("# Netscape HTTP Cookie File")) hasHeader = true
+        val existingKey = netscapeCookieKey(line)
+        if (existingKey != null && existingKey in newEntriesByKey) {
+            mergedLines.add(newEntriesByKey.getValue(existingKey).toFileLine())
+            writtenKeys.add(existingKey)
+        } else {
+            mergedLines.add(line)
+        }
+    }
+
+    if (!hasHeader) {
+        mergedLines.add(0, "# Netscape HTTP Cookie File")
+        mergedLines.add(1, "# Generated by AutoPie BrowserActivity.")
+    }
+
+    newEntries.forEach { entry ->
+        if (writtenKeys.add(entry.key)) {
+            mergedLines.add(entry.toFileLine())
+        }
+    }
+
+    return mergedLines.joinToString(separator = "\n", postfix = "\n")
+}
+
+private fun netscapeCookieKey(line: String): String? {
+    if (line.isBlank() || line.startsWith("#")) return null
+    val fields = line.split("\t")
+    if (fields.size < 7) return null
+    return listOf(fields[0], fields[2], fields[5]).joinToString("\t")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
