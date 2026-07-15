@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TERMUX_REPO="${TERMUX_REPO:-https://github.com/termux/termux-app.git}"
 TERMUX_REF="${TERMUX_REF:-master}"
 NEW_PACKAGE="${TERMUX_BOOTSTRAP_NEW_PACKAGE:-com.autopi}"
-NEW_ROOT_DIR="${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}"
+NEW_ROOT_DIR="${NEW_ROOT_DIR:-${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}}"
 PATCH_DIR="$ROOT_DIR/patches/termux-app"
 SOURCE_DIR="$ROOT_DIR/termux-app"
 
@@ -20,6 +20,7 @@ Options:
 
 Environment:
   TERMUX_BOOTSTRAP_NEW_ROOT_DIR  Same as --new-root-dir.
+  NEW_ROOT_DIR                   Also accepted as --new-root-dir by build_with_termux.sh.
 USAGE
 }
 
