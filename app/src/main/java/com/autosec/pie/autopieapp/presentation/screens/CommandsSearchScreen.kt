@@ -134,12 +134,16 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.List,
-                                contentDescription = "No results",
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
-                                modifier = Modifier.size(80.dp)
-                            )
+                            if (viewModel.isLoading.value) {
+                                CircularProgressIndicator(strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.List,
+                                    contentDescription = "No results",
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
+                                    modifier = Modifier.size(80.dp)
+                                )
+                            }
 
                         }
                     }

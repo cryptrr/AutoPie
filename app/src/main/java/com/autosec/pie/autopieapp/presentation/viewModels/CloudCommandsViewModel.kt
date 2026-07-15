@@ -110,6 +110,10 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             }catch (e: Exception){
                 Timber.e(e)
 
+                withContext(dispatchers.main) {
+                    isLoading.value = false
+                }
+
                 when(e){
                     is java.io.FileNotFoundException -> {}
                     is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
