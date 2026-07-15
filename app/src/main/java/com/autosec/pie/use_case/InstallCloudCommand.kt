@@ -117,9 +117,11 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     val version = manifest.stringValue("version", required = false)
     val name = manifest.stringValue("name").ifBlank { id }
     val commandSlug = manifest.stringValue("commandSlug", required = false)
+    val commandType = manifest.commandType()
     val commandObject = JsonObject().apply {
         addProperty("id", id)
         addProperty("version", version)
+        addProperty("type", commandType.name)
         addProperty("path", "")
         addProperty("exec", commandSlug)
         addProperty("command", "")
@@ -158,11 +160,32 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
         runtime.extrasArray()?.let { commandObject.add("extras", it) }
     }
 
+    when (commandType) {
+        CommandType.FILE_OBSERVER -> {
+            runtime.stringListValue("selectors")?.let {
+                commandObject.add("selectors", Gson().toJsonTree(it))
+            }
+        }
+        CommandType.CRON -> {
+            commandObject.addProperty("cronInterval", runtime.stringValue("cronInterval"))
+        }
+        CommandType.SHARE -> Unit
+    }
+
     return CloudManifestCommand(
         commandKey = name,
         commandObject = commandObject,
         installScript = install.stringValue("script", required = false)
     )
+}
+
+private fun Map<String, Any?>.commandType(): CommandType = when (
+    stringValue("type", required = false).uppercase()
+) {
+    "", "PACKAGE", "SHARE" -> CommandType.SHARE
+    "FILE_OBSERVER" -> CommandType.FILE_OBSERVER
+    "CRON" -> CommandType.CRON
+    else -> throw ViewModelError.InvalidCommandRepoFile
 }
 
 private fun Map<String, Any?>.stringValue(key: String, required: Boolean = true): String {

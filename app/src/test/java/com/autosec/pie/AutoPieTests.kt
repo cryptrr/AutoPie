@@ -80,11 +80,7 @@ class CommandTests : KoinTest {
                 "path": "",
                 "command": "echo new",
                 "exec": "",
-                "extras": [{
-                  "id": "1",
-                  "type": "SELECTABLE",
-                  "selectableOptions": {"Friendly label": "--raw-value"}
-                }]
+                "steps": {"unsupported": true}
               }
             }
             """.trimIndent()
@@ -177,12 +173,48 @@ class CommandTests : KoinTest {
         assertEquals("install.sh", manifest.installScript)
         assertEquals("autopie.change-volume-on-mac", command.get("id").asString)
         assertEquals("1.0.0", command.get("version").asString)
+        assertEquals("SHARE", command.get("type").asString)
         assertEquals("AutoSec/scripts", command.get("path").asString)
         assertEquals("openssh", command.get("exec").asString)
         assertEquals("VOLUME", extra.get("name").asString)
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
         assertEquals("pdf", selectableExtra.getAsJsonObject("selectableOptions").get("PDF").asString)
         assertEquals("txt", selectableExtra.getAsJsonObject("selectableOptions").get("Text").asString)
+    }
+
+    @Test
+    fun `observer manifest keeps observer properties in shares command`() = runTest {
+        val command = cloudManifestToShareCommandJson(
+            """
+            id: "autopie.watch-downloads"
+            name: "Watch Downloads"
+            type: "FILE_OBSERVER"
+            runtime:
+              path: "Download"
+              command: "echo changed"
+              selectors: [".*\\.mp4", ".*\\.mkv"]
+            """.trimIndent()
+        ).commandObject
+
+        assertEquals("FILE_OBSERVER", command.get("type").asString)
+        assertEquals(".*\\.mp4", command.getAsJsonArray("selectors")[0].asString)
+    }
+
+    @Test
+    fun `cron manifest keeps cron properties in shares command`() = runTest {
+        val command = cloudManifestToShareCommandJson(
+            """
+            id: "autopie.hourly-sync"
+            name: "Hourly Sync"
+            type: "CRON"
+            runtime:
+              command: "rsync source target"
+              cronInterval: "1h"
+            """.trimIndent()
+        ).commandObject
+
+        assertEquals("CRON", command.get("type").asString)
+        assertEquals("1h", command.get("cronInterval").asString)
     }
 
     @Test

@@ -28,10 +28,10 @@ class GetShareCommands(private val jsonService: JsonService) {
         val commandsData = sharesData.values.map {
             it.value.copy(
                 id = it.value.id.ifBlank { it.key },
-                type = CommandType.SHARE,
+                type = it.value.type ?: CommandType.SHARE,
                 name = it.key
             )
-        }
+        }.filter { it.type == CommandType.SHARE }
 
         return commandsData
     }

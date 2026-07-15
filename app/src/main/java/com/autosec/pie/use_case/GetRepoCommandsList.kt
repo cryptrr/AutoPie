@@ -17,7 +17,7 @@ class GetRepoCommandsList(private val jsonService: JsonService) {
                 val command = gson.fromJson(jsonElement, CloudCommandModel::class.java)
                 command.copy(
                     id = id,
-                    type = CommandType.SHARE,
+                    type = command.type ?: CommandType.SHARE,
                     name = command.name.ifBlank { id },
                     command = "",
                     description = command.summary
@@ -30,7 +30,11 @@ class GetRepoCommandsList(private val jsonService: JsonService) {
         val repoData: Map<String, CloudCommandModel> = gson.fromJson(repoList, mapType)
 
         val commandsData = repoData.entries.toMutableList().map { (id, command) ->
-            command.copy(type = CommandType.SHARE, id = id.ifBlank { command.id }, name = command.name.ifBlank { id })
+            command.copy(
+                type = command.type ?: CommandType.SHARE,
+                id = id.ifBlank { command.id },
+                name = command.name.ifBlank { id }
+            )
         }
 
         return commandsData

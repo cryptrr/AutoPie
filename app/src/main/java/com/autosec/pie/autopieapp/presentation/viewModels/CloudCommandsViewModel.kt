@@ -205,7 +205,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
     private suspend fun getInstalledCommandVersions(): Map<String, String> =
         try {
-            useCases.getShareCommands()
+            useCases.getCommandsList()
                 .filter { it.id.isNotBlank() }
                 .associate { it.id to it.version }
         } catch (error: Exception) {

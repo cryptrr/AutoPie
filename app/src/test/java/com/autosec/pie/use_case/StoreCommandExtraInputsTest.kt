@@ -95,13 +95,9 @@ class StoreCommandExtraInputsTest {
         var shares: JsonObject = initialShares
 
         override fun readSharesConfig(): JsonObject = shares
-        override fun readObserversConfig(): JsonObject = JsonObject()
-        override fun readCronConfig(): JsonObject = JsonObject()
         override fun writeSharesConfig(jsonString: String) {
             shares = JsonParser.parseString(jsonString).asJsonObject
         }
-        override fun writeObserversConfig(jsonString: String) = Unit
-        override fun writeCronConfig(jsonString: String) = Unit
         override fun readRepoList(path: String): JsonObject = JsonObject()
     }
 }

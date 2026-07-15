@@ -11,37 +11,19 @@ import com.google.gson.GsonBuilder
 class ToggleCommandDebugMode(private val jsonService: JsonService) {
     suspend operator fun invoke(command: CommandModel, enabled: Boolean): CommandModel {
         val shareCommands = jsonService.readSharesConfig()
-        val observerCommands = jsonService.readObserversConfig()
-        val cronCommands = jsonService.readCronConfig()
-
-        if (shareCommands == null || observerCommands == null || cronCommands == null) {
+        if (shareCommands == null) {
             throw ViewModelError.ConfigUnavailable
         }
 
-        val commandObject = when (command.type) {
-            CommandType.SHARE -> shareCommands.getAsJsonObject(command.name)
-            CommandType.FILE_OBSERVER -> observerCommands.getAsJsonObject(command.name)
-            CommandType.CRON -> cronCommands.getAsJsonObject(command.name)
-            null -> shareCommands.getAsJsonObject(command.name)
-                ?: observerCommands.getAsJsonObject(command.name)
-                ?: cronCommands.getAsJsonObject(command.name)
-        } ?: throw ViewModelError.CommandNotFound
+        val commandObject = shareCommands.getAsJsonObject(command.name)
+            ?: throw ViewModelError.CommandNotFound
 
         val updatedCommand = Utils.setScriptHeader(command.command, ScriptFlags.INTERACTIVE, enabled)
         commandObject.addProperty("command", updatedCommand)
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-        when (command.type) {
-            CommandType.SHARE -> jsonService.writeSharesConfig(gson.toJson(shareCommands))
-            CommandType.FILE_OBSERVER -> jsonService.writeObserversConfig(gson.toJson(observerCommands))
-            CommandType.CRON -> jsonService.writeCronConfig(gson.toJson(cronCommands))
-            null -> when {
-                shareCommands.has(command.name) -> jsonService.writeSharesConfig(gson.toJson(shareCommands))
-                observerCommands.has(command.name) -> jsonService.writeObserversConfig(gson.toJson(observerCommands))
-                cronCommands.has(command.name) -> jsonService.writeCronConfig(gson.toJson(cronCommands))
-            }
-        }
+        jsonService.writeSharesConfig(gson.toJson(shareCommands))
 
         return command.copy(command = updatedCommand)
     }
