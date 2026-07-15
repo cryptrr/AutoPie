@@ -2,10 +2,10 @@ name: Build release APK
 
 on:
   push:
-    branches:
-      - main
-#    tags:
-#      - "v*"
+#    branches:
+#      - main
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -153,15 +153,15 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-#      - name: Publish GitHub release
-#        if: startsWith(github.ref, 'refs/tags/v')
-#        uses: softprops/action-gh-release@v2
-#        env:
-#          GITHUB_TOKEN: ${{ github.token }}
-#        with:
-#          name: AutoPie ${{ github.ref_name }}
-#          tag_name: ${{ github.ref_name }}
-#          files: release-output/AutoPie-${{ github.ref_name }}-aarch64.apk
-#          fail_on_unmatched_files: true
-#          generate_release_notes: true
-#          prerelease: ${{ contains(github.ref_name, '-') }}
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          name: AutoPie ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: release-output/AutoPie-${{ github.ref_name }}-aarch64.apk
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
