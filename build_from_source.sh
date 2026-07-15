@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSETS_DIR="${AUTOPIE_ASSETS_DIR:-$ROOT_DIR/app/src/main/assets}"
 GENERATOR_REPOSITORY="${TERMUX_GENERATOR_REPOSITORY:-https://github.com/cryptrr/termux-generator.git}"
 # This revision contains the native, Docker-free bootstrap builder used here.
-GENERATOR_REF="${TERMUX_GENERATOR_REF:-95a068727eabb303d1f4c0d5fe2fe5cf5d2695ea}"
+GENERATOR_REF="${TERMUX_GENERATOR_REF:-b8c21b1857782e0c2959bf4658cb48d8aa45cb29}"
 DPKG_WRAPPER="${AUTOPIE_DPKG_WRAPPER:-$ROOT_DIR/scripts/bootstrap/dpkg.py}"
 AUTOPIE_SECRET_WRAPPER="${AUTOPIE_SECRET_WRAPPER:-$ROOT_DIR/scripts/bootstrap/autopie-secret}"
 TARGET_ROOT_DIR="/data/data/com.autopi"
