@@ -107,6 +107,7 @@ fun CloudCommandDetails(
                             text = command?.name.orEmpty(),
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
+                            lineHeight = 29.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -160,7 +161,7 @@ fun CloudCommandDetails(
                             val docs = viewModel.selectedCommandDocumentation.value
                             docs?.readme?.takeIf(String::isNotBlank)?.let { readme ->
                                 Text(
-                                    text = "README.md",
+                                    text = "README",
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -174,7 +175,7 @@ fun CloudCommandDetails(
                             docs?.changelog?.takeIf(String::isNotBlank)?.let { changelog ->
                                 Spacer(modifier = Modifier.height(28.dp))
                                 Text(
-                                    text = "CHANGELOG.md",
+                                    text = "CHANGELOG",
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer

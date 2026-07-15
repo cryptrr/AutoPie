@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.InstallDesktop
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -57,7 +56,6 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
-import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.LoadingBadge
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.autopieapp.presentation.elements.YesNoDialog
@@ -203,16 +201,16 @@ fun HomeScreen(
 
                 commandsListScreenViewModel.configUnavailable.value -> {
                     item {
-                        MissingCommandConfigsBadge(onInstallNewClick = onInstallNewClick)
+                        InstallNewCommandsBadge(
+                            onInstallNewClick = onInstallNewClick,
+                            message = "Command config is unavailable"
+                        )
                     }
                 }
 
                 else -> {
                     item {
-                        EmptyItemsBadge(
-                            icon = Icons.Outlined.Share,
-                            text = "Your commands list is empty"
-                        )
+                        InstallNewCommandsBadge(onInstallNewClick = onInstallNewClick)
                     }
                 }
 
@@ -245,7 +243,10 @@ fun HomeScreen(
 }
 
 @Composable
-private fun MissingCommandConfigsBadge(onInstallNewClick: () -> Unit) {
+private fun InstallNewCommandsBadge(
+    onInstallNewClick: () -> Unit,
+    message: String? = null
+) {
     Box(
         Modifier
             .height(500.dp)
@@ -261,14 +262,16 @@ private fun MissingCommandConfigsBadge(onInstallNewClick: () -> Unit) {
                 contentDescription = "Install commands",
                 tint = Color.White.copy(0.4F)
             )
-            Spacer(Modifier.height(15.dp))
-            Text(
-                text = "Command config files are not installed",
-                color = Color.White.copy(0.7F),
-                fontSize = 15.7.sp
-            )
+            if (message != null) {
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    text = message,
+                    color = Color.White.copy(0.7F),
+                    fontSize = 15.7.sp
+                )
+            }
             Spacer(Modifier.height(18.dp))
-            Button(onClick = onInstallNewClick) {
+            Button(onClick = onInstallNewClick, shape = RoundedCornerShape(15.dp)) {
                 Text("Install New")
             }
         }
