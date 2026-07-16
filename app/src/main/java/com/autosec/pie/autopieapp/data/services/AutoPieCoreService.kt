@@ -101,6 +101,7 @@ class AutoPieCoreService {
                     val binFolderExists = checkForBinFolder()
                     val canAccessConfigPath =
                         !autoPieConfigPathProvider.usesExternalStorage() || mainViewModel.storageManagerPermissionGranted
+                    val fullStoragePermissionGranted = mainViewModel.storageManagerPermissionGranted
 
                     if (canAccessConfigPath && !autosecFolderExists) {
                         Timber.d("Autosec folder does not exist. Creating and copying files")
@@ -111,7 +112,11 @@ class AutoPieCoreService {
                         Timber.d("Autosec folder exists. Doing nothing.")
                     }
 
-                    if (canAccessConfigPath && !binFolderExists) {
+                    if (
+                        fullStoragePermissionGranted &&
+                        !binFolderExists &&
+                        mainViewModel.shouldPromptForInitPackageCommands()
+                    ) {
                         //Timber.d("Starting fetching init files")
                         //downloadAndExtractAutoSecInitArchive()
                         mainViewModel.installInitPackagesPrompt = true

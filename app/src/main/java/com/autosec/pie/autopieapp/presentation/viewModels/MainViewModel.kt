@@ -78,7 +78,10 @@ class MainViewModel(
     var mcpServerActive by mutableStateOf(false)
 
     var installInitPackagesPrompt by mutableStateOf(false)
-    val initPackageCommandKeywords = listOf("ffmpeg","yt-dlp", "imagemagick","openssh","rsync")
+    val initPackageCommandKeywords = listOf("ffmpeg", "yt-dlp", "imagemagick", "openssh", "rsync")
+    private var initPackageCommandsPromptHandled by mutableStateOf(
+        appPreferences.getBoolSync(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED)
+    )
 
     //MOVED HERE FROM SHARERECEIVERVIEWMODEL becase of State Hoisting necessity
     var shareReceiverSearchQuery = mutableStateOf("")
@@ -170,14 +173,33 @@ class MainViewModel(
         }
     }
 
+    fun shouldPromptForInitPackageCommands(): Boolean =
+        storageManagerPermissionGranted &&
+            !initPackageCommandsPromptHandled
+
+    fun markInitPackageCommandsPromptHandled() {
+        initPackageCommandsPromptHandled = true
+        viewModelScope.launch(dispatchers.io) {
+            appPreferences.setBool(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED, true)
+        }
+    }
+
     fun installCloudCommandsForKeywords(keywords: List<String>) {
         val selectedKeywords = keywords.map(String::trim).filter(String::isNotBlank)
-        if (selectedKeywords.isEmpty()) {
+        if (!storageManagerPermissionGranted || initPackageCommandsPromptHandled) {
             return
         }
 
+        initPackageCommandsPromptHandled = true
+
         viewModelScope.launch(dispatchers.io) {
             try {
+                appPreferences.setBool(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED, true)
+
+                if (selectedKeywords.isEmpty()) {
+                    return@launch
+                }
+
                 val repoListPath = File(application.filesDir, "repolist.json").absolutePath
                 val matchingCommands = useCases.getRepoCommandsList(repoListPath)
                     .filter { command -> command.matchesAnyCloudKeyword(selectedKeywords) }

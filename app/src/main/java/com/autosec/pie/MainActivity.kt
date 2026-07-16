@@ -255,7 +255,8 @@ class MainActivity : ComponentActivity() {
                     }
 
                     YesNoMultiCheckboxDialog(
-                        showDialog = mainViewModel.installInitPackagesPrompt,
+                        showDialog = mainViewModel.installInitPackagesPrompt &&
+                            mainViewModel.storageManagerPermissionGranted,
                         title = "Do you want to install init packages and its commands?",
                         subtitle = "",
                         options = mainViewModel.initPackageCommandKeywords,
@@ -265,9 +266,11 @@ class MainActivity : ComponentActivity() {
                         },
                         onNoClicked = {
                             mainViewModel.installInitPackagesPrompt = false
+                            mainViewModel.markInitPackageCommandsPromptHandled()
                         },
                         onDismissRequest = {
-
+                            mainViewModel.installInitPackagesPrompt = false
+                            mainViewModel.markInitPackageCommandsPromptHandled()
                         }
                     )
 
