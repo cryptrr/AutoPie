@@ -114,7 +114,7 @@ class AutoPieCoreService {
                     if (canAccessConfigPath && !binFolderExists) {
                         //Timber.d("Starting fetching init files")
                         //downloadAndExtractAutoSecInitArchive()
-                        //mainViewModel.installInitPackagesPrompt = true
+                        mainViewModel.installInitPackagesPrompt = true
                     } else {
                         Timber.d("Bin folder exists. Doing nothing.")
                     }

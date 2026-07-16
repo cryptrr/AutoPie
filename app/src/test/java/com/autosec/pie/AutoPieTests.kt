@@ -11,6 +11,8 @@ import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
 import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
+import com.autopi.autopieapp.presentation.viewModels.keywordInstallScriptFor
+import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
@@ -26,7 +28,9 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -242,6 +246,47 @@ class CommandTests : KoinTest {
         )
 
         assertEquals(listOf("autopie.a-update", "autopie.b-new", "autopie.z-current"), sorted.map { it.id })
+    }
+
+    @Test
+    fun `cloud command keyword matching checks catalog metadata`() = runTest {
+        val ffmpegCommand = CloudCommandModel(
+            id = "autopie.extract-audio",
+            name = "Extract Audio",
+            summary = "Convert media files",
+            tags = listOf("ffmpeg")
+        )
+        val imageMagickCommand = CloudCommandModel(
+            id = "autopie.resize-image",
+            name = "Resize Image",
+            summary = "ImageMagick powered resize",
+            tags = listOf("images")
+        )
+        val unrelatedCommand = CloudCommandModel(
+            id = "autopie.sync-folder",
+            name = "Sync Folder",
+            tags = listOf("rsync")
+        )
+
+        val selectedKeywords = listOf("ffmpeg", "imagemagick")
+
+        assertEquals(true, ffmpegCommand.matchesAnyCloudKeyword(selectedKeywords))
+        assertEquals(true, imageMagickCommand.matchesAnyCloudKeyword(selectedKeywords))
+        assertEquals(false, unrelatedCommand.matchesAnyCloudKeyword(selectedKeywords))
+    }
+
+    @Test
+    fun `keyword install script uses fixed commands once`() = runTest {
+        val installScript = keywordInstallScriptFor(listOf("ffmpeg", "yt-dlp", "ffmpeg", "unknown"))
+
+        assertTrue(installScript.contains("dpkg -s \"${'$'}package\""))
+        assertTrue(installScript.contains("pip show \"${'$'}package\""))
+        assertTrue(installScript.contains("pkg install -y \"${'$'}package\""))
+        assertTrue(installScript.contains("pip install \"${'$'}package\""))
+        assertEquals(1, "autopie_pkg_install_once ffmpeg".toRegex().findAll(installScript).count())
+        assertEquals(1, "autopie_pip_install_once yt-dlp".toRegex().findAll(installScript).count())
+        assertFalse(installScript.contains("imagemagick"))
+        assertFalse(installScript.contains("unknown"))
     }
 
     @Test

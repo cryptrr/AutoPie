@@ -22,25 +22,69 @@ class InstallCloudCommand(
     private val application: Application
 ) {
     suspend operator fun invoke(commandId: String, manifestYaml: String? = null) {
+        installResolvedCommands(listOf(resolveCloudCommand(commandId, manifestYaml)))
+    }
+
+    suspend fun installAll(commandIds: List<String>, runInstallScripts: Boolean = true) {
+        val resolvedCommands = commandIds
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinct()
+            .map { commandId -> resolveCloudCommand(commandId, includeInstallScript = runInstallScripts) }
+
+        if (resolvedCommands.isEmpty()) {
+            return
+        }
+
+        installResolvedCommands(resolvedCommands)
+    }
+
+    private fun resolveCloudCommand(
+        commandId: String,
+        manifestYaml: String? = null,
+        includeInstallScript: Boolean = true
+    ): ResolvedCloudCommand {
         val folderUrl = cloudCommandFolderUrl(commandId)
         val resolvedManifestYaml = manifestYaml ?: fetchCloudCommandText("$folderUrl/manifest.yaml")
         val manifest = cloudManifestToShareCommandJson(resolvedManifestYaml)
-        val installScriptName = manifest.installScript?.takeIf(String::isNotBlank)
-
-        if (installScriptName != null) {
-            val installScript = fetchCloudCommandText("$folderUrl/$installScriptName")
-            runInstallScript(manifest.commandKey, installScript)
+        val installScript = if (includeInstallScript) {
+            manifest.installScript
+                ?.takeIf(String::isNotBlank)
+                ?.let { installScriptName -> fetchCloudCommandText("$folderUrl/$installScriptName") }
+        } else {
+            null
         }
 
+        return ResolvedCloudCommand(
+            manifest = manifest,
+            installScript = installScript?.let { CloudCommandInstallScript(manifest.commandKey, it) }
+        )
+    }
+
+    private fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
+        val installScripts = resolvedCommands.mapNotNull { it.installScript }
+        runInstallScripts(installScripts)
+
         val commands = jsonService.readCommandsConfig() ?: throw ViewModelError.CommandConfigUnavailable
-        commands.add(manifest.commandKey, manifest.commandObject)
+        resolvedCommands.forEach { resolvedCommand ->
+            commands.add(resolvedCommand.manifest.commandKey, resolvedCommand.manifest.commandObject)
+        }
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
-    private fun runInstallScript(commandName: String, installScript: String) {
-        val installCommand = installScript.trimEnd() + "\n"
+    private fun runInstallScripts(installScripts: List<CloudCommandInstallScript>) {
+        if (installScripts.isEmpty()) {
+            return
+        }
+
+        val installCommand = combinedCloudCommandInstallScript(installScripts)
+        val commandName = if (installScripts.size == 1) {
+            installScripts.single().commandName
+        } else {
+            "Cloud commands"
+        }
         val command = CommandModel(
             id = "$commandName.install",
             type = CommandType.SHARE,
@@ -65,6 +109,30 @@ class InstallCloudCommand(
     }
 
 }
+
+private data class ResolvedCloudCommand(
+    val manifest: CloudManifestCommand,
+    val installScript: CloudCommandInstallScript?
+)
+
+internal data class CloudCommandInstallScript(
+    val commandName: String,
+    val script: String
+)
+
+internal fun combinedCloudCommandInstallScript(installScripts: List<CloudCommandInstallScript>): String =
+    installScripts.joinToString(separator = "\n\n", postfix = "\n") { installScript ->
+        buildString {
+            append("printf '%s\\n' ")
+            append("Installing ${installScript.commandName.sanitizedForShellLabel()}".shellSingleQuote())
+            append('\n')
+            append(installScript.script.trimEnd())
+        }
+    }
+
+private fun String.sanitizedForShellLabel(): String = replace('\n', ' ').replace('\r', ' ')
+
+private fun String.shellSingleQuote(): String = "'${replace("'", "'\\''")}'"
 
 class GetCloudCommandDocumentation {
     operator fun invoke(commandId: String): CloudCommandDocumentation {

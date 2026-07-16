@@ -55,7 +55,7 @@ import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AppBottomBar
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SnackbarHostCustom
-import com.autopi.autopieapp.presentation.elements.YesNoDialog
+import com.autopi.autopieapp.presentation.elements.YesNoMultiCheckboxDialog
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.presentation.screens.AddShareCommandBottomSheet
 import com.autopi.autopieapp.presentation.screens.CloudCommandDetails
@@ -254,22 +254,22 @@ class MainActivity : ComponentActivity() {
 
                     }
 
-//                    YesNoDialog(
-//                        showDialog = mainViewModel.installInitPackagesPrompt,
-//                        title = "Do you want to install init packages and its commands?",
-//                        subtitle = "Contains ffmpeg and imagemagick.",
-//                        onYesClicked = {
-//                            mainViewModel.installInitPackagesPrompt = false
-//                            AutoPieCoreService.downloadAndExtractAutoSecInitArchive()
-//                        },
-//                        onNoClicked = {
-//                            mainViewModel.installInitPackagesPrompt = false
-//                            AutoPieCoreService.downloadAndExtractAutoSecEmptyInit()
-//                        },
-//                        onDismissRequest = {
-//
-//                        }
-//                    )
+                    YesNoMultiCheckboxDialog(
+                        showDialog = mainViewModel.installInitPackagesPrompt,
+                        title = "Do you want to install init packages and its commands?",
+                        subtitle = "",
+                        options = mainViewModel.initPackageCommandKeywords,
+                        onYesClicked = { selectedKeywords ->
+                            mainViewModel.installInitPackagesPrompt = false
+                            mainViewModel.installCloudCommandsForKeywords(selectedKeywords)
+                        },
+                        onNoClicked = {
+                            mainViewModel.installInitPackagesPrompt = false
+                        },
+                        onDismissRequest = {
+
+                        }
+                    )
 
 
                     if (autoPieStates.addShareBottomSheetStateOpen.value) {

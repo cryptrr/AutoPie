@@ -31,6 +31,8 @@ import com.autopi.autopieapp.data.services.FileObserverJobService
 import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.ReleaseInfo
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -51,6 +53,7 @@ class MainViewModel(
 
 
     private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
+    private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
@@ -75,6 +78,7 @@ class MainViewModel(
     var mcpServerActive by mutableStateOf(false)
 
     var installInitPackagesPrompt by mutableStateOf(false)
+    val initPackageCommandKeywords = listOf("ffmpeg","yt-dlp", "imagemagick","openssh","rsync")
 
     //MOVED HERE FROM SHARERECEIVERVIEWMODEL becase of State Hoisting necessity
     var shareReceiverSearchQuery = mutableStateOf("")
@@ -164,6 +168,62 @@ class MainViewModel(
         viewModelScope.launch {
             appPreferences.setBool(AppPreferences.FILE_LOGGING_ENABLED, enabled)
         }
+    }
+
+    fun installCloudCommandsForKeywords(keywords: List<String>) {
+        val selectedKeywords = keywords.map(String::trim).filter(String::isNotBlank)
+        if (selectedKeywords.isEmpty()) {
+            return
+        }
+
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val repoListPath = File(application.filesDir, "repolist.json").absolutePath
+                val matchingCommands = useCases.getRepoCommandsList(repoListPath)
+                    .filter { command -> command.matchesAnyCloudKeyword(selectedKeywords) }
+                    .distinctBy { it.id }
+
+                runKeywordInstallCommands(selectedKeywords)
+                useCases.installCloudCommand.installAll(
+                    commandIds = matchingCommands.map { it.id },
+                    runInstallScripts = false
+                )
+            } catch (e: ViewModelError) {
+                showError(e)
+            } catch (e: Exception) {
+                Timber.e(e)
+                showError(ViewModelError.Unknown)
+            }
+        }
+    }
+
+    private fun runKeywordInstallCommands(keywords: List<String>) {
+        val installCommand = keywordInstallScriptFor(keywords)
+        if (installCommand.isBlank()) {
+            return
+        }
+
+        val command = CommandModel(
+            id = "autopie.keyword-init-packages.install",
+            type = CommandType.SHARE,
+            name = "Install selected init packages",
+            path = "",
+            exec = "bash",
+            command = installCommand
+        )
+
+        processManagerService.runCommandInTermuxShell(
+            commandObject = command,
+            exec = "bash",
+            command = installCommand,
+            cwd = application.filesDir.absolutePath,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = (1000..9999).random(),
+            jobType = JobType.STANDALONE,
+            usePython = false,
+            isShellScript = true
+        )
     }
 
 
@@ -405,6 +465,65 @@ class MainViewModel(
 
 
 }
+
+internal fun CloudCommandModel.matchesAnyCloudKeyword(keywords: List<String>): Boolean =
+    keywords.any { keyword ->
+        id.contains(keyword, ignoreCase = true) ||
+            name.contains(keyword, ignoreCase = true) ||
+            namespace.contains(keyword, ignoreCase = true) ||
+            summary.contains(keyword, ignoreCase = true) ||
+            tags.any { tag -> tag.contains(keyword, ignoreCase = true) }
+    }
+
+internal fun keywordInstallScriptFor(keywords: List<String>): String {
+    val installCommands = keywords
+        .map { keyword -> keyword.trim().lowercase() }
+        .mapNotNull { keyword -> KEYWORD_INSTALL_COMMANDS[keyword] }
+        .distinct()
+
+    if (installCommands.isEmpty()) {
+        return ""
+    }
+
+    return buildString {
+        append(KEYWORD_INSTALL_HELPERS)
+        append("\n\n")
+        append(installCommands.joinToString(separator = "\n"))
+        append('\n')
+    }
+}
+
+private val KEYWORD_INSTALL_COMMANDS = linkedMapOf(
+    "ffmpeg" to "autopie_pkg_install_once ffmpeg",
+    "yt-dlp" to "autopie_pip_install_once yt-dlp",
+    "imagemagick" to "autopie_pkg_install_once imagemagick",
+    "openssh" to "autopie_pkg_install_once openssh",
+    "rsync" to "autopie_pkg_install_once rsync"
+)
+
+private val KEYWORD_INSTALL_HELPERS = """
+autopie_pkg_install_once() {
+    local package="${'$'}1"
+
+    if dpkg -s "${'$'}package" >/dev/null 2>&1; then
+        printf '%s\n' "Package already installed: ${'$'}package"
+        return
+    fi
+
+    pkg install -y "${'$'}package"
+}
+
+autopie_pip_install_once() {
+    local package="${'$'}1"
+
+    if pip show "${'$'}package" >/dev/null 2>&1; then
+        printf '%s\n' "Python package already installed: ${'$'}package"
+        return
+    fi
+
+    pip install "${'$'}package"
+}
+""".trimIndent()
 
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\\''")}'"
