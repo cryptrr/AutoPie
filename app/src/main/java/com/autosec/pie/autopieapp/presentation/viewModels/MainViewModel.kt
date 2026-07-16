@@ -205,11 +205,15 @@ class MainViewModel(
                     .filter { command -> command.matchesAnyCloudKeyword(selectedKeywords) }
                     .distinctBy { it.id }
 
-                runKeywordInstallCommands(selectedKeywords)
                 useCases.installCloudCommand.installAll(
                     commandIds = matchingCommands.map { it.id },
                     runInstallScripts = false
                 )
+                withContext(dispatchers.main) {
+                    emitEvent(ViewModelEvent.RefreshCommandsList)
+                    emitEvent(ViewModelEvent.CommandsConfigChanged)
+                }
+                runKeywordInstallCommands(selectedKeywords)
             } catch (e: ViewModelError) {
                 showError(e)
             } catch (e: Exception) {
@@ -253,23 +257,27 @@ class MainViewModel(
     fun dispatchEvent(event: ViewModelEvent) {
         Timber.d("Event Fired: $event")
         viewModelScope.launch(dispatchers.main) {
-            when (event) {
-                is ViewModelEvent.CreateShell -> withContext(dispatchers.io) {
-                    processManagerService.createShell(event.processId)
-                }
-
-                is ViewModelEvent.StopShell -> withContext(dispatchers.io) {
-                    processManagerService.stopShell(event.processId)
-                }
-
-                else -> {
-
-                }
-            }
-            _eventFlow.emit(event)
+            emitEvent(event)
         }
 
 
+    }
+
+    private suspend fun emitEvent(event: ViewModelEvent) {
+        when (event) {
+            is ViewModelEvent.CreateShell -> withContext(dispatchers.io) {
+                processManagerService.createShell(event.processId)
+            }
+
+            is ViewModelEvent.StopShell -> withContext(dispatchers.io) {
+                processManagerService.stopShell(event.processId)
+            }
+
+            else -> {
+
+            }
+        }
+        _eventFlow.emit(event)
     }
 
     fun clearAllBanners(){
