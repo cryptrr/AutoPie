@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
@@ -207,17 +208,17 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                val status = when {
+                val badgeText = when {
                     updateAvailable -> "update"
                     isInstalled -> "installed"
-                    else -> card.status.ifBlank { "catalog" }
+                    else -> card.type.name
                 }
-                val badgeColor = when (status.lowercase()) {
-                    "update" -> Color(0xFFFFD166)
-                    "installed" -> PastelGreen
-                    "stable" -> GreenGrey60
-                    "beta" -> PastelPurple
-                    "experimental" -> Purple10
+                val badgeColor = when {
+                    updateAvailable -> Color(0xFFFFD166)
+                    isInstalled -> PastelGreen
+                    card.type == CommandType.SHARE -> PastelPurple
+                    card.type == CommandType.FILE_OBSERVER -> Purple10
+                    card.type == CommandType.CRON -> GreenGrey60
                     else -> MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)
                 }
                 Box(
@@ -231,7 +232,7 @@ fun CloudCommandCard(
                         .padding(horizontal = 5.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = status.uppercase(),
+                        text = badgeText.uppercase(),
                         fontSize = 13.3.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.Black

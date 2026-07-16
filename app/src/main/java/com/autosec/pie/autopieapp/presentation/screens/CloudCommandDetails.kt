@@ -130,7 +130,7 @@ fun CloudCommandDetails(
                         Text(
                             text = listOfNotNull(
                                 command?.namespace?.takeIf { it.isNotBlank() }?.let { "Namespace: $it" },
-                                command?.status?.takeIf { it.isNotBlank() }?.let { "Status: $it" },
+                                command?.type?.name?.let { "Type: $it" },
                                 command?.version?.takeIf { it.isNotBlank() }?.let { "Version: $it" }
                             ).joinToString("\n"),
                             fontSize = 15.sp,
