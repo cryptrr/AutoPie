@@ -75,7 +75,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     private val realtimeProcessIds = mutableSetOf<Int>()
     val commandNotFound = mutableStateOf<Boolean?>(false)
 
-    private fun isOpenRealtimeExtrasProcess(processId: Int): Boolean {
+    fun isOpenRealtimeExtrasProcess(processId: Int): Boolean {
         val currentDetails = currentExtrasDetails.value ?: return false
         return processId in realtimeProcessIds ||
             currentDetails.third.processId == processId &&

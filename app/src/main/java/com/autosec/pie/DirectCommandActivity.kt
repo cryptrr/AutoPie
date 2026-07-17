@@ -118,7 +118,7 @@ class DirectCommandActivity : ComponentActivity() {
 
                         //For synchronous requests
                         is ViewModelEvent.CommandCompleted -> {
-                            if (it.partial) {
+                            if (it.partial || shareReceiverViewModel.isOpenRealtimeExtrasProcess(it.processId)) {
                                 return@collect
                             }
                             try {
@@ -139,6 +139,9 @@ class DirectCommandActivity : ComponentActivity() {
                         }
 
                         is ViewModelEvent.CommandFailed -> {
+                            if (shareReceiverViewModel.isOpenRealtimeExtrasProcess(it.processId)) {
+                                return@collect
+                            }
                             try {
                                 val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
                                     File(it.logFile)
@@ -214,7 +217,6 @@ class DirectCommandActivity : ComponentActivity() {
     }
 
 }
-
 
 
 
