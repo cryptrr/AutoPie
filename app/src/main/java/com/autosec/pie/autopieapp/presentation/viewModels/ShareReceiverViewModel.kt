@@ -12,6 +12,7 @@ import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandStepResolutionException
+import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
@@ -25,12 +26,17 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
+import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +48,7 @@ import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
@@ -62,6 +69,10 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
     var shareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
     var filteredShareItemsResult = MutableStateFlow<List<CommandModel>>(emptyList())
+    val repositorySearchResults = MutableStateFlow<List<CloudCommandModel>>(emptyList())
+    val repositoryInstalledCommandVersions = MutableStateFlow<Map<String, String>>(emptyMap())
+    val isRepositorySearchLoading = mutableStateOf(false)
+    private var repositorySearchJob: Job? = null
     val mostUsedPackages: StateFlow<List<String>> =
         getFrequentPackages(shareItemsResult)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10000), emptyList())
@@ -184,11 +195,57 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
         Timber.d("Searching ${query}")
         val trimmedQuery = query.trim()
+        val localMatches = shareItemsResult.value.filter { it.matchesSearch(trimmedQuery) }
 
         filteredShareItemsResult.update {
-            shareItemsResult.value.filter { it.matchesSearch(trimmedQuery) }
+            localMatches
         }
 
+        repositorySearchJob?.cancel()
+        if (trimmedQuery.isBlank()) {
+            repositorySearchResults.value = emptyList()
+            isRepositorySearchLoading.value = false
+            return
+        }
+
+        searchRepositoryCommands(trimmedQuery)
+
+    }
+
+    private fun searchRepositoryCommands(query: String) {
+        repositorySearchResults.value = emptyList()
+        isRepositorySearchLoading.value = true
+        repositorySearchJob = viewModelScope.launch(dispatchers.io) {
+            delay(250L)
+            try {
+                AutoPieCoreService.fetchLatestRepositoryJson()
+                val installedVersions = shareItemsResult.value
+                    .filter { it.id.isNotBlank() }
+                    .associate { it.id to it.version }
+                val matches = useCases
+                    .getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath)
+                    .filter { it.type == CommandType.SHARE && it.matchesSearch(query) }
+                    .sortedBy { it.name.lowercase() }
+
+                withContext(dispatchers.main) {
+                    if (main.shareReceiverSearchQuery.value.trim() == query) {
+                        repositoryInstalledCommandVersions.value = installedVersions
+                        repositorySearchResults.value = matches
+                        isRepositorySearchLoading.value = false
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.w(error, "Unable to search the commands repository from the share sheet")
+                withContext(dispatchers.main) {
+                    if (main.shareReceiverSearchQuery.value.trim() == query) {
+                        repositorySearchResults.value = emptyList()
+                        isRepositorySearchLoading.value = false
+                    }
+                }
+            }
+        }
     }
 
 

@@ -200,7 +200,8 @@ class MainViewModel(
                     return@launch
                 }
 
-                val repoListPath = File(application.filesDir, "repolist.json").absolutePath
+                AutoPieCoreService.fetchLatestRepositoryJson()
+                val repoListPath = AutoPieCoreService.repositoryJsonFile().absolutePath
                 val matchingCommands = useCases.getRepoCommandsList(repoListPath)
                     .filter { command -> command.matchesAnyCloudKeyword(selectedKeywords) }
                     .distinctBy { it.id }

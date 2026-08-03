@@ -37,6 +37,18 @@ data class CloudCommandModel(
     val version: String = ""
 ) : CloudCommandInterface
 
+fun CloudCommandModel.matchesSearch(query: String): Boolean {
+    if (query.isBlank()) return true
+
+    return id.contains(query, ignoreCase = true) ||
+        name.contains(query, ignoreCase = true) ||
+        namespace.contains(query, ignoreCase = true) ||
+        status.contains(query, ignoreCase = true) ||
+        summary.contains(query, ignoreCase = true) ||
+        version.contains(query, ignoreCase = true) ||
+        tags.any { tag -> tag.contains(query, ignoreCase = true) }
+}
+
 
 
 interface CloudCommandInterface {

@@ -84,7 +84,6 @@ class MyApplication : Application() {
             startScreenStateReceiver()
             startNotificationReceiver()
             AutoPieCoreService.initEmptyCommandsConfigIfMissing()
-            AutoPieCoreService.fetchLatestRepositoryJson()
             createEmptyCookieFile()
             AutoPieCoreService.setAutoPieGraphics()
         }
@@ -202,4 +201,3 @@ class MyApplication : Application() {
     }
 
 }
-

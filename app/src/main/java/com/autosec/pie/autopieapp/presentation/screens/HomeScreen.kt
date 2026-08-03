@@ -87,6 +87,9 @@ fun HomeScreen(
 //    }
 
     val filteredListOfCommands = commandsListScreenViewModel.filteredListOfCommands.collectAsState()
+    val repositorySearchResults = commandsListScreenViewModel.repositorySearchResults.collectAsState()
+    val repositoryInstalledCommandVersions =
+        commandsListScreenViewModel.repositoryInstalledCommandVersions.collectAsState()
     val mostUsedPackages = commandsListScreenViewModel.mostUsedPackages.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -199,6 +202,8 @@ fun HomeScreen(
                     }
                 }
 
+                commandsListScreenViewModel.searchCommandQuery.value.isNotBlank() -> Unit
+
                 commandsListScreenViewModel.configUnavailable.value -> {
                     item {
                         InstallNewCommandsBadge(
@@ -214,6 +219,32 @@ fun HomeScreen(
                     }
                 }
 
+            }
+
+            if (
+                !commandsListScreenViewModel.isLoading.value &&
+                commandsListScreenViewModel.searchCommandQuery.value.isNotBlank()
+            ) {
+                if (commandsListScreenViewModel.isRepositorySearchLoading.value) {
+                    item {
+                        LoadingBadge()
+                    }
+                } else if (repositorySearchResults.value.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Available from the command catalog",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75F)
+                        )
+                    }
+                    items(repositorySearchResults.value, key = { "repository:${it.id}" }) { command ->
+                        CloudCommandCard(
+                            card = command,
+                            installedVersion = repositoryInstalledCommandVersions.value[command.id]
+                        )
+                    }
+                }
             }
 
 

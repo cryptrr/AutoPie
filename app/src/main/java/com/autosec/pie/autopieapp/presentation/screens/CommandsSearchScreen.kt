@@ -23,14 +23,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.List
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +82,9 @@ fun CloudCommandsScreen() {
 
     val state = viewModel.filteredListOfCommands.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.getCommandsList(forceRepositoryRefresh = true)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CloudCommandsList(state.value, viewModel)
@@ -106,7 +112,9 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                     modifier = Modifier
                         .padding(vertical = 20.dp)
                         .fillMaxWidth()
-                        .padding(vertical = 0.dp)
+                        .padding(vertical = 0.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Install New",
@@ -114,6 +122,15 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
+                    IconButton(
+                        enabled = !viewModel.isLoading.value,
+                        onClick = { viewModel.getCommandsList(forceRepositoryRefresh = true) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = "Refresh command catalog"
+                        )
+                    }
                 }
             }
 
@@ -155,10 +172,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                     val installedVersion = installedCommandVersions.value[it.id]
                     CloudCommandCard(
                         card = it,
-                        isInstalled = installedVersion != null,
-                        updateAvailable = installedVersion?.let { version ->
-                            isCloudCommandUpdateAvailable(it.version, version)
-                        } == true
+                        installedVersion = installedVersion
                     )
                 }
             }
@@ -173,8 +187,8 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 @Composable
 fun CloudCommandCard(
     card: CloudCommandModel,
-    isInstalled: Boolean,
-    updateAvailable: Boolean
+    installedVersion: String?,
+    onClick: ((CloudCommandModel) -> Unit)? = null
 ) {
 
     var isLoading by remember {
@@ -193,8 +207,12 @@ fun CloudCommandCard(
             .combinedClickable(
                 onClick = {
                     Timber.d("CLICK DETECTED")
-                    viewModel.selectedCommand.value = card
-                    viewModel.main.dispatchEvent(ViewModelEvent.OpenCloudCommandDetails)
+                    if (onClick != null) {
+                        onClick(card)
+                    } else {
+                        viewModel.selectCommand(card, installedVersion)
+                        viewModel.main.dispatchEvent(ViewModelEvent.OpenCloudCommandDetails)
+                    }
 
                 }
             ).border(BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.primary.copy(.35F)), shape= RoundedCornerShape(15.dp))
@@ -208,6 +226,10 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
+                val isInstalled = installedVersion != null
+                val updateAvailable = installedVersion?.let { version ->
+                    isCloudCommandUpdateAvailable(card.version, version)
+                } == true
                 val badgeText = when {
                     updateAvailable -> "update"
                     isInstalled -> "installed"

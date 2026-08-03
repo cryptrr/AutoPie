@@ -15,13 +15,18 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.matchesSearch
 import com.autopi.autopieapp.domain.AppNotification
+import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.AutoPieUseCases
 import com.autopi.utils.getCommandExec
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +55,10 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     var fullListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
+    val repositorySearchResults = MutableStateFlow<List<CloudCommandModel>>(emptyList())
+    val repositoryInstalledCommandVersions = MutableStateFlow<Map<String, String>>(emptyMap())
+    val isRepositorySearchLoading = mutableStateOf(false)
+    private var repositorySearchJob: Job? = null
 
     val mostUsedPackages: StateFlow<List<String>> =
         getFrequentPackages(fullListOfCommands)
@@ -150,11 +159,57 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     fun searchInCommands(query: String){
         val trimmedQuery = query.trim()
+        val localMatches = fullListOfCommands.value.filter { it.matchesSearch(trimmedQuery) }
 
         filteredListOfCommands.update {
-            fullListOfCommands.value.filter { it.matchesSearch(trimmedQuery) }
+            localMatches
         }
 
+        repositorySearchJob?.cancel()
+        if (trimmedQuery.isBlank()) {
+            repositorySearchResults.value = emptyList()
+            isRepositorySearchLoading.value = false
+            return
+        }
+
+        searchRepositoryCommands(trimmedQuery)
+
+    }
+
+    private fun searchRepositoryCommands(query: String) {
+        repositorySearchResults.value = emptyList()
+        isRepositorySearchLoading.value = true
+        repositorySearchJob = viewModelScope.launch(dispatchers.io) {
+            delay(250L)
+            try {
+                AutoPieCoreService.fetchLatestRepositoryJson()
+                val installedVersions = fullListOfCommands.value
+                    .filter { it.id.isNotBlank() }
+                    .associate { it.id to it.version }
+                val matches = useCases
+                    .getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath)
+                    .filter { it.matchesSearch(query) }
+                    .sortedBy { it.name.lowercase() }
+
+                withContext(dispatchers.main) {
+                    if (searchCommandQuery.value.trim() == query) {
+                        repositoryInstalledCommandVersions.value = installedVersions
+                        repositorySearchResults.value = matches
+                        isRepositorySearchLoading.value = false
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.w(error, "Unable to search the commands repository")
+                withContext(dispatchers.main) {
+                    if (searchCommandQuery.value.trim() == query) {
+                        repositorySearchResults.value = emptyList()
+                        isRepositorySearchLoading.value = false
+                    }
+                }
+            }
+        }
     }
 
 //    fun setFrequentPackages(input: List<CommandModel>){

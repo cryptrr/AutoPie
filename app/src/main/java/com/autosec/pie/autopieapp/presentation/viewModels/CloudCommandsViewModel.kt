@@ -17,6 +17,7 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.CloudCommandsListDto
+import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.CloudCommandDocumentation
 import com.autopi.core.Result
 import com.autopi.core.asResult
@@ -65,25 +66,16 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     val selectedCommandDocumentation = mutableStateOf<CloudCommandDocumentation?>(null)
     private var loadedDocumentationCommandId: String? = null
 
-    init {
-        viewModelScope.launch {
-            getCommandsList()
-        }
-    }
-
-
-
-    fun getCommandsList(){
+    fun getCommandsList(forceRepositoryRefresh: Boolean = false){
         isLoading.value = true
         Timber.d("Getting Repo Commands List")
 
         viewModelScope.launch(dispatchers.io){
 
-            delay(500L)
-
             try {
+                AutoPieCoreService.fetchLatestRepositoryJson(forceRepositoryRefresh)
                 val installedVersions = getInstalledCommandVersions()
-                useCases.getRepoCommandsList("${application.filesDir.absolutePath}/repolist.json").let { newCommands ->
+                useCases.getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath).let { newCommands ->
                     withContext(dispatchers.main){
                         val sortedCommands = sortCloudCommandsForCatalog(newCommands, installedVersions)
                         installedCommandVersions.update { installedVersions }
@@ -126,18 +118,18 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
         filteredListOfCommands.update {
             val trimmedQuery = query.trim()
-            val filteredCommands = fullListOfCommands.value.filter {
-                it.id.contains(trimmedQuery, ignoreCase = true) ||
-                    it.name.contains(trimmedQuery, ignoreCase = true) ||
-                    it.namespace.contains(trimmedQuery, ignoreCase = true) ||
-                    it.status.contains(trimmedQuery, ignoreCase = true) ||
-                    it.summary.contains(trimmedQuery, ignoreCase = true) ||
-                    it.version.contains(trimmedQuery, ignoreCase = true) ||
-                    it.tags.any { tag -> tag.contains(trimmedQuery, ignoreCase = true) }
-            }
+            val filteredCommands = fullListOfCommands.value.filter { it.matchesSearch(trimmedQuery) }
             sortCloudCommandsForCatalog(filteredCommands, installedCommandVersions.value)
         }
 
+    }
+
+    fun selectCommand(command: CloudCommandModel, installedVersion: String? = null) {
+        selectedCommand.value = command
+        installedCommandVersions.update { versions ->
+            if (installedVersion == null) versions - command.id
+            else versions + (command.id to installedVersion)
+        }
     }
 
     fun installSelectedCommand(onInstalled: () -> Unit = {}) {

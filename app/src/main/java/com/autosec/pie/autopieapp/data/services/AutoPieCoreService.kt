@@ -21,6 +21,8 @@ import com.termux.app.TermuxActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
@@ -45,6 +47,8 @@ class AutoPieCoreService {
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
         private val autoPieConfigPathProvider: AutoPieConfigPathProvider by inject(AutoPieConfigPathProvider::class.java)
         private var termuxBootstrapTriggered = false
+        private val repositoryRefreshMutex = Mutex()
+        private const val REPOSITORY_CACHE_MAX_AGE_MILLIS = 24L * 60L * 60L * 1000L
 
         fun ensureTermuxBootstrapTriggered(context: Context) {
             if (isTermuxBootstrapInstalled(context)) {
@@ -585,17 +589,31 @@ class AutoPieCoreService {
             }
         }
 
-        fun fetchLatestRepositoryJson(){
-            Timber.d("Fetching latest commands repository")
-            CoroutineScope(dispatchers.io).launch {
+        fun repositoryJsonFile(): File = File(application.filesDir, "repolist.json")
+
+        fun isRepositoryJsonStale(
+            maxAgeMillis: Long = REPOSITORY_CACHE_MAX_AGE_MILLIS,
+            nowMillis: Long = System.currentTimeMillis()
+        ): Boolean {
+            val repositoryFile = repositoryJsonFile()
+            return isRepositoryFileStale(repositoryFile, maxAgeMillis, nowMillis)
+        }
+
+        suspend fun fetchLatestRepositoryJson(forceRefresh: Boolean = false): Boolean =
+            repositoryRefreshMutex.withLock {
+                val repositoryJsonFile = repositoryJsonFile()
+                if (!forceRefresh && !isRepositoryJsonStale()) {
+                    return@withLock true
+                }
+
+                Timber.d("Fetching latest commands repository")
                 try {
-                    val repositoryJsonFile = File(application.filesDir, "repolist.json")
                     val repositoryJsonNewFile = File(application.filesDir, "repolist.json.new")
                     val repositoryJsonBackupFile = File(application.filesDir, "repolist.json.bak")
 
                     if (repositoryJsonNewFile.exists() && !repositoryJsonNewFile.delete()) {
                         Timber.e("Unable to delete existing new repository file ${repositoryJsonNewFile.absolutePath}")
-                        return@launch
+                        return@withLock false
                     }
 
                     val isDownloaded = downloadFileNatively(
@@ -606,19 +624,19 @@ class AutoPieCoreService {
                     if (!isDownloaded) {
                         Timber.e("Failed to fetch latest commands repository")
                         repositoryJsonNewFile.delete()
-                        return@launch
+                        return@withLock false
                     }
 
                     if (repositoryJsonBackupFile.exists() && !repositoryJsonBackupFile.delete()) {
                         Timber.e("Unable to delete existing repository backup ${repositoryJsonBackupFile.absolutePath}")
                         repositoryJsonNewFile.delete()
-                        return@launch
+                        return@withLock false
                     }
 
                     if (repositoryJsonFile.exists() && !repositoryJsonFile.renameTo(repositoryJsonBackupFile)) {
                         Timber.e("Unable to backup existing repository file ${repositoryJsonFile.absolutePath}")
                         repositoryJsonNewFile.delete()
-                        return@launch
+                        return@withLock false
                     }
 
                     if (!repositoryJsonNewFile.renameTo(repositoryJsonFile)) {
@@ -626,15 +644,16 @@ class AutoPieCoreService {
                         if (!repositoryJsonFile.exists() && repositoryJsonBackupFile.exists()) {
                             repositoryJsonBackupFile.renameTo(repositoryJsonFile)
                         }
-                        return@launch
+                        return@withLock false
                     }
 
                     Timber.d("Latest repository fetched successfully")
-                }catch (e: Exception){
+                    true
+                } catch (e: Exception) {
                     Timber.e(e)
+                    false
                 }
             }
-        }
 
         private fun isFileCompletelyDownloaded(
             filePath: String,
@@ -798,3 +817,11 @@ class AutoPieCoreService {
 
     }
 }
+
+internal fun isRepositoryFileStale(
+    repositoryFile: File,
+    maxAgeMillis: Long,
+    nowMillis: Long = System.currentTimeMillis()
+): Boolean = !repositoryFile.isFile ||
+    repositoryFile.length() == 0L ||
+    nowMillis - repositoryFile.lastModified() >= maxAgeMillis

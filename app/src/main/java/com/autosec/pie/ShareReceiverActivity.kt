@@ -77,10 +77,13 @@ import com.autopi.autopieapp.data.hasUnsetRequiredExtras
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.autopieapp.presentation.screens.CloudCommandCard
+import com.autopi.autopieapp.presentation.screens.CloudCommandDetails
 import com.autopi.autopieapp.presentation.screens.CommandExtrasBottomSheet
 import com.autopi.ui.theme.AutoPieTheme
 import com.autopi.utils.Utils.Companion.getPathsFromClipData
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
@@ -225,9 +228,13 @@ fun ShareContextMenuBottomSheet(
     onExpand: () -> Unit = {}
 ) {
     val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+    val cloudCommandsViewModel: CloudCommandsViewModel = koinViewModel()
 
     val shareItemsResult = shareReceiverViewModel.shareItemsResult.collectAsState()
     val filteredShareItemsResult = shareReceiverViewModel.filteredShareItemsResult.collectAsState()
+    val repositorySearchResults = shareReceiverViewModel.repositorySearchResults.collectAsState()
+    val repositoryInstalledCommandVersions =
+        shareReceiverViewModel.repositoryInstalledCommandVersions.collectAsState()
     val mostUsedPackages = shareReceiverViewModel.mostUsedPackages.collectAsState()
 
 
@@ -262,6 +269,8 @@ fun ShareContextMenuBottomSheet(
     val extrasBottomSheetStateOpen = remember {
         mutableStateOf(false)
     }
+    val cloudCommandDetailsState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val cloudCommandDetailsOpen = remember { mutableStateOf(false) }
 
     LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
         extrasBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
@@ -336,6 +345,43 @@ fun ShareContextMenuBottomSheet(
                         key = { it.name ?: it }) { item ->
                         ShareCard(card = item, inputText, inputFiles, state)
                     }
+                    if (shareReceiverViewModel.isRepositorySearchLoading.value) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 30.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(strokeWidth = 2.dp)
+                            }
+                        }
+                    }
+                    if (repositorySearchResults.value.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Available from the command catalog",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75F)
+                            )
+                        }
+                        items(
+                            repositorySearchResults.value,
+                            key = { "repository:${it.id}" }
+                        ) { command ->
+                            val installedVersion =
+                                repositoryInstalledCommandVersions.value[command.id]
+                            CloudCommandCard(
+                                card = command,
+                                installedVersion = installedVersion,
+                                onClick = {
+                                    cloudCommandsViewModel.selectCommand(command, installedVersion)
+                                    cloudCommandDetailsOpen.value = true
+                                }
+                            )
+                        }
+                    }
                 }
 
             }
@@ -368,6 +414,13 @@ fun ShareContextMenuBottomSheet(
             }
         }
     )
+
+    if (cloudCommandDetailsOpen.value) {
+        CloudCommandDetails(
+            state = cloudCommandDetailsState,
+            open = cloudCommandDetailsOpen
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
