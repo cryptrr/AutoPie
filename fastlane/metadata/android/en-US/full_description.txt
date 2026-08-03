@@ -45,3 +45,10 @@
 	</ul>
 	</li>
 </ul>
+
+<p><strong>Permissions</strong></p>
+
+<ul>
+	<li><strong>All files access:</strong> AutoPie runs terminal commands and scripts against files in shared storage. This permission is required so those commands can read, create, modify, monitor, and organize user files and folders.</li>
+	<li><strong>Battery optimization exemption:</strong> AutoPie requests permission to run without battery optimizations so long-running terminal commands, scheduled jobs, and folder observers can continue working reliably in the background.</li>
+</ul>
