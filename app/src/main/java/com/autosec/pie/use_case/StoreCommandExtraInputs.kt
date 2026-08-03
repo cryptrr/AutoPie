@@ -82,22 +82,7 @@ class StoreCommandExtraInputs(
         val commandKey = command.name.ifBlank { command.id }
         if (commandKey.isBlank()) return false
 
-        val shareCommands = jsonService.readSharesConfig()
-        val observerCommands = jsonService.readObserversConfig()
-        val cronCommands = jsonService.readCronConfig()
-
-        val target = when (command.type) {
-            CommandType.SHARE -> shareCommands?.let { it to jsonService::writeSharesConfig }
-            CommandType.FILE_OBSERVER -> observerCommands?.let { it to jsonService::writeObserversConfig }
-            CommandType.CRON -> cronCommands?.let { it to jsonService::writeCronConfig }
-            null -> listOfNotNull(
-                shareCommands?.let { it to jsonService::writeSharesConfig },
-                observerCommands?.let { it to jsonService::writeObserversConfig },
-                cronCommands?.let { it to jsonService::writeCronConfig }
-            ).firstOrNull { (commands, _) -> commands.has(commandKey) }
-        } ?: return false
-
-        val (commands, writeConfig) = target
+        val commands = jsonService.readCommandsConfig() ?: return false
         val commandObject = commands.getAsJsonObject(commandKey) ?: return false
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         val storedExtras = gson.toJsonTree(extras.map { it.withoutStoredSecretDefault() })
@@ -108,7 +93,7 @@ class StoreCommandExtraInputs(
         } else {
             commandObject.add("extras", storedExtras)
         }
-        writeConfig(gson.toJson(commands))
+        jsonService.writeCommandsConfig(gson.toJson(commands))
         return true
     }
 

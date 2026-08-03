@@ -11,12 +11,8 @@ import java.io.File
 import java.io.FileInputStream
 
 interface JsonService {
-    fun readSharesConfig(): JsonObject?
-    fun readObserversConfig(): JsonObject?
-    fun readCronConfig(): JsonObject?
-    fun writeSharesConfig(jsonString: String)
-    fun writeObserversConfig(jsonString: String)
-    fun writeCronConfig(jsonString: String)
+    fun readCommandsConfig(): JsonObject?
+    fun writeCommandsConfig(jsonString: String)
     fun readRepoList(path: String): JsonObject?
 
 }
@@ -29,14 +25,14 @@ class JSONServiceImpl : JsonService {
 
 
 
-    override fun readSharesConfig(): JsonObject? {
+    override fun readCommandsConfig(): JsonObject? {
 
 
-        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
+        val commandsFilePath = autoPieConfigPathProvider.getConfigFile("commands.json").absolutePath
 
 
         try {
-            val file = File(sharesFilePath)
+            val file = File(commandsFilePath)
             val inputStream = FileInputStream(file)
             val size = inputStream.available()
             val buffer = ByteArray(size)
@@ -49,80 +45,13 @@ class JSONServiceImpl : JsonService {
             val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
 
             if(dataObject == null) {
-                Timber.d("Share Sheet config not available")
-                throw ViewModelError.ShareConfigUnavailable
+                Timber.d("Commands config not available")
+                throw ViewModelError.CommandConfigUnavailable
             }
 
             if (!dataObject.isJsonObject) {
-                Timber.d("Share Sheet config is not valid json")
-                throw ViewModelError.InvalidShareConfig
-            }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            Timber.e(e)
-            throw e
-        }
-    }
-
-    override fun readObserversConfig(): JsonObject? {
-
-
-        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("observers.json").absolutePath
-
-        try {
-            val file = File(fileObserverPath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            // Parse the JSON string
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if(dataObject == null) {
-                Timber.d("Observer Sheet config not available")
-                throw ViewModelError.ObserverConfigUnavailable
-            }
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Observers config is not valid json")
-                throw ViewModelError.InvalidObserverConfig
-            }
-            return dataObject.asJsonObject
-        } catch (e: Exception) {
-            Timber.e(e)
-            throw e
-        }
-    }
-
-    override fun readCronConfig(): JsonObject? {
-
-
-        val cronConfigPath = autoPieConfigPathProvider.getConfigFile("cron.json").absolutePath
-
-        try {
-            val file = File(cronConfigPath)
-            val inputStream = FileInputStream(file)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val jsonString = String(buffer)
-
-            val gson = Gson()
-            val dataObject = gson.fromJson(jsonString, JsonElement::class.java)
-
-            if(dataObject == null) {
-                Timber.d("Cron Sheet config not available")
-                throw ViewModelError.CronConfigUnavailable
-            }
-
-            if (!dataObject.isJsonObject) {
-                Timber.d("Cron config is not valid json")
-                throw ViewModelError.InvalidCronConfig
+                Timber.d("Commands config is not valid json")
+                throw ViewModelError.InvalidCommandConfig
             }
             return dataObject.asJsonObject
         } catch (e: Exception) {
@@ -163,38 +92,14 @@ class JSONServiceImpl : JsonService {
     }
 
 
-    override fun writeSharesConfig(jsonString: String) {
+    override fun writeCommandsConfig(jsonString: String) {
 
-        val sharesFilePath = autoPieConfigPathProvider.getConfigFile("shares.json").absolutePath
-
-        try {
-            val file = File(sharesFilePath)
-            file.writeText(jsonString)
-
-        } catch (e: Exception) {
-            Timber.e(e)
-            return
-        }
-    }
-
-    override fun writeObserversConfig(jsonString: String) {
-        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("observers.json").absolutePath
+        val commandsFilePath = autoPieConfigPathProvider.getConfigFile("commands.json").absolutePath
 
         try {
-            val file = File(fileObserverPath)
+            val file = File(commandsFilePath)
             file.writeText(jsonString)
-        } catch (e: Exception) {
-            Timber.e(e)
-            return
-        }
-    }
 
-    override fun writeCronConfig(jsonString: String) {
-        val fileObserverPath = autoPieConfigPathProvider.getConfigFile("cron.json").absolutePath
-
-        try {
-            val file = File(fileObserverPath)
-            file.writeText(jsonString)
         } catch (e: Exception) {
             Timber.e(e)
             return

@@ -43,7 +43,7 @@
 
 ## Troubleshooting
 * If `pkg install` fails immediately after installation, open the AutoPie terminal once more and let the bootstrap finish before retrying.
-* Check that the `AutoSec` folder contains `observers.json` for Folder Observation Automation, `shares.json` for Share Sheet Configuration and `cron.json` for Cron Configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
+* Check that the `AutoSec` folder contains `commands.json` for share, observer, and cron command configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
 
 ## Command Format
 
@@ -86,7 +86,7 @@ fun RunCommandButton(){
             "com.autopi", // target app package
             "com.autopi.DirectCommandActivity" // full class name
         )
-        putExtra("commandId", "YT-DLP Generic Downloader")
+        putExtra("commandId", "autopie.yt-dlp-downloader")
         putExtra("input", "https://www.youtube.com/watch?v=7N74-JBHk3g")
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
     }

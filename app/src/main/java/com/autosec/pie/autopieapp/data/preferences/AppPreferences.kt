@@ -39,6 +39,7 @@ class AppPreferences(private val context: Context) : MyPreferences {
         val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamicColorsEnabled")
         val AUTOPIE_CONFIG_LOCATION = stringPreferencesKey("autoPieConfigLocation")
         val FILE_LOGGING_ENABLED = booleanPreferencesKey("fileLoggingEnabled")
+        val INIT_PACKAGE_COMMANDS_PROMPT_HANDLED = booleanPreferencesKey("initPackageCommandsPromptHandled")
     }
 
     override fun getString(key: Preferences.Key<String>)  = context.dataStore.data.map {

@@ -408,11 +408,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         viewModel.changeCommandDetails(key = commandKey)
                         delay(500L)
                         viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                        when(viewModel.type.value){
-                            "SHARE" -> viewModel.main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
-                            "FILE_OBSERVER" -> viewModel.main.dispatchEvent(ViewModelEvent.ObserversConfigChanged)
-                            "CRON" -> viewModel.main.dispatchEvent(ViewModelEvent.CronConfigChanged)
-                        }
+                        viewModel.main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
                         open.value = false
                     }
                 },

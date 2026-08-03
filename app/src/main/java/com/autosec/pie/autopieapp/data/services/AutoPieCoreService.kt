@@ -101,6 +101,7 @@ class AutoPieCoreService {
                     val binFolderExists = checkForBinFolder()
                     val canAccessConfigPath =
                         !autoPieConfigPathProvider.usesExternalStorage() || mainViewModel.storageManagerPermissionGranted
+                    val fullStoragePermissionGranted = mainViewModel.storageManagerPermissionGranted
 
                     if (canAccessConfigPath && !autosecFolderExists) {
                         Timber.d("Autosec folder does not exist. Creating and copying files")
@@ -111,11 +112,14 @@ class AutoPieCoreService {
                         Timber.d("Autosec folder exists. Doing nothing.")
                     }
 
-                    if (canAccessConfigPath && !binFolderExists) {
-                        Timber.d("Starting fetching init files")
-                        downloadAndExtractAutoSecInitArchive()
-                        //mainViewModel.installInitPackagesPrompt = true
-
+                    if (
+                        fullStoragePermissionGranted &&
+                        !binFolderExists &&
+                        mainViewModel.shouldPromptForInitPackageCommands()
+                    ) {
+                        //Timber.d("Starting fetching init files")
+                        //downloadAndExtractAutoSecInitArchive()
+                        mainViewModel.installInitPackagesPrompt = true
                     } else {
                         Timber.d("Bin folder exists. Doing nothing.")
                     }
@@ -538,6 +542,45 @@ class AutoPieCoreService {
                     }
                 }catch (e: Exception){
                     Timber.e(e)
+                }
+            }
+        }
+
+        fun initEmptyCommandsConfigIfMissing() {
+            val canAccessConfigPath =
+                !autoPieConfigPathProvider.usesExternalStorage() ||
+                    mainViewModel.storageManagerPermissionGranted
+
+            if (!canAccessConfigPath) {
+                Timber.d("Storage permission not granted")
+                return
+            }
+
+            CoroutineScope(dispatchers.io).launch {
+                try {
+                    val commandsFile = autoPieConfigPathProvider.getConfigFile("commands.json")
+                    if (commandsFile.exists()) {
+                        Timber.d("commands.json exists. Doing nothing.")
+                        return@launch
+                    }
+
+                    commandsFile.parentFile?.mkdirs()
+                    val legacySharesFile = autoPieConfigPathProvider.getConfigFile("shares.json")
+                    if (legacySharesFile.exists()) {
+                        if (!legacySharesFile.renameTo(commandsFile)) {
+                            legacySharesFile.copyTo(commandsFile)
+                            if (!legacySharesFile.delete()) {
+                                Timber.w("Migrated shares.json but could not remove the legacy file")
+                            }
+                        }
+                        Timber.d("Migrated shares.json to commands.json")
+                        return@launch
+                    }
+
+                    commandsFile.writeText("{}\n")
+                    Timber.d("Created empty commands.json at ${commandsFile.absolutePath}")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to initialize empty commands.json")
                 }
             }
         }

@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.annotations.JsonAdapter
@@ -28,6 +29,7 @@ data class CommandModel(
     override val extras: List<CommandExtra>? = null,
     override val multiStage: Boolean? = false,
     override val steps: List<CommandStep> = emptyList(),
+    override val version: String = "",
     ) : CommandInterface
 
 data class CommandStep(
@@ -148,8 +150,10 @@ interface CommandInterface {
     val steps: List<CommandStep>
     val flags: List<String>?
     val extras: List<CommandExtra>?
+    val version: String
 }
 
+@JsonAdapter(CommandExtraAdapter::class)
 data class CommandExtra(
     val id: String,
     val name: String = "",
@@ -171,6 +175,38 @@ fun CommandExtra.secretKey(commandId: String): String = "$commandId@$name"
 
 fun CommandExtra.withoutStoredSecretDefault(): CommandExtra =
     if (isSecretExtra()) copy(default = "") else this
+
+class CommandExtraAdapter : JsonDeserializer<CommandExtra> {
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type,
+        context: JsonDeserializationContext
+    ): CommandExtra {
+        val source = json.asJsonObject
+        return CommandExtra(
+            id = source.stringOrDefault("id"),
+            name = source.stringOrDefault("name"),
+            type = source.stringOrDefault("type"),
+            default = source.stringOrDefault("default"),
+            description = source.stringOrDefault("description"),
+            defaultBoolean = source.booleanOrDefault("defaultBoolean", true),
+            required = source.booleanOrDefault("required", true),
+            flags = source.get("flags")?.takeUnless { it.isJsonNull }?.asJsonArray?.map { it.asString },
+            visibleWhen = source.get("visibleWhen")?.takeUnless { it.isJsonNull }?.let {
+                context.deserialize(it, ExtraVisibilityRule::class.java)
+            },
+            selectableOptions = source.get("selectableOptions")?.takeUnless { it.isJsonNull }?.let {
+                SelectableOptionsAdapter().deserialize(it, Map::class.java, context)
+            }.orEmpty()
+        )
+    }
+}
+
+private fun JsonObject.stringOrDefault(name: String, default: String = ""): String =
+    get(name)?.takeUnless { it.isJsonNull }?.asString ?: default
+
+private fun JsonObject.booleanOrDefault(name: String, default: Boolean): Boolean =
+    get(name)?.takeUnless { it.isJsonNull }?.asBoolean ?: default
 
 class SelectableOptionsAdapter :
     JsonDeserializer<Map<String, String>>,

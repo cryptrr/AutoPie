@@ -9,7 +9,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.autopi.autopieapp.data.CronCommandModel
+import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.utils.Utils
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -38,8 +39,8 @@ class CronService(private val jsonService: JsonService){
             main.viewModelScope.launch {
                 main.eventFlow.collect{
                     when(it){
-                        is ViewModelEvent.CronConfigChanged -> {
-                            Timber.d("Cron config changed: Restarting")
+                        is ViewModelEvent.CommandsConfigChanged -> {
+                            Timber.d("Commands config changed: Rescheduling cron commands")
                             setUpCronJobs()
                         }
                         else -> {}
@@ -64,7 +65,7 @@ class CronService(private val jsonService: JsonService){
             Timber.d("OFF YOU GO")
 
             val cronConfig = try {
-                jsonService.readCronConfig()
+                jsonService.readCommandsConfig()
             }catch (e: Exception){
                 Timber.e(e)
                 return@launch
@@ -79,8 +80,8 @@ class CronService(private val jsonService: JsonService){
                 main.schedulerConfigAvailable = true
             }
 
-            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CronCommandModel::class.java)
-            val data = parsedData.values
+            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CommandModel::class.java)
+            val data = parsedData.values.filterValues { it.type == CommandType.CRON }
             if (parsedData.skippedKeys.isNotEmpty()) {
                 Timber.w("Skipped incompatible cron commands: ${parsedData.skippedKeys}")
             }
@@ -96,7 +97,7 @@ class CronService(private val jsonService: JsonService){
                     .putString("command", commandJson)
                     .build()
 
-                val timeInterval = Utils.parseTimeInterval(cronJob.value.cronInterval) ?: continue
+                val timeInterval = Utils.parseTimeInterval(cronJob.value.cronInterval ?: continue) ?: continue
 
                 Timber.d("Cron Interval: $timeInterval")
 
@@ -125,7 +126,7 @@ class CronService(private val jsonService: JsonService){
 
         CoroutineScope(dispatchers.default).launch {
             val cronConfig = try {
-                jsonService.readCronConfig()
+                jsonService.readCommandsConfig()
             }catch (e: Exception){
                 Timber.e(e)
                 return@launch
@@ -140,8 +141,8 @@ class CronService(private val jsonService: JsonService){
                 main.schedulerConfigAvailable = true
             }
 
-            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CronCommandModel::class.java)
-            val data = parsedData.values
+            val parsedData = Gson().fromJsonObjectEntries(cronConfig, CommandModel::class.java)
+            val data = parsedData.values.filterValues { it.type == CommandType.CRON }
             if (parsedData.skippedKeys.isNotEmpty()) {
                 Timber.w("Skipped incompatible cron commands: ${parsedData.skippedKeys}")
             }
@@ -158,7 +159,7 @@ class CronService(private val jsonService: JsonService){
                     .putString("command", commandJson)
                     .build()
 
-                val timeInterval = Utils.parseTimeInterval(cronJob.value.cronInterval) ?: continue
+                val timeInterval = Utils.parseTimeInterval(cronJob.value.cronInterval ?: continue) ?: continue
 
                 Timber.d("Cron Interval: $timeInterval")
 

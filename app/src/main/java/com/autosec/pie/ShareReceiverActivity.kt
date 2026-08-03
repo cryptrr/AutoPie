@@ -245,7 +245,7 @@ fun ShareContextMenuBottomSheet(
 
     SideEffect {
         if(shareItemsResult.value.isEmpty()){
-            shareReceiverViewModel.getSharesConfig()
+            shareReceiverViewModel.getShareCommands()
         }
     }
 

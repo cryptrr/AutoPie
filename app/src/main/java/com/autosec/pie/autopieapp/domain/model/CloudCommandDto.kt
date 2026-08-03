@@ -20,16 +20,21 @@ data class CloudCommandsListDto(
 
 @Serializable
 data class CloudCommandModel(
-    override val id: String,
-    override val type: CommandType,
-    override val name: String,
-    override val directory: String,
-    override val command: String,
-    override val packageUniqueName: String,
-    override val installationScript: String,
-    override val description: String, //Link to MD file.
+    override val id: String = "",
+    override val type: CommandType = CommandType.SHARE,
+    override val name: String = "",
+    override val directory: String = "",
+    override val command: String = "",
+    override val packageUniqueName: String = "",
+    override val installationScript: String = "",
+    override val description: String = "", //Link to MD file.
     override val extrasRequired : Boolean? = false,
-    override val extras: List<CloudCommandExtra>? = null
+    override val extras: List<CloudCommandExtra>? = null,
+    val namespace: String = "",
+    val status: String = "",
+    val summary: String = "",
+    val tags: List<String> = emptyList(),
+    val version: String = ""
 ) : CloudCommandInterface
 
 
@@ -57,4 +62,3 @@ data class CloudCommandExtra(
     val defaultBoolean: Boolean = true,
     val selectableOptions: List<String> = emptyList()
 )
-

@@ -34,9 +34,6 @@ data class AutoPieStates(
     val addShareBottomSheetState: SheetState,
     val addShareBottomSheetStateOpen: MutableState<Boolean>,
 
-    val commandsSearchBottomSheetState: SheetState,
-    val commandsSearchBottomSheetStateOpen: MutableState<Boolean>,
-
     val installNewPackageBottomSheet: SheetState,
     val installNewPackageBottomSheetOpen: MutableState<Boolean>,
 
@@ -76,9 +73,6 @@ fun rememberAutoPieStates(): AutoPieStates{
         it != SheetValue.Hidden
     })
     val addShareBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
-
-    val commandsSearchBottomSheetState = rememberModalBottomSheetState(true)
-    val commandsSearchBottomSheetStateOpen = rememberSaveable { mutableStateOf(false) }
 
     val installNewPackageBottomSheet = rememberModalBottomSheetState(true)
     val installNewPackageBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
@@ -210,14 +204,12 @@ fun rememberAutoPieStates(): AutoPieStates{
 
     return AutoPieStates(
         editCommandBottomSheet = editCommandBottomSheet,
-        commandsSearchBottomSheetState = commandsSearchBottomSheetState,
         runCommandBottomSheetStateOpen = runCommandBottomSheetStateOpen,
         runCommandBottomSheetState = runCommandBottomSheetState,
         cloudCommandDetailsBottomSheet = cloudCommandDetailsBottomSheet,
         cloudCommandDetailsBottomSheetOpen = cloudCommandDetailsBottomSheetOpen,
         addShareBottomSheetState = addShareBottomSheetState,
         addShareBottomSheetStateOpen = addShareBottomSheetStateOpen,
-        commandsSearchBottomSheetStateOpen = commandsSearchBottomSheetStateOpen,
         editCommandBottomSheetOpen = editCommandBottomSheetOpen,
         installNewPackageBottomSheetOpen = installNewPackageBottomSheetOpen,
         installNewPackageBottomSheet = installNewPackageBottomSheet,

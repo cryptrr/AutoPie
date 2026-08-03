@@ -283,11 +283,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                         viewModel.createNewCommand()
                         delay(500L)
                         viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                        when(viewModel.selectedCommandType){
-                            "SHARE" -> viewModel.main.dispatchEvent(ViewModelEvent.SharesConfigChanged)
-                            "FILE_OBSERVER" -> viewModel.main.dispatchEvent(ViewModelEvent.ObserversConfigChanged)
-                            "CRON" -> viewModel.main.dispatchEvent(ViewModelEvent.CronConfigChanged)
-                        }
+                        viewModel.main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
                         open.value = false
                     }
                 },

@@ -1,23 +1,21 @@
 package com.autopi.autopieapp.presentation.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,98 +26,48 @@ import androidx.compose.material.icons.rounded.List
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autopi.utils.getActivity
-import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
-import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
-import com.autopi.core.*
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.presentation.elements.SearchBar
+import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
 import com.autopi.ui.theme.GreenGrey60
+import com.autopi.ui.theme.PastelGreen
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
-import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommandsSearchBottomSheet(
-    state: SheetState,
-    open : MutableState<Boolean>,
-    onHide: () -> Unit = {},
-    onExpand: () -> Unit = {}
-) {
-
-    val scope = rememberCoroutineScope()
-
-    val activity = LocalContext.current.getActivity()
-
-    @Composable
-    fun bottomSheetContent() {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                //.height(700.dp)
-                .fillMaxHeight(0.75F)
-            ,
-            contentAlignment = Alignment.TopStart
-
-        )
-        {
-
-
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 15.dp)){
-
-
-                CloudCommandsScreen()
-
-
-            }
-        }
+fun CloudCommandsPage(innerPadding: PaddingValues) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .padding(horizontal = 15.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        CloudCommandsScreen()
     }
-
-    ModalBottomSheet(
-        sheetState = state,
-        content = { bottomSheetContent() },
-        shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        onDismissRequest = {
-            scope.launch {
-                open.value = false
-            }
-        }
-    )
 }
 
 
@@ -141,6 +89,7 @@ fun CloudCommandsScreen() {
 fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCommandsViewModel) {
 
     val state = rememberLazyListState()
+    val installedCommandVersions = viewModel.installedCommandVersions.collectAsState()
 
     val isAtBottom = !state.canScrollForward
 
@@ -160,7 +109,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                         .padding(vertical = 0.dp)
                 ) {
                     Text(
-                        text = "Explore Commands",
+                        text = "Install New",
                         fontSize = 33.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -169,7 +118,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             }
 
             item {
-                SearchBar(viewModel.searchCommandQuery,"Search your commands"){
+                SearchBar(viewModel.searchCommandQuery,"Search command catalog"){
                     viewModel.searchInCommands(viewModel.searchCommandQuery.value)
                 }
             }
@@ -186,12 +135,16 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.List,
-                                contentDescription = "No results",
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
-                                modifier = Modifier.size(80.dp)
-                            )
+                            if (viewModel.isLoading.value) {
+                                CircularProgressIndicator(strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.List,
+                                    contentDescription = "No results",
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(0.7F),
+                                    modifier = Modifier.size(80.dp)
+                                )
+                            }
 
                         }
                     }
@@ -199,7 +152,14 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             } else {
 
                 items(cloudCommands) {
-                    CloudCommandCard(card = it)
+                    val installedVersion = installedCommandVersions.value[it.id]
+                    CloudCommandCard(
+                        card = it,
+                        isInstalled = installedVersion != null,
+                        updateAvailable = installedVersion?.let { version ->
+                            isCloudCommandUpdateAvailable(it.version, version)
+                        } == true
+                    )
                 }
             }
 
@@ -212,10 +172,11 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CloudCommandCard(
-    card: CloudCommandModel
+    card: CloudCommandModel,
+    isInstalled: Boolean,
+    updateAvailable: Boolean
 ) {
 
-    val activity = LocalContext.current.getActivity()
     var isLoading by remember {
         mutableStateOf(false)
     }
@@ -228,7 +189,7 @@ fun CloudCommandCard(
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(150.dp)
             .combinedClickable(
                 onClick = {
                     Timber.d("CLICK DETECTED")
@@ -236,7 +197,8 @@ fun CloudCommandCard(
                     viewModel.main.dispatchEvent(ViewModelEvent.OpenCloudCommandDetails)
 
                 }
-            ),
+            ).border(BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.primary.copy(.35F)), shape= RoundedCornerShape(15.dp))
+        ,
 
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.elevatedCardColors(containerColor =  Color.Black.copy(0.13F))
@@ -246,6 +208,19 @@ fun CloudCommandCard(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
+                val badgeText = when {
+                    updateAvailable -> "update"
+                    isInstalled -> "installed"
+                    else -> card.type.name
+                }
+                val badgeColor = when {
+                    updateAvailable -> Color(0xFFFFD166)
+                    isInstalled -> PastelGreen
+                    card.type == CommandType.SHARE -> PastelPurple
+                    card.type == CommandType.FILE_OBSERVER -> Purple10
+                    card.type == CommandType.CRON -> GreenGrey60
+                    else -> MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)
+                }
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
@@ -253,52 +228,42 @@ fun CloudCommandCard(
                         .clip(
                             RoundedCornerShape(10.dp)
                         )
-                        .background(
-                            when (card.type) {
-                                CommandType.SHARE -> PastelPurple
-                                CommandType.FILE_OBSERVER -> Purple10
-                                CommandType.CRON -> GreenGrey60
-                            }
-                        )
+                        .background(badgeColor)
                         .padding(horizontal = 5.dp, vertical = 3.dp)
                 ) {
-                    when (card.type) {
-                        CommandType.SHARE -> {
-                            Text(
-                                text = "SHARE",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-
-                        CommandType.FILE_OBSERVER -> {
-                            Text(
-                                text = "FILE OBSERVER",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-                        CommandType.CRON -> {
-                            Text(
-                                text = "CRON",
-                                fontSize = 13.3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                        }
-                    }
+                    Text(
+                        text = badgeText.uppercase(),
+                        fontSize = 13.3.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Black
+                    )
                 }
                 Column(
                     Modifier
                         .fillMaxSize()
                         .padding(15.dp), verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = card.command,
+                        text = card.name,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(.72F)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = card.id,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary.copy(0.8F),
+                        modifier = Modifier.fillMaxWidth(.85F)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = card.summary.ifBlank { "Catalog entry" },
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -307,11 +272,21 @@ fun CloudCommandCard(
                             .fillMaxWidth()
                         //.basicMarquee()
                     )
+                    val tagsText = card.tags.take(3).joinToString("  ") { "#$it" }
+                    if (tagsText.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = tagsText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.55F),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
     }
 }
-
-
-

@@ -6,25 +6,37 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TERMUX_REPO="${TERMUX_REPO:-https://github.com/termux/termux-app.git}"
 TERMUX_REF="${TERMUX_REF:-master}"
 NEW_PACKAGE="${TERMUX_BOOTSTRAP_NEW_PACKAGE:-com.autopi}"
-NEW_ROOT_DIR="${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}"
+NEW_ROOT_DIR="${NEW_ROOT_DIR:-${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}}"
 PATCH_DIR="$ROOT_DIR/patches/termux-app"
 SOURCE_DIR="$ROOT_DIR/termux-app"
 
 usage() {
     cat <<USAGE
-Usage: $0 [--new-root-dir PATH]
+Usage: $0 [--new-root-dir PATH] [--new-package PACKAGE]
 
 Options:
+  --new-package PACKAGE  Override the embedded Termux package name. Defaults
+                         to $NEW_PACKAGE.
   --new-root-dir PATH  Override TermuxConstants app data root. If omitted,
                        the patched Termux source is left unchanged.
 
 Environment:
+  TERMUX_BOOTSTRAP_NEW_PACKAGE   Same as --new-package.
   TERMUX_BOOTSTRAP_NEW_ROOT_DIR  Same as --new-root-dir.
+  NEW_ROOT_DIR                   Also accepted as --new-root-dir by build_with_termux.sh.
 USAGE
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --new-package)
+            if [[ $# -lt 2 || -z "$2" ]]; then
+                echo "$1 requires a package name" >&2
+                exit 1
+            fi
+            NEW_PACKAGE="$2"
+            shift 2
+            ;;
         --new-root-dir|--new-root)
             if [[ $# -lt 2 || -z "$2" ]]; then
                 echo "$1 requires a path argument" >&2
@@ -44,6 +56,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+if [[ ! "$NEW_PACKAGE" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]]; then
+    echo "Invalid Android package name: $NEW_PACKAGE" >&2
+    exit 1
+fi
 
 normalize_root_prefix() {
     local root="$1"
@@ -88,6 +105,48 @@ fi
 UPSTREAM_COMMIT="$(git -C "$CHECKOUT_DIR" rev-parse HEAD)"
 echo "Applying ${#patches[@]} AutoPie patches to $UPSTREAM_COMMIT"
 git -C "$CHECKOUT_DIR" am --quiet --3way "${patches[@]}"
+
+if [[ "$NEW_PACKAGE" != "com.autopi" ]]; then
+    TERMUX_CONSTANTS="$CHECKOUT_DIR/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java"
+    TERMUX_APP_GRADLE="$CHECKOUT_DIR/app/build.gradle"
+    if [[ ! -f "$TERMUX_CONSTANTS" ]]; then
+        echo "Missing TermuxConstants.java at $TERMUX_CONSTANTS" >&2
+        exit 1
+    fi
+    if [[ ! -f "$TERMUX_APP_GRADLE" ]]; then
+        echo "Missing Termux app build.gradle at $TERMUX_APP_GRADLE" >&2
+        exit 1
+    fi
+
+    echo "Setting Termux package name to $NEW_PACKAGE"
+    python3 - "$TERMUX_CONSTANTS" "$TERMUX_APP_GRADLE" "$NEW_PACKAGE" <<'PY'
+from pathlib import Path
+import sys
+
+termux_constants = Path(sys.argv[1])
+termux_app_gradle = Path(sys.argv[2])
+new_package = sys.argv[3]
+
+replacements = [
+    (
+        termux_constants,
+        'public static final String TERMUX_PACKAGE_NAME = "com.autopi";',
+        f'public static final String TERMUX_PACKAGE_NAME = "{new_package}";',
+    ),
+    (
+        termux_app_gradle,
+        'manifestPlaceholders.TERMUX_PACKAGE_NAME = "com.autopi"',
+        f'manifestPlaceholders.TERMUX_PACKAGE_NAME = "{new_package}"',
+    ),
+]
+
+for path, old, new in replacements:
+    text = path.read_text(encoding="utf-8")
+    if old not in text:
+        raise SystemExit(f"Could not find expected package assignment in {path}")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+fi
 
 if [[ -n "$NEW_ROOT_DIR" ]]; then
     ROOT_PREFIX="$(normalize_root_prefix "$NEW_ROOT_DIR")"

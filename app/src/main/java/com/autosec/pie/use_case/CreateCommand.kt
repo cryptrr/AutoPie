@@ -23,13 +23,9 @@ class CreateCommand(
     suspend operator fun invoke(newCommand: CommandCreationModel) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
 
-        val shareCommands = jsonService.readSharesConfig()
-        val observerCommands = jsonService.readObserversConfig()
-        val cronCommands = jsonService.readCronConfig()
+        val commands = jsonService.readCommandsConfig()
 
-        if (shareCommands == null) throw ViewModelError.ShareConfigUnavailable
-        if (observerCommands == null) throw ViewModelError.ObserverConfigUnavailable
-        if (cronCommands == null) throw ViewModelError.CronConfigUnavailable
+        if (commands == null) throw ViewModelError.CommandConfigUnavailable
 
 
         val commandObject = JsonObject()
@@ -38,6 +34,7 @@ class CreateCommand(
         commandObject.addProperty("path", newCommand.directory)
         commandObject.addProperty("exec", newCommand.exec)
         commandObject.addProperty("command", newCommand.command)
+        commandObject.addProperty("type", newCommand.selectedCommandType)
 
         val selectorsJson = if(newCommand.selectors.isNotBlank()){
             val jsonArray = JsonArray()
@@ -57,60 +54,21 @@ class CreateCommand(
         storeSecretExtras(newCommand.commandName, newCommand.commandExtras)
         val configExtras = newCommand.commandExtras.map { it.withoutStoredSecretDefault() }
 
+        if(configExtras.isNotEmpty()){
+            commandObject.add("extras", Gson().toJsonTree(configExtras))
+        }
+
         when (newCommand.selectedCommandType) {
-            "SHARE" -> {
-                if(configExtras.isNotEmpty()){
-                    commandObject.add("extras", Gson().toJsonTree(configExtras))
-                }else{
-                    commandObject.remove("extras")
-                }
-
-                shareCommands.add(newCommand.commandName, commandObject)
-            }
             "FILE_OBSERVER" -> {
-
-                if(configExtras.isNotEmpty()){
-                    commandObject.add("extras", Gson().toJsonTree(configExtras))
-                }else{
-                    commandObject.remove("extras")
-                }
-
                 commandObject.add("selectors", selectorsJson)
-
-                observerCommands.add(newCommand.commandName, commandObject)
             }
             "CRON" -> {
-
-                if(configExtras.isNotEmpty()){
-                    commandObject.add("extras", Gson().toJsonTree(configExtras))
-                }else{
-                    commandObject.remove("extras")
-                }
-
                 commandObject.addProperty("cronInterval", newCommand.cronInterval)
-
-                cronCommands.add(newCommand.commandName, commandObject)
             }
         }
 
-        when (newCommand.selectedCommandType) {
-            "SHARE" -> {
-
-                val modifiedJsonContent = gson.toJson(shareCommands)
-
-                jsonService.writeSharesConfig(modifiedJsonContent)
-            }
-            "FILE_OBSERVER" -> {
-                val modifiedJsonContent = gson.toJson(observerCommands)
-
-                jsonService.writeObserversConfig(modifiedJsonContent)
-            }
-            "CRON" -> {
-                val modifiedJsonContent = gson.toJson(cronCommands)
-
-                jsonService.writeCronConfig(modifiedJsonContent)
-            }
-        }
+        commands.add(newCommand.commandName, commandObject)
+        jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
     private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>) {

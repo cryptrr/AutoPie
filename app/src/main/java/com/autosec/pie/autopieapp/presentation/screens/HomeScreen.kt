@@ -16,18 +16,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -53,7 +56,6 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
-import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.LoadingBadge
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.autopieapp.presentation.elements.YesNoDialog
@@ -71,7 +73,10 @@ import timber.log.Timber
 
 
 @Composable
-fun HomeScreen(innerPadding: PaddingValues) {
+fun HomeScreen(
+    innerPadding: PaddingValues,
+    onInstallNewClick: () -> Unit = {}
+) {
 
     val commandsListScreenViewModel: CommandsListScreenViewModel = koinViewModel()
 
@@ -194,12 +199,18 @@ fun HomeScreen(innerPadding: PaddingValues) {
                     }
                 }
 
+                commandsListScreenViewModel.configUnavailable.value -> {
+                    item {
+                        InstallNewCommandsBadge(
+                            onInstallNewClick = onInstallNewClick,
+                            message = "Command config is unavailable"
+                        )
+                    }
+                }
+
                 else -> {
                     item {
-                        EmptyItemsBadge(
-                            icon = Icons.Outlined.Share,
-                            text = "Your commands list is empty"
-                        )
+                        InstallNewCommandsBadge(onInstallNewClick = onInstallNewClick)
                     }
                 }
 
@@ -228,6 +239,42 @@ fun HomeScreen(innerPadding: PaddingValues) {
         )
 
 
+    }
+}
+
+@Composable
+private fun InstallNewCommandsBadge(
+    onInstallNewClick: () -> Unit,
+    message: String? = null
+) {
+    Box(
+        Modifier
+            .height(500.dp)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .size(100.dp),
+                imageVector = Icons.Outlined.InstallDesktop,
+                contentDescription = "Install commands",
+                tint = Color.White.copy(0.4F)
+            )
+            if (message != null) {
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    text = message,
+                    color = Color.White.copy(0.7F),
+                    fontSize = 15.7.sp
+                )
+            }
+            Spacer(Modifier.height(18.dp))
+            Button(onClick = onInstallNewClick, shape = RoundedCornerShape(15.dp)) {
+                Text("Install New")
+            }
+        }
     }
 }
 

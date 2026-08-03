@@ -6,6 +6,7 @@ import codecs
 import hashlib
 import os
 import shutil
+import struct
 import tempfile
 import zipfile
 import zlib
@@ -155,7 +156,12 @@ def rewrite_zip_file(
         with zipfile.ZipFile(path, "r") as zin:
             for info in zin.infolist():
                 data = zin.read(info.filename)
-                updated = data if info.is_dir() else rewrite_binary_bytes(data, rewrites)
+                if info.is_dir():
+                    updated = data
+                elif is_dex_file(data):
+                    updated = rewrite_dex_bytes(data, rewrites)
+                else:
+                    updated = rewrite_binary_bytes(data, rewrites)
                 if updated != data and is_dex_file(updated):
                     updated = repair_dex_header(updated)
                 if updated != data:
@@ -216,6 +222,121 @@ def rewrite_zip_file(
 
 def is_dex_file(data: bytes) -> bool:
     return len(data) >= 32 and data.startswith(b"dex\n")
+
+
+def read_uleb128(data: bytes, offset: int) -> tuple[int, int]:
+    result = 0
+    shift = 0
+    cursor = offset
+    while cursor < len(data):
+        byte = data[cursor]
+        cursor += 1
+        result |= (byte & 0x7F) << shift
+        if byte & 0x80 == 0:
+            return result, cursor
+        shift += 7
+        if shift > 35:
+            break
+    raise ValueError(f"Invalid uleb128 at offset {offset}")
+
+
+def write_uleb128(value: int) -> bytes:
+    encoded = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        if value:
+            encoded.append(byte | 0x80)
+        else:
+            encoded.append(byte)
+            return bytes(encoded)
+
+
+def rewrite_dex_bytes(data: bytes, rewrites: list[tuple[bytes, bytes]]) -> bytes:
+    """
+    Rewrite DEX string_data_item values in place.
+
+    Generic binary rewriting pads shorter replacements with NUL bytes. That is
+    fine for many binaries, but DEX class descriptors like
+    `Lcom/termux/termuxam/Am;` would become `Lcom/pie\\0\\0\\0/termuxam/Am;`
+    for shorter package names and app_process may abort while loading them.
+    DEX strings have a uleb128 UTF-16 length prefix, so update that prefix and
+    leave any unused bytes after the string terminator as unreferenced padding.
+    """
+    if len(data) < 112:
+        return data
+
+    string_ids_size = struct.unpack_from("<I", data, 56)[0]
+    string_ids_off = struct.unpack_from("<I", data, 60)[0]
+    if string_ids_off <= 0 or string_ids_off + string_ids_size * 4 > len(data):
+        return data
+
+    updated = bytearray(data)
+    changed = False
+    byte_rewrites = [
+        (old, new)
+        for old, new in rewrites
+        if b"\x00" not in old and b"\x00" not in new
+    ]
+
+    for index in range(string_ids_size):
+        string_data_off = struct.unpack_from("<I", data, string_ids_off + index * 4)[0]
+        if string_data_off <= 0 or string_data_off >= len(data):
+            continue
+
+        try:
+            old_utf16_size, string_start = read_uleb128(data, string_data_off)
+        except ValueError:
+            continue
+
+        string_end = data.find(b"\x00", string_start)
+        if string_end < 0:
+            continue
+
+        declared_ascii_end = string_start + old_utf16_size
+        repaired_padded_string = False
+        if (
+            declared_ascii_end < len(data)
+            and string_end < declared_ascii_end
+            and any(new in data[string_start:declared_ascii_end] for _, new in byte_rewrites)
+        ):
+            # Repair DEX strings previously processed by fixed-width binary
+            # replacement, for example `Lcom/pie\0\0\0/termuxam/Am;`.
+            original_bytes = data[string_start:declared_ascii_end].replace(b"\x00", b"")
+            old_item_size = declared_ascii_end + 1 - string_data_off
+            repaired_padded_string = True
+        else:
+            original_bytes = data[string_start:string_end]
+            old_item_size = string_end + 1 - string_data_off
+
+        rewritten_bytes = rewrite_text_bytes(original_bytes, byte_rewrites)
+        if rewritten_bytes == original_bytes and not repaired_padded_string:
+            continue
+
+        try:
+            rewritten_text = rewritten_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+
+        new_size_bytes = write_uleb128(len(rewritten_text))
+        new_item_size = len(new_size_bytes) + len(rewritten_bytes) + 1
+        if new_item_size > old_item_size:
+            print(
+                f"[SKIP] Cannot rewrite DEX string {original_bytes!r} "
+                f"to {rewritten_bytes!r} (too long)"
+            )
+            continue
+
+        updated[string_data_off : string_data_off + old_item_size] = b"\x00" * old_item_size
+        cursor = string_data_off
+        updated[cursor : cursor + len(new_size_bytes)] = new_size_bytes
+        cursor += len(new_size_bytes)
+        updated[cursor : cursor + len(rewritten_bytes)] = rewritten_bytes
+        cursor += len(rewritten_bytes)
+        updated[cursor] = 0
+        changed = True
+
+    return bytes(updated) if changed else data
 
 
 def repair_dex_header(data: bytes) -> bytes:
@@ -281,6 +402,8 @@ def rewrite_file(
 
     if is_text:
         updated = rewrite_text_bytes(original, rewrites)
+    elif is_dex_file(original):
+        updated = rewrite_dex_bytes(original, rewrites)
     else:
         updated = rewrite_binary_bytes(original, rewrites)
 

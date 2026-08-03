@@ -916,6 +916,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             return@launch
                         }
 
+                        if (isRealtimeEnabled) {
+                            isLoading = false
+                            return@launch
+                        }
+
                         //Don't close the activity if intent is started with async false.
                         //If intent is started with async true, the closing logic is in the event listener inside DirectCommandActivity
                         if(callerName == "EXTERNAL_APP"){

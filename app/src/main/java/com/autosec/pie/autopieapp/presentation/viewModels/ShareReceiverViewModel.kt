@@ -75,7 +75,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     private val realtimeProcessIds = mutableSetOf<Int>()
     val commandNotFound = mutableStateOf<Boolean?>(false)
 
-    private fun isOpenRealtimeExtrasProcess(processId: Int): Boolean {
+    fun isOpenRealtimeExtrasProcess(processId: Int): Boolean {
         val currentDetails = currentExtrasDetails.value ?: return false
         return processId in realtimeProcessIds ||
             currentDetails.third.processId == processId &&
@@ -85,13 +85,13 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     init {
         try {
             viewModelScope.launch {
-                getSharesConfig()
+                getShareCommands()
 
                 main.eventFlow.collect{
                     when(it){
-                        is ViewModelEvent.SharesConfigChanged -> {
-                            Timber.d("Share config changed: Restarting")
-                            getSharesConfig()
+                        is ViewModelEvent.CommandsConfigChanged -> {
+                            Timber.d("Commands config changed: Reloading share commands")
+                            getShareCommands()
                         }
                         is ViewModelEvent.CommandCompleted -> {
                             if (it.partial) {
@@ -192,9 +192,9 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     }
 
 
-    fun getSharesConfig() {
+    fun getShareCommands() {
 
-        Timber.d("GetSharesConfig")
+        Timber.d("GetShareCommands")
 
         if(!main.storageManagerPermissionGranted){
             main.showError(ViewModelError.StoragePermissionDenied)
@@ -219,8 +219,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             }catch (e: Exception){
                 when(e){
                     is FileNotFoundException -> {}
-                    is ViewModelError.ShareConfigUnavailable -> main.showError(ViewModelError.ShareConfigUnavailable)
-                    is ViewModelError.InvalidShareConfig -> main.showError(ViewModelError.InvalidShareConfig)
+                    is ViewModelError.CommandConfigUnavailable -> main.showError(ViewModelError.CommandConfigUnavailable)
+                    is ViewModelError.InvalidCommandConfig -> main.showError(ViewModelError.InvalidCommandConfig)
                     else -> main.showError(ViewModelError.Unknown)
                 }
             }

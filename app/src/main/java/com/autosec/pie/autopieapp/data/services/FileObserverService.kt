@@ -10,12 +10,14 @@ import android.os.FileObserver
 import androidx.lifecycle.viewModelScope
 import androidx.work.Configuration
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.use_case.AutoPieUseCases
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -45,8 +47,8 @@ class FileObserverJobService : JobService() {
             main.viewModelScope.launch {
                 main.eventFlow.collect{
                     when(it){
-                        is ViewModelEvent.ObserversConfigChanged -> {
-                            Timber.d("Observers config changed: Restarting")
+                        is ViewModelEvent.CommandsConfigChanged -> {
+                            Timber.d("Commands config changed: Restarting observers")
                             restart()
                         }
                         else -> {}
@@ -91,16 +93,16 @@ class FileObserverJobService : JobService() {
                     return@launch
                 }
 
-                val observerConfig = try {
-                    jsonService.readObserversConfig()
+                val commandsConfig = try {
+                    jsonService.readCommandsConfig()
                 }catch (e: Exception){
                     Timber.e(e)
                     return@launch
                 }
 
 
-                if (observerConfig == null) {
-                    Timber.d("Observers file not available")
+                if (commandsConfig == null) {
+                    Timber.d("Commands file not available")
                     main.schedulerConfigAvailable = false
                     return@launch
                 } else {
@@ -108,7 +110,12 @@ class FileObserverJobService : JobService() {
                 }
 
 
-                for (entry in observerConfig.entrySet()) {
+                val observerCommands = Gson().fromJsonObjectEntries(
+                    commandsConfig,
+                    CommandModel::class.java
+                ).values.filterValues { it.type == CommandType.FILE_OBSERVER }
+
+                for (entry in observerCommands.entries) {
                     val key = entry.key
 
                     val commandModel = useCases.getCommandDetails(key)
