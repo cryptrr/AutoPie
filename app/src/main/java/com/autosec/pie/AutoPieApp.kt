@@ -84,7 +84,6 @@ class MyApplication : Application() {
             startScreenStateReceiver()
             startNotificationReceiver()
             AutoPieCoreService.fetchLatestRepositoryJson()
-            checkForUpdates()
             createEmptyCookieFile()
             AutoPieCoreService.setAutoPieGraphics()
         }
@@ -202,5 +201,4 @@ class MyApplication : Application() {
     }
 
 }
-
 
