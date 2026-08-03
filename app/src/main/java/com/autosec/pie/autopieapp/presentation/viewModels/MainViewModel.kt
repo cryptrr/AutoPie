@@ -194,12 +194,16 @@ class MainViewModel(
 
         viewModelScope.launch(dispatchers.io) {
             try {
-                appPreferences.setBool(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED, true)
-
                 if (selectedKeywords.isEmpty()) {
+                    appPreferences.setBool(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED, true)
                     return@launch
                 }
 
+                // Open the visible Termux install session before repository and manifest downloads.
+                // The package install script does not depend on the command catalog being prepared.
+                runKeywordInstallCommands(selectedKeywords)
+
+                appPreferences.setBool(AppPreferences.INIT_PACKAGE_COMMANDS_PROMPT_HANDLED, true)
                 AutoPieCoreService.fetchLatestRepositoryJson()
                 val repoListPath = AutoPieCoreService.repositoryJsonFile().absolutePath
                 val matchingCommands = useCases.getRepoCommandsList(repoListPath)
@@ -214,7 +218,6 @@ class MainViewModel(
                     emitEvent(ViewModelEvent.RefreshCommandsList)
                     emitEvent(ViewModelEvent.CommandsConfigChanged)
                 }
-                runKeywordInstallCommands(selectedKeywords)
             } catch (e: ViewModelError) {
                 showError(e)
             } catch (e: Exception) {

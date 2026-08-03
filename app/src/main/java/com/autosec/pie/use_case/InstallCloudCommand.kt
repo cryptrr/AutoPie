@@ -11,6 +11,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.yaml.snakeyaml.Yaml
 import timber.log.Timber
 import java.net.HttpURLConnection
@@ -26,14 +32,27 @@ class InstallCloudCommand(
     }
 
     suspend fun installAll(commandIds: List<String>, runInstallScripts: Boolean = true) {
-        val resolvedCommands = commandIds
+        val uniqueCommandIds = commandIds
             .map(String::trim)
             .filter(String::isNotBlank)
             .distinct()
-            .map { commandId -> resolveCloudCommand(commandId, includeInstallScript = runInstallScripts) }
 
-        if (resolvedCommands.isEmpty()) {
+        if (uniqueCommandIds.isEmpty()) {
             return
+        }
+
+        val fetchSemaphore = Semaphore(MAX_PARALLEL_COMMAND_FETCHES)
+        val resolvedCommands = coroutineScope {
+            uniqueCommandIds.map { commandId ->
+                async(Dispatchers.IO) {
+                    fetchSemaphore.withPermit {
+                        resolveCloudCommand(
+                            commandId,
+                            includeInstallScript = runInstallScripts
+                        )
+                    }
+                }
+            }.awaitAll()
         }
 
         installResolvedCommands(resolvedCommands)
@@ -345,3 +364,5 @@ internal fun fetchCloudCommandText(url: String): String {
 
 private const val COMMANDS_RAW_BASE =
     "https://raw.githubusercontent.com/cryptrr/autopie-commands/main/commands"
+
+private const val MAX_PARALLEL_COMMAND_FETCHES = 4
