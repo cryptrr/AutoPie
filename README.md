@@ -1,230 +1,451 @@
 # AutoPie
 
-### [Get the APK from here](https://github.com/cryptrr/AutoPie/releases/)
+AutoPie is a command hub and workflow runner for Android. It gives shell commands and Python scripts a friendly UI, runs them inside an embedded Termux environment, and lets you trigger them manually, from Android's share sheet, when files appear, on a schedule, from a home-screen shortcut, or from another app.
 
-### AutoPie includes a Termux-based environment, so you can now install packages from the terminal with `pkg install package-name`.
+### [Download the latest APK](https://github.com/cryptrr/AutoPie/releases/)
 
-## Commands hub where you can create, automate and run commands without using the terminal.
-
-**AutoPie is your own power tool-kit for Android.**
-
+> AutoPie currently supports aarch64/arm64-v8a devices (most newer Android phones).
 
 <div style="display:flex;flex-direction:row;justify-content:space-between">
 <img src="https://github.com/user-attachments/assets/ff9d86db-fc71-45e6-bbe6-9891ab5af35c" alt="AutoPie screenshot" width="47%" height="auto">
 <img src="https://github.com/user-attachments/assets/1e996b5f-02e5-46bd-9ff4-78bb886bd410" alt="AutoPie feature demo" width="47%" height="auto">
 </div>
 
-[<video src="https://cryptrr.github.io/AutoPie/fastlane/metadata/android/en-US/autopie-feature-demo1.mp4" width="47%" height="auto"></video>
-](https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb)
+[<video src="https://cryptrr.github.io/AutoPie/fastlane/metadata/android/en-US/autopie-feature-demo1.mp4" width="47%" height="auto"></video>](https://github.com/user-attachments/assets/4b51312f-fb4a-4d7c-9318-0ffd1aed2dfb)
 
+## What AutoPie supports
 
+- Bash commands, shell scripts, inline Python, Python packages, and Termux packages.
+- Multistage workflows with a persistent shell, per-step working directories and inputs, automatic step-to-step values, and reusable command steps.
+- Share-sheet commands for text, URLs, one or many files, and directories.
+- File observers with regular-expression filename filters.
+- Periodic commands through Android WorkManager.
+- Manual runs from the command hub and pinned home-screen shortcuts.
+- Calls from other Android apps through an explicit intent, with asynchronous or final result reporting.
+- Rich command inputs: strings, booleans, single-select, multi-select, flags, sliders, passwords/secrets, and file pickers.
+- Conditional inputs, persistent internal configuration, environment-backed options, and realtime controls.
+- A searchable command catalog with command documentation, install scripts, versions, and updates.
+- Per-command history, process logs, success/failure notifications, command search, cloning, and editing.
+- A full embedded Termux terminal. Install more software with `pkg` or `pip`.
+- Config storage in shared external storage or AutoPie's private app-data home.
 
 ## Installation
 
-1) Build from source yourself or get the prebuilt APK from the releases section.
-2) Install the APK and accept Play Protect Dialogs if any.
-3) Open AutoPie once and wait for the embedded Termux bootstrap to finish installing.
-4) Grant necessary permissions.
-5) Optional: Disable Battery Optimization for AutoPie.
+1. Download an APK from [Releases](https://github.com/cryptrr/AutoPie/releases/) or build it from source.
+2. Install it and accept any Play Protect prompt.
+3. Open AutoPie and wait for the embedded Termux bootstrap to finish installing.
+4. Grant the requested storage and notification permissions.
+5. If scheduled or background workflows are important, disable battery optimization for AutoPie.
 
+If `pkg install` fails immediately after the first launch, reopen the terminal and give the bootstrap a little more time to finish.
 
-## Usage
+## Quick start
 
-1) Open AutoPie App
-2) There are currently three types of commands. `Share Sheet Commands`, `Folder Observer Commands` and `Cron Commands`.
-3) Add your desired Commands in the AutoPie App by clicking on Add Button or Edit an already existing command.
+1. Open AutoPie and press the add button.
+2. Choose **Share**, **Observer**, or **Cron**.
+3. Give the command a name and enter Bash or Python code.
+4. Optionally choose a working directory and add inputs under **Extras**.
+5. Save the command, then run it from AutoPie or its configured trigger.
 
-## Easiest way to add new packages
-- Open the Terminal inside AutoPie
-- Install Termux packages with `pkg install package-name`
-- Install Python packages with `pip install package-name`
+You can also browse the command catalog to install ready-made commands and their dependencies.
 
+## Command types and triggers
 
+| Type | When it runs | Type-specific configuration |
+| --- | --- | --- |
+| `SHARE` | From AutoPie, Android's share sheet, a pinned shortcut, or another app | Receives text, URLs, files, or directories |
+| `FILE_OBSERVER` | After a new file in the configured directory has finished being written | `selectors`: a list of regexes matched against the filename |
+| `CRON` | Periodically in the background | `cronInterval`: values such as `15m`, `30m`, or `1h` |
 
-## Troubleshooting
-* If `pkg install` fails immediately after installation, open the AutoPie terminal once more and let the bootstrap finish before retrying.
-* Check that the `AutoSec` folder contains `commands.json` for share, observer, and cron command configuration. If not or if your commands list is empty, delete the `AutoSec` folder and reopen the application.
+Android limits periodic work to a minimum interval of 15 minutes. AutoPie raises shorter cron intervals to that minimum. File observers can be disabled globally from Settings.
 
-## Command Format
+The three types live together in `commands.json`. If `type` is omitted, AutoPie treats the entry as a share command.
 
-| PLACEHOLDER        | DESCRIPTION                                                                                     |
-|--------------------|-------------------------------------------------------------------------------------------------|
-| ${INPUT_FILE}      | Use it to pass input file path or url in the command                                            |
-| ${INPUT_FILES}     | If multiple files are needed as input to the command<br/> Example : `magick combine two images` |
-| ${INPUT_FILES_ARR} | Input files as Shell array<br/> Example : `magick "${INPUT_FILES_ARR[@]}"`                      |
-| ${INPUT_URL}       | If the program takes a single URL                                                               |
-| ${INPUT_URLS}      | If the program takes multiple URLs                                                              |
-| ${INPUT_TEXT}      | If program takes raw TEXT as input                                                              |
-| ${FILENAME}        | Filename without path                                                                           |
-| ${DIRECTORY}       | Parent Directory of file                                                                        |
-| ${FILENAME_NO_EXT} | Filename without path and extension                                                             |
-| ${FILE_EXT}        | File extension                                                                                  |
-| ${RAND}            | Random 4 digit number                                                                           |
-| ${HOST}            | URL host (Only available if the input is a URL)                                                 |
+## Command environment
 
-## Example Commands
+AutoPie exposes inputs and extras as environment variables. Use normal shell syntax such as `"$INPUT_FILE"` or `"${QUALITY}"`.
 
-| USE                             | COMMAND                                                          |
-|---------------------------------|------------------------------------------------------------------|
-| Ffmpeg Extract Audio from Video | `ffmpeg -i ${INPUT_FILE} -b:a 192K -vn ${INPUT_FILE}.mp3`        |
-| ImageMagick combine horizontal  | `magick ${INPUT_FILES} +append ${INPUT_FILE}-horiz-${RAND}.jpeg` |
+| Variable | Value |
+| --- | --- |
+| `INPUT` | The raw active input. In a multistage workflow, the previous step's exported `OUTPUT` becomes the next step's `INPUT`. |
+| `INPUT_TEXT` | Shared or manually entered text. |
+| `INPUT_FILE` | A single file path, directory path, or first URL, depending on the input. |
+| `INPUT_FILES` | Multiple file paths separated by newlines. |
+| `INPUT_FILES_ARR` | `INPUT_FILES` converted to a Bash array; use `"${INPUT_FILES_ARR[@]}"`. |
+| `INPUT_URL` | A single detected HTTP(S) URL. |
+| `INPUT_URLS` | All detected URLs in shared text. |
+| `FILENAME` | Input filename without its parent path. |
+| `FILENAME_NO_EXT` | Filename without its parent path or extension. |
+| `FILE_EXT` | File extension without the leading dot. |
+| `DIRECTORY` | Parent directory of the input file. |
+| `HOST` | Hostname for a URL input. |
+| `RAND` | A random four-digit number for collision-resistant output names. |
 
+Availability depends on the kind of input. Extras are exported under their configured uppercase `name` as well.
 
-## Start AutoPie Commands from your app.
+Examples:
 
-AutoPie supports starting **command dialogs** from other apps through intents. Other apps **cannot** directly run commands without user prompt.
+| Use | Command |
+| --- | --- |
+| Extract audio from a video | `ffmpeg -i "$INPUT_FILE" -b:a 192K -vn "$DIRECTORY/$FILENAME_NO_EXT.mp3"` |
+| Combine images horizontally | `magick "${INPUT_FILES_ARR[@]}" +append "$DIRECTORY/$FILENAME_NO_EXT-horiz-$RAND.jpeg"` |
+| Run inline Python | `#@PYTHON` followed by Python source on the next line |
 
-Extend the functionality of your apps by adding `RunCommandButton()`.
+## `commands.json`
+
+AutoPie stores user and catalog commands in a single JSON object. Each top-level key is the command's display name.
+
+```json
+{
+  "Convert image to WebP": {
+    "id": "local.convert-image-webp",
+    "type": "SHARE",
+    "path": "Pictures",
+    "command": "magick \"$INPUT_FILE\" -quality \"$QUALITY\" \"$DIRECTORY/$FILENAME_NO_EXT.webp\"",
+    "extras": [
+      {
+        "id": "quality",
+        "name": "QUALITY",
+        "type": "SLIDER",
+        "default": "1,85,100",
+        "description": "WebP quality",
+        "required": true,
+        "flags": ["--int"]
+      }
+    ]
+  }
+}
+```
+
+Common command fields:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable ID used by command references and Android intents. The top-level name is used as a fallback. |
+| `type` | `SHARE`, `FILE_OBSERVER`, or `CRON`. |
+| `path` | Working directory, normally relative to shared storage. |
+| `command` | Bash command or inline script. |
+| `selectors` | Regex list for a file observer. |
+| `cronInterval` | Periodic interval for a cron command. |
+| `flags` | Command-level behavior flags. |
+| `extras` | Inputs exported as environment variables. |
+| `multiStage` / `steps` | Enables and defines a multistage workflow. |
+| `version` | Installed catalog-command version used for update detection. |
+
+The legacy `exec` field is still accepted for packaged commands, but new shell commands can normally put the complete invocation in `command`.
+
+You can edit `commands.json` directly from **Settings → Edit Config File**. AutoPie skips individual incompatible entries instead of hiding the rest of the valid configuration.
+
+## Multistage workflows
+
+Set `multiStage` to `true` and provide a `steps` array. Steps execute in order in the same shell and with the same process ID, so exported variables and other shell state survive between steps.
+
+Use a `SHARE` command for a multistage workflow. AutoPie's command hub, share sheet, shortcuts, and direct-intent runner drive the step transitions and any per-step UI.
+
+```json
+{
+  "Prepare and compress audio": {
+    "id": "local.prepare-compress-audio",
+    "type": "SHARE",
+    "multiStage": true,
+    "flags": ["--show-loading-screen"],
+    "steps": [
+      {
+        "id": "prepare",
+        "path": "Music",
+        "command": "ffmpeg -y -i \"$INPUT_FILE\" \"$DIRECTORY/$FILENAME_NO_EXT.wav\"\nexport OUTPUT=\"$DIRECTORY/$FILENAME_NO_EXT.wav\""
+      },
+      {
+        "id": "compress",
+        "path": "Music",
+        "command": "ffmpeg -y -i \"$INPUT\" -b:a \"$BITRATE\" \"$DIRECTORY/$FILENAME_NO_EXT-compressed.mp3\"",
+        "extras": [
+          {
+            "id": "bitrate",
+            "name": "BITRATE",
+            "type": "SELECTABLE",
+            "default": "192k",
+            "selectableOptions": {
+              "Small (128 kbps)": "128k",
+              "Balanced (192 kbps)": "192k",
+              "High (320 kbps)": "320k"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Workflow behavior:
+
+- If a step succeeds, AutoPie advances to the next step. A failed step stops the workflow.
+- `export OUTPUT=...` in one step passes that value to the next step as `INPUT`. AutoPie then clears `OUTPUT`, ready for the next handoff.
+- Other exported variables remain available because the shell stays alive.
+- A step with visible extras pauses the workflow and shows that step's input sheet. A step without visible extras continues automatically.
+- Every step may define its own `id`, `path`, `command`, `flags`, and `extras`.
+- An omitted step ID falls back to its zero-based position. At runtime, step IDs are namespaced under the parent command.
+- Parent command flags apply to the first step; later steps use their own flags.
+- Dismissing a workflow input sheet or cancelling its process stops the persistent shell.
+
+### Reuse an installed command as a step
+
+A step can contain `commandId` instead of repeating a command:
+
+```json
+{
+  "Reuse installed commands": {
+    "id": "local.reuse-demo",
+    "type": "SHARE",
+    "multiStage": true,
+    "steps": [
+      { "commandId": "namespace.first-command" },
+      { "commandId": "namespace.second-command" }
+    ]
+  }
+}
+```
+
+`commandId` must exactly match the stable ID of an installed share command. AutoPie resolves that command's `path`, `command`, `flags`, and `extras` before the workflow starts. A missing reference fails the workflow with a clear error instead of running a partial pipeline.
+
+## Extras and custom command UIs
+
+An extra becomes an environment variable. For example, an extra named `QUALITY` is available as `$QUALITY` in the command.
+
+| Extra type | UI and exported value |
+| --- | --- |
+| `STRING` | Text input; can also become a password or file picker. |
+| `BOOLEAN` | `true` or `false`. |
+| `SELECTABLE` | One value from a label-to-value map. |
+| `MULTI_SELECTABLE` | Multiple values joined with newlines. |
+| `FLAG` | Exports its `default` value when checked, otherwise an empty string. |
+| `SLIDER` | Numeric value. Configure `default` as `minimum,initial,maximum`. |
+
+Useful extra fields:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable identifier used by visibility rules and saved values. |
+| `name` | Environment-variable name. Uppercase shell names are recommended. |
+| `default` | Initial/exported value. |
+| `defaultBoolean` | Initial value for a boolean extra. |
+| `required` | Makes an empty string extra open the input sheet instead of being skipped by a quick run. |
+| `description` | Help text shown below the input. |
+| `selectableOptions` | Object of display labels to exported values. A legacy string array is also accepted. |
+| `flags` | Input behavior such as secrets, pickers, layout, integer sliders, or realtime runs. |
+| `visibleWhen` | Condition that controls whether the input is shown. |
+
+Extra flags:
+
+| Flag | Behavior |
+| --- | --- |
+| `--password` / `--secret` | Masks the input and stores its value in AutoPie's private encrypted preferences instead of writing it into `commands.json`. |
+| `--internal-config` | Treats the value as persistent setup rather than an input that must be shown on every run. |
+| `--file-picker` | Adds a single-file picker to a string input. Names ending in `FILE` also get this behavior. |
+| `--multi-file-picker` | Adds a multi-file picker. Names ending in `FILES` also get this behavior. |
+| `--mime-type=audio/*` | Restricts a file picker; the default is `*/*`. |
+| `--int` | Makes a slider use integer values. |
+| `--large` | Forces the input to use the full available row width. |
+| `--realtime` | Re-runs the current command when this extra changes. |
+
+String extras ending in `FILE`, `FILES`, or `FOLDER` are resolved to usable paths when relative values are supplied.
+
+### Conditional extras
+
+Use `visibleWhen` to build dependent forms. A simple rule references another extra by `extraId`:
+
+```json
+{
+  "id": "custom_path",
+  "name": "CUSTOM_PATH",
+  "type": "STRING",
+  "default": "",
+  "required": false,
+  "visibleWhen": {
+    "extraId": "destination",
+    "equals": "custom"
+  }
+}
+```
+
+Supported conditions are `equals`, `notEquals`, `startsWith`, `endsWith`, `contains`, `matches` (regex), `gt`, `gte`, `lt`, `lte`, `oneOf`, `exists`, and `isEmpty`. Compose rules with `all`, `or`/`any`, and `not`.
+
+### Values generated by an earlier step
+
+For `STRING`, `BOOLEAN`, `SELECTABLE`, `MULTI_SELECTABLE`, and `SLIDER` inputs, a default or sole selectable value in the form `$$VARIABLE_NAME` is read from the workflow's live shell. This is useful when an earlier step discovers the valid choices or slider range.
+
+For example, a preparation step can run:
+
+```sh
+export AUDIO_FORMATS='MP3=mp3,Opus=opus,FLAC=flac'
+export VOLUME_RANGE='0,50,100'
+```
+
+Then a later selectable can use `{"From previous step": "$$AUDIO_FORMATS"}`, or a slider can set `"default": "$$VOLUME_RANGE"`.
+
+### Realtime commands
+
+Add `--realtime` to a command's top-level `flags` to re-run it whenever its visible inputs change, or add the flag to selected extras to trigger only on those values. Changes are debounced briefly, notifications are suppressed while adjusting, and the same shell/process is kept alive until the input sheet closes.
+
+## Command and script flags
+
+Command-level flags:
+
+| Flag | Behavior |
+| --- | --- |
+| `--show-loading-screen` | Opens AutoPie's loading screen while the command runs. |
+| `--realtime` | Re-runs as inputs change in the extras sheet. |
+
+Script headers must appear at the beginning of `command`; multiple headers can be combined:
+
+| Header | Behavior |
+| --- | --- |
+| `#@PYTHON` | Treats the remaining command body as inline Python. |
+| `#@INTERACTIVE` | Opens a regular single-stage command in the interactive Termux shell. This is also available as **Debug Mode** in command details. |
+| `#@OPEN_LOGS` | Opens the live output viewer when execution starts. |
+| `#@SHELL` | Explicitly labels the command as shell code for command grouping and display. |
+
+Example:
+
+```python
+#@PYTHON
+#@OPEN_LOGS
+import os
+
+print(f"Received: {os.environ.get('INPUT', '')}")
+```
+
+Interactive mode is for single-stage commands; multistage workflows use their own persistent background shell.
+
+## Command catalog and packages
+
+The **Commands** catalog is backed by [autopie-commands](https://github.com/cryptrr/autopie-commands). You can search by name, ID, summary, or tag; read a command's README and changelog; install it; and update it when a newer catalog version is available. A catalog command can include an install script for its Termux or Python dependencies.
+
+The embedded terminal is still the fastest way to install arbitrary tools:
+
+```sh
+pkg update
+pkg install ffmpeg imagemagick
+pip install yt-dlp
+```
+
+The bootstrap already contains Python, pip, binutils, OpenSSH, and sshpass.
+
+## Run AutoPie commands from another app
+
+Other apps can open AutoPie's command dialog with an explicit intent. The user is always shown AutoPie's UI before an external app can run a command.
 
 ```kt
 @Composable
-fun RunCommandButton(){
+fun RunAutoPieCommandButton() {
     val context = LocalContext.current
+
     val intent = Intent(Intent.ACTION_MAIN).apply {
-        setClassName(context, "com.autopi" + ".DirectCommandActivity")
         component = ComponentName(
-            "com.autopi", // target app package
-            "com.autopi.DirectCommandActivity" // full class name
+            "com.autopi",
+            "com.autopi.DirectCommandActivity"
         )
         putExtra("commandId", "autopie.yt-dlp-downloader")
-        putExtra("input", "https://www.youtube.com/watch?v=7N74-JBHk3g")
+        putExtra("input", "https://example.com/video")
+        putExtra("async", true)
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
     }
 
     Button(onClick = {
-        try {
-            context.startActivity(intent)
-        }catch (e: Exception){
-            Log.e("ERROR",e.toString())
-        }
+        runCatching { context.startActivity(intent) }
+            .onFailure { Log.e("AutoPie", "Unable to open AutoPie", it) }
     }) {
-        Text("Run Command")
+        Text("Run with AutoPie")
     }
 }
 ```
 
-###  This configuration enables you to automatically convert each screenshot you take into webp.
+Intent extras:
+
+| Extra | Meaning |
+| --- | --- |
+| `commandId` | Required command ID or display name. |
+| `input` | Optional text or URL input. |
+| `async` | Defaults to `true`. A regular command can return as soon as it starts; `false` waits for completion. Multistage workflows return after their final step. |
+| `processId` | Optional non-negative process ID supplied by the caller. |
+
+When launched for a result, AutoPie returns `status` (`running`, `ok`, or `failed`), `processId`, and a `logFile` content URI. Use Android's Activity Result API and grant/read URI access as appropriate for your app.
+
+You can also open a command's details in AutoPie and choose **Add to Home Screen** to create a launcher shortcut without writing any Android code.
+
+## File observer example
+
+The following kind of observer can automatically convert every new screenshot to WebP. Set the observer directory to your screenshots folder and use a selector such as `^.*\.png$`.
 
 <div style="display:flex; flex-direction:row; width:100%; justify-content:center; align-items:center">
-    <img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" style="width:55%; height:auto">
+<img src="https://github.com/user-attachments/assets/af5a7cb2-0953-4886-97fb-d64a06289677" alt="AutoPie file observer example command" style="width:55%; height:auto">
 </div>
 
-## Custom Defined Command Arguments for Customization.
+## Configuration, logs, and troubleshooting
 
-With AutoPie, you can define custom arguments called (extras) for commands.
+AutoPie can store `AutoSec` in either shared external storage or its private app-data home. Change the location in **Settings → AutoPie Config Path**; AutoPie moves the directory when possible. External storage survives an uninstall but is less private. App-data storage is more private but is normally removed with the app.
 
-This will show a card where you can input details to customize the behaviour of the command.
+Important files and directories inside `AutoSec` include:
 
-For Example,
+- `commands.json` — all share, observer, cron, and multistage command definitions.
+- `bin/` — packaged command executables.
+- `logs/autopie.log` — optional application file log.
 
-Defining extra items such as options for codecs etc will look like this.
+Useful Settings actions include opening the Termux terminal, editing `commands.json` in `nano`, enabling file logging, opening logs with `less`, turning file observers on or off, and clearing the packaged-command cache.
 
+Troubleshooting:
 
-<div style="display:flex;flex-direction:row;justify-content:space-between">
-<img src="https://github.com/user-attachments/assets/cb7c3010-5270-49a8-9854-1f19b17a6a27" alt="AutoPie extras config" width="47%" height="auto">
-<img src="https://github.com/user-attachments/assets/25e2d5a9-bf40-4c23-85ae-8c4dfebe917a" alt="AutoPie extras how to" width="47%" height="auto">
+- If the command list is empty, open Settings and verify the active config path and `commands.json`.
+- If `commands.json` is missing or the initial config is unusable, move the current `AutoSec` directory somewhere safe and reopen AutoPie so it can initialize a fresh one. Restore custom entries after comparing the files.
+- AutoPie does not overwrite an existing `AutoSec` directory during app updates, which protects custom commands but can leave bundled package data behind. See [README-updates.md](README-updates.md) before replacing package data.
+- Enable **File Logger** and inspect `AutoSec/logs/autopie.log` when a service, observer, or scheduled command does not start.
+- Each command also has a **History** view, and process notifications link to command output logs.
+- Android battery restrictions can delay cron commands and stop long-running background work; disable battery optimization if necessary.
 
-</div>
+## Build from source
 
-## Commands and Package Repository
+AutoPie requires JDK 17 and an Android SDK. Open the project in Android Studio for normal development builds, or use the included scripts to prepare the patched Termux modules and bootstrap.
 
-- A package manager powered by the embedded Termux environment.
-
-- A repository where users can search and add pre-made AutoPie command snippets is in the works.
-
-## New MCP Server
-AutoPie now comes with your own MCP server that you can use to automate your phone with AI Tools.
-
-The server is easily extensible by adding your scripts to the /ExternalStorage/AutoSec/mcp_modules folder.
-
-The scripts inside this folder will be included as tools in the MCP server.
-
-You can add any kind of functionality on your phone with this by just writing a Python script.
-
-The MCP tool scripts should be in this format.
-
-```py
-import os
-from typing import Dict, Any
-from pydantic import BaseModel
-
-class CreateFileInput(BaseModel):
-    filepath: str
-    content: str
-
-
-class MCPTool:
-    path = "/create_file"
-    name = "create_text_file"
-    methods=["POST"]
-    
-    async def run(self, input: CreateFileInput) -> Dict[str, Any]:
-        """Creates a text file with the specified content."""
-        try:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(input.filepath)), exist_ok=True)
-            
-            # Write content to file
-            with open(input.filepath, "w") as f:
-                f.write(input.content)
-            
-            return {
-                "status": "success",
-                "message": f"File '{input.filepath}' created successfully"
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Failed to create file: {str(e)}"
-            }
-
-```
-
-
-
-## Build Instructions
-
-You can build the app by opening the project with Android Studio and running the
-normal Gradle build tasks. For a clean command-line build that prepares the
-embedded Termux source and bootstrap, use `build_with_termux.sh`.
-
-The Termux modules are generated rather than stored as a git submodule. To
-clone the latest official Termux source, apply the AutoPie patch series, and
-build a debug APK, run:
+To clone the latest official Termux source, apply AutoPie's patches, prepare the embedded bootstrap, and build a debug APK:
 
 ```sh
 ./build_with_termux.sh
 ```
 
-Pass Gradle tasks as arguments for another build, for example
-`./build_with_termux.sh :app:assembleRelease`. Set `TERMUX_REF` to pin a
-specific upstream tag or commit.
+Pass Gradle tasks to make another build, for example:
 
-The build script also downloads Termux's pinned bootstrap, injects AutoPie's
-required packages from termux repo, patches package paths for `com.autopi`, and writes the final
-bootstrap archive to `app/src/main/assets/bootstrap-aarch64.zip`.
+```sh
+./build_with_termux.sh :app:assembleRelease
+```
 
-Run `./scripts/prepare-termux-app.sh` when you only want to refresh the patched
-Termux checkout for Android Studio. Run `./scripts/prepare-termux-bootstrap.sh`
-when you only want to regenerate the bootstrap asset.
+Set `TERMUX_REF` to pin an upstream Termux tag or commit.
 
-The current bootstrap includes `python`, `pip`, `binutils`, `openssh`, and
-`sshpass` so package installation works from a fresh app install without Docker
-or the old Python/busybox build scripts.
+The build script downloads Termux's pinned bootstrap, injects AutoPie's required packages from the Termux repository, rewrites package paths for `com.autopi`, and writes `app/src/main/assets/bootstrap-aarch64.zip`.
 
-To build that bootstrap entirely from source with the native
-`termux-generator` pipeline, run `./build_from_source.sh` on a compatible
-Ubuntu x86_64 host. The script installs the generated archive at
-`app/src/main/assets/bootstrap-aarch64.zip`; afterward, use the normal Android
-Studio or Gradle build.
+For individual preparation stages:
 
+```sh
+./scripts/prepare-termux-app.sh
+./scripts/prepare-termux-bootstrap.sh
+```
+
+To build the bootstrap entirely from source with the native `termux-generator` pipeline, run the following on a compatible Ubuntu x86_64 host:
+
+```sh
+./build_from_source.sh
+```
+
+It installs the generated archive at `app/src/main/assets/bootstrap-aarch64.zip`; afterward, build normally in Android Studio or with Gradle.
 
 ## Support
-* Supports only aarch64/arm-v8 as of now. It should run on most newer phones.
 
+- [GitHub issues](https://github.com/cryptrr/AutoPie/issues)
+- [Discord](https://discord.gg/rsZ3Sr42Am)
 
-## Thanks To
+## Thanks
 
-[Jared Rummler](https://github.com/jaredrummler)
+- [Jared Rummler](https://github.com/jaredrummler)
+- [Termux](https://github.com/termux)
 
-[Termux](https://github.com/termux)
+AutoPie is licensed under the [Apache License 2.0](LICENSE).
