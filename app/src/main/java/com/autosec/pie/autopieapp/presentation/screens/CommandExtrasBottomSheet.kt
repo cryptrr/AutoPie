@@ -250,12 +250,11 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     val viewModel: ShareReceiverViewModel = koinViewModel()
     val secretsService: SecretsService by KoinJavaComponent.inject(SecretsService::class.java)
 
-    val inputFiles by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputFiles)
-    }
-    val inputText by remember {
-        mutableStateOf(viewModel.currentExtrasDetails.value?.third?.inputText)
-    }
+    // Keep these tied to the active invocation. Remembering the first values caused a
+    // reused sheet to retain the null inputs from an earlier non-share invocation.
+    val currentInputs = viewModel.currentExtrasDetails.value?.third
+    val inputFiles = currentInputs?.inputFiles
+    val inputText = currentInputs?.inputText
 
     val extraInput = remember {
         mutableStateOf("")
