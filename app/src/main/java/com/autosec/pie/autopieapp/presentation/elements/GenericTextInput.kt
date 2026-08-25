@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilePresent
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -232,6 +233,41 @@ fun SingleFilePicker(
         Icon(
             imageVector = Icons.Rounded.FilePresent,
             contentDescription = "File Picker",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(25.dp)
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+fun FolderPicker(
+    onFolderPicked: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        Timber.tag("UriResolver").d(
+            "Folder picker returned URI: uri=%s",
+            uri
+        )
+        uri?.let {
+            val path = Utils.getAbsolutePathFromUri2(context, uri)
+
+            Timber.tag("UriResolver").d("Folder picker resolved URI: uri=%s path=%s", uri, path)
+            path?.let(onFolderPicked)
+                ?: Timber.tag("UriResolver").w("Folder picker dropped unresolved URI: %s", uri)
+        } ?: Timber.tag("UriResolver").w("Folder picker was dismissed without a URI")
+    }
+
+    IconButton(onClick = {
+        Timber.tag("UriResolver").d("Launching folder picker")
+        launcher.launch(null)
+    }) {
+        Icon(
+            imageVector = Icons.Rounded.Folder,
+            contentDescription = "Folder Picker",
             tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(25.dp)
         )

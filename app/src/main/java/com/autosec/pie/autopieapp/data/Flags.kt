@@ -6,6 +6,7 @@ enum class ExtraFlags(val value: String) {
     SECRET("--secret"),
     MULTI_FILE_PICKER("--multi-file-picker"),
     FILE_PICKER("--file-picker"),
+    FOLDER_PICKER("--folder-picker"),
     MIME_TYPE("--mime-type"),
     INT("--int"),
     SMALL("--small"),

@@ -229,7 +229,11 @@ class Utils{
 
             if ("content".equals(uri.scheme, ignoreCase = true)) {
                 if (isExternalStorageDocument(uri)) {
-                    val docId = DocumentsContract.getDocumentId(uri)
+                    val docId = if (DocumentsContract.isTreeUri(uri)) {
+                        DocumentsContract.getTreeDocumentId(uri)
+                    } else {
+                        DocumentsContract.getDocumentId(uri)
+                    }
                     val split = docId.split(":", limit = 2)
                     val type = split[0]
                     val relativePath = split.getOrNull(1)

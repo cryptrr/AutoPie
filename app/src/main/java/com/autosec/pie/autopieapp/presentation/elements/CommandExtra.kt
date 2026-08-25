@@ -51,6 +51,7 @@ import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.flagValue
+import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.SecretsService
@@ -285,7 +286,21 @@ fun CommandExtraInputElement(
                     "",
                     placeholder = "DEFAULT",
                     isError = default.value.isBlank(),
-                    trailingIcon = if(name.value.endsWith("FILE")){
+                    trailingIcon = if(
+                        command.flags.hasFlag(ExtraFlags.FOLDER_PICKER) ||
+                        name.value.endsWith("FOLDER")
+                    ) {
+                        {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                FolderPicker {
+                                    default.value = it
+                                }
+                            }
+                        }
+                    } else if(
+                        command.flags.hasFlag(ExtraFlags.FILE_PICKER) ||
+                        name.value.endsWith("FILE")
+                    ){
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                 SingleFilePicker(
@@ -296,7 +311,10 @@ fun CommandExtraInputElement(
                                 }
                             }
                         }
-                    }else if(name.value.endsWith("FILES")) {
+                    }else if(
+                        command.flags.hasFlag(ExtraFlags.MULTI_FILE_PICKER) ||
+                        name.value.endsWith("FILES")
+                    ) {
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                 MultiFilePicker(

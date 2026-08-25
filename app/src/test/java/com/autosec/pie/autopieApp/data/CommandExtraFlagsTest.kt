@@ -103,6 +103,12 @@ class CommandExtraFlagsTest {
     }
 
     @Test
+    fun `folder picker flag is detected`() {
+        assertTrue(listOf("--folder-picker").hasFlag(ExtraFlags.FOLDER_PICKER))
+        assertFalse(emptyList<String>().hasFlag(ExtraFlags.FOLDER_PICKER))
+    }
+
+    @Test
     fun `extra size flags are detected`() {
         val flags = listOf("--small", "--large")
 

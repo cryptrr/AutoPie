@@ -85,6 +85,7 @@ import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.FlagSelector
+import com.autopi.autopieapp.presentation.elements.FolderPicker
 import com.autopi.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autopi.autopieapp.presentation.elements.MultiFilePicker
 import com.autopi.autopieapp.presentation.elements.MultiOptionSelector
@@ -451,6 +452,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val useSingleFilePicker = remember(extra.name, extra.flags) {
                                 extra.flags.hasFlag(ExtraFlags.FILE_PICKER) || extra.name.endsWith("FILE")
                             }
+                            val useFolderPicker = remember(extra.name, extra.flags) {
+                                extra.flags.hasFlag(ExtraFlags.FOLDER_PICKER) || extra.name.endsWith("FOLDER")
+                            }
                             val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
                             val displayedDefault = remember(command.id, command.name, extra.id, extra.default) {
@@ -504,7 +508,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     text = textValue,
                                     title = extra.name,
                                     subtitle = extra.description,
-                                    trailingIcon = if(useMultiFilePicker){
+                                    trailingIcon = if(useFolderPicker){
+                                        {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                                FolderPicker {
+                                                    textValue.value = it
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else if(useMultiFilePicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                                 MultiFilePicker(
