@@ -141,6 +141,7 @@ class ProcessManagerService(
                     }
 
                     is ViewModelEvent.CommandCompleted -> {
+                        LoadingActivity.dismiss(it.processId)
                         try {
                             //Add it to the success list
                             successProcessIds = successProcessIds + it.processId
@@ -149,12 +150,16 @@ class ProcessManagerService(
                         }
                     }
                     is ViewModelEvent.CommandFailed -> {
+                        LoadingActivity.dismiss(it.processId)
                         try {
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
                         }catch (e: Exception){
                             Timber.e(e)
                         }
+                    }
+                    is ViewModelEvent.CommandStoppedByUser -> {
+                        LoadingActivity.dismiss(it.processId)
                     }
 
                     else -> {}
@@ -553,7 +558,7 @@ class ProcessManagerService(
             }
 
             if (commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN)) {
-                LoadingActivity.start(activity)
+                LoadingActivity.start(activity, processId)
             }
 
             val shell = getOrCreateShell(processId)
