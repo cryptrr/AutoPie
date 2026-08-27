@@ -48,7 +48,8 @@ class ProcessManagerScriptTest {
             processId = 42,
             cacheDir = cacheDir,
             usePython = true,
-            isShellScript = false
+            isShellScript = false,
+            hasInputFiles = true
         )
 
         assertEquals(
@@ -82,7 +83,8 @@ class ProcessManagerScriptTest {
             processId = 99,
             cacheDir = File("/tmp"),
             usePython = true,
-            isShellScript = false
+            isShellScript = false,
+            hasInputFiles = false
         )
 
         assertEquals(
@@ -108,7 +110,8 @@ class ProcessManagerScriptTest {
             processId = 100,
             cacheDir = File("/tmp"),
             usePython = false,
-            isShellScript = true
+            isShellScript = true,
+            hasInputFiles = false
         )
 
         assertEquals(
@@ -134,7 +137,8 @@ class ProcessManagerScriptTest {
             processId = 101,
             cacheDir = File("/tmp"),
             usePython = false,
-            isShellScript = false
+            isShellScript = false,
+            hasInputFiles = false
         )
 
         assertEquals(
@@ -144,7 +148,6 @@ class ProcessManagerScriptTest {
                     unset OUTPUT
                 fi
                 set -x
-                readarray -t INPUT_FILES_ARR <<< "${'$'}INPUT_FILES"
                 echo value
                 step_status=${'$'}?
                 set +x

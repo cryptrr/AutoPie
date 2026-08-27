@@ -492,6 +492,12 @@ class ProcessManagerService(
         try {
             //checkForUnsafeCommands(commandObject, command)
 
+            val commandEnvironment = getEnvsFromCommand(
+                inputParsedData,
+                commandExtraInputs,
+                commandObject
+            )
+
             val logFile = File(activity.cacheDir, "${processId}.log")
             logFile.createNewFile()
 
@@ -505,7 +511,8 @@ class ProcessManagerService(
                 processId = processId,
                 cacheDir = activity.cacheDir,
                 usePython = usePython,
-                isShellScript = isShellScript
+                isShellScript = isShellScript,
+                hasInputFiles = !commandEnvironment["INPUT_FILES"].isNullOrBlank()
             )
             val fullCommand = scriptPlan.fullCommand
 
@@ -532,11 +539,6 @@ class ProcessManagerService(
 
             Timber.d("Received processId in Command Start: $processId")
 
-            val commandEnvironment = getEnvsFromCommand(
-                inputParsedData,
-                commandExtraInputs,
-                commandObject
-            )
             val exportResult = shell.run(
                 commandEnvironment.toShellExportCommands(),
                 Shell.Command.Config.silent()
@@ -628,8 +630,9 @@ class ProcessManagerService(
                     "export $key=${value.shellExportValue()}\n"
                 )
             }
-            //TODO: Do this on condition.
-            scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            if (!envs["INPUT_FILES"].isNullOrBlank()) {
+                scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            }
 
             if (usePython && Utils.isPythonScript(commandObject.command)) {
                 val pythonScriptFile = File(activity.cacheDir, "${processId}.py")
@@ -1048,7 +1051,8 @@ internal fun buildCommandScript(
     processId: Int,
     cacheDir: File,
     usePython: Boolean,
-    isShellScript: Boolean
+    isShellScript: Boolean,
+    hasInputFiles: Boolean
 ): CommandScriptPlan {
     val pythonScriptFile = File(cacheDir, "${processId}.py")
     val pythonScript = if (usePython && Utils.isPythonScript(commandObject.command)) {
@@ -1073,7 +1077,9 @@ internal fun buildCommandScript(
         fullCommand = fullCommand,
         shellScript = buildString {
             append(commandScriptPreamble(commandObject.multiStage == true))
-            append("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            if (hasInputFiles) {
+                append("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
+            }
             append(fullCommand)
             if (commandObject.multiStage == true) {
                 append("\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n")
