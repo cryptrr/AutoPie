@@ -407,6 +407,53 @@ class CommandTests : KoinTest {
     }
 
     @Test
+    fun `raw json adds commands keyed by name`() = runTest {
+        val jsonService = FakeJSONService()
+        val createCommand = CreateCommand(jsonService)
+
+        createCommand.fromRawJson(
+            """
+            {
+              "First raw command": {"command": "echo first", "type": "SHARE"},
+              "Second raw command": {}
+            }
+            """.trimIndent()
+        )
+
+        val commands = jsonService.readCommandsConfig()!!
+        assertEquals("echo first", commands.getAsJsonObject("First raw command").get("command").asString)
+        assertTrue(commands.get("Second raw command").isJsonObject)
+        assertEquals(4, commands.size())
+    }
+
+    @Test
+    fun `raw json replaces an existing command with the same key`() = runTest {
+        val jsonService = FakeJSONService()
+        val createCommand = CreateCommand(jsonService)
+
+        createCommand.fromRawJson(
+            """{"Extract Audio": {"command": "echo replacement", "type": "SHARE"}}"""
+        )
+
+        val command = jsonService.readCommandsConfig()!!.getAsJsonObject("Extract Audio")
+        assertEquals("echo replacement", command.get("command").asString)
+        assertEquals(2, jsonService.readCommandsConfig()!!.size())
+    }
+
+    @Test
+    fun `raw json rejects command values that are not objects without writing`() = runTest {
+        val jsonService = FakeJSONService()
+        val original = jsonService.getRawStorageContent()
+        val createCommand = CreateCommand(jsonService)
+
+        assertThrows(ViewModelError.InvalidRawCommandJson::class.java) {
+            runBlocking { createCommand.fromRawJson("""{"Broken": "echo nope"}""") }
+        }
+
+        assertEquals(original, jsonService.getRawStorageContent())
+    }
+
+    @Test
     fun `get a command - success`() = runTest {
 
         val jsonService = FakeJSONService()

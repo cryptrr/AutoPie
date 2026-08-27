@@ -14,6 +14,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import timber.log.Timber
 
 class CreateCommand(
@@ -68,6 +69,45 @@ class CreateCommand(
         }
 
         commands.add(newCommand.commandName, commandObject)
+        jsonService.writeCommandsConfig(gson.toJson(commands))
+    }
+
+    suspend fun fromRawJson(rawJson: String) {
+        val rawCommands = try {
+            JsonParser.parseString(rawJson)
+        } catch (_: Exception) {
+            throw ViewModelError.InvalidRawCommandJson("Enter valid JSON.")
+        }
+
+        if (!rawCommands.isJsonObject) {
+            throw ViewModelError.InvalidRawCommandJson(
+                "The top-level value must be an object, for example {\"Key\": {}}."
+            )
+        }
+
+        val rawCommandsObject = rawCommands.asJsonObject
+        if (rawCommandsObject.size() == 0) {
+            throw ViewModelError.InvalidRawCommandJson("Add at least one command.")
+        }
+
+        rawCommandsObject.entrySet().forEach { (name, command) ->
+            if (name.isBlank()) {
+                throw ViewModelError.InvalidRawCommandJson("Command names cannot be blank.")
+            }
+            if (!command.isJsonObject) {
+                throw ViewModelError.InvalidRawCommandJson(
+                    "The value for '$name' must be a JSON object."
+                )
+            }
+        }
+
+        val commands = jsonService.readCommandsConfig()
+            ?: throw ViewModelError.CommandConfigUnavailable
+        rawCommandsObject.entrySet().forEach { (name, command) ->
+            commands.add(name, command.deepCopy())
+        }
+
+        val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 

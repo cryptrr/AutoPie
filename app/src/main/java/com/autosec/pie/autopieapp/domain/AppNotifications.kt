@@ -33,6 +33,7 @@ sealed class ViewModelError() : Exception(), Notification {
     object ErrorDownloadingInitPackages : ViewModelError()
     data object CouldNotAddProduct : ViewModelError()
     data class InvalidJson(val name: String) : ViewModelError()
+    data class InvalidRawCommandJson(val reason: String) : ViewModelError()
     object Timeout : ViewModelError()
     object Unauthorized : ViewModelError()
     object Conflict : ViewModelError()
@@ -58,6 +59,7 @@ sealed class ViewModelError() : Exception(), Notification {
             is ErrorDownloadingInitPackages -> "Error downloading init packages"
             is ProductNotFound -> "Product Not Available"
             is InvalidJson -> "$name Config is not valid JSON."
+            is InvalidRawCommandJson -> reason
             is StoragePermissionDenied -> "Storage Permission not granted."
             is TagNotDeletable -> "This tag cannot be deleted because it is not a user defined tag."
             else -> "An Unknown Error has occurred"

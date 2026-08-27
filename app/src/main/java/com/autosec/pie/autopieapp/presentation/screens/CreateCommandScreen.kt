@@ -97,38 +97,67 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
             Spacer(modifier = Modifier.height(25.dp))
 
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                viewModel.commandTypeOptions.forEachIndexed { index, label ->
+                viewModel.creationModeOptions.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
-                            count = viewModel.commandTypeOptions.size,
+                            count = viewModel.creationModeOptions.size,
                             baseShape = RoundedCornerShape(10.dp)
                         ),
-                        onClick = {
-                            viewModel.selectedICommandTypeIndex = index
-
-                            when (label) {
-                                "Share" -> viewModel.selectedCommandType = "SHARE"
-                                "Observer" -> viewModel.selectedCommandType = "FILE_OBSERVER"
-                                "Cron" -> viewModel.selectedCommandType = "CRON"
-                            }
-                        },
+                        onClick = { viewModel.selectedCreationModeIndex = index },
                         colors = SegmentedButtonDefaults.colors().copy(
                             inactiveContainerColor = Color.Transparent,
                             activeContentColor = MaterialTheme.colorScheme.primary
                         ),
-                        selected = index == viewModel.selectedICommandTypeIndex
+                        selected = index == viewModel.selectedCreationModeIndex
                     ) {
                         Text(label)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
+            if (viewModel.isRawJsonMode) {
+                GenericTextFormField(
+                    text = viewModel.rawJson,
+                    title = "RAW JSON*",
+                    subtitle = "Add one or more commands as an object keyed by command name. Existing commands with the same name will be replaced.",
+                    placeholder = "{\n  \"Key\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    singleLine = false,
+                    modifier = Modifier.defaultMinSize(minHeight = 220.dp)
+                )
+            } else {
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    viewModel.commandTypeOptions.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = viewModel.commandTypeOptions.size,
+                                baseShape = RoundedCornerShape(10.dp)
+                            ),
+                            onClick = {
+                                viewModel.selectedICommandTypeIndex = index
+                                viewModel.selectedCommandType = when (label) {
+                                    "Observer" -> "FILE_OBSERVER"
+                                    "Cron" -> "CRON"
+                                    else -> "SHARE"
+                                }
+                            },
+                            colors = SegmentedButtonDefaults.colors().copy(
+                                inactiveContainerColor = Color.Transparent,
+                                activeContentColor = MaterialTheme.colorScheme.primary
+                            ),
+                            selected = index == viewModel.selectedICommandTypeIndex
+                        ) {
+                            Text(label)
+                        }
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(15.dp))
 
-            GenericTextFormField(text = viewModel.commandName, "NAME*")
+                GenericTextFormField(text = viewModel.commandName, "NAME*")
 
 //            Spacer(modifier = Modifier.height(20.dp))
 //            GenericTextFormField(text = viewModel.execFile, "PROGRAM*"){
@@ -151,40 +180,35 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 //                }
 //            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            GenericTextFormField(
-                text = viewModel.command,
-                "Command".uppercase(),
-                placeholder = "command",
-                singleLine = false,
-                modifier = Modifier
-                .defaultMinSize(minHeight = 120.dp)
-                //.wrapContentHeight(),
-                ,
-                subtitle = "Bash and Python scripting syntax are supported.",
-                contentAfterSubtitle = {
-                    CommandLanguageSelector(
-                        command = viewModel.command.value,
-                        onCommandChange = {
-                            viewModel.command.value = it
-                        }
-                    )
-                }
-            )
-
-
-            if(viewModel.selectedCommandType == "FILE_OBSERVER"){
                 Spacer(modifier = Modifier.height(20.dp))
 
                 GenericTextFormField(
-                    text = viewModel.selectors,
-                    "Selectors".uppercase(),
-                    subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
+                    text = viewModel.command,
+                    "Command".uppercase(),
+                    placeholder = "command",
+                    singleLine = false,
+                    modifier = Modifier.defaultMinSize(minHeight = 120.dp),
+                    subtitle = "Bash and Python scripting syntax are supported.",
+                    contentAfterSubtitle = {
+                        CommandLanguageSelector(
+                            command = viewModel.command.value,
+                            onCommandChange = { viewModel.command.value = it }
+                        )
+                    }
                 )
-            }
 
-            if (viewModel.selectedCommandType == "CRON") {
+
+                if (viewModel.selectedCommandType == "FILE_OBSERVER") {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    GenericTextFormField(
+                        text = viewModel.selectors,
+                        "Selectors".uppercase(),
+                        subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
+                    )
+                }
+
+                if (viewModel.selectedCommandType == "CRON") {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -193,50 +217,41 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     "Cron Interval*".uppercase(),
                     subtitle = "The interval in which this needs to run once.\nUse values like 15m, 30m, 1h etc.\nAndroid Limits periodic jobs to minimum of 15m."
                 )
-            }
+                }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            GenericTextFormField(
-                text = viewModel.directory,
-                subtitle = "The folder to set as the CWD.",
-                title = "DIRECTORY",
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (viewModel.commandExtras.value.isNotEmpty()) {
-                CommandExtraElement(
-                    extrasElements = viewModel.commandExtras,
-                    onAddCommandExtra = {
-                        viewModel.addCommandExtra(it)
-                    },
-                    onRemoveCommandExtra = {
-                        viewModel.removeCommandExtra(it)
-                    }
+                GenericTextFormField(
+                    text = viewModel.directory,
+                    subtitle = "The folder to set as the CWD.",
+                    title = "DIRECTORY",
                 )
-            }
 
-            OutlinedButton(
-                modifier = Modifier
-                    .padding(vertical = 15.dp)
-                    .height(52.dp)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(20),
-                //contentPadding = PaddingValues(vertical = 20.dp),
-                enabled = viewModel.isValidCommand,
-                onClick = {
-                    addExtra()
-                },
+                Spacer(modifier = Modifier.height(20.dp))
 
+                if (viewModel.commandExtras.value.isNotEmpty()) {
+                    CommandExtraElement(
+                        extrasElements = viewModel.commandExtras,
+                        onAddCommandExtra = { viewModel.addCommandExtra(it) },
+                        onRemoveCommandExtra = { viewModel.removeCommandExtra(it) }
+                    )
+                }
+
+                OutlinedButton(
+                    modifier = Modifier
+                        .padding(vertical = 15.dp)
+                        .height(52.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(20),
+                    enabled = viewModel.isValidCommand,
+                    onClick = { addExtra() }
                 ) {
-                Text(
-                    text = "ADD EXTRA",
-                    //modifier = Modifier.align(Alignment.Center),
-                    letterSpacing = 1.11.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-
+                    Text(
+                        text = "ADD EXTRA",
+                        letterSpacing = 1.11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
         }
@@ -279,13 +294,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                 //contentPadding = PaddingValues(vertical = 20.dp),
                 enabled = viewModel.isValidCommand,
                 onClick = {
-                    viewModel.viewModelScope.launch {
-                        viewModel.createNewCommand()
-                        delay(500L)
-                        viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                        viewModel.main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
-                        open.value = false
-                    }
+                    viewModel.createNewCommand { open.value = false }
                 },
 
                 ) {

@@ -17,6 +17,7 @@ import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 
@@ -36,37 +37,50 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
     val selectors = mutableStateOf("")
     val cronInterval = mutableStateOf("")
     val directory = mutableStateOf("")
+    val rawJson = mutableStateOf("")
+
+    var selectedCreationModeIndex by mutableIntStateOf(0)
+    val creationModeOptions = listOf("Form", "Raw JSON")
+    val isRawJsonMode: Boolean
+        get() = selectedCreationModeIndex == 1
 
     var selectedICommandTypeIndex by mutableIntStateOf(0)
     val commandTypeOptions = listOf("Share", "Observer", "Cron")
 
     var selectedCommandType by mutableStateOf("SHARE")
 
-    val isValidCommand by derivedStateOf { commandName.value.isNotBlank() }
+    val isValidCommand by derivedStateOf {
+        if (isRawJsonMode) rawJson.value.isNotBlank() else commandName.value.isNotBlank()
+    }
 
     val commandExtras = mutableStateOf<List<CommandExtra>>(emptyList())
 
 
 
-    fun createNewCommand() {
+    fun createNewCommand(onSuccess: () -> Unit = {}) {
         viewModelScope.launch(dispatchers.io) {
 
             try {
-                val newCommand = CommandCreationModel(
-                    selectedCommandType = selectedCommandType,
-                    commandName = commandName.value,
-                    directory = directory.value,
-                    command = command.value,
-                    isValidCommand = isValidCommand,
-                    //exec = execFile.value,
-                    commandExtras = commandExtras.value,
-                    selectors = selectors.value,
-                    cronInterval = cronInterval.value
-                )
-
-                useCases.createCommand(newCommand).let{
-                    delay(1500L)
+                if (isRawJsonMode) {
+                    useCases.createCommand.fromRawJson(rawJson.value)
+                } else {
+                    val newCommand = CommandCreationModel(
+                        selectedCommandType = selectedCommandType,
+                        commandName = commandName.value,
+                        directory = directory.value,
+                        command = command.value,
+                        isValidCommand = isValidCommand,
+                        commandExtras = commandExtras.value,
+                        selectors = selectors.value,
+                        cronInterval = cronInterval.value
+                    )
+                    useCases.createCommand(newCommand)
+                }
+                main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
+                main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
+                withContext(dispatchers.main) {
                     clear()
+                    onSuccess()
                 }
             }catch (e: Exception){
                 when(e){
@@ -152,6 +166,8 @@ class CreateCommandViewModel(application: Application) : AndroidViewModel(applic
         commandName.value = ""
         selectors.value = ""
         directory.value = ""
+        rawJson.value = ""
+        selectedCreationModeIndex = 0
         selectedICommandTypeIndex = 0
         selectedCommandType = "SHARE"
     }
