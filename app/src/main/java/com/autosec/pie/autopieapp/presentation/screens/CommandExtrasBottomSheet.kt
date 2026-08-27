@@ -511,7 +511,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     trailingIcon = if(useFolderPicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                                FolderPicker {
+                                                FolderPicker(useRelativePaths = true) {
                                                     textValue.value = it
                                                 }
                                             }

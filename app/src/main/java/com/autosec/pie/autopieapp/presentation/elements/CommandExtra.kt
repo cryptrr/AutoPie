@@ -292,7 +292,7 @@ fun CommandExtraInputElement(
                     ) {
                         {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                FolderPicker {
+                                FolderPicker(useRelativePaths = true) {
                                     default.value = it
                                 }
                             }

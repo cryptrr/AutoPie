@@ -362,6 +362,7 @@ class ProcessManagerService(
 
     private fun getEnvsFromCommand(inputParsedData:  List<InputParsedData>, commandExtraInputs: List<CommandExtraInput>,commandObject: CommandInterface, ): HashMap<String, String> {
         val envMap = HashMap<String, String>()
+        val externalStorageRoot = Environment.getExternalStorageDirectory()
 
 //        envMap["HOME"] = activity.filesDir.absolutePath
 //        envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
@@ -384,31 +385,13 @@ class ProcessManagerService(
                     extra.default
                 }
 
-                //Check if the field is not string type. Then don't do all of this shit with the file paths.
-                if(extra.type != "STRING"){
-                    envMap[extra.name] = extraValue
-                }
-                //TEMP FIX for multi user envs where fully qualified paths for extras don't work
-                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extraValue).isAbsolute){
-                        envMap[extra.name] = extraValue
-                    }else{
-                        val fullPath = getConfigRelativePath(extraValue)
-                        envMap[extra.name] = fullPath
-                    }
-                }
-                else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extraValue.split(",").map {
-                        if(Path(extraValue).isAbsolute){
-                            it
-                        }else{
-                            getConfigRelativePath(it)
-                        }
-                    }.joinToString(",")
-                }
-                else{
-                    envMap[extra.name] = extraValue
-                }
+                envMap[extra.name] = resolveExtraPathValue(
+                    name = extra.name,
+                    type = extra.type,
+                    flags = extra.flags,
+                    value = extraValue,
+                    externalStorageRoot = externalStorageRoot
+                )
             }
         }
         //This is when the command extra inputs are passed. That is when the CommandExtrasBottomSheet is opened, all the extras including the defaults are passed as commandExtraInputs
@@ -422,29 +405,13 @@ class ProcessManagerService(
                     extra.value
                 }
 
-                if(extra.type != "STRING"){
-                    envMap[extra.name] = extraValue
-                }
-                else if(extra.name.endsWith("FILE") || extra.name.endsWith("FOLDER")){
-                    if(Path(extraValue).isAbsolute){
-                        envMap[extra.name] = extraValue
-                    }else{
-                        val fullPath = getConfigRelativePath(extraValue)
-                        envMap[extra.name] = fullPath
-                    }
-                }
-                else if(extra.name.endsWith("FILES")){
-                    envMap[extra.name] = extraValue.split(",").map {
-                        if(Path(extraValue).isAbsolute){
-                            it
-                        }else{
-                            getConfigRelativePath(it)
-                        }
-                    }.joinToString(",")
-                }
-                else{
-                    envMap[extra.name] = extraValue
-                }
+                envMap[extra.name] = resolveExtraPathValue(
+                    name = extra.name,
+                    type = extra.type,
+                    flags = commandExtra?.flags.orEmpty(),
+                    value = extraValue,
+                    externalStorageRoot = externalStorageRoot
+                )
             }
         }
 
@@ -1139,3 +1106,29 @@ internal fun buildExecutionCommand(scriptFile: File, multiStage: Boolean): Strin
     } else {
         "bash ${scriptFile.absolutePath.shellQuote()} < /dev/null"
     }
+
+internal fun resolveExtraPathValue(
+    name: String,
+    type: String,
+    flags: List<String>?,
+    value: String,
+    externalStorageRoot: File
+): String {
+    if (type != "STRING" || value.isBlank()) return value
+
+    fun resolve(path: String): String {
+        val trimmedPath = path.trim()
+        if (trimmedPath.isBlank() || File(trimmedPath).isAbsolute) return trimmedPath
+        return File(externalStorageRoot, trimmedPath).absolutePath
+    }
+
+    val isMultiplePaths = name.endsWith("FILES") ||
+        flags.hasFlag(ExtraFlags.MULTI_FILE_PICKER)
+    if (isMultiplePaths) {
+        return value.split(',').joinToString(",", transform = ::resolve)
+    }
+
+    val isSinglePath = name.endsWith("FILE") || name.endsWith("FOLDER") ||
+        flags.hasFlag(ExtraFlags.FILE_PICKER) || flags.hasFlag(ExtraFlags.FOLDER_PICKER)
+    return if (isSinglePath) resolve(value) else value
+}

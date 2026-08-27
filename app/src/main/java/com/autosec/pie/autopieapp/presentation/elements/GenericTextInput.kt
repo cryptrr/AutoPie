@@ -242,6 +242,7 @@ fun SingleFilePicker(
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun FolderPicker(
+    useRelativePaths: Boolean = false,
     onFolderPicked: (String) -> Unit,
 ) {
     val context = LocalContext.current
@@ -249,11 +250,16 @@ fun FolderPicker(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         Timber.tag("UriResolver").d(
-            "Folder picker returned URI: uri=%s",
-            uri
+            "Folder picker returned URI: uri=%s useRelativePaths=%s",
+            uri,
+            useRelativePaths
         )
         uri?.let {
-            val path = Utils.getAbsolutePathFromUri2(context, uri)
+            val path = if (useRelativePaths) {
+                Utils.getRelativePathFromUri(context, uri)
+            } else {
+                Utils.getAbsolutePathFromUri2(context, uri)
+            }
 
             Timber.tag("UriResolver").d("Folder picker resolved URI: uri=%s path=%s", uri, path)
             path?.let(onFolderPicked)
