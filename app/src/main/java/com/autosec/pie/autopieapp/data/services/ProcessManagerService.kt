@@ -200,8 +200,8 @@ class ProcessManagerService(
 
             try {
                 val result = runningShell.run(
-                    "if [[ -v $variableName ]]; then printf '%s\\n' \"\${$variableName}\"; else false; fi",
-                    Shell.Command.Config.silent()
+                    "if [ \"\${$variableName+x}\" = x ]; then printf '%s\\n' \"\${$variableName}\"; else false; fi",
+                    silentShellConfig()
                 )
                 if (result.isSuccess) {
                     Timber.d("Resolved $variableName from shell for processId $processId")
@@ -242,7 +242,7 @@ class ProcessManagerService(
             val runningShell = getOrCreateShell(processId)
             val result = runningShell.run(
                 validVariables.toShellExportCommands(),
-                Shell.Command.Config.silent()
+                silentShellConfig()
             )
             if (!result.isSuccess) {
                 Timber.e("Failed to set shell environment for processId $processId")
@@ -318,6 +318,12 @@ class ProcessManagerService(
 
     private fun getOrCreateShell(processId: Int): Shell =
         shells.computeIfAbsent(processId) { getNewShell() }
+
+    private fun silentShellConfig(): Shell.Command.Config =
+        Shell.Command.Config.Builder().apply {
+            notify = false
+            timeout = shellTimeout
+        }.create()
 
     fun createShell(processId: Int) {
         getOrCreateShell(processId)
@@ -541,7 +547,7 @@ class ProcessManagerService(
 
             val exportResult = shell.run(
                 commandEnvironment.toShellExportCommands(),
-                Shell.Command.Config.silent()
+                silentShellConfig()
             )
             if (!exportResult.isSuccess) {
                 Timber.e("Failed to export command environment: ${exportResult.stderr()}")
@@ -549,7 +555,7 @@ class ProcessManagerService(
 
             val cwdSuccess = shell.run(
                 "cd ${cwd.shellQuote()}",
-                Shell.Command.Config.silent()
+                silentShellConfig()
             )
 
             if(!cwdSuccess.isSuccess){
@@ -567,6 +573,7 @@ class ProcessManagerService(
             val executionCommand = buildExecutionCommand(scriptFile, commandObject.multiStage == true)
 
             val result = shell.run(executionCommand) {
+                timeout = shellTimeout
                 notify = false
                 onStdOut = { line -> writeLogLine(logWriter, line) }
                 onStdErr = { line -> writeLogLine(logWriter, line) }

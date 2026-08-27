@@ -22,11 +22,7 @@ class PartialJsonMapParserTest {
               "Requires newer app": {
                 "path": "",
                 "command": "echo new",
-                "extras": [{
-                  "id": "1",
-                  "type": "SELECTABLE",
-                  "selectableOptions": {"Friendly label": "--raw-value"}
-                }]
+                "steps": {"unsupported": true}
               }
             }
             """.trimIndent()
