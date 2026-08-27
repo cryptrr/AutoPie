@@ -227,6 +227,9 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
                 step.stringValue("commandSlug", required = false)
                     .takeIf(String::isNotBlank)
                     ?.let { addProperty("exec", it) }
+                step.stringListValue("flags")?.let { flags ->
+                    add("flags", Gson().toJsonTree(flags))
+                }
                 step.extrasArray()?.let { add("extras", it) }
             }
         }
@@ -245,6 +248,10 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
             .takeIf(String::isNotBlank)
             ?.let { commandObject.addProperty("exec", it) }
         runtime.extrasArray()?.let { commandObject.add("extras", it) }
+    }
+
+    runtime.stringListValue("flags")?.let { flags ->
+        commandObject.add("flags", Gson().toJsonTree(flags))
     }
 
     when (commandType) {

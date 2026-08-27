@@ -147,6 +147,7 @@ class CommandTests : KoinTest {
             runtime:
               path: "AutoSec/scripts"
               command: "sshpass -p \"${'$'}PASSWORD\" ssh \"${'$'}USER@${'$'}HOST\" \"osascript -e \\\"set volume output volume ${'$'}{VOLUME}\\\"\""
+              flags: ["--show-loading-screen"]
               extras:
               - id: "574538"
                 name: "VOLUME"
@@ -181,6 +182,7 @@ class CommandTests : KoinTest {
         assertEquals("SHARE", command.get("type").asString)
         assertEquals("AutoSec/scripts", command.get("path").asString)
         assertEquals("openssh", command.get("exec").asString)
+        assertEquals("--show-loading-screen", command.getAsJsonArray("flags")[0].asString)
         assertEquals("VOLUME", extra.get("name").asString)
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
         assertEquals("pdf", selectableExtra.getAsJsonObject("selectableOptions").get("PDF").asString)
@@ -332,6 +334,7 @@ class CommandTests : KoinTest {
               - path: "AutoSec/scripts"
                 commandSlug: "openssh"
                 command: "sshpass -p \"${'$'}PASSWORD\" ssh \"${'$'}USER@${'$'}HOST\""
+                flags: ["--show-loading-screen"]
                 extras:
                 - id: "574538"
                   name: "VOLUME"
@@ -363,6 +366,7 @@ class CommandTests : KoinTest {
         assertEquals("openssh", command.get("exec").asString)
         assertEquals("0", steps[0].asJsonObject.get("id").asString)
         assertEquals("1", secondStep.get("id").asString)
+        assertEquals("--show-loading-screen", secondStep.getAsJsonArray("flags")[0].asString)
         assertEquals("VOLUME", secondStep.getAsJsonArray("extras")[0].asJsonObject.get("name").asString)
         assertEquals(
             "pdf",
