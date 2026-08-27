@@ -70,12 +70,14 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.firstStepOrSelf
+import com.autopi.autopieapp.data.environmentVariableReferenceOrNull
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasNextStep
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.matchesExtraValues
 import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
+import com.autopi.autopieapp.data.resolveEnvironmentBackedValue
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.data.toMultiSelectableValue
@@ -103,8 +105,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import kotlin.math.roundToInt
-
-private val ENVIRONMENT_DEFAULT = Regex("\\$\\$([A-Za-z_][A-Za-z0-9_]*)")
 
 private fun String.toShellBooleanOrNull(): String? = when (trim().lowercase()) {
     "true", "1", "yes", "on" -> "true"
@@ -473,14 +473,15 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
 
                             val shellEnvironmentVariable = remember(extra.default) {
-                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                                extra.default.environmentVariableReferenceOrNull()
                             }
 
                             LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
                                 shellEnvironmentVariable?.let { variableName ->
-                                    viewModel.processManagerService
-                                        .getShellEnvironmentVariable(processId, variableName)
-                                        ?.let { textValue.value = it }
+                                    textValue.value = resolveEnvironmentBackedValue(extra.default) {
+                                        viewModel.processManagerService
+                                            .getShellEnvironmentVariable(processId, it)
+                                    }
                                 }
                             }
 
@@ -553,7 +554,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         "BOOLEAN" -> {
                             val booleanExpanded = remember { mutableStateOf(false) }
                             val shellEnvironmentVariable = remember(extra.default) {
-                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                                extra.default.environmentVariableReferenceOrNull()
                             }
                             val selectedOptionForBoolean =
                                 rememberSaveable(extra.id, extra.default, extra.defaultBoolean) {
@@ -563,8 +564,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
                                 shellEnvironmentVariable?.let { variableName ->
-                                    viewModel.processManagerService
-                                        .getShellEnvironmentVariable(processId, variableName)
+                                    resolveEnvironmentBackedValue(extra.default) {
+                                        viewModel.processManagerService
+                                            .getShellEnvironmentVariable(processId, it)
+                                    }
                                         ?.toShellBooleanOrNull()
                                         ?.let { selectedOptionForBoolean.value = it }
                                 }
@@ -604,9 +607,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val configuredOptions = extra.selectableOptions
                             val shellEnvironmentVariable = remember(configuredOptions) {
                                 configuredOptions.values.singleOrNull()
-                                    ?.let { ENVIRONMENT_DEFAULT.matchEntire(it) }
-                                    ?.groupValues
-                                    ?.get(1)
+                                    ?.environmentVariableReferenceOrNull()
+                            }
+                            val defaultEnvironmentVariable = remember(extra.default) {
+                                extra.default.environmentVariableReferenceOrNull()
                             }
                             var options by remember(extra.id, configuredOptions) {
                                 mutableStateOf(configuredOptions)
@@ -624,26 +628,37 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     )
                                 }
 
-                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
-                                shellEnvironmentVariable?.let { variableName ->
-                                    val resolvedOptions = viewModel.processManagerService
-                                        .getShellEnvironmentVariable(processId, variableName)
+                            LaunchedEffect(
+                                processId,
+                                extra.id,
+                                shellEnvironmentVariable,
+                                defaultEnvironmentVariable
+                            ) {
+                                val resolvedDefault = resolveEnvironmentBackedValue(extra.default) {
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, it)
+                                }
+                                val resolvedOptions = if (shellEnvironmentVariable != null) {
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, shellEnvironmentVariable)
                                         ?.toSelectableOptions()
                                         ?.takeIf { it.isNotEmpty() }
+                                } else {
+                                    configuredOptions
+                                }
 
-                                    if (resolvedOptions == null) {
-                                        selectableFetchFailed = true
-                                        expanded.value = false
-                                        options = emptyMap()
-                                        selectedOption.value = "Error fetching"
-                                    } else {
-                                        selectableFetchFailed = false
-                                        options = resolvedOptions
-                                        selectedOption.value = resolvedOptions[extra.default]
-                                            ?: extra.default.ifEmpty {
-                                                resolvedOptions.values.firstOrNull().orEmpty()
-                                            }
-                                    }
+                                if (resolvedOptions == null) {
+                                    selectableFetchFailed = true
+                                    expanded.value = false
+                                    options = emptyMap()
+                                    selectedOption.value = "Error fetching"
+                                } else {
+                                    selectableFetchFailed = false
+                                    options = resolvedOptions
+                                    selectedOption.value = resolvedOptions[resolvedDefault]
+                                        ?: resolvedDefault.ifEmpty {
+                                            resolvedOptions.values.firstOrNull().orEmpty()
+                                        }
                                 }
                             }
 
@@ -686,9 +701,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             val configuredOptions = extra.selectableOptions
                             val shellEnvironmentVariable = remember(configuredOptions) {
                                 configuredOptions.values.singleOrNull()
-                                    ?.let { ENVIRONMENT_DEFAULT.matchEntire(it) }
-                                    ?.groupValues
-                                    ?.get(1)
+                                    ?.environmentVariableReferenceOrNull()
+                            }
+                            val defaultEnvironmentVariable = remember(extra.default) {
+                                extra.default.environmentVariableReferenceOrNull()
                             }
                             var options by remember(extra.id, configuredOptions) {
                                 mutableStateOf(configuredOptions)
@@ -703,26 +719,37 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     )
                                 }
 
-                            LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
-                                shellEnvironmentVariable?.let { variableName ->
-                                    val resolvedOptions = viewModel.processManagerService
-                                        .getShellEnvironmentVariable(processId, variableName)
+                            LaunchedEffect(
+                                processId,
+                                extra.id,
+                                shellEnvironmentVariable,
+                                defaultEnvironmentVariable
+                            ) {
+                                val resolvedDefault = resolveEnvironmentBackedValue(extra.default) {
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, it)
+                                }
+                                val resolvedOptions = if (shellEnvironmentVariable != null) {
+                                    viewModel.processManagerService
+                                        .getShellEnvironmentVariable(processId, shellEnvironmentVariable)
                                         ?.toSelectableOptions()
                                         ?.takeIf { it.isNotEmpty() }
+                                } else {
+                                    configuredOptions
+                                }
 
-                                    if (resolvedOptions == null) {
+                                if (resolvedOptions == null) {
                                         selectableFetchFailed = true
                                         expanded.value = false
                                         options = emptyMap()
                                         selectedOptions.value = emptyList()
-                                    } else {
+                                } else {
                                         selectableFetchFailed = false
                                         options = resolvedOptions
                                         selectedOptions.value = resolveMultiSelectableDefaults(
-                                            extra.default,
+                                            resolvedDefault,
                                             resolvedOptions
                                         )
-                                    }
                                 }
                             }
 
@@ -768,7 +795,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         "SLIDER" -> {
                             val isIntegerSlider = extra.flags.hasFlag(ExtraFlags.INT)
                             val shellEnvironmentVariable = remember(extra.default) {
-                                ENVIRONMENT_DEFAULT.matchEntire(extra.default)?.groupValues?.get(1)
+                                extra.default.environmentVariableReferenceOrNull()
                             }
                             var sliderConfiguration by remember(extra.id, extra.default) {
                                 mutableStateOf(extra.default)
@@ -776,9 +803,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
                                 shellEnvironmentVariable?.let { variableName ->
-                                    viewModel.processManagerService
-                                        .getShellEnvironmentVariable(processId, variableName)
-                                        ?.let { sliderConfiguration = it }
+                                    sliderConfiguration = resolveEnvironmentBackedValue(extra.default) {
+                                        viewModel.processManagerService
+                                            .getShellEnvironmentVariable(processId, it)
+                                    }
                                 }
                             }
 
