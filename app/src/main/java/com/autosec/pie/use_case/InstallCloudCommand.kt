@@ -218,7 +218,13 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
         val steps = runtime.listValue("steps").mapIndexed { index, stepValue ->
             val step = stepValue.asMap()
             JsonObject().apply {
-                addProperty("id", index.toString())
+                addProperty(
+                    "id",
+                    step.stringValue("id", required = false).ifBlank { index.toString() }
+                )
+                step.stringValue("commandId", required = false)
+                    .takeIf(String::isNotBlank)
+                    ?.let { addProperty("commandId", it) }
                 addProperty("path", step.stringValue("path", required = false))
                 addProperty(
                     "command",
@@ -317,12 +323,17 @@ private fun Map<String, Any?>.extrasArray(): JsonArray? {
                 addProperty("type", extra.stringValue("type", required = false))
                 addProperty("default", extra.stringValue("default", required = false))
                 addProperty("description", extra.stringValue("description", required = false))
-                addProperty("required", extra.booleanValue("required", required = false))
+                if (extra.containsKey("required")) {
+                    addProperty("required", extra.booleanValue("required", required = false))
+                }
                 if (extra.containsKey("defaultBoolean")) {
                     addProperty("defaultBoolean", extra.booleanValue("defaultBoolean", required = false))
                 }
                 extra["selectableOptions"]?.let { selectableOptions ->
                     add("selectableOptions", Gson().toJsonTree(selectableOptions))
+                }
+                extra["visibleWhen"]?.let { visibleWhen ->
+                    add("visibleWhen", Gson().toJsonTree(visibleWhen))
                 }
                 extra.stringListValue("flags")?.let { flags ->
                     add("flags", Gson().toJsonTree(flags))

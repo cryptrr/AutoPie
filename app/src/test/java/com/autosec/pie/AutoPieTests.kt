@@ -4,6 +4,7 @@ package com.autopi
 import android.os.Environment
 import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
+import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.CreateCommand
@@ -17,6 +18,7 @@ import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
+import com.google.gson.Gson
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
@@ -328,10 +330,12 @@ class CommandTests : KoinTest {
             runtime:
               multiStage: true
               steps:
-              - path: "AutoSec/scripts"
+              - id: "inspect"
+                path: "AutoSec/scripts"
                 commandSlug: "openssh"
                 command: "export SLIDER_OPTIONS=0,50,100"
-              - path: "AutoSec/scripts"
+              - id: "download"
+                path: "AutoSec/scripts"
                 commandSlug: "openssh"
                 command: "sshpass -p \"${'$'}PASSWORD\" ssh \"${'$'}USER@${'$'}HOST\""
                 flags: ["--show-loading-screen"]
@@ -352,6 +356,14 @@ class CommandTests : KoinTest {
                   selectableOptions:
                     PDF: "pdf"
                     Text: "txt"
+                  visibleWhen:
+                    all:
+                    - extraId: "574538"
+                      notEquals: "0"
+                    - extraId: "mode"
+                      equals: "document"
+              - id: "notify"
+                commandId: "autopie.notify-complete"
             install:
               script: "install.sh"
             """.trimIndent()
@@ -364,10 +376,26 @@ class CommandTests : KoinTest {
         assertEquals("Change Volume on Mac - AutoFetch", manifest.commandKey)
         assertEquals(true, command.get("multiStage").asBoolean)
         assertEquals("openssh", command.get("exec").asString)
-        assertEquals("0", steps[0].asJsonObject.get("id").asString)
-        assertEquals("1", secondStep.get("id").asString)
+        assertEquals("inspect", steps[0].asJsonObject.get("id").asString)
+        assertEquals("download", secondStep.get("id").asString)
+        assertEquals("notify", steps[2].asJsonObject.get("id").asString)
+        assertEquals(
+            "autopie.notify-complete",
+            steps[2].asJsonObject.get("commandId").asString
+        )
         assertEquals("--show-loading-screen", secondStep.getAsJsonArray("flags")[0].asString)
         assertEquals("VOLUME", secondStep.getAsJsonArray("extras")[0].asJsonObject.get("name").asString)
+        assertEquals(
+            "574538",
+            secondStep.getAsJsonArray("extras")[1]
+                .asJsonObject
+                .getAsJsonObject("visibleWhen")
+                .getAsJsonArray("all")[0]
+                .asJsonObject
+                .get("extraId")
+                .asString
+        )
+        assertFalse(secondStep.getAsJsonArray("extras")[1].asJsonObject.has("required"))
         assertEquals(
             "pdf",
             secondStep.getAsJsonArray("extras")[1]
@@ -376,6 +404,15 @@ class CommandTests : KoinTest {
                 .get("PDF")
                 .asString
         )
+
+        val parsedCommand = Gson().fromJson(command, CommandModel::class.java)
+        val parsedSelectableExtra = parsedCommand.steps[1].extras!![1]
+        assertTrue(parsedSelectableExtra.required)
+        assertEquals(
+            "574538",
+            parsedSelectableExtra.visibleWhen?.all?.first()?.extraId
+        )
+        assertEquals("autopie.notify-complete", parsedCommand.steps[2].commandId)
     }
 
     @Test
