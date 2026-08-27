@@ -96,7 +96,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
                     selectors.value = commandModel.selectors?.joinToString(",") ?: ""
                     cronInterval.value = commandModel.cronInterval ?: ""
                     rawJson.value = prettyRawCommand
-                    selectedEditorModeIndex = 0
+                    selectedEditorModeIndex = if (commandModel.multiStage == true) 1 else 0
 
                     selectedCommandType = commandModel.type.toString()
 
