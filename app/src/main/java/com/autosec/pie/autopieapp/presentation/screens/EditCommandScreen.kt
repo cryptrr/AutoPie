@@ -35,7 +35,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -231,8 +234,40 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             Spacer(modifier = Modifier.height(25.dp))
 
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                viewModel.editorModeOptions.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = viewModel.editorModeOptions.size,
+                            baseShape = RoundedCornerShape(10.dp)
+                        ),
+                        onClick = { viewModel.selectedEditorModeIndex = index },
+                        colors = SegmentedButtonDefaults.colors().copy(
+                            inactiveContainerColor = Color.Transparent,
+                            activeContentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        selected = index == viewModel.selectedEditorModeIndex
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
 
-            GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
+            Spacer(modifier = Modifier.height(20.dp))
+
+            if (viewModel.isRawJsonMode) {
+                GenericTextFormField(
+                    text = viewModel.rawJson,
+                    title = "RAW JSON*",
+                    subtitle = "Edit exactly one command as an object keyed by its name.",
+                    placeholder = "{\n  \"Key\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    singleLine = false,
+                    modifier = Modifier.defaultMinSize(minHeight = 260.dp)
+                )
+            } else {
+
+                GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
 
 //            Spacer(modifier = Modifier.height(20.dp))
 //            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file"){
@@ -255,21 +290,18 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 //                }
 //            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            GenericTextFormField(
-                text = viewModel.command,
-                "Command".uppercase(),
-                placeholder = "command",
-                singleLine = false,
-                modifier = Modifier
-                .defaultMinSize(minHeight = 100.dp)
-                //.wrapContentHeight()
-                ,
-                subtitle = "Bash and Python scripting syntax is supported."
-            )
+                GenericTextFormField(
+                    text = viewModel.command,
+                    "Command".uppercase(),
+                    placeholder = "command",
+                    singleLine = false,
+                    modifier = Modifier.defaultMinSize(minHeight = 100.dp),
+                    subtitle = "Bash and Python scripting syntax is supported."
+                )
 
-            if (viewModel.selectedCommandType == "FILE_OBSERVER") {
+                if (viewModel.selectedCommandType == "FILE_OBSERVER") {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -278,9 +310,9 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     "Selectors".uppercase(),
                     subtitle = "Selector is a regex pattern to filter for this command.\nFor Example, to select only PNG files, use \"^.*\\\\.png$\""
                 )
-            }
+                }
 
-            if (viewModel.selectedCommandType == "CRON") {
+                if (viewModel.selectedCommandType == "CRON") {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -289,61 +321,53 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     "Cron Interval*".uppercase(),
                     subtitle = "The interval in which this needs to run once.\nUse values like 15m, 30m, 1h etc.\nAndroid Limits periodic jobs to minimum of 15m."
                 )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            val annotatedString = buildAnnotatedString {
-                append("This is the directory in which the command will be run. \n" +
-                        "Type ")
-                withStyle(style = SpanStyle(background = MaterialTheme.colorScheme.surfaceColorAtElevation(30.dp), fontSize = 14.sp)) {
-                    append(" Download ")
                 }
-                append(" to use your download folder.")
-            }
 
-            GenericTextFormField(
-                text = viewModel.directory,
-                "DIRECTORY",
-                subtitle = annotatedString
-            )
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
+                val annotatedString = buildAnnotatedString {
+                    append("This is the directory in which the command will be run. \n" +
+                            "Type ")
+                    withStyle(style = SpanStyle(background = MaterialTheme.colorScheme.surfaceColorAtElevation(30.dp), fontSize = 14.sp)) {
+                        append(" Download ")
+                    }
+                    append(" to use your download folder.")
+                }
 
-
-            if (extrasElements.value.isNotEmpty()) {
-                CommandExtraElement(
-                    extrasElements = extrasElements,
-                    onAddCommandExtra = {
-                        viewModel.addCommandExtra(it)
-                    },
-                    onRemoveCommandExtra = {
-                        viewModel.removeCommandExtra(it)
-                    },
-                    commandId = viewModel.oldCommandName.value.ifBlank { commandKey }
+                GenericTextFormField(
+                    text = viewModel.directory,
+                    "DIRECTORY",
+                    subtitle = annotatedString
                 )
-            }
 
-            OutlinedButton(
-                modifier = Modifier
-                    .padding(vertical = 15.dp)
-                    .height(52.dp)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(20),
-                //contentPadding = PaddingValues(vertical = 20.dp),
-                enabled = viewModel.isValidCommand,
-                onClick = {
-                    addExtra()
-                },
+                Spacer(modifier = Modifier.height(20.dp))
 
+
+                if (extrasElements.value.isNotEmpty()) {
+                    CommandExtraElement(
+                        extrasElements = extrasElements,
+                        onAddCommandExtra = { viewModel.addCommandExtra(it) },
+                        onRemoveCommandExtra = { viewModel.removeCommandExtra(it) },
+                        commandId = viewModel.oldCommandName.value.ifBlank { commandKey }
+                    )
+                }
+
+                OutlinedButton(
+                    modifier = Modifier
+                        .padding(vertical = 15.dp)
+                        .height(52.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(20),
+                    enabled = viewModel.isValidCommand,
+                    onClick = { addExtra() }
                 ) {
-                Text(
-                    text = "ADD EXTRA",
-                    //modifier = Modifier.align(Alignment.Center),
-                    letterSpacing = 1.11.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    Text(
+                        text = "ADD EXTRA",
+                        letterSpacing = 1.11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
+                }
             }
 
         }
@@ -371,27 +395,24 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
             }
 
-            Spacer(modifier = Modifier.width(11.dp))
-            Button(
-                modifier = Modifier
-                    .padding(vertical = 15.dp)
-                    .height(52.dp)
-                    .width(63.dp),
-                shape = RoundedCornerShape(20),
-                contentPadding = PaddingValues(vertical = 10.dp),
-                onClick = {
-                    addExtra()
-                },
-
-                ) {
-                Icon(
+            if (!viewModel.isRawJsonMode) {
+                Spacer(modifier = Modifier.width(11.dp))
+                Button(
                     modifier = Modifier
+                        .padding(vertical = 15.dp)
+                        .height(52.dp)
+                        .width(63.dp),
+                    shape = RoundedCornerShape(20),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                    onClick = { addExtra() }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(27.dp),
+                        imageVector = Icons.Default.AddCircle,
+                        contentDescription = "Extras",
+                    )
 
-                        .size(27.dp),
-                    imageVector = Icons.Default.AddCircle,
-                    contentDescription = "Extras",
-                )
-
+                }
             }
 
             Spacer(modifier = Modifier.width(11.dp))
@@ -404,13 +425,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                 //contentPadding = PaddingValues(vertical = 20.dp),
                 enabled = viewModel.isValidCommand,
                 onClick = {
-                    viewModel.viewModelScope.launch {
-                        viewModel.changeCommandDetails(key = commandKey)
-                        delay(500L)
-                        viewModel.main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                        viewModel.main.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
-                        open.value = false
-                    }
+                    viewModel.changeCommandDetails(key = commandKey) { open.value = false }
                 },
 
                 ) {

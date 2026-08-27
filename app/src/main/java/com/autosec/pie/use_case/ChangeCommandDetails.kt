@@ -98,6 +98,47 @@ class ChangeCommandDetails(
 
     }
 
+    suspend fun fromRawJson(key: String, rawJson: String) {
+        val rawCommand = try {
+            JsonParser.parseString(rawJson)
+        } catch (_: Exception) {
+            throw ViewModelError.InvalidRawCommandJson("Enter valid JSON.")
+        }
+
+        if (!rawCommand.isJsonObject) {
+            throw ViewModelError.InvalidRawCommandJson(
+                "The top-level value must be an object, for example {\"Key\": {}}."
+            )
+        }
+
+        val rawCommandObject = rawCommand.asJsonObject
+        if (rawCommandObject.size() != 1) {
+            throw ViewModelError.InvalidRawCommandJson("Enter exactly one command.")
+        }
+        val (newKey, newValue) = rawCommandObject.entrySet().first()
+        if (newKey.isBlank()) {
+            throw ViewModelError.InvalidRawCommandJson("The command name cannot be blank.")
+        }
+        if (!newValue.isJsonObject) {
+            throw ViewModelError.InvalidRawCommandJson(
+                "The value for '$newKey' must be a JSON object."
+            )
+        }
+
+        val commands = jsonService.readCommandsConfig()
+            ?: throw ViewModelError.CommandConfigUnavailable
+        if (!commands.has(key)) {
+            throw ViewModelError.CommandNotFound
+        }
+
+        if (newKey != key) {
+            commands.remove(key)
+        }
+        commands.add(newKey, newValue.deepCopy())
+        val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+        jsonService.writeCommandsConfig(gson.toJson(commands))
+    }
+
     private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>, previousCommandId: String) {
         val service = secretsService ?: return
         extras.filter { it.isSecretExtra() }.forEach { extra ->

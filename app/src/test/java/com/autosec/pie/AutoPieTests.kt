@@ -7,6 +7,7 @@ import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.CreateCommand
+import com.autopi.use_case.ChangeCommandDetails
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
@@ -448,6 +449,37 @@ class CommandTests : KoinTest {
 
         assertThrows(ViewModelError.InvalidRawCommandJson::class.java) {
             runBlocking { createCommand.fromRawJson("""{"Broken": "echo nope"}""") }
+        }
+
+        assertEquals(original, jsonService.getRawStorageContent())
+    }
+
+    @Test
+    fun `raw editor replaces only the selected command object`() = runTest {
+        val jsonService = FakeJSONService()
+        val changeCommandDetails = ChangeCommandDetails(jsonService)
+
+        changeCommandDetails.fromRawJson(
+            "Extract Audio",
+            """{"Renamed command": {"command": "echo edited", "customProperty": {"enabled": true}}}"""
+        )
+
+        val commands = jsonService.readCommandsConfig()!!
+        val edited = commands.getAsJsonObject("Renamed command")
+        assertEquals("echo edited", edited.get("command").asString)
+        assertTrue(edited.getAsJsonObject("customProperty").get("enabled").asBoolean)
+        assertFalse(commands.has("Extract Audio"))
+        assertTrue(commands.has("RSYNC Sync Folder"))
+    }
+
+    @Test
+    fun `raw editor rejects a non-object without changing the command`() = runTest {
+        val jsonService = FakeJSONService()
+        val original = jsonService.getRawStorageContent()
+        val changeCommandDetails = ChangeCommandDetails(jsonService)
+
+        assertThrows(ViewModelError.InvalidRawCommandJson::class.java) {
+            runBlocking { changeCommandDetails.fromRawJson("Extract Audio", "[]") }
         }
 
         assertEquals(original, jsonService.getRawStorageContent())
