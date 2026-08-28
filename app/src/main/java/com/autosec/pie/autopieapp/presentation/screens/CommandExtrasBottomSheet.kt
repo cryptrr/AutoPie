@@ -933,7 +933,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         }
 
 
-        Row(Modifier.align(Alignment.BottomCenter)){
+        Row(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+        ) {
             Button(
                 modifier = Modifier
                     .padding(vertical = 15.dp)
