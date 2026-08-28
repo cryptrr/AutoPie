@@ -209,6 +209,7 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:noHistory="true"
+            android:taskAffinity="${applicationId}.loading.small"
             android:theme="@style/ShareTheme" />
         <service
             android:name=".autopieapp.data.services.FileObserverJobService"
