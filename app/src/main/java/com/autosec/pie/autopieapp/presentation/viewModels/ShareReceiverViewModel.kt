@@ -93,6 +93,20 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
             currentDetails.second.flags.hasFlag(CommandFlags.REALTIME)
     }
 
+    fun abandonCurrentInvocation() {
+        val currentDetails = currentExtrasDetails.value
+        val processId = currentDetails?.third?.processId
+
+        if (processId != null) {
+            main.dispatchEvent(ViewModelEvent.CancelProcess(processId))
+            multiStageInputs.remove(processId)
+            multiStageCompletionCallbacks.remove(processId)
+            realtimeProcessIds.remove(processId)
+        }
+
+        currentExtrasDetails.value = null
+    }
+
     init {
         try {
             viewModelScope.launch {

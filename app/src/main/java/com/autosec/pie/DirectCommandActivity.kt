@@ -21,9 +21,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,51 +45,49 @@ import com.autopi.ui.theme.AutoPieTheme
 import com.autopi.utils.Utils.Companion.getPathsFromClipData
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import com.autopi.utils.getActivity
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
+private data class DirectCommandRequest(val intent: Intent?, val version: Int)
 
 class DirectCommandActivity : ComponentActivity() {
 
+    private var directCommandRequest by mutableStateOf(DirectCommandRequest(null, 0))
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        directCommandRequest = DirectCommandRequest(intent, 0)
 
 
         Timber.d(this.intent.toString())
         Timber.d(this.intent.extras.toString())
 
-        val commandId = intent.getStringExtra("commandId")
-        val input = intent.getStringExtra("input")
-        val isAsync = intent.getBooleanExtra("async", true)
-        val processId = intent.getIntExtra("processId", -1).takeIf { it >= 0 }
-        val callerPackage = callingPackage
-            ?: referrer?.authority ?: ""
-
-        val callerType = when{
-            callerPackage.contains("launcher") -> "DIRECT_ICON"
-            callerPackage == "com.autopi" -> "DIRECT_ICON"
-            else -> "EXTERNAL_APP"
-        }
-
-        Timber.d("Calling package: $callerPackage")
-
-
         setContent {
+            val request = directCommandRequest
+            val currentIntent = request.intent ?: return@setContent
+            val commandId = currentIntent.getStringExtra("commandId")
+            val input = currentIntent.getStringExtra("input")
+            val isAsync = currentIntent.getBooleanExtra("async", true)
+            val processId = currentIntent.getIntExtra("processId", -1).takeIf { it >= 0 }
+            val callerPackage = callingPackage ?: referrer?.authority ?: ""
+            val callerType = when {
+                callerPackage.contains("launcher") -> "DIRECT_ICON"
+                callerPackage == "com.autopi" -> "DIRECT_ICON"
+                else -> "EXTERNAL_APP"
+            }
+
+            Timber.d("Calling package: $callerPackage")
 
             //val activity = LocalContext.current.getActivity()
 
             val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
 
-            val scope = rememberCoroutineScope()
-
-            LaunchedEffect(Unit) {
+            LaunchedEffect(request.version) {
                 shareReceiverViewModel.main.eventFlow.collect{
                     when(it){
                         //For asynchronous requests
@@ -164,46 +162,45 @@ class DirectCommandActivity : ComponentActivity() {
                 }
             }
 
-            DisposableEffect(commandId) {
-                //Get the command from the list
-
-                scope.launch {
-                    delay(100L)
-                    if(commandId != null){
-                        Timber.d("Setting command to $commandId")
-                        val success = shareReceiverViewModel.selectCommandFromDirectActivity(
-                            commandId,
-                            input,
-                            callerType,
-                            this@DirectCommandActivity,
-                            processId
-                        )
-                    }
+            LaunchedEffect(commandId, request.version) {
+                delay(100L)
+                if (commandId != null) {
+                    Timber.d("Setting command to $commandId")
+                    shareReceiverViewModel.selectCommandFromDirectActivity(
+                        commandId,
+                        input,
+                        callerType,
+                        this@DirectCommandActivity,
+                        processId
+                    )
                 }
+            }
 
+            DisposableEffect(commandId, request.version) {
                 onDispose {
                     Timber.d("Unsetting current command $commandId")
-                    shareReceiverViewModel.currentExtrasDetails.value = null
+                    shareReceiverViewModel.abandonCurrentInvocation()
                 }
             }
 
 
-            val state = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = {
-                it != SheetValue.Hidden
-            })
+            key(request.version) {
+                val state = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = {
+                    it != SheetValue.Hidden
+                })
 
-            val extrasBottomSheetState = rememberModalBottomSheetState(true)
-            val extrasBottomSheetStateOpen = remember {
-                mutableStateOf(false)
-            }
+                val extrasBottomSheetState = rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true
+                )
+                val extrasBottomSheetStateOpen = remember {
+                    mutableStateOf(false)
+                }
 
-            LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
-                extrasBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
-            }
+                LaunchedEffect(shareReceiverViewModel.currentExtrasDetails.value) {
+                    extrasBottomSheetStateOpen.value = shareReceiverViewModel.currentExtrasDetails.value != null
+                }
 
-
-            AutoPieTheme {
-
+                AutoPieTheme {
                     CommandExtrasBottomSheet(
                         state = extrasBottomSheetState,
                         open = extrasBottomSheetStateOpen,
@@ -211,12 +208,15 @@ class DirectCommandActivity : ComponentActivity() {
                         callerName = callerType,
                         isAsync = isAsync
                     )
-
+                }
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        directCommandRequest = DirectCommandRequest(intent, directCommandRequest.version + 1)
+    }
+
 }
-
-
-

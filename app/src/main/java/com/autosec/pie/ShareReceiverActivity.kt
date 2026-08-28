@@ -55,6 +55,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -94,127 +95,85 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.Duration.Companion.milliseconds
 
 
+private data class ShareRequest(val intent: Intent?, val version: Int)
+
 class ShareReceiverActivity : ComponentActivity() {
 
+    private var shareRequest by mutableStateOf(ShareRequest(null, 0))
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-
-
-        Timber.d(this.intent.toString())
-        Timber.d(this.intent.extras.toString())
-
-
-        val inputText = intent?.getStringExtra(Intent.EXTRA_TEXT)
-
-        val viewData = intent?.data
-
-        Timber.d("View data: $viewData")
-
-
-        val inputFiles = mutableListOf<String>()
-
-
-        when {
-            Intent.ACTION_SEND_MULTIPLE == intent?.action -> {
-
-                val sharedPaths = intent.getParcelableArrayListExtra<Uri>("extra_file_uris")
-
-                Timber.d("ACTION_SEND_MULTIPLE PATH: $sharedPaths")
-
-                sharedPaths?.map { sharedPath ->
-                    sharedPath.path.let {
-                        val fragment = sharedPath?.fragment
-                        val fullPath = if (fragment != null) "$it#$fragment" else it
-                        inputFiles.add(fullPath!!)
-                    }
-                }
-
-                if(sharedPaths == null && inputText == null){
-                    val clipData = getPathsFromClipData(this.applicationContext, intent)
-
-                    Timber.d("ACTION_SEND_MULTIPLE CLIP: $clipData")
-
-                    clipData.forEach {
-                        inputFiles.add(it)
-                    }
-                }
-
-            }
-
-            Intent.ACTION_SEND == intent?.action -> {
-
-                val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
-
-
-
-                Timber.d("ACTION_SEND PATH: $sharedPath")
-
-
-                sharedPath?.path.let {
-                    if (it != null) {
-                        val fragment = sharedPath?.fragment
-                        val fullPath = if (fragment != null) "$it#$fragment" else it
-                        inputFiles.add(fullPath)
-                    }
-                }
-
-                if(sharedPath == null && inputText == null) {
-                    val clipData = getPathsFromClipData(this.applicationContext, intent)
-
-                    Timber.d("ACTION_SEND CLIP: $clipData")
-
-                    clipData.forEach {
-                        inputFiles.add(it)
-                    }
-                }
-
-            }
-
-            Intent.ACTION_VIEW == intent?.action -> {
-
-                val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
-
-                Timber.d("ACTION_VIEW PATH: $sharedPath")
-
-                sharedPath?.path.let {
-                    if (it != null) {
-                        val fragment = sharedPath?.fragment
-                        val fullPath = if (fragment != null) "$it#$fragment" else it
-                        inputFiles.add(fullPath)
-                    }
-                }
-
-                if(sharedPath == null && inputText == null){
-                    val clipData = getPathsFromClipData(this.applicationContext, intent)
-
-                    Timber.d("ACTION_VIEW CLIP: $clipData")
-
-                    clipData.forEach {
-                        inputFiles.add(it)
-                    }
-                }
-            }
-
-        }
-
-        Timber.d("Intent EXTRA_TEXT: ${inputText.toString()}")
-        Timber.d("Intent FILES: : $inputFiles")
-
-
-
+        shareRequest = ShareRequest(intent, 0)
 
         setContent {
+            val currentRequest = shareRequest
+            val currentIntent = currentRequest.intent
+            val inputText = currentIntent?.getStringExtra(Intent.EXTRA_TEXT)
+            val inputFiles = remember(currentIntent) {
+                extractInputFiles(currentIntent, inputText)
+            }
+            val requestVersion = currentRequest.version
+            val shareReceiverViewModel: ShareReceiverViewModel = koinViewModel()
+
+            LaunchedEffect(requestVersion) {
+                if (requestVersion > 0) {
+                    shareReceiverViewModel.abandonCurrentInvocation()
+                }
+            }
 
             AutoPieTheme {
-
-                ShareContextMenuBottomSheet(inputText = inputText, inputFiles = inputFiles)
-
+                key(requestVersion) {
+                    ShareContextMenuBottomSheet(inputText = inputText, inputFiles = inputFiles)
+                }
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        shareRequest = ShareRequest(intent, shareRequest.version + 1)
+    }
+
+    private fun extractInputFiles(intent: Intent?, inputText: String?): List<String> {
+        Timber.d(intent.toString())
+        Timber.d(intent?.extras.toString())
+        Timber.d("View data: ${intent?.data}")
+
+        if (intent == null) return emptyList()
+        val inputFiles = mutableListOf<String>()
+
+        when (intent.action) {
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val sharedPaths = intent.getParcelableArrayListExtra<Uri>("extra_file_uris")
+                Timber.d("ACTION_SEND_MULTIPLE PATH: $sharedPaths")
+                sharedPaths?.forEach { sharedPath ->
+                    sharedPath.path?.let { path ->
+                        inputFiles.add(sharedPath.fragment?.let { "$path#$it" } ?: path)
+                    }
+                }
+                if (sharedPaths == null && inputText == null) {
+                    inputFiles.addAll(getPathsFromClipData(applicationContext, intent))
+                }
+            }
+
+            Intent.ACTION_SEND, Intent.ACTION_VIEW -> {
+                val sharedPath = intent.getParcelableExtra<Uri>("extra_file_uris")
+                Timber.d("${intent.action} PATH: $sharedPath")
+                sharedPath?.path?.let { path ->
+                    inputFiles.add(sharedPath.fragment?.let { "$path#$it" } ?: path)
+                }
+                if (sharedPath == null && inputText == null) {
+                    inputFiles.addAll(getPathsFromClipData(applicationContext, intent))
+                }
+            }
+        }
+
+        Timber.d("Intent EXTRA_TEXT: $inputText")
+        Timber.d("Intent FILES: $inputFiles")
+        return inputFiles
+    }
 
 }
 
