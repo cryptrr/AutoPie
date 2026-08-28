@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -137,6 +138,44 @@ class ProcessManagerTests : KoinTest {
 
             assertTrue(secondResult.success)
             assertTrue(secondResult.output.contains("from-first-step"))
+        } finally {
+            processManagerService.stopShell(processId)
+        }
+    }
+
+    @Test
+    fun `multistage command that exits shared shell reports failure`() = runTest {
+        val (processManagerService, _) = createProcessManagerService("multistage-shell-exit")
+        val processId = 61546
+        val command = CommandModel(
+            type = CommandType.SHARE,
+            name = "Fail workflow",
+            path = "",
+            command = "exit 7",
+            exec = "",
+            extras = emptyList(),
+            multiStage = true,
+            steps = listOf(
+                com.autopi.autopieapp.data.CommandStep(command = "exit 7"),
+                com.autopi.autopieapp.data.CommandStep(command = "echo should-not-run")
+            )
+        )
+
+        try {
+            val result = processManagerService.runCommandForShareWithEnv2(
+                command,
+                command.exec,
+                command.command,
+                command.path,
+                commandExtraInputs = emptyList(),
+                rawInput = "",
+                processId = processId,
+                jobType = JobType.STANDALONE,
+                usePython = false
+            )
+
+            assertFalse(result.success)
+            assertFalse(result.partial)
         } finally {
             processManagerService.stopShell(processId)
         }

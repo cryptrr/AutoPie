@@ -214,6 +214,16 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
             }
         }
 
+        // A sourced multi-stage command can terminate the shared shell (for example via
+        // `exit` or `set -e`) before the completion marker is printed. Treat stream EOF as
+        // termination so callers do not wait forever for a marker that can no longer arrive.
+        val onStreamClosed = {
+            if (exitCode == Command.Status.INVALID) {
+                exitCode = Command.Status.TERMINATED
+                watchdog.signal()
+            }
+        }
+
         val lock = ReentrantLock()
         val output = Collections.synchronizedList(mutableListOf<String>())
 
@@ -238,6 +248,8 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
 
         stdoutReader.onComplete = onComplete
         stderrReader.onComplete = onComplete
+        stdoutReader.onClosed = onStreamClosed
+        stderrReader.onClosed = onStreamClosed
         stdoutReader.onReadLine = onLine(stdout, onStdOutListeners, config.onStdOut)
         stderrReader.onReadLine = when (config.redirectStdErr) {
             true -> onLine(stdout, onStdOutListeners, config.onStdOut)
@@ -716,6 +728,11 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
          */
         var onComplete: (marker: Command.Marker) -> Unit = {}
 
+        /**
+         * The lambda that is invoked when the backing stream reaches EOF.
+         */
+        var onClosed: () -> Unit = {}
+
         override fun run(){
             try {
                 BufferedReader(InputStreamReader(stream)).forEachLine { line ->
@@ -735,6 +752,8 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
                 }
             }catch (ignore: IOException){
                 Timber.d("Interrupted IO")
+            } finally {
+                onClosed()
             }
         }
 
