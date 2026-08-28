@@ -203,6 +203,7 @@
             android:exported="true"
             android:noHistory="true"
             android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.loading.full"
             />
         <activity
             android:name=".SmallLoadingActivity"
