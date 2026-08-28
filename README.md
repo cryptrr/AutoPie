@@ -414,6 +414,7 @@ Command-level flags:
 | Flag | Behavior |
 | --- | --- |
 | `--show-loading-screen` | Opens AutoPie's loading screen while the command runs. |
+| `--show-loading-screen-small` | Opens a compact loading bottom sheet while the command runs. |
 | `--realtime` | Re-runs as inputs change in the extras sheet. |
 
 Script headers must appear at the beginning of `command`; multiple headers can be combined:

@@ -204,6 +204,12 @@
             android:noHistory="true"
             android:excludeFromRecents="true"
             />
+        <activity
+            android:name=".SmallLoadingActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@style/ShareTheme" />
         <service
             android:name=".autopieapp.data.services.FileObserverJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />

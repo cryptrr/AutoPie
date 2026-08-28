@@ -129,6 +129,12 @@ class CommandExtraFlagsTest {
     }
 
     @Test
+    fun `small loading screen command flag is detected`() {
+        assertTrue(listOf("--show-loading-screen-small").hasFlag(CommandFlags.SHOW_LOADING_SCREEN_SMALL))
+        assertFalse(emptyList<String>().hasFlag(CommandFlags.SHOW_LOADING_SCREEN_SMALL))
+    }
+
+    @Test
     fun `realtime command flag is detected`() {
         assertTrue(listOf("--realtime").hasFlag(CommandFlags.REALTIME))
         assertFalse(emptyList<String>().hasFlag(CommandFlags.REALTIME))

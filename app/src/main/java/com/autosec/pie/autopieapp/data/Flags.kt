@@ -24,6 +24,7 @@ enum class ScriptFlags(val value: String) {
 
 enum class CommandFlags(val value: String) {
     SHOW_LOADING_SCREEN("--show-loading-screen"),
+    SHOW_LOADING_SCREEN_SMALL("--show-loading-screen-small"),
     REALTIME("--realtime")
 }
 

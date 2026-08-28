@@ -8,6 +8,7 @@ import android.system.Os
 import androidx.lifecycle.viewModelScope
 import com.autopi.LoadingActivity
 import com.autopi.OutputViewerActivity
+import com.autopi.SmallLoadingActivity
 import com.autopi.autopieapp.data.AutoPieError
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandFlags
@@ -142,6 +143,7 @@ class ProcessManagerService(
 
                     is ViewModelEvent.CommandCompleted -> {
                         LoadingActivity.dismiss(it.processId)
+                        SmallLoadingActivity.dismiss(it.processId)
                         try {
                             //Add it to the success list
                             successProcessIds = successProcessIds + it.processId
@@ -151,6 +153,7 @@ class ProcessManagerService(
                     }
                     is ViewModelEvent.CommandFailed -> {
                         LoadingActivity.dismiss(it.processId)
+                        SmallLoadingActivity.dismiss(it.processId)
                         try {
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
@@ -160,6 +163,7 @@ class ProcessManagerService(
                     }
                     is ViewModelEvent.CommandStoppedByUser -> {
                         LoadingActivity.dismiss(it.processId)
+                        SmallLoadingActivity.dismiss(it.processId)
                     }
 
                     else -> {}
@@ -537,8 +541,13 @@ class ProcessManagerService(
                 openOutputViewer(logFile.absolutePath, commandObject.name)
             }
 
-            if (commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN)) {
-                LoadingActivity.start(activity, processId)
+            when {
+                commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN) -> {
+                    LoadingActivity.start(activity, processId)
+                }
+                commandObject.flags.hasFlag(CommandFlags.SHOW_LOADING_SCREEN_SMALL) -> {
+                    SmallLoadingActivity.start(activity, processId)
+                }
             }
 
             val shell = getOrCreateShell(processId)
