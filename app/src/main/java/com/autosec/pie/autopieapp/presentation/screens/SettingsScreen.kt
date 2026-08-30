@@ -54,6 +54,7 @@ import com.autopi.terminal.TerminalEmulatorActivity
 import com.autopi.ui.theme.PastelYellow
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.ui.theme.PastelGreen
+import com.autosec.pie.BrowserActivity
 import com.termux.app.TermuxActivity
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
@@ -156,6 +157,28 @@ fun SettingsToggles() {
                 }
         ) {
             Text("Terminal")
+            GoToPageIcon()
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .clickable(
+                    indication = null,
+                    enabled = true,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    try {
+                        context.startActivity(Intent(context, BrowserActivity::class.java))
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to start BrowserActivity")
+                    }
+                }
+        ) {
+            Text("Browser")
             GoToPageIcon()
         }
 

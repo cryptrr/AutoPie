@@ -76,23 +76,13 @@
             </intent-filter>
         </activity>
 
-<!--        <activity-->
-<!--            android:name="com.autosec.pie.BrowserActivity"-->
-<!--            android:exported="true"-->
-<!--            android:label="AutoPie Browser"-->
-<!--            android:launchMode="singleTop"-->
-<!--            android:taskAffinity="${applicationId}.browser"-->
-<!--            android:theme="@style/Theme.AppCompat.NoActionBar">-->
-
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.SEND" />-->
-
-<!--                <category android:name="android.intent.category.DEFAULT" />-->
-
-<!--                <data android:mimeType="text/plain" />-->
-<!--            </intent-filter>-->
-
-<!--        </activity>-->
+        <activity
+            android:name="com.autosec.pie.BrowserActivity"
+            android:exported="true"
+            android:label="AutoPie Browser"
+            android:launchMode="singleTop"
+            android:taskAffinity="${applicationId}.browser"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
 <!--        <activity-alias-->
 <!--            android:name=".BrowserLauncher"-->
