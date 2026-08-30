@@ -25,13 +25,25 @@ jobs:
       FDROID_BUILD_DIR: /home/vagrant/build/com.autopi
       HOME: /home/vagrant
       LC_ALL: C.UTF-8
+      TERMUX_GENERATOR_REF: b8c21b1857782e0c2959bf4658cb48d8aa45cb29
       TERMUX_NATIVE_SKIP_HOST_SETUP: "true"
+      TERMUX_PACKAGES_REF: f8711dbfb6a073554267e9f6291721ca60d69788
       TERMUX_REF: 401bbe54b8f4e68302b1ff70678015a24628fb1d
       TZ: UTC
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      #Mitigate intermittent http errors in GNU source tarballs.
+      - name: Restore Termux source archives
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            /home/vagrant/.termux-build/_cache
+            /home/vagrant/.termux-build/*/cache
+          key: termux-sources-${{ runner.os }}-${{ env.TERMUX_GENERATOR_REF }}-${{ env.TERMUX_PACKAGES_REF }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            termux-sources-${{ runner.os }}-${{ env.TERMUX_GENERATOR_REF }}-${{ env.TERMUX_PACKAGES_REF }}-
 
       - name: Prepare F-Droid build environment
         run: |
@@ -72,7 +84,9 @@ jobs:
           runuser -u vagrant -- env \
             HOME=/home/vagrant \
             LC_ALL=C.UTF-8 \
+            TERMUX_GENERATOR_REF="$TERMUX_GENERATOR_REF" \
             TERMUX_NATIVE_SKIP_HOST_SETUP="$TERMUX_NATIVE_SKIP_HOST_SETUP" \
+            TERMUX_PACKAGES_REF="$TERMUX_PACKAGES_REF" \
             TERMUX_REF="$TERMUX_REF" \
             TZ=UTC \
             bash -lc '
@@ -84,6 +98,17 @@ jobs:
               bash scripts/fdroid-build-from-source.sh
               ./gradlew :app:assembleRelease
             '
+
+      # Use a unique key so a failed attempt can extend the cache restored by
+      # the next retry instead of being blocked by GitHub's immutable caches.
+      - name: Save Termux source archives
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            /home/vagrant/.termux-build/_cache
+            /home/vagrant/.termux-build/*/cache
+          key: termux-sources-${{ runner.os }}-${{ env.TERMUX_GENERATOR_REF }}-${{ env.TERMUX_PACKAGES_REF }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Decode release keystore
         env:
