@@ -20,8 +20,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 63
-        versionName = "0.17.53-beta"
+        versionCode = 64
+        versionName = "0.17.54-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
@@ -39,8 +39,6 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
-            buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
             applicationIdSuffix = ".debug"
             versionNameSuffix = ".debug"
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher_debug"
@@ -57,8 +55,6 @@ android {
             }
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_round"
-            buildConfigField("String", "VERSION_NAME", "${android.defaultConfig.versionName}")
-            buildConfigField("int", "VERSION_CODE", "${android.defaultConfig.versionCode}")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
