@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">AutoPie</string>
+    <string name="star_autopie_title">Enjoying AutoPie?</string>
+    <string name="star_autopie_description">AutoPie is completely open source. A GitHub star helps more people discover the project and improve the commands ecosystem.</string>
+    <string name="star_autopie_action">⭐ Star AutoPie</string>
+    <string name="star_autopie_not_now">Not now</string>
 </resources>
