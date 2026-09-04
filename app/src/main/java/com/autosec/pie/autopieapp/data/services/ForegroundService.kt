@@ -174,10 +174,10 @@ class ForegroundService : Service() {
 
         val notification = NotificationCompat.Builder(this, AutoPieNotification.FOREGROUND_CHANNEL)
             .setContentTitle("AutoPie Running")
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setOngoing(true)
             .addAction(
-                R.mipmap.ic_launcher,
+                R.drawable.ic_notification,
                 "Cancel",
                 pendingButtonIntent
             )

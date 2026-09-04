@@ -126,7 +126,7 @@ class AutoPieNotification(
 
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setSilent(true)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
@@ -195,7 +195,7 @@ class AutoPieNotification(
 
 
         var builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setSilent(true)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
@@ -203,7 +203,7 @@ class AutoPieNotification(
             .setContentIntent(pendingIntent)
             .setAutoCancel(false)
             .addAction(
-                R.mipmap.ic_launcher,
+                R.drawable.ic_notification,
                 "Cancel",
                 pendingCancelIntent
             )
@@ -262,7 +262,7 @@ class AutoPieNotification(
 
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setSilent(false)
             .setContentTitle(title)
             .setContentText(description)
@@ -339,7 +339,7 @@ class AutoPieNotification(
         )
 
         var builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setSilent(true)
             .setContentTitle(title)
             .setContentText(description)
@@ -352,7 +352,7 @@ class AutoPieNotification(
 //                pendingButtonIntent
 //            )
             .addAction(
-                R.mipmap.ic_launcher,
+                R.drawable.ic_notification,
                 "Cancel",
                 pendingButtonIntent
             )
