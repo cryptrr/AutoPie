@@ -67,10 +67,10 @@ AutoPie exposes inputs and extras as environment variables. Use normal shell syn
 
 | Variable | Value |
 | --- | --- |
-| `INPUT` | The raw active input. In a multistage workflow, the previous step's exported `OUTPUT` becomes the next step's `INPUT`. |
+| `INPUT` | The raw active input. When a folder is selected, this is the selected folder path. In a multistage workflow, the previous step's exported `OUTPUT` becomes the next step's `INPUT`. |
 | `INPUT_TEXT` | Shared or manually entered text. |
-| `INPUT_FILE` | A single file path, directory path, or first URL, depending on the input. |
-| `INPUT_FILES` | Multiple file paths separated by newlines. |
+| `INPUT_FILE` | A single file path or first URL. For folder input, this is the current immediate child being processed. |
+| `INPUT_FILES` | Multiple file paths separated by newlines. For folder input, this contains the folder's immediate children. |
 | `INPUT_FILES_ARR` | `INPUT_FILES` converted to a Bash array; use `"${INPUT_FILES_ARR[@]}"`. |
 | `INPUT_URL` | A single detected HTTP(S) URL. |
 | `INPUT_URLS` | All detected URLs in shared text. |
@@ -82,6 +82,8 @@ AutoPie exposes inputs and extras as environment variables. Use normal shell syn
 | `RAND` | A random four-digit number for collision-resistant output names. |
 
 Availability depends on the kind of input. Extras are exported under their configured uppercase `name` as well.
+
+When a folder is selected, AutoPie runs the command once for each immediate child in that folder. Use `INPUT` when the command needs the selected folder itself, and `INPUT_FILE` when it needs the child currently being processed.
 
 Examples:
 
