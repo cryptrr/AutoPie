@@ -435,6 +435,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
             for(extra in visibleExtras.filter { it.type != "FLAG" }) {
                 key(extra.id) {
+                    val displayName = extra.name.replace('_', ' ')
                     val useSmallWidth = extra.description.isEmpty() &&
                         !extra.flags.hasFlag(ExtraFlags.LARGE) &&
                         extra.type != "SELECTABLE_FLAT" &&
@@ -505,12 +506,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
                             if(isPasswordField){
-                                PasswordFormField(text = textValue, title = extra.name, subtitle = extra.description, mask = '⬤')
+                                PasswordFormField(text = textValue, title = displayName, subtitle = extra.description, mask = '⬤')
                             }
                             else{
                                 GenericTextFormField(
                                     text = textValue,
-                                    title = extra.name,
+                                    title = displayName,
                                     subtitle = extra.description,
                                     trailingIcon = if(useFolderPicker){
                                         {
@@ -591,7 +592,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 )
                             }
 
-                            Text(text = extra.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = displayName, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                             if(extra.description.isNotEmpty()){
                                 Spacer(modifier = Modifier.height(3.dp))
                                 Text(text = extra.description, fontSize = 14.sp, fontWeight = FontWeight.Normal)
@@ -683,7 +684,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             Column {
                                 Text(
-                                    text = extra.name,
+                                    text = displayName,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -784,7 +785,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             Column {
                                 Text(
-                                    text = extra.name,
+                                    text = displayName,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -881,7 +882,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                             Column {
                                 Text(
-                                    text = extra.name,
+                                    text = displayName,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -946,7 +947,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
                     Column(Modifier.widthIn(min = 100.dp, max = 250.dp)){
 
-                        FlagSelector(flag, isChecked.value) { isChecked.value = it }
+                        FlagSelector(
+                            flag.copy(name = flag.name.replace('_', ' ')),
+                            isChecked.value
+                        ) { isChecked.value = it }
 
                     }
 
