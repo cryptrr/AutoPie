@@ -14,6 +14,7 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandStepResolutionException
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.hasFlag
@@ -119,6 +120,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             getShareCommands()
                         }
                         is ViewModelEvent.CommandCompleted -> {
+                            if (it.jobType == JobType.CRON) return@collect
                             if (it.partial) {
                                 val nextCommand = it.command.nextStepOrNull()
                                 if (nextCommand == null) {
@@ -177,6 +179,7 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             }
                         }
                         is ViewModelEvent.CommandFailed -> {
+                            if (it.jobType == JobType.CRON) return@collect
                             multiStageInputs.remove(it.processId)
                             multiStageCompletionCallbacks.remove(it.processId)?.invoke()
                             if (
@@ -356,7 +359,6 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     if (item.multiStage == true && !keepShellAlive) {
                         main.dispatchEvent(ViewModelEvent.StopShell(processId))
                     }
-                    main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     Timber.e(e)
 
                     if (sendNotifications) {
@@ -378,14 +380,6 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                         if (item.multiStage == true && !receipt.partial && !keepShellAlive) {
                             main.dispatchEvent(ViewModelEvent.StopShell(processId))
                         }
-                        main.dispatchEvent(
-                            ViewModelEvent.CommandCompleted(
-                                processId,
-                                item,
-                                logsFile.absolutePath,
-                                partial = receipt.partial
-                            )
-                        )
                     } else {
                         Timber.d("Process FAILED".uppercase())
                         if (item.multiStage == true && !keepShellAlive) {
@@ -394,7 +388,6 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                         if (sendNotifications) {
                             autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, logsFile.absolutePath, processId)
                         }
-                        main.dispatchEvent(ViewModelEvent.CommandFailed(processId, item, logsFile.absolutePath))
                     }
 
                 }

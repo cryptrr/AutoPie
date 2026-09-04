@@ -12,6 +12,7 @@ data class AutoPieUseCases (
     val runCommandForFiles: RunCommandForFiles,
     val runCommandForText: RunCommandForText,
     val runStandaloneCommand: RunStandaloneCommand,
+    val runCronCommand: RunCronCommand,
     val changeCommandDetails: ChangeCommandDetails,
     val deleteCommand: DeleteCommand,
     val addCommandToHistory: AddCommandToHistory,

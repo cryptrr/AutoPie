@@ -309,7 +309,8 @@ enum class JobType {
     FILES,
     DIRECTORY,
     TEXT,
-    STANDALONE
+    STANDALONE,
+    CRON
 }
 
 data class ExecAndCommand(

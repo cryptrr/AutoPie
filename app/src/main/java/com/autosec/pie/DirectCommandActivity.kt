@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ShareInputs
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
@@ -92,6 +93,7 @@ class DirectCommandActivity : ComponentActivity() {
                     when(it){
                         //For asynchronous requests
                         is ViewModelEvent.CommandStarted -> {
+                            if (it.jobType == JobType.CRON) return@collect
 
                             try {
                                 val uri = FileProvider.getUriForFile(this@DirectCommandActivity, "${this@DirectCommandActivity.packageName}.fileprovider",
@@ -116,6 +118,7 @@ class DirectCommandActivity : ComponentActivity() {
 
                         //For synchronous requests
                         is ViewModelEvent.CommandCompleted -> {
+                            if (it.jobType == JobType.CRON) return@collect
                             if (it.partial || shareReceiverViewModel.isOpenRealtimeExtrasProcess(it.processId)) {
                                 return@collect
                             }
@@ -137,6 +140,7 @@ class DirectCommandActivity : ComponentActivity() {
                         }
 
                         is ViewModelEvent.CommandFailed -> {
+                            if (it.jobType == JobType.CRON) return@collect
                             if (shareReceiverViewModel.isOpenRealtimeExtrasProcess(it.processId)) {
                                 return@collect
                             }

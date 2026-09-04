@@ -138,6 +138,12 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             processIds = processIds + it.processId
+                            publishWidgetState(
+                                commandObject = it.command,
+                                rawOutput = null,
+                                status = "running",
+                                replaceOutput = false
+                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -149,6 +155,14 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             successProcessIds = successProcessIds + it.processId
+                            if (!it.partial) {
+                                publishWidgetState(
+                                    commandObject = it.command,
+                                    rawOutput = it.exportedOutput,
+                                    status = "success",
+                                    replaceOutput = true
+                                )
+                            }
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -159,6 +173,12 @@ class ProcessManagerService(
                         try {
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
+                            publishWidgetState(
+                                commandObject = it.command,
+                                rawOutput = null,
+                                status = "failed",
+                                replaceOutput = false
+                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -502,6 +522,8 @@ class ProcessManagerService(
     ): ProcessResult {
 
         val exportedOutputFile = File(activity.cacheDir, "${processId}.output")
+        val commandModel = commandObject as CommandModel
+        val logFile = File(activity.cacheDir, "${processId}.log")
 
         try {
             //checkForUnsafeCommands(commandObject, command)
@@ -512,7 +534,6 @@ class ProcessManagerService(
                 commandObject
             )
 
-            val logFile = File(activity.cacheDir, "${processId}.log")
             logFile.createNewFile()
 
             val logWriter = BufferedWriter(FileWriter(logFile, true))
@@ -539,13 +560,7 @@ class ProcessManagerService(
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
 
-            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
-            publishWidgetState(
-                commandObject = commandObject,
-                rawOutput = null,
-                status = "running",
-                replaceOutput = false
-            )
+            main.dispatchEvent(ViewModelEvent.CommandStarted(processId, commandModel, logFile.absolutePath, rawInput, jobType))
 
             if (Utils.isOpenLogsCommand(commandObject.command)) {
                 openOutputViewer(logFile.absolutePath, commandObject.name)
@@ -617,19 +632,32 @@ class ProcessManagerService(
                 commandObject.multiStage == true &&
                 commandObject.steps.size > 1
 
-            if (!partial) {
-                publishWidgetState(
-                    commandObject = commandObject,
-                    rawOutput = exportedOutput,
-                    status = if (result.isSuccess) "success" else "failed",
-                    replaceOutput = result.isSuccess
-                )
-            }
-
             if(commandObject.multiStage != true){
                 Timber.d("Removing shell for non multistage commannd")
                 shell.shutdown()
                 shells.remove(processId)
+            }
+
+            if (result.isSuccess) {
+                main.dispatchEvent(
+                    ViewModelEvent.CommandCompleted(
+                        processId = processId,
+                        command = commandModel,
+                        logFile = logFile.absolutePath,
+                        jobType = jobType,
+                        partial = partial,
+                        exportedOutput = exportedOutput
+                    )
+                )
+            } else {
+                main.dispatchEvent(
+                    ViewModelEvent.CommandFailed(
+                        processId = processId,
+                        command = commandModel,
+                        logFile = logFile.absolutePath,
+                        jobType = jobType
+                    )
+                )
             }
 
             return ProcessResult(
@@ -644,11 +672,13 @@ class ProcessManagerService(
         }
         catch (e: Exception) {
             Timber.e(e.toString())
-            publishWidgetState(
-                commandObject = commandObject,
-                rawOutput = null,
-                status = "failed",
-                replaceOutput = false
+            main.dispatchEvent(
+                ViewModelEvent.CommandFailed(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType
+                )
             )
             throw e
         }
@@ -692,7 +722,20 @@ class ProcessManagerService(
 
         Timber.d("runCommandInTermuxShell for $command")
 
+        val commandModel = commandObject as CommandModel
+        val logFile = File(activity.cacheDir, "${processId}.log")
+
         try {
+            logFile.createNewFile()
+            main.dispatchEvent(
+                ViewModelEvent.CommandStarted(
+                    processId,
+                    commandModel,
+                    logFile.absolutePath,
+                    rawInput,
+                    jobType
+                )
+            )
             val envs = getEnvsFromCommand(inputParsedData, commandExtraInputs, commandObject)
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
             scriptFile.writeText("set -x\n")
@@ -759,17 +802,36 @@ class ProcessManagerService(
                 Timber.d("Starting Termux Activity: $it")
             }
 
+            val partial = commandObject.multiStage == true && commandObject.steps.size > 1
+            main.dispatchEvent(
+                ViewModelEvent.CommandCompleted(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType,
+                    partial = partial
+                )
+            )
+
             return ProcessResult(
                 commandObject.name,
                 processId,
                 true,
                 "Command Opened in Termux Shell",
-                partial = commandObject.multiStage == true && commandObject.steps.size > 1
+                partial = partial
             )
 
 
         }catch (e: Exception){
             Timber.e(e)
+            main.dispatchEvent(
+                ViewModelEvent.CommandFailed(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType
+                )
+            )
             throw e
         }
 
