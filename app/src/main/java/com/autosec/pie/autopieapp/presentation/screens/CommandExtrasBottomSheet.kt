@@ -87,6 +87,8 @@ import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
 import com.autopi.autopieapp.presentation.elements.FlagSelector
+import com.autopi.autopieapp.presentation.elements.FlatMultiOptionSelector
+import com.autopi.autopieapp.presentation.elements.FlatOptionSelector
 import com.autopi.autopieapp.presentation.elements.FolderPicker
 import com.autopi.autopieapp.presentation.elements.GenericTextAndSelectorFormField
 import com.autopi.autopieapp.presentation.elements.MultiFilePicker
@@ -434,7 +436,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             for(extra in visibleExtras.filter { it.type != "FLAG" }) {
                 key(extra.id) {
                     val useSmallWidth = extra.description.isEmpty() &&
-                        !extra.flags.hasFlag(ExtraFlags.LARGE)
+                        !extra.flags.hasFlag(ExtraFlags.LARGE) &&
+                        extra.type != "SELECTABLE_FLAT" &&
+                        extra.type != "MULTI_SELECTABLE_FLAT"
                     Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
                     when (extra.type) {
                         "STRING" -> {
@@ -602,7 +606,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             )
                         }
 
-                        "SELECTABLE" -> {
+                        "SELECTABLE", "SELECTABLE_FLAT" -> {
+                            val isFlat = extra.type == "SELECTABLE_FLAT"
                             val expanded = remember { mutableStateOf(false) }
                             val configuredOptions = extra.selectableOptions
                             val shellEnvironmentVariable = remember(configuredOptions) {
@@ -688,15 +693,24 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                OptionSelector(
-                                    options = options,
-                                    selectedOption = selectedOption,
-                                    expanded = expanded,
-                                    enabled = !selectableFetchFailed
-                                )
+                                if (isFlat) {
+                                    FlatOptionSelector(
+                                        options = options,
+                                        selectedOption = selectedOption,
+                                        enabled = !selectableFetchFailed
+                                    )
+                                } else {
+                                    OptionSelector(
+                                        options = options,
+                                        selectedOption = selectedOption,
+                                        expanded = expanded,
+                                        enabled = !selectableFetchFailed
+                                    )
+                                }
                             }
                         }
-                        "MULTI_SELECTABLE" -> {
+                        "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
+                            val isFlat = extra.type == "MULTI_SELECTABLE_FLAT"
                             val expanded = remember { mutableStateOf(false) }
                             val configuredOptions = extra.selectableOptions
                             val shellEnvironmentVariable = remember(configuredOptions) {
@@ -784,12 +798,20 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                MultiOptionSelector(
-                                    options = options,
-                                    selectedOptions = selectedOptions,
-                                    expanded = expanded,
-                                    enabled = !selectableFetchFailed
-                                )
+                                if (isFlat) {
+                                    FlatMultiOptionSelector(
+                                        options = options,
+                                        selectedOptions = selectedOptions,
+                                        enabled = !selectableFetchFailed
+                                    )
+                                } else {
+                                    MultiOptionSelector(
+                                        options = options,
+                                        selectedOptions = selectedOptions,
+                                        expanded = expanded,
+                                        enabled = !selectableFetchFailed
+                                    )
+                                }
                             }
                         }
                         "SLIDER" -> {

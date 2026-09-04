@@ -22,10 +22,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -168,7 +170,16 @@ fun CommandExtraInputElement(
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
-    val options = listOf("STRING", "SELECTABLE", "MULTI_SELECTABLE", "FLAG", "BOOLEAN", "SLIDER")
+    val options = listOf(
+        "STRING",
+        "SELECTABLE",
+        "SELECTABLE_FLAT",
+        "MULTI_SELECTABLE",
+        "MULTI_SELECTABLE_FLAT",
+        "FLAG",
+        "BOOLEAN",
+        "SLIDER"
+    )
 
     //Boolean extra options
     var booleanExpanded = remember { mutableStateOf(false) }
@@ -211,7 +222,9 @@ fun CommandExtraInputElement(
             type = selectedCommandType.value,
             default = when{
                 selectedCommandType.value == "SELECTABLE" ||
-                    selectedCommandType.value == "MULTI_SELECTABLE" ->
+                    selectedCommandType.value == "SELECTABLE_FLAT" ||
+                    selectedCommandType.value == "MULTI_SELECTABLE" ||
+                    selectedCommandType.value == "MULTI_SELECTABLE_FLAT" ->
                     parsedSelectableOptions.values.firstOrNull() ?: ""
                 else -> default.value
             },
@@ -365,7 +378,7 @@ fun CommandExtraInputElement(
                 )
             }
 
-            "SELECTABLE", "MULTI_SELECTABLE" -> {
+            "SELECTABLE", "SELECTABLE_FLAT", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -375,7 +388,10 @@ fun CommandExtraInputElement(
                     text = selectableOptions,
                     "",
                     placeholder = "OPTIONS",
-                    subtitle = if (selectedCommandType.value == "MULTI_SELECTABLE") {
+                    subtitle = if (
+                        selectedCommandType.value == "MULTI_SELECTABLE" ||
+                        selectedCommandType.value == "MULTI_SELECTABLE_FLAT"
+                    ) {
                         "Separate options with commas. Users can select multiple values; selected raw values are joined with a new line."
                     } else {
                         "Separate options with commas. Use Label=raw value for a user-friendly label. The first value is the default."
@@ -647,6 +663,117 @@ fun MultiOptionSelector(
                     },
                     text = { Text(label) }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun FlatOptionSelector(
+    options: Map<String, String>,
+    selectedOption: MutableState<String>,
+    enabled: Boolean = true,
+) {
+    if (!enabled) {
+        Text(
+            text = "Error fetching",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F)
+        )
+        return
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color.Black.copy(alpha = 0.25F))
+    ) {
+        options.entries.forEachIndexed { index, (label, value) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { selectedOption.value = value }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedOption.value == value) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            if (index < options.size - 1) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+    }
+}
+
+@Composable
+fun FlatMultiOptionSelector(
+    options: Map<String, String>,
+    selectedOptions: MutableState<List<String>>,
+    enabled: Boolean = true,
+) {
+    if (!enabled) {
+        Text(
+            text = "Error fetching",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F)
+        )
+        return
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color.Black.copy(alpha = 0.25F))
+    ) {
+        options.entries.forEachIndexed { index, (label, value) ->
+            val selected = value in selectedOptions.value
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        selectedOptions.value = if (selected) {
+                            selectedOptions.value - value
+                        } else {
+                            selectedOptions.value + value
+                        }
+                    }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selected) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            if (index < options.size - 1) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     }
