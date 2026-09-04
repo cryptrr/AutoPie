@@ -424,9 +424,12 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         return resolvedProcessId
     }
 
-    fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?, processId: Int? = null): Boolean{
+    suspend fun selectCommandFromDirectActivity(commandId: String, input: String?,callerType: String, activity: Activity?, processId: Int? = null): Boolean{
         try {
-            val command = shareItemsResult.value.find { it.id == commandId || it.name == commandId }
+            val installedCommands = withContext(dispatchers.io) {
+                useCases.getCommandsList()
+            }
+            val command = installedCommands.find { it.id == commandId || it.name == commandId }
 
             if(command == null){
                 Timber.d("Command not found: $commandId")
@@ -436,7 +439,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
             commandNotFound.value = null
 
-            val activeCommand = prepareCommand(command, processId)?.firstStepOrSelf()
+            val activeCommand = prepareCommand(
+                command = command,
+                processId = processId,
+                availableCommands = installedCommands
+            )?.firstStepOrSelf()
                 ?: return false
 
             if (activeCommand.multiStage == true || activeCommand.extras?.any { !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) } == true) {
@@ -462,9 +469,13 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         }
     }
 
-    fun prepareCommand(command: CommandModel, processId: Int? = null): CommandModel? {
+    fun prepareCommand(
+        command: CommandModel,
+        processId: Int? = null,
+        availableCommands: List<CommandModel> = shareItemsResult.value
+    ): CommandModel? {
         return try {
-            val commandsById = shareItemsResult.value
+            val commandsById = availableCommands
                 .filter { it.id.isNotBlank() }
                 .associateBy { it.id }
             command.resolveCommandSteps(commandsById)
