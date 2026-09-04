@@ -44,6 +44,7 @@ import com.autopi.autopieapp.presentation.elements.OptionItem
 import com.autopi.autopieapp.presentation.elements.OptionLayout
 import com.autopi.autopieapp.presentation.viewModels.CreateCommandViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
+import com.autopi.autopieapp.widget.requestPinCommandWidget
 import com.autopi.utils.Utils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -106,7 +107,7 @@ fun CommandDetailsSheet(
     }
 
 
-    val optionsList = remember {
+    val optionsList = remember(card.id, card.name) {
         listOf(
             OptionItem(
                 text = "EDIT",
@@ -147,11 +148,25 @@ fun CommandDetailsSheet(
                 }
             ),
             OptionItem(
-                text = "ADD TO HOME SCREEN",
+                text = "ADD SHORTCUT",
                 enabled = true,
                 onClick = {
                     scope.launch {
                         pinAppShortcut(context = context, card.name, card.name, card.name)
+                        open.value = false
+                    }
+                }
+            ),
+            OptionItem(
+                text = "ADD WIDGET",
+                enabled = true,
+                onClick = {
+                    scope.launch {
+                        requestPinCommandWidget(
+                            context = context,
+                            commandId = card.id.ifBlank { card.name },
+                            commandName = card.name
+                        )
                         open.value = false
                     }
                 }

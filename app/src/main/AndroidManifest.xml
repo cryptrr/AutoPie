@@ -233,6 +233,19 @@
                 <action android:name="${applicationId}.PLAY_MEDIA" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".autopieapp.widget.CommandWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/command_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".autopieapp.widget.CommandWidgetPinReceiver"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
