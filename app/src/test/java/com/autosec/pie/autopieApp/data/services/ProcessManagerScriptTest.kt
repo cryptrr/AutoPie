@@ -54,11 +54,16 @@ class ProcessManagerScriptTest {
 
         assertEquals(
             """
+                rm -f '/tmp/autopie test-cache/42.output'
                 set -x
                 readarray -t INPUT_FILES_ARR <<< "${'$'}INPUT_FILES"
                 python '/tmp/autopie test-cache/42.py'
                 command_status=${'$'}?
                 set +x
+                if [ "${'$'}{OUTPUT+x}" = x ]; then
+                    umask 077
+                    printf '%s' "${'$'}OUTPUT" > '/tmp/autopie test-cache/42.output'
+                fi
                 exit "${'$'}command_status"
             """.trimIndent() + "\n",
             plan.shellScript
@@ -143,6 +148,7 @@ class ProcessManagerScriptTest {
 
         assertEquals(
             """
+                rm -f '/tmp/101.output'
                 if [ "${'$'}{OUTPUT+x}" = x ]; then
                     export INPUT="${'$'}OUTPUT"
                     unset OUTPUT
@@ -151,6 +157,10 @@ class ProcessManagerScriptTest {
                 echo value
                 step_status=${'$'}?
                 set +x
+                if [ "${'$'}{OUTPUT+x}" = x ]; then
+                    umask 077
+                    printf '%s' "${'$'}OUTPUT" > '/tmp/101.output'
+                fi
                 return "${'$'}step_status"
             """.trimIndent() + "\n",
             plan.shellScript

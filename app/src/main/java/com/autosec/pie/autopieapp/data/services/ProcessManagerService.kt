@@ -26,6 +26,7 @@ import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.widget.updateCommandWidgets
 import com.autopi.core.DispatcherProvider
 import com.autopi.utils.Shell
 import com.autopi.utils.Utils
@@ -36,6 +37,7 @@ import com.termux.shared.termux.TermuxConstants
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -485,7 +487,7 @@ class ProcessManagerService(
 
 
 
-    fun runCommandForShareWithEnv2(
+    suspend fun runCommandForShareWithEnv2(
         commandObject: CommandInterface,
         exec: String,
         command: String,
@@ -498,6 +500,8 @@ class ProcessManagerService(
         usePython: Boolean = true,
         isShellScript: Boolean = false
     ): ProcessResult {
+
+        val exportedOutputFile = File(activity.cacheDir, "${processId}.output")
 
         try {
             //checkForUnsafeCommands(commandObject, command)
@@ -536,6 +540,12 @@ class ProcessManagerService(
 
 
             main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
+            publishWidgetState(
+                commandObject = commandObject,
+                rawOutput = null,
+                status = "running",
+                replaceOutput = false
+            )
 
             if (Utils.isOpenLogsCommand(commandObject.command)) {
                 openOutputViewer(logFile.absolutePath, commandObject.name)
@@ -592,6 +602,9 @@ class ProcessManagerService(
 
 
             val output = result.output()
+            val exportedOutput = exportedOutputFile
+                .takeIf(File::isFile)
+                ?.readText()
 
             Timber.d(output)
 
@@ -599,6 +612,19 @@ class ProcessManagerService(
 
 
             closeLog(logWriter)
+
+            val partial = result.isSuccess &&
+                commandObject.multiStage == true &&
+                commandObject.steps.size > 1
+
+            if (!partial) {
+                publishWidgetState(
+                    commandObject = commandObject,
+                    rawOutput = exportedOutput,
+                    status = if (result.isSuccess) "success" else "failed",
+                    replaceOutput = result.isSuccess
+                )
+            }
 
             if(commandObject.multiStage != true){
                 Timber.d("Removing shell for non multistage commannd")
@@ -611,13 +637,42 @@ class ProcessManagerService(
                 processId,
                 result.isSuccess,
                 output,
-                partial = result.isSuccess && commandObject.multiStage == true && commandObject.steps.size > 1
+                partial = partial,
+                exportedOutput = exportedOutput
             )
 
         }
         catch (e: Exception) {
             Timber.e(e.toString())
+            publishWidgetState(
+                commandObject = commandObject,
+                rawOutput = null,
+                status = "failed",
+                replaceOutput = false
+            )
             throw e
+        }
+    }
+
+    private suspend fun publishWidgetState(
+        commandObject: CommandInterface,
+        rawOutput: String?,
+        status: String,
+        replaceOutput: Boolean
+    ) {
+        try {
+            updateCommandWidgets(
+                context = activity,
+                commandId = commandObject.id.ifBlank { commandObject.name },
+                commandName = commandObject.name,
+                rawOutput = rawOutput,
+                status = status,
+                replaceOutput = replaceOutput
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Timber.e(error, "Unable to update command widgets for ${commandObject.name}")
         }
     }
 
@@ -1071,6 +1126,7 @@ internal fun buildCommandScript(
     hasInputFiles: Boolean
 ): CommandScriptPlan {
     val pythonScriptFile = File(cacheDir, "${processId}.py")
+    val exportedOutputFile = File(cacheDir, "${processId}.output")
     val pythonScript = if (usePython && Utils.isPythonScript(commandObject.command)) {
         Utils.stripScriptHeaders(commandObject.command)
     } else {
@@ -1092,19 +1148,31 @@ internal fun buildCommandScript(
     return CommandScriptPlan(
         fullCommand = fullCommand,
         shellScript = buildString {
+            append("rm -f ${exportedOutputFile.absolutePath.shellQuote()}\n")
             append(commandScriptPreamble(commandObject.multiStage == true))
             if (hasInputFiles) {
                 append("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             }
             append(fullCommand)
             if (commandObject.multiStage == true) {
-                append("\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n")
+                append("\nstep_status=\$?\nset +x\n")
+                append(commandOutputCapture(exportedOutputFile))
+                append("return \"\$step_status\"\n")
             } else {
-                append("\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n")
+                append("\ncommand_status=\$?\nset +x\n")
+                append(commandOutputCapture(exportedOutputFile))
+                append("exit \"\$command_status\"\n")
             }
         },
         pythonScript = pythonScript
     )
+}
+
+internal fun commandOutputCapture(outputFile: File): String = buildString {
+    append("if [ \"\${OUTPUT+x}\" = x ]; then\n")
+    append("    umask 077\n")
+    append("    printf '%s' \"\$OUTPUT\" > ${outputFile.absolutePath.shellQuote()}\n")
+    append("fi\n")
 }
 
 internal fun Map<String, String>.toShellExportCommands(): String =

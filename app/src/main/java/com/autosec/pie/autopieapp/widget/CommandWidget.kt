@@ -495,8 +495,10 @@ private object PendingCommandBinding {
 suspend fun updateCommandWidgets(
     context: Context,
     commandId: String,
+    commandName: String = commandId,
     rawOutput: String?,
     status: String,
+    replaceOutput: Boolean = true,
     updatedAt: Long = System.currentTimeMillis()
 ) {
     val widget = CommandWidget()
@@ -507,13 +509,17 @@ suspend fun updateCommandWidgets(
             PreferencesGlanceStateDefinition,
             glanceId
         )
-        if (state[CommandWidgetState.commandId] != commandId) return@forEach
+        val matchesCommand = state[CommandWidgetState.commandId] == commandId ||
+            state[CommandWidgetState.commandName] == commandName
+        if (!matchesCommand) return@forEach
 
         updateAppWidgetState(context, glanceId) { preferences ->
-            if (rawOutput == null) {
-                preferences.remove(CommandWidgetState.output)
-            } else {
-                preferences[CommandWidgetState.output] = boundWidgetOutput(rawOutput)
+            if (replaceOutput) {
+                if (rawOutput == null) {
+                    preferences.remove(CommandWidgetState.output)
+                } else {
+                    preferences[CommandWidgetState.output] = boundWidgetOutput(rawOutput)
+                }
             }
             preferences[CommandWidgetState.status] = status
             preferences[CommandWidgetState.updatedAt] = updatedAt

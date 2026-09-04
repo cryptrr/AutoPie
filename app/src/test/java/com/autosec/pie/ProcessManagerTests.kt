@@ -181,6 +181,51 @@ class ProcessManagerTests : KoinTest {
         }
     }
 
+    @Test
+    fun `command result captures exported output and clears stale sidecar`() = runTest {
+        val (processManagerService, _) = createProcessManagerService("exported-output")
+        val processId = 61547
+        val command = CommandModel(
+            id = "widget-output-command",
+            type = CommandType.SHARE,
+            name = "Widget output",
+            path = "",
+            command = "export OUTPUT='[\"one\",\"two\"]'",
+            exec = "",
+            extras = emptyList()
+        )
+
+        val outputResult = processManagerService.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = processId,
+            jobType = JobType.STANDALONE,
+            usePython = false
+        )
+
+        assertTrue(outputResult.success)
+        assertEquals("[\"one\",\"two\"]", outputResult.exportedOutput)
+
+        val noOutputResult = processManagerService.runCommandForShareWithEnv2(
+            command.copy(command = "true"),
+            command.exec,
+            "true",
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = processId,
+            jobType = JobType.STANDALONE,
+            usePython = false
+        )
+
+        assertTrue(noOutputResult.success)
+        assertEquals(null, noOutputResult.exportedOutput)
+    }
+
 //    @Test
 //    fun `runCommandForShareWithEnv does not throw for safe command`() = runTest {
 //
