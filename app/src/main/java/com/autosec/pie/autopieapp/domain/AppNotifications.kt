@@ -45,6 +45,8 @@ sealed class ViewModelError() : Exception(), Notification {
     object TagNotDeletable : ViewModelError()
     object InvalidCommandRepoFile : ViewModelError()
     object CommandRepoUnavailable : ViewModelError()
+    data object ConfigBackupFailed : ViewModelError()
+    data object ConfigRestoreFailed : ViewModelError()
 
 
     data class CommandUnknown(override val message: String) : ViewModelError()
@@ -62,6 +64,8 @@ sealed class ViewModelError() : Exception(), Notification {
             is InvalidRawCommandJson -> reason
             is StoragePermissionDenied -> "Storage Permission not granted."
             is TagNotDeletable -> "This tag cannot be deleted because it is not a user defined tag."
+            is ConfigBackupFailed -> "Could not back up commands.json."
+            is ConfigRestoreFailed -> "The selected backup could not be restored."
             else -> "An Unknown Error has occurred"
         }
 
@@ -103,6 +107,8 @@ sealed class AppNotification : Notification {
     data object MCPServerStopped : AppNotification()
     data object MCPServerStartError : AppNotification()
     data object CommandDeleted : AppNotification()
+    data object ConfigBackupCreated : AppNotification()
+    data object ConfigBackupRestored : AppNotification()
     data class CommandsSkipped(val names: List<String>) : AppNotification()
     data class UpdatesAvailable(val url: String) : AppNotification()
     data class PackageUpdatesAvailable(val url: String) : AppNotification()
@@ -137,6 +143,8 @@ sealed class AppNotification : Notification {
             is MCPServerStarted -> "MCP Server Running on ${host}:${port}"
             is MCPServerStartError -> "Error Starting MCP Server"
             is CommandDeleted -> "Command Deleted"
+            is ConfigBackupCreated -> "Config backup saved."
+            is ConfigBackupRestored -> "Config backup restored."
             is CommandsSkipped -> "This AutoPie version cannot read: ${names.joinToString()}."
             else -> "Unknown Event Occurred"
         }
@@ -145,6 +153,8 @@ sealed class AppNotification : Notification {
         get() = when (this) {
             is InstallingPythonPackages -> BannerType.Warning
             is InstallingPythonPackagesSuccess -> BannerType.Success
+            is ConfigBackupCreated -> BannerType.Success
+            is ConfigBackupRestored -> BannerType.Success
             is UpdatesAvailable -> BannerType.Warning
             is PackageUpdatesAvailable -> BannerType.Warning
             is CommandsSkipped -> BannerType.Warning

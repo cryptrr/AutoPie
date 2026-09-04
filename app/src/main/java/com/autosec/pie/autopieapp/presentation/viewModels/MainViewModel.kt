@@ -6,6 +6,7 @@ import android.app.job.JobScheduler
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import com.autopi.autopieapp.domain.Notification
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.AutoPieCoreService
+import com.autopi.autopieapp.data.services.ConfigBackupService
 import com.autopi.autopieapp.data.services.FileObserverJobService
 import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.ProcessManagerService
@@ -54,6 +56,7 @@ class MainViewModel(
 
     private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+    private val configBackupService = ConfigBackupService()
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
@@ -295,6 +298,46 @@ class MainViewModel(
         viewModelScope.launch {
             processManagerService.clearPackagesCache()
             showNotification(AppNotification.ClearedPackageCache)
+        }
+    }
+
+    fun backupCommandsConfig(destination: Uri) {
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val output = application.contentResolver.openOutputStream(destination, "w")
+                    ?: throw IllegalStateException("Could not open backup destination")
+                output.use {
+                    configBackupService.createBackup(
+                        autoPieConfigPathProvider.getConfigFile("commands.json"),
+                        it
+                    )
+                }
+                showNotification(AppNotification.ConfigBackupCreated)
+            } catch (error: Exception) {
+                Timber.e(error, "Failed to back up commands config")
+                showError(ViewModelError.ConfigBackupFailed)
+            }
+        }
+    }
+
+    fun restoreCommandsConfig(source: Uri) {
+        viewModelScope.launch(dispatchers.io) {
+            try {
+                val input = application.contentResolver.openInputStream(source)
+                    ?: throw IllegalStateException("Could not open config backup")
+                input.use {
+                    configBackupService.restoreBackup(
+                        it,
+                        autoPieConfigPathProvider.getConfigFile("commands.json")
+                    )
+                }
+                emitEvent(ViewModelEvent.RefreshCommandsList)
+                emitEvent(ViewModelEvent.CommandsConfigChanged)
+                showNotification(AppNotification.ConfigBackupRestored)
+            } catch (error: Exception) {
+                Timber.e(error, "Failed to restore commands config")
+                showError(ViewModelError.ConfigRestoreFailed)
+            }
         }
     }
 
