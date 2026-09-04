@@ -924,7 +924,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             Row(Modifier.horizontalScroll(horizontalScrollState), horizontalArrangement = Arrangement.spacedBy(5.dp)){
                 for(flag in visibleExtras.filter { it.type == "FLAG" }){
                     key(flag.id) {
-                    val isChecked = remember { mutableStateOf(false) }
+                    val isChecked = rememberSaveable(flag.id, flag.defaultBoolean) {
+                        mutableStateOf(flag.defaultBoolean)
+                    }
 
                     //Timber.d("RawDef: ${extra.default} DEFAULT: ${extra.default.split(",")} Start value: $startValue, End value: $endValue, Default Value: $defaultValue")
 

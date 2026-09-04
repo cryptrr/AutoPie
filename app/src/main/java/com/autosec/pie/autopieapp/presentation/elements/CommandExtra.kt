@@ -438,6 +438,16 @@ fun CommandExtraInputElement(
                     subtitle = "Flag to set. Eg --flag. Checkbox will be shown to select/deselect.",
                     isError = default.value.isBlank()
                 )
+                Text(
+                    text = "ENABLED BY DEFAULT",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                OptionSelectorBoolean(
+                    options = booleanOptions,
+                    selectedOption = selectedOptionForBoolean,
+                    expanded = booleanExpanded
+                )
                 GenericTextFormField(
                     text = description,
                     "",
