@@ -67,7 +67,6 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
             else{
                 mainViewModel.storageManagerPermissionGranted = true
                 AutoPieCoreService.initAutosec()
-                mainViewModel.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
             }
         })
 
@@ -97,7 +96,6 @@ fun RequestManageStoragePermission(context: Activity, innerPadding: PaddingValue
                     Timber.d("All files access granted")
                     mainViewModel.storageManagerPermissionGranted = true
                     AutoPieCoreService.initAutosec()
-                    mainViewModel.dispatchEvent(ViewModelEvent.CommandsConfigChanged)
                 } else {
                     Timber.d("All files access denied")
                 }
