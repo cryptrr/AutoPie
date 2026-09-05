@@ -148,16 +148,8 @@ private fun CommandWidgetContent(context: Context) {
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
-            Box(
-                modifier = GlanceModifier
-                    .size(12.dp)
-                    .background(ColorProvider(statusColor(status)))
-                    .cornerRadius(6.dp)
-            ) {}
-            Spacer(GlanceModifier.width(10.dp))
             Text(
                 text = commandName.ifBlank { "AutoPie command" },
-                modifier = GlanceModifier.defaultWeight(),
                 maxLines = 2,
                 style = TextStyle(
                     color = ColorProvider(Color(0xFFFFFFFF)),
@@ -189,6 +181,12 @@ private fun CommandWidgetContent(context: Context) {
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
+            Box(
+                modifier = GlanceModifier
+                    .size(12.dp)
+                    .background(ColorProvider(statusColor(status)))
+                    .cornerRadius(6.dp)
+            ) {}
             Spacer(GlanceModifier.defaultWeight())
             Button(
                 text = if (commandId == null) "Open" else "Run",
