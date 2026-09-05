@@ -80,6 +80,7 @@ AutoPie exposes inputs and extras as environment variables. Use normal shell syn
 | `DIRECTORY` | Parent directory of the input file. |
 | `HOST` | Hostname for a URL input. |
 | `RAND` | A random four-digit number for collision-resistant output names. |
+| `COOKIE_JAR` | Path to the Netscape-format cookie jar populated by logins in AutoPie's browser. URL-based commands can pass it to tools that support Netscape cookie files. |
 
 Availability depends on the kind of input. Extras are exported under their configured uppercase `name` as well.
 
@@ -429,6 +430,7 @@ Script headers must appear at the beginning of `command`; multiple headers can b
 | `#@INTERACTIVE` | Opens a regular single-stage command in the interactive Termux shell. This is also available as **Debug Mode** in command details. |
 | `#@OPEN_LOGS` | Opens the live output viewer when execution starts. |
 | `#@SHELL` | Explicitly labels the command as shell code for command grouping and display. |
+| `//@BROWSER` | Makes the command available in AutoPie's browser and runs the remaining body as JavaScript in the current page. |
 
 Example:
 
@@ -441,6 +443,23 @@ print(f"Received: {os.environ.get('INPUT', '')}")
 ```
 
 Interactive mode is for single-stage commands; multistage workflows use their own persistent background shell.
+
+## Browser commands and cookies
+
+Open **Settings → Browser** to use `BrowserActivity`, AutoPie's built-in browser. Commands whose script begins with `//@BROWSER` appear in the browser's command menu. Their Greasemonkey-style JavaScript runs in the context of the currently loaded page, so it can read and modify the DOM:
+
+```js
+//@BROWSER
+document.querySelectorAll("video").length
+```
+
+Logging in to a service through the AutoPie browser synchronizes its cookies to `COOKIE_JAR`, a Netscape-format cookie file. URL-based shell commands can reuse the authenticated browser session with tools that accept this format, for example:
+
+```sh
+curl --cookie "$COOKIE_JAR" "$INPUT_URL"
+```
+
+Treat the cookie jar as sensitive because it may contain active login sessions.
 
 ## Command catalog and packages
 
