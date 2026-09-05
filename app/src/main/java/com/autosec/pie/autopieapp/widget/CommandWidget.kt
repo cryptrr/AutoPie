@@ -9,13 +9,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.text.format.DateUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -63,7 +61,6 @@ object CommandWidgetState {
     val commandName = stringPreferencesKey("command_name")
     val output = stringPreferencesKey("output")
     val status = stringPreferencesKey("status")
-    val updatedAt = longPreferencesKey("updated_at")
 }
 
 internal sealed interface DisplayOutput {
@@ -122,7 +119,6 @@ private fun CommandWidgetContent(context: Context) {
     val commandId = state[CommandWidgetState.commandId]
     val commandName = state[CommandWidgetState.commandName].orEmpty()
     val status = state[CommandWidgetState.status]
-    val updatedAt = state[CommandWidgetState.updatedAt]
     val output = parseDisplayOutput(state[CommandWidgetState.output])
 
     val primaryAction = actionStartActivity(
@@ -193,15 +189,7 @@ private fun CommandWidgetContent(context: Context) {
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
-            Text(
-                text = footerText(status, updatedAt),
-                modifier = GlanceModifier.defaultWeight(),
-                maxLines = 1,
-                style = TextStyle(
-                    color = ColorProvider(Color(0xFFAEB0B9)),
-                    fontSize = 12.sp
-                )
-            )
+            Spacer(GlanceModifier.defaultWeight())
             Button(
                 text = if (commandId == null) "Open" else "Run",
                 onClick = primaryAction
@@ -300,19 +288,6 @@ private fun statusColor(status: String?): Color = when (status) {
     "failed" -> Color(0xFFEF7070)
     else -> Color(0xFF878992)
 }
-
-private fun footerText(status: String?, updatedAt: Long?): String = when {
-    status == "running" -> "Running…"
-    status == "failed" -> updatedAt?.let { "Failed · ${relativeTime(it)}" } ?: "Last run failed"
-    updatedAt != null -> "Updated ${relativeTime(updatedAt)}"
-    else -> "Ready"
-}
-
-private fun relativeTime(timestamp: Long): String = DateUtils.getRelativeTimeSpanString(
-    timestamp,
-    System.currentTimeMillis(),
-    DateUtils.MINUTE_IN_MILLIS
-).toString()
 
 class CommandWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = CommandWidget()
@@ -498,8 +473,7 @@ suspend fun updateCommandWidgets(
     commandName: String = commandId,
     rawOutput: String?,
     status: String,
-    replaceOutput: Boolean = true,
-    updatedAt: Long = System.currentTimeMillis()
+    replaceOutput: Boolean = true
 ) {
     val widget = CommandWidget()
     val manager = GlanceAppWidgetManager(context)
@@ -522,7 +496,6 @@ suspend fun updateCommandWidgets(
                 }
             }
             preferences[CommandWidgetState.status] = status
-            preferences[CommandWidgetState.updatedAt] = updatedAt
         }
         widget.update(context, glanceId)
     }
