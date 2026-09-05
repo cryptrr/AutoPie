@@ -160,7 +160,10 @@ class ProcessManagerService(
                                     commandObject = it.command,
                                     rawOutput = it.exportedOutput,
                                     status = "success",
-                                    replaceOutput = true
+                                    replaceOutput = shouldReplaceWidgetOutput(
+                                        jobType = it.jobType,
+                                        exportedOutput = it.exportedOutput
+                                    )
                                 )
                             }
                         }catch (e: Exception){
@@ -1158,6 +1161,11 @@ class ProcessManagerService(
 
 
 }
+
+internal fun shouldReplaceWidgetOutput(
+    jobType: JobType,
+    exportedOutput: String?
+): Boolean = jobType != JobType.CRON || !exportedOutput.isNullOrBlank()
 
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\"'\"'")}'"

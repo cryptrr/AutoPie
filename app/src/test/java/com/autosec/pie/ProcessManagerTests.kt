@@ -9,6 +9,7 @@ import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DefaultDispatchers
@@ -94,6 +95,15 @@ class ProcessManagerTests : KoinTest {
             configPathProvider = autoPieConfigPathProvider,
             mainViewModel = mainViewModel
         )
+    }
+
+    @Test
+    fun `blank cron output preserves last widget value`() {
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, null))
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, ""))
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, "   "))
+        assertTrue(shouldReplaceWidgetOutput(JobType.CRON, "42"))
+        assertTrue(shouldReplaceWidgetOutput(JobType.STANDALONE, ""))
     }
 
     @Test
