@@ -27,6 +27,7 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.action.clickable
 import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
@@ -45,7 +46,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.Button
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.autopi.MainActivity
 import com.autopi.DirectCommandActivity
@@ -139,36 +139,38 @@ private fun CommandWidgetContent(context: Context) {
         }
     )
 
-    Column(
+    Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
             .background(GlanceTheme.colors.widgetBackground)
             .cornerRadius(28.dp)
-            .padding(22.dp)
+            .padding(22.dp),
+        contentAlignment = Alignment.TopStart
     ) {
-        Row(
-            modifier = GlanceModifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Vertical.CenterVertically
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.TopStart
         ) {
-            Text(
-                text = commandName.ifBlank { "AutoPie command" },
-                maxLines = 2,
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Vertical.CenterVertically
+            ) {
+                Text(
+                    text = commandName.ifBlank { "AutoPie command" },
+                    maxLines = 2,
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
+            }
         }
 
-        Spacer(GlanceModifier.height(20.dp))
-
         Box(
-            modifier = GlanceModifier
-                .fillMaxWidth()
-                .defaultWeight(),
-            contentAlignment = Alignment.Center
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.CenterStart
         ) {
             when (output) {
                 DisplayOutput.Empty -> EmptyOutput(commandId != null)
@@ -178,23 +180,34 @@ private fun CommandWidgetContent(context: Context) {
             }
         }
 
-        Spacer(GlanceModifier.height(16.dp))
-
-        Row(
-            modifier = GlanceModifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Vertical.CenterVertically
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Box(
+            Row(
                 modifier = GlanceModifier
-                    .size(12.dp)
-                    .background(ColorProvider(statusColor(status)))
-                    .cornerRadius(6.dp)
-            ) {}
-            Spacer(GlanceModifier.defaultWeight())
-            Button(
-                text = if (commandId == null) "Open" else "Run",
-                onClick = primaryAction
-            )
+                    .background(GlanceTheme.colors.secondaryContainer)
+                    .cornerRadius(24.dp)
+                    .clickable(primaryAction)
+                    .padding(horizontal = 16.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.Vertical.CenterVertically
+            ) {
+                Box(
+                    modifier = GlanceModifier
+                        .size(10.dp)
+                        .background(ColorProvider(statusColor(status)))
+                        .cornerRadius(5.dp)
+                ) {}
+                Spacer(GlanceModifier.width(9.dp))
+                Text(
+                    text = if (commandId == null) "Open" else "Run",
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSecondaryContainer,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
         }
     }
 }
@@ -217,6 +230,7 @@ private fun EmptyOutput(isConfigured: Boolean) {
 private fun NumberOutput(value: String) {
     Text(
         text = value,
+        modifier = GlanceModifier.fillMaxWidth(),
         maxLines = 2,
         style = TextStyle(
             color = GlanceTheme.colors.onSurface,
@@ -274,6 +288,7 @@ private fun ListOutput(values: List<String>) {
 private fun TextOutput(value: String) {
     Text(
         text = value.ifBlank { "Output is empty" },
+        modifier = GlanceModifier.fillMaxWidth(),
         maxLines = 8,
         style = TextStyle(
             color = GlanceTheme.colors.onSurface,
