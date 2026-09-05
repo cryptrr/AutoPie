@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -108,7 +109,9 @@ class CommandWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         bindPendingCommandIfNecessary(context, id)
         provideContent {
-            CommandWidgetContent(context)
+            GlanceTheme {
+                CommandWidgetContent(context)
+            }
         }
     }
 }
@@ -140,7 +143,7 @@ private fun CommandWidgetContent(context: Context) {
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
-            .background(ColorProvider(Color(0xFF18191D)))
+            .background(GlanceTheme.colors.widgetBackground)
             .cornerRadius(28.dp)
             .padding(22.dp)
     ) {
@@ -152,7 +155,7 @@ private fun CommandWidgetContent(context: Context) {
                 text = commandName.ifBlank { "AutoPie command" },
                 maxLines = 2,
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFFFFFFF)),
+                    color = GlanceTheme.colors.onSurface,
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -202,7 +205,7 @@ private fun EmptyOutput(isConfigured: Boolean) {
         Text(
             text = if (isConfigured) "No output yet" else "Choose a command from AutoPie",
             style = TextStyle(
-                color = ColorProvider(Color(0xFFAEB0B9)),
+                color = GlanceTheme.colors.onSurfaceVariant,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
             )
@@ -216,7 +219,7 @@ private fun NumberOutput(value: String) {
         text = value,
         maxLines = 2,
         style = TextStyle(
-            color = ColorProvider(Color(0xFFFFFFFF)),
+            color = GlanceTheme.colors.onSurface,
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -237,7 +240,7 @@ private fun ListOutput(values: List<String>) {
                 Text(
                     text = "•",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF9C7EFF)),
+                        color = GlanceTheme.colors.primary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -248,7 +251,7 @@ private fun ListOutput(values: List<String>) {
                     modifier = GlanceModifier.defaultWeight(),
                     maxLines = 1,
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFFFFFFFF)),
+                        color = GlanceTheme.colors.onSurface,
                         fontSize = 16.sp
                     )
                 )
@@ -259,7 +262,7 @@ private fun ListOutput(values: List<String>) {
                 text = "+ ${values.size - 6} more",
                 modifier = GlanceModifier.padding(top = 5.dp),
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFAEB0B9)),
+                    color = GlanceTheme.colors.onSurfaceVariant,
                     fontSize = 13.sp
                 )
             )
@@ -273,9 +276,9 @@ private fun TextOutput(value: String) {
         text = value.ifBlank { "Output is empty" },
         maxLines = 8,
         style = TextStyle(
-            color = ColorProvider(Color(0xFFFFFFFF)),
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center
+            color = GlanceTheme.colors.onSurface,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Start
         )
     )
 }
