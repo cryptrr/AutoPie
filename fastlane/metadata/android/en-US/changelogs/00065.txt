@@ -6,4 +6,4 @@ What's Changed
 - Added flat selectable controls and clearer extra-field labels.
 - Improved notification icons and fixed stale widget output.
 
-Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.17.4-beta...v0.17.54-beta
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.17.4-beta...v0.17.6-beta
