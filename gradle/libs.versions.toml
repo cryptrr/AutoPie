@@ -9,6 +9,7 @@ coreKtx = "1.16.0"
 datastorePreferences = "1.1.7"
 editorkit = "2.0.0"
 gson = "2.13.1"
+glance = "1.2.0"
 koinAndroid = "3.5.6"
 kotlin = "2.2.0"
 ktorClientCore = "2.3.7"
@@ -38,6 +39,7 @@ core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 editorkit = { module = "com.blacksquircle.ui:editorkit", version.ref = "editorkit" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroid" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCore" }

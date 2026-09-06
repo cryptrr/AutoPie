@@ -26,6 +26,7 @@ import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
+import com.autopi.autopieapp.widget.updateCommandWidgets
 import com.autopi.core.DispatcherProvider
 import com.autopi.utils.Shell
 import com.autopi.utils.Utils
@@ -36,6 +37,7 @@ import com.termux.shared.termux.TermuxConstants
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -136,6 +138,12 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             processIds = processIds + it.processId
+                            publishWidgetState(
+                                commandObject = it.command,
+                                rawOutput = null,
+                                status = "running",
+                                replaceOutput = false
+                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -147,6 +155,17 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             successProcessIds = successProcessIds + it.processId
+                            if (!it.partial) {
+                                publishWidgetState(
+                                    commandObject = it.command,
+                                    rawOutput = it.exportedOutput,
+                                    status = "success",
+                                    replaceOutput = shouldReplaceWidgetOutput(
+                                        jobType = it.jobType,
+                                        exportedOutput = it.exportedOutput
+                                    )
+                                )
+                            }
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -157,6 +176,12 @@ class ProcessManagerService(
                         try {
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
+                            publishWidgetState(
+                                commandObject = it.command,
+                                rawOutput = null,
+                                status = "failed",
+                                replaceOutput = false
+                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -485,7 +510,7 @@ class ProcessManagerService(
 
 
 
-    fun runCommandForShareWithEnv2(
+    suspend fun runCommandForShareWithEnv2(
         commandObject: CommandInterface,
         exec: String,
         command: String,
@@ -499,6 +524,10 @@ class ProcessManagerService(
         isShellScript: Boolean = false
     ): ProcessResult {
 
+        val exportedOutputFile = File(activity.cacheDir, "${processId}.output")
+        val commandModel = commandObject as CommandModel
+        val logFile = File(activity.cacheDir, "${processId}.log")
+
         try {
             //checkForUnsafeCommands(commandObject, command)
 
@@ -508,7 +537,6 @@ class ProcessManagerService(
                 commandObject
             )
 
-            val logFile = File(activity.cacheDir, "${processId}.log")
             logFile.createNewFile()
 
             val logWriter = BufferedWriter(FileWriter(logFile, true))
@@ -535,7 +563,7 @@ class ProcessManagerService(
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
 
-            main.dispatchEvent(ViewModelEvent.CommandStarted(processId,commandObject as CommandModel, logFile.absolutePath, rawInput, jobType))
+            main.dispatchEvent(ViewModelEvent.CommandStarted(processId, commandModel, logFile.absolutePath, rawInput, jobType))
 
             if (Utils.isOpenLogsCommand(commandObject.command)) {
                 openOutputViewer(logFile.absolutePath, commandObject.name)
@@ -592,6 +620,9 @@ class ProcessManagerService(
 
 
             val output = result.output()
+            val exportedOutput = exportedOutputFile
+                .takeIf(File::isFile)
+                ?.readText()
 
             Timber.d(output)
 
@@ -600,10 +631,36 @@ class ProcessManagerService(
 
             closeLog(logWriter)
 
+            val partial = result.isSuccess &&
+                commandObject.multiStage == true &&
+                commandObject.steps.size > 1
+
             if(commandObject.multiStage != true){
                 Timber.d("Removing shell for non multistage commannd")
                 shell.shutdown()
                 shells.remove(processId)
+            }
+
+            if (result.isSuccess) {
+                main.dispatchEvent(
+                    ViewModelEvent.CommandCompleted(
+                        processId = processId,
+                        command = commandModel,
+                        logFile = logFile.absolutePath,
+                        jobType = jobType,
+                        partial = partial,
+                        exportedOutput = exportedOutput
+                    )
+                )
+            } else {
+                main.dispatchEvent(
+                    ViewModelEvent.CommandFailed(
+                        processId = processId,
+                        command = commandModel,
+                        logFile = logFile.absolutePath,
+                        jobType = jobType
+                    )
+                )
             }
 
             return ProcessResult(
@@ -611,13 +668,44 @@ class ProcessManagerService(
                 processId,
                 result.isSuccess,
                 output,
-                partial = result.isSuccess && commandObject.multiStage == true && commandObject.steps.size > 1
+                partial = partial,
+                exportedOutput = exportedOutput
             )
 
         }
         catch (e: Exception) {
             Timber.e(e.toString())
+            main.dispatchEvent(
+                ViewModelEvent.CommandFailed(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType
+                )
+            )
             throw e
+        }
+    }
+
+    private suspend fun publishWidgetState(
+        commandObject: CommandInterface,
+        rawOutput: String?,
+        status: String,
+        replaceOutput: Boolean
+    ) {
+        try {
+            updateCommandWidgets(
+                context = activity,
+                commandId = commandObject.id.ifBlank { commandObject.name },
+                commandName = commandObject.name,
+                rawOutput = rawOutput,
+                status = status,
+                replaceOutput = replaceOutput
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Timber.e(error, "Unable to update command widgets for ${commandObject.name}")
         }
     }
 
@@ -637,7 +725,20 @@ class ProcessManagerService(
 
         Timber.d("runCommandInTermuxShell for $command")
 
+        val commandModel = commandObject as CommandModel
+        val logFile = File(activity.cacheDir, "${processId}.log")
+
         try {
+            logFile.createNewFile()
+            main.dispatchEvent(
+                ViewModelEvent.CommandStarted(
+                    processId,
+                    commandModel,
+                    logFile.absolutePath,
+                    rawInput,
+                    jobType
+                )
+            )
             val envs = getEnvsFromCommand(inputParsedData, commandExtraInputs, commandObject)
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
             scriptFile.writeText("set -x\n")
@@ -704,17 +805,36 @@ class ProcessManagerService(
                 Timber.d("Starting Termux Activity: $it")
             }
 
+            val partial = commandObject.multiStage == true && commandObject.steps.size > 1
+            main.dispatchEvent(
+                ViewModelEvent.CommandCompleted(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType,
+                    partial = partial
+                )
+            )
+
             return ProcessResult(
                 commandObject.name,
                 processId,
                 true,
                 "Command Opened in Termux Shell",
-                partial = commandObject.multiStage == true && commandObject.steps.size > 1
+                partial = partial
             )
 
 
         }catch (e: Exception){
             Timber.e(e)
+            main.dispatchEvent(
+                ViewModelEvent.CommandFailed(
+                    processId = processId,
+                    command = commandModel,
+                    logFile = logFile.absolutePath,
+                    jobType = jobType
+                )
+            )
             throw e
         }
 
@@ -1042,6 +1162,11 @@ class ProcessManagerService(
 
 }
 
+internal fun shouldReplaceWidgetOutput(
+    jobType: JobType,
+    exportedOutput: String?
+): Boolean = jobType != JobType.CRON || !exportedOutput.isNullOrBlank()
+
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\"'\"'")}'"
 }
@@ -1071,6 +1196,7 @@ internal fun buildCommandScript(
     hasInputFiles: Boolean
 ): CommandScriptPlan {
     val pythonScriptFile = File(cacheDir, "${processId}.py")
+    val exportedOutputFile = File(cacheDir, "${processId}.output")
     val pythonScript = if (usePython && Utils.isPythonScript(commandObject.command)) {
         Utils.stripScriptHeaders(commandObject.command)
     } else {
@@ -1092,19 +1218,31 @@ internal fun buildCommandScript(
     return CommandScriptPlan(
         fullCommand = fullCommand,
         shellScript = buildString {
+            append("rm -f ${exportedOutputFile.absolutePath.shellQuote()}\n")
             append(commandScriptPreamble(commandObject.multiStage == true))
             if (hasInputFiles) {
                 append("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             }
             append(fullCommand)
             if (commandObject.multiStage == true) {
-                append("\nstep_status=\$?\nset +x\nreturn \"\$step_status\"\n")
+                append("\nstep_status=\$?\nset +x\n")
+                append(commandOutputCapture(exportedOutputFile))
+                append("return \"\$step_status\"\n")
             } else {
-                append("\ncommand_status=\$?\nset +x\nexit \"\$command_status\"\n")
+                append("\ncommand_status=\$?\nset +x\n")
+                append(commandOutputCapture(exportedOutputFile))
+                append("exit \"\$command_status\"\n")
             }
         },
         pythonScript = pythonScript
     )
+}
+
+internal fun commandOutputCapture(outputFile: File): String = buildString {
+    append("if [ \"\${OUTPUT+x}\" = x ]; then\n")
+    append("    umask 077\n")
+    append("    printf '%s' \"\$OUTPUT\" > ${outputFile.absolutePath.shellQuote()}\n")
+    append("fi\n")
 }
 
 internal fun Map<String, String>.toShellExportCommands(): String =

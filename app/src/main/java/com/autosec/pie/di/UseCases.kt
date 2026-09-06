@@ -22,6 +22,7 @@ import com.autopi.use_case.RunCommandForDirectory
 import com.autopi.use_case.RunCommandForFiles
 import com.autopi.use_case.RunCommandForText
 import com.autopi.use_case.RunCommandForUrl
+import com.autopi.use_case.RunCronCommand
 import com.autopi.use_case.RunInteractiveCommand
 import com.autopi.use_case.RunStandaloneCommand
 import com.autopi.use_case.StoreCommandExtraInputs
@@ -41,6 +42,7 @@ val useCaseModule = module {
             runCommandForDirectory = RunCommandForDirectory(get()),
             runCommandForText = RunCommandForText(get()),
             runStandaloneCommand =  RunStandaloneCommand(get()),
+            runCronCommand = RunCronCommand(get()),
             changeCommandDetails = ChangeCommandDetails(get(), get()),
             deleteCommand = DeleteCommand(get()),
             addCommandToHistory = AddCommandToHistory(get()),

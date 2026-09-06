@@ -1,0 +1,9 @@
+What's Changed
+
+- Added a compact loading bottom sheet for commands.
+- Improved Run button styling and isolated loading screens into separate tasks.
+- Fixed stale state across consecutive share and direct-command requests.
+- Cleaned up abandoned command invocations.
+- Fixed multistage commands hanging when their shared shell closes early.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/releases/tag/v0.17.4-beta

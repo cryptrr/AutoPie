@@ -2,6 +2,8 @@ package com.autopi.autopieapp.presentation.screens
 
 import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -58,6 +60,9 @@ import com.autosec.pie.BrowserActivity
 import com.termux.app.TermuxActivity
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(innerPadding: PaddingValues) {
@@ -118,6 +123,17 @@ fun SettingsToggles() {
 
 
     val mainViewModel: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
+
+    val backupConfigLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { destination ->
+        destination?.let(mainViewModel::backupCommandsConfig)
+    }
+    val restoreConfigLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { source ->
+        source?.let(mainViewModel::restoreCommandsConfig)
+    }
 
 
     Column(
@@ -495,16 +511,17 @@ fun SettingsToggles() {
                     enabled = true,
                     interactionSource = remember { MutableInteractionSource() })
                 {
-                    mainViewModel.showNotification(AppNotification.FeatureWIP)
+                    val timestamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+                    backupConfigLauncher.launch("autopie-commands-$timestamp.zip")
                 }
 
             //.height(90.dp)
         ) {
             Column(Modifier.fillMaxWidth(0.8F)){
-                Text("Generate Backup File")
+                Text("Backup Config File")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Generates a tar.xz backup file and stores it to the base directory of your storage.",
+                    "Save commands.json as a ZIP file in a location you choose.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
@@ -523,13 +540,26 @@ fun SettingsToggles() {
                     enabled = true,
                     interactionSource = remember { MutableInteractionSource() })
                 {
-                    mainViewModel.showNotification(AppNotification.FeatureWIP)
+                    restoreConfigLauncher.launch(
+                        arrayOf(
+                            "application/zip",
+                            "application/x-zip-compressed",
+                            "application/octet-stream"
+                        )
+                    )
                 }
 
             //.height(90.dp)
         ) {
             Column(Modifier.fillMaxWidth(0.8F)){
                 Text("Restore From Backup")
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "Replace commands.json using an AutoPie config backup ZIP.",
+                    softWrap = true,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                )
             }
         }
 

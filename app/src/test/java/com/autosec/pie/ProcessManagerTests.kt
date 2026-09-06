@@ -9,15 +9,24 @@ import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
+import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DefaultDispatchers
 import com.autopi.utils.Shell
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,13 +40,20 @@ import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProcessManagerTests : KoinTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private data class ProcessManagerFixture(
+        val service: ProcessManagerService,
+        val configPathProvider: AutoPieConfigPathProvider,
+        val mainViewModel: MainViewModel
+    )
+
     private fun createProcessManagerService(
         testName: String
-    ): Pair<ProcessManagerService, AutoPieConfigPathProvider> {
+    ): ProcessManagerFixture {
         val mockApplication = mockk<Application>(relaxed = true)
         val testRoot = Files.createTempDirectory("autopie-$testName").toFile()
         val testCacheDir = File(testRoot, "cache")
@@ -68,13 +84,26 @@ class ProcessManagerTests : KoinTest {
             autoPieConfigPathProvider,
             DefaultDispatchers()
         )
-        return ProcessManagerService(
-            mainViewModel,
-            DefaultDispatchers(),
-            mockApplication,
-            autoPieConfigPathProvider,
-            Shell.Timeout(5, TimeUnit.SECONDS)
-        ) to autoPieConfigPathProvider
+        return ProcessManagerFixture(
+            service = ProcessManagerService(
+                mainViewModel,
+                DefaultDispatchers(),
+                mockApplication,
+                autoPieConfigPathProvider,
+                Shell.Timeout(5, TimeUnit.SECONDS)
+            ),
+            configPathProvider = autoPieConfigPathProvider,
+            mainViewModel = mainViewModel
+        )
+    }
+
+    @Test
+    fun `blank cron output preserves last widget value`() {
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, null))
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, ""))
+        assertFalse(shouldReplaceWidgetOutput(JobType.CRON, "   "))
+        assertTrue(shouldReplaceWidgetOutput(JobType.CRON, "42"))
+        assertTrue(shouldReplaceWidgetOutput(JobType.STANDALONE, ""))
     }
 
     @Test
@@ -145,7 +174,16 @@ class ProcessManagerTests : KoinTest {
 
     @Test
     fun `multistage command that exits shared shell reports failure`() = runTest {
-        val (processManagerService, _) = createProcessManagerService("multistage-shell-exit")
+        val fixture = createProcessManagerService("multistage-shell-exit")
+        val processManagerService = fixture.service
+        val events = mutableListOf<ViewModelEvent>()
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+        val eventCollector = backgroundScope.launch(
+            context = UnconfinedTestDispatcher(testScheduler),
+            start = CoroutineStart.UNDISPATCHED
+        ) {
+            fixture.mainViewModel.eventFlow.take(2).toList(events)
+        }
         val processId = 61546
         val command = CommandModel(
             type = CommandType.SHARE,
@@ -176,9 +214,107 @@ class ProcessManagerTests : KoinTest {
 
             assertFalse(result.success)
             assertFalse(result.partial)
+            mainDispatcherRule.scheduler.advanceUntilIdle()
+            assertEquals(2, events.size)
+            assertTrue(events[0] is ViewModelEvent.CommandStarted)
+            val failed = events[1] as ViewModelEvent.CommandFailed
+            assertEquals(JobType.STANDALONE, failed.jobType)
         } finally {
+            eventCollector.cancel()
             processManagerService.stopShell(processId)
         }
+    }
+
+    @Test
+    fun `command result captures exported output and clears stale sidecar`() = runTest {
+        val (processManagerService, _) = createProcessManagerService("exported-output")
+        val processId = 61547
+        val command = CommandModel(
+            id = "widget-output-command",
+            type = CommandType.SHARE,
+            name = "Widget output",
+            path = "",
+            command = "export OUTPUT='[\"one\",\"two\"]'",
+            exec = "",
+            extras = emptyList()
+        )
+
+        val outputResult = processManagerService.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = processId,
+            jobType = JobType.STANDALONE,
+            usePython = false
+        )
+
+        assertTrue(outputResult.success)
+        assertEquals("[\"one\",\"two\"]", outputResult.exportedOutput)
+
+        val noOutputResult = processManagerService.runCommandForShareWithEnv2(
+            command.copy(command = "true"),
+            command.exec,
+            "true",
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = processId,
+            jobType = JobType.STANDALONE,
+            usePython = false
+        )
+
+        assertTrue(noOutputResult.success)
+        assertEquals(null, noOutputResult.exportedOutput)
+    }
+
+    @Test
+    fun `cron execution emits typed lifecycle events with exported output`() = runTest {
+        val fixture = createProcessManagerService("cron-lifecycle-events")
+        val events = mutableListOf<ViewModelEvent>()
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+        val eventCollector = backgroundScope.launch(
+            context = UnconfinedTestDispatcher(testScheduler),
+            start = CoroutineStart.UNDISPATCHED
+        ) {
+            fixture.mainViewModel.eventFlow.take(2).toList(events)
+        }
+
+        val command = CommandModel(
+            id = "cron-widget-output",
+            type = CommandType.CRON,
+            name = "Cron widget output",
+            path = "",
+            command = "export OUTPUT=42",
+            exec = "",
+            extras = emptyList()
+        )
+        val processId = 61548
+
+        val result = fixture.service.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = processId,
+            jobType = JobType.CRON,
+            usePython = false
+        )
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        assertTrue(result.success)
+        assertEquals(2, events.size)
+        val started = events[0] as ViewModelEvent.CommandStarted
+        val completed = events[1] as ViewModelEvent.CommandCompleted
+        assertEquals(JobType.CRON, started.jobType)
+        assertEquals(JobType.CRON, completed.jobType)
+        assertEquals("42", completed.exportedOutput)
+        eventCollector.cancel()
     }
 
 //    @Test

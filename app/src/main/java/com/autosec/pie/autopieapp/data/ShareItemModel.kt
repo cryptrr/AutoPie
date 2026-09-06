@@ -262,6 +262,7 @@ data class ProcessResult(
     val success: Boolean,
     val output: String,
     val partial: Boolean = false,
+    val exportedOutput: String? = null,
 )
 
 data class CommandResult(
@@ -272,6 +273,7 @@ data class CommandResult(
     val jobType: JobType,
     val jobKey: String,
     val partial: Boolean = false,
+    val exportedOutput: String? = null,
 )
 
 data class InputParsedData(
@@ -307,7 +309,8 @@ enum class JobType {
     FILES,
     DIRECTORY,
     TEXT,
-    STANDALONE
+    STANDALONE,
+    CRON
 }
 
 data class ExecAndCommand(

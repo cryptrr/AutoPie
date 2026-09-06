@@ -1,0 +1,9 @@
+What's Changed
+
+- Added configurable home-screen command widgets with live status and output.
+- Added configuration backup and restore in Settings.
+- Improved cron scheduling, retries, reboot persistence, and widget event updates.
+- Added flat selectable controls and clearer extra-field labels.
+- Improved notification icons and fixed stale widget output.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.17.4-beta...v0.17.54-beta

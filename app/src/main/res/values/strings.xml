@@ -1,4 +1,5 @@
 <resources>
+    <string name="command_widget_description">Run an AutoPie command and show its latest output</string>
     <string name="app_name">AutoPie</string>
     <string name="star_autopie_title">Enjoying AutoPie?</string>
     <string name="star_autopie_description">AutoPie is completely open source. A GitHub star helps more people discover the project and improve the commands ecosystem.</string>

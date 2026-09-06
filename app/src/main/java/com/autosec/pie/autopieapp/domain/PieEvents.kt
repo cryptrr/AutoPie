@@ -23,8 +23,20 @@ sealed class ViewModelEvent {
 
     data object StopAutoPie : ViewModelEvent()
     data class CommandStarted(val processId: Int,val command: CommandModel, val logFile: String, val input: String, val jobType: JobType) : ViewModelEvent()
-    data class CommandCompleted(val processId: Int,val command: CommandModel, val logFile: String, val partial: Boolean = false) : ViewModelEvent()
-    data class CommandFailed(val processId: Int,val command: CommandModel, val logFile: String) : ViewModelEvent()
+    data class CommandCompleted(
+        val processId: Int,
+        val command: CommandModel,
+        val logFile: String,
+        val jobType: JobType,
+        val partial: Boolean = false,
+        val exportedOutput: String? = null
+    ) : ViewModelEvent()
+    data class CommandFailed(
+        val processId: Int,
+        val command: CommandModel,
+        val logFile: String,
+        val jobType: JobType
+    ) : ViewModelEvent()
     data object AuthTokenExpired: ViewModelEvent()
 
 }

@@ -20,8 +20,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 64
-        versionName = "0.17.54-beta"
+        versionCode = 65
+        versionName = "0.17.6-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.gson)
+    implementation(libs.glance.appwidget)
     implementation(libs.commons.compress)
     implementation(libs.snakeyaml)
     implementation(libs.datastore.preferences)

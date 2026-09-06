@@ -51,6 +51,7 @@ fun ProcessResult.toCommandResult(jobType: JobType,jobKey: String): CommandResul
         output = this.output,
         jobType = jobType,
         jobKey = jobKey,
-        partial = this.partial
+        partial = this.partial,
+        exportedOutput = this.exportedOutput
     )
 }
