@@ -129,6 +129,16 @@ class ProcessManagerTests : KoinTest {
     }
 
     @Test
+    fun `AutoPie output directive unwraps a JSON encoded string`() {
+        assertEquals(
+            AutoPieStructuredEvent.Output("{\"count\":3,\"fresh\":true}"),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"output\",\"value\":\"{\\\"count\\\":3,\\\"fresh\\\":true}\"}"
+            )
+        )
+    }
+
+    @Test
     fun `malformed AutoPie directive is ignored`() {
         assertEquals(null, parseAutoPieStructuredEvent("#@AUTOPIE not-json"))
         assertEquals(null, parseAutoPieStructuredEvent("normal command output"))

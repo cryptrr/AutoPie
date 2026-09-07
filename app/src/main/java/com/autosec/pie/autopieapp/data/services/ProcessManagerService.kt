@@ -1211,7 +1211,7 @@ internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? 
 
         when (type) {
             "output" -> AutoPieStructuredEvent.Output(
-                rawValue = event.get("value")?.toString() ?: return null
+                rawValue = event.get("value")?.toWidgetRawValue() ?: return null
             )
             "notification" -> AutoPieStructuredEvent.Notification(
                 title = event.stringOrNull("title"),
@@ -1221,6 +1221,17 @@ internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? 
             else -> AutoPieStructuredEvent.Unsupported(type)
         }
     }.getOrNull()
+}
+
+private fun JsonElement.toWidgetRawValue(): String {
+    if (!isJsonPrimitive || !asJsonPrimitive.isString) return toString()
+
+    val nestedJson = runCatching { JsonParser.parseString(asString) }.getOrNull()
+    return if (nestedJson?.isJsonObject == true || nestedJson?.isJsonArray == true) {
+        nestedJson.toString()
+    } else {
+        toString()
+    }
 }
 
 private fun com.google.gson.JsonObject.stringOrNull(key: String): String? =
