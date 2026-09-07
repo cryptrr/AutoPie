@@ -30,6 +30,8 @@ import com.autopi.autopieapp.widget.updateCommandWidgets
 import com.autopi.core.DispatcherProvider
 import com.autopi.utils.Shell
 import com.autopi.utils.Utils
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import com.termux.app.RunCommandService
 import com.termux.app.TermuxActivity
 import com.termux.shared.shell.command.ExecutionCommand
@@ -46,6 +48,7 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createSymbolicLinkPointingTo
@@ -608,11 +611,28 @@ class ProcessManagerService(
 
 
             val executionCommand = buildExecutionCommand(scriptFile, commandObject.multiStage == true)
+            val latestStructuredOutput = AtomicReference<String?>(null)
 
             val result = shell.run(executionCommand) {
                 timeout = shellTimeout
                 notify = false
-                onStdOut = { line -> writeLogLine(logWriter, line) }
+                onStdOut = { line ->
+                    writeLogLine(logWriter, line)
+                    when (val event = parseAutoPieStructuredEvent(line)) {
+                        is AutoPieStructuredEvent.Output -> {
+                            latestStructuredOutput.set(event.rawValue)
+                            main.viewModelScope.launch(dispatchers.io) {
+                                publishWidgetState(
+                                    commandObject = commandObject,
+                                    rawOutput = event.rawValue,
+                                    status = "running",
+                                    replaceOutput = true
+                                )
+                            }
+                        }
+                        else -> Unit
+                    }
+                }
                 onStdErr = { line -> writeLogLine(logWriter, line) }
             }
 
@@ -623,6 +643,7 @@ class ProcessManagerService(
             val exportedOutput = exportedOutputFile
                 .takeIf(File::isFile)
                 ?.readText()
+                ?: latestStructuredOutput.get()
 
             Timber.d(output)
 
@@ -1166,6 +1187,46 @@ internal fun shouldReplaceWidgetOutput(
     jobType: JobType,
     exportedOutput: String?
 ): Boolean = jobType != JobType.CRON || !exportedOutput.isNullOrBlank()
+
+private const val AUTOPIE_EVENT_PREFIX = "#@AUTOPIE"
+
+internal sealed interface AutoPieStructuredEvent {
+    data class Output(val rawValue: String) : AutoPieStructuredEvent
+    data class Notification(val title: String?, val body: String?) : AutoPieStructuredEvent
+    data class Progress(val value: JsonElement?) : AutoPieStructuredEvent
+    data class Unsupported(val type: String) : AutoPieStructuredEvent
+}
+
+internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? {
+    if (!line.startsWith(AUTOPIE_EVENT_PREFIX)) return null
+    val payload = line.removePrefix(AUTOPIE_EVENT_PREFIX).trimStart()
+    if (payload.isBlank()) return null
+
+    return runCatching {
+        val event = JsonParser.parseString(payload).asJsonObject
+        val type = event.get("type")
+            ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isString }
+            ?.asString
+            ?: return null
+
+        when (type) {
+            "output" -> AutoPieStructuredEvent.Output(
+                rawValue = event.get("value")?.toString() ?: return null
+            )
+            "notification" -> AutoPieStructuredEvent.Notification(
+                title = event.stringOrNull("title"),
+                body = event.stringOrNull("body")
+            )
+            "progress" -> AutoPieStructuredEvent.Progress(event.get("value"))
+            else -> AutoPieStructuredEvent.Unsupported(type)
+        }
+    }.getOrNull()
+}
+
+private fun com.google.gson.JsonObject.stringOrNull(key: String): String? =
+    get(key)
+        ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isString }
+        ?.asString
 
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\"'\"'")}'"

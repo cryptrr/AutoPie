@@ -9,6 +9,8 @@ import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.AutoPieStructuredEvent
+import com.autopi.autopieapp.data.services.parseAutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -104,6 +106,61 @@ class ProcessManagerTests : KoinTest {
         assertFalse(shouldReplaceWidgetOutput(JobType.CRON, "   "))
         assertTrue(shouldReplaceWidgetOutput(JobType.CRON, "42"))
         assertTrue(shouldReplaceWidgetOutput(JobType.STANDALONE, ""))
+    }
+
+    @Test
+    fun `AutoPie output directive parses its value for the widget`() {
+        assertEquals(
+            AutoPieStructuredEvent.Output("\"3 new posts\""),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"output\",\"value\":\"3 new posts\"}"
+            )
+        )
+    }
+
+    @Test
+    fun `AutoPie output directive preserves structured JSON values`() {
+        assertEquals(
+            AutoPieStructuredEvent.Output("{\"count\":3,\"fresh\":true}"),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"output\",\"value\":{\"count\":3,\"fresh\":true}}"
+            )
+        )
+    }
+
+    @Test
+    fun `malformed AutoPie directive is ignored`() {
+        assertEquals(null, parseAutoPieStructuredEvent("#@AUTOPIE not-json"))
+        assertEquals(null, parseAutoPieStructuredEvent("normal command output"))
+    }
+
+    @Test
+    fun `structured stdout output is retained as command widget output`() = runTest {
+        val fixture = createProcessManagerService("structured-stdout-output")
+        val command = CommandModel(
+            id = "structured-output-command",
+            type = CommandType.CRON,
+            name = "Structured output",
+            path = "",
+            command = "printf '%s\\n' '#@AUTOPIE {\"type\":\"output\",\"value\":\"3 new posts\"}'",
+            exec = "",
+            extras = emptyList()
+        )
+
+        val result = fixture.service.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = 61549,
+            jobType = JobType.CRON,
+            usePython = false
+        )
+
+        assertTrue(result.success)
+        assertEquals("\"3 new posts\"", result.exportedOutput)
     }
 
     @Test
