@@ -111,6 +111,7 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.editorkit)
     implementation(libs.language.shell)
+    implementation(libs.language.json)
     implementation(libs.work.runtime.ktx)
     implementation(libs.webkit)
     implementation(libs.ktor.client.core)

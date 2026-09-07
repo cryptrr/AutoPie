@@ -27,6 +27,22 @@ class CommandWidgetOutputTest {
     }
 
     @Test
+    fun `JSON object selects pretty printed JSON presentation`() {
+        assertEquals(
+            DisplayOutput.Json("{\n  \"name\": \"AutoPie\",\n  \"stars\": 42\n}"),
+            parseDisplayOutput("{\"name\":\"AutoPie\",\"stars\":42}")
+        )
+    }
+
+    @Test
+    fun `non string JSON array selects JSON presentation`() {
+        assertEquals(
+            DisplayOutput.Json("[\n  1,\n  true,\n  null\n]"),
+            parseDisplayOutput("[1,true,null]")
+        )
+    }
+
+    @Test
     fun `unset output selects empty presentation`() {
         assertTrue(parseDisplayOutput(null) is DisplayOutput.Empty)
     }

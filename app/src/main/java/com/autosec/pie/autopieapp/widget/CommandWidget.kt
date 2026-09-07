@@ -6,9 +6,15 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.TextPaint
+import android.text.style.ForegroundColorSpan
+import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -21,6 +27,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -49,8 +56,13 @@ import androidx.glance.unit.ColorProvider
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.autopi.MainActivity
 import com.autopi.DirectCommandActivity
+import com.autopi.R
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.blacksquircle.ui.language.base.model.SyntaxScheme
+import com.blacksquircle.ui.language.json.JsonLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -68,8 +80,11 @@ internal sealed interface DisplayOutput {
     data object Empty : DisplayOutput
     data class Number(val value: String) : DisplayOutput
     data class Items(val values: List<String>) : DisplayOutput
+    data class Json(val value: String) : DisplayOutput
     data class PlainText(val value: String) : DisplayOutput
 }
+
+private val prettyJson = GsonBuilder().setPrettyPrinting().create()
 
 internal fun parseDisplayOutput(raw: String?): DisplayOutput {
     if (raw == null) return DisplayOutput.Empty
@@ -89,7 +104,7 @@ internal fun parseDisplayOutput(raw: String?): DisplayOutput {
             json.isJsonPrimitive && json.asJsonPrimitive.isString -> {
                 DisplayOutput.PlainText(json.asString)
             }
-            else -> DisplayOutput.PlainText(raw)
+            else -> DisplayOutput.Json(prettyJson.toJson(json))
         }
     }.getOrElse { DisplayOutput.PlainText(raw) }
 }
@@ -100,7 +115,18 @@ internal fun boundWidgetOutput(raw: String): String = when (val output = parseDi
     is DisplayOutput.Items -> Gson().toJson(
         output.values.take(MAX_STORED_ITEMS).map { it.take(MAX_STORED_ITEM_LENGTH) }
     )
+    is DisplayOutput.Json -> boundJson(output.value)
     is DisplayOutput.PlainText -> Gson().toJson(output.value.take(MAX_STORED_OUTPUT_LENGTH))
+}
+
+private fun boundJson(prettyValue: String): String {
+    val compact = Gson().toJson(JsonParser.parseString(prettyValue))
+    if (compact.length <= MAX_STORED_OUTPUT_LENGTH) return compact
+
+    return Gson().toJson(JsonObject().apply {
+        addProperty("preview", compact.take(MAX_STORED_OUTPUT_LENGTH - 128))
+        addProperty("truncated", true)
+    })
 }
 
 class CommandWidget : GlanceAppWidget() {
@@ -176,6 +202,7 @@ private fun CommandWidgetContent(context: Context) {
                 DisplayOutput.Empty -> EmptyOutput(commandId != null)
                 is DisplayOutput.Number -> NumberOutput(output.value)
                 is DisplayOutput.Items -> ListOutput(output.values)
+                is DisplayOutput.Json -> JsonOutput(context, output.value)
                 is DisplayOutput.PlainText -> TextOutput(output.value)
             }
         }
@@ -296,6 +323,81 @@ private fun TextOutput(value: String) {
             textAlign = TextAlign.Start
         )
     )
+}
+
+@Composable
+private fun JsonOutput(context: Context, value: String) {
+    val remoteViews = RemoteViews(context.packageName, R.layout.command_widget_json_output).apply {
+        setTextViewText(R.id.command_widget_json_text, highlightedJson(context, value))
+        setTextColor(R.id.command_widget_json_text, jsonPalette(context).text)
+    }
+    AndroidRemoteViews(
+        remoteViews = remoteViews,
+        modifier = GlanceModifier.fillMaxWidth()
+    )
+}
+
+private data class JsonPalette(
+    val text: Int,
+    val number: Int,
+    val operator: Int,
+    val keyword: Int,
+    val string: Int
+)
+
+private fun jsonPalette(context: Context): JsonPalette {
+    val isDark = context.resources.configuration.uiMode and
+        Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    return if (isDark) {
+        JsonPalette(
+            text = 0xFFE6E1E5.toInt(),
+            number = 0xFF82AAFF.toInt(),
+            operator = 0xFF89DDFF.toInt(),
+            keyword = 0xFFC792EA.toInt(),
+            string = 0xFFC3E88D.toInt()
+        )
+    } else {
+        JsonPalette(
+            text = 0xFF24292F.toInt(),
+            number = 0xFF0550AE.toInt(),
+            operator = 0xFF0A3069.toInt(),
+            keyword = 0xFF8250DF.toInt(),
+            string = 0xFF116329.toInt()
+        )
+    }
+}
+
+private fun highlightedJson(context: Context, value: String): CharSequence {
+    val palette = jsonPalette(context)
+    val scheme = SyntaxScheme(
+        numberColor = palette.number,
+        operatorColor = palette.operator,
+        keywordColor = palette.keyword,
+        typeColor = palette.keyword,
+        langConstColor = palette.keyword,
+        preprocessorColor = palette.keyword,
+        variableColor = palette.text,
+        methodColor = palette.text,
+        stringColor = palette.string,
+        commentColor = palette.text,
+        tagColor = palette.text,
+        tagNameColor = palette.text,
+        attrNameColor = palette.text,
+        attrValueColor = palette.string,
+        entityRefColor = palette.operator
+    )
+    val highlighted = SpannableString(value)
+    JsonLanguage().getStyler().execute(value, scheme).forEach { syntaxSpan ->
+        val paint = TextPaint().apply { color = palette.text }
+        syntaxSpan.updateDrawState(paint)
+        highlighted.setSpan(
+            ForegroundColorSpan(paint.color),
+            syntaxSpan.start.coerceIn(0, value.length),
+            syntaxSpan.end.coerceIn(0, value.length),
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+    }
+    return highlighted
 }
 
 private fun statusColor(status: String?): Color = when (status) {

@@ -48,6 +48,7 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorCli
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorClientCore" }
 ktsh = { module = "com.jaredrummler:ktsh", version.ref = "ktsh" }
 language-shell = { module = "com.blacksquircle.ui:language-shell", version.ref = "editorkit" }
+language-json = { module = "com.blacksquircle.ui:language-json", version.ref = "editorkit" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
