@@ -8,5 +8,4 @@
     android:gravity="start"
     android:includeFontPadding="false"
     android:lineSpacingExtra="2dp"
-    android:maxLines="9"
     android:textSize="13sp" />
