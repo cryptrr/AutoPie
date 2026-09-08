@@ -46,11 +46,12 @@ class StoreCommandExtraInputs(
             if (extra.isSecretExtra()) {
                 storeSecret(command, extra, value)
                 extra
-            } else if (extra.shouldStoreInternalConfigDefault(value) && extra.default != value) {
-                changedConfigExtra = true
-                extra.copy(default = value)
             } else {
-                extra
+                val updatedExtra = extra.withUpdatedInternalConfigDefault(value)
+                if (updatedExtra != extra) {
+                    changedConfigExtra = true
+                }
+                updatedExtra
             }
         }
 
@@ -73,10 +74,25 @@ class StoreCommandExtraInputs(
         service.set(extra.secretKey(commandId), value)
     }
 
-    private fun CommandExtra.shouldStoreInternalConfigDefault(value: String): Boolean =
-        flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
-            type == "STRING" &&
-            value.isNotBlank()
+    private fun CommandExtra.withUpdatedInternalConfigDefault(value: String): CommandExtra {
+        if (!flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) return this
+
+        return when (type) {
+            "BOOLEAN" -> value.trim().lowercase().let { booleanValue ->
+                when (booleanValue) {
+                    "true" -> copy(defaultBoolean = true)
+                    "false" -> copy(defaultBoolean = false)
+                    else -> this
+                }
+            }
+            "FLAG" -> copy(defaultBoolean = value.isNotEmpty())
+            "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> copy(default = value)
+            "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> {
+                if (value.isNotBlank()) copy(default = value) else this
+            }
+            else -> this
+        }
+    }
 
     private fun storeUpdatedConfigExtras(command: CommandModel, extras: List<CommandExtra>): Boolean {
         val commandKey = command.name.ifBlank { command.id }

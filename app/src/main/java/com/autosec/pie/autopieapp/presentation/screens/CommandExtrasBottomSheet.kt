@@ -129,7 +129,6 @@ private fun CommandExtra.toInitialInput(): CommandExtraInput =
         name,
         default,
         when {
-            flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) -> default
             type == "BOOLEAN" -> defaultBoolean.toString()
             type == "SLIDER" -> {
                 val value = default.split(",").getOrNull(1) ?: default
@@ -139,7 +138,10 @@ private fun CommandExtra.toInitialInput(): CommandExtraInput =
                     value
                 }
             }
-            type == "FLAG" -> ""
+            type == "FLAG" -> if (defaultBoolean) default else ""
+            type == "SELECTABLE" || type == "SELECTABLE_FLAT" -> {
+                selectableOptions[default] ?: default
+            }
             else -> default
         },
         type,
@@ -304,7 +306,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             val commandId = command.id.ifBlank { command.name }
             return secretsService.get(extra.secretKey(commandId)).isNullOrBlank()
         }
-        return extra.default.isBlank()
+        return when (extra.type) {
+            "BOOLEAN", "FLAG" -> false
+            else -> extra.default.isBlank()
+        }
     }
 
     val internalConfigExtras = command.extras.orEmpty()
