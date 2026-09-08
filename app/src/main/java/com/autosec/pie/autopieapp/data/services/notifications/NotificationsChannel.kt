@@ -161,21 +161,18 @@ class AutoPieNotification(
 
     }
 
-    fun sendBroadcastNotification(contentTitle: String, contentText: String,command: CommandModel?,processId: Int, logFile: String) {
+    fun sendBroadcastNotification(
+        contentTitle: String,
+        contentText: String,
+        command: CommandModel?,
+        processId: Int,
+        logFile: String,
+        totalProgress: Int = 100,
+        currentProgress: Int? = null
+    ) {
 
         val channelId = BROADCASTS_CHANNEL
         val notificationId = processId
-
-        val total_progress: Int? = try {
-            0
-        } catch (e: Exception) {
-            null
-        }
-        val current_progress: Int? = try {
-            null
-        } catch (e: Exception) {
-            null
-        }
 
 
         val intent = Intent(Intent.ACTION_MAIN).apply {
@@ -216,14 +213,13 @@ class AutoPieNotification(
                 pendingCancelIntent
             )
 
-        if (total_progress == 0) {
+        if (currentProgress == null) {
             builder = builder
                 .setProgress(0, 0, true)
-        }
-
-        if (total_progress != null && current_progress != null) {
+        } else {
+            val maximum = totalProgress.coerceAtLeast(1)
             builder = builder
-                .setProgress(total_progress, current_progress, false)
+                .setProgress(maximum, currentProgress.coerceIn(0, maximum), false)
         }
 
         // Show the notification

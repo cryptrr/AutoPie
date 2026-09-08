@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.math.roundToInt
 
 class ProcessManagerService(
     private val main: MainViewModel,
@@ -650,6 +651,26 @@ class ProcessManagerService(
                                 )
                             }
                         }
+                        is AutoPieStructuredEvent.Progress -> {
+                            if (jobType != JobType.CRON) {
+                                try {
+                                    autoPieNotification.sendBroadcastNotification(
+                                        contentTitle = commandObject.name,
+                                        contentText = rawInput,
+                                        command = commandModel,
+                                        processId = processId,
+                                        logFile = logFile.absolutePath,
+                                        totalProgress = 100,
+                                        currentProgress = event.value
+                                    )
+                                } catch (error: Throwable) {
+                                    Timber.e(
+                                        error,
+                                        "Unable to update progress notification for ${commandObject.name}"
+                                    )
+                                }
+                            }
+                        }
                         else -> Unit
                     }
                 }
@@ -1213,7 +1234,7 @@ private const val AUTOPIE_EVENT_PREFIX = "#@AUTOPIE"
 internal sealed interface AutoPieStructuredEvent {
     data class Output(val rawValue: String) : AutoPieStructuredEvent
     data class Notification(val title: String, val body: String) : AutoPieStructuredEvent
-    data class Progress(val value: JsonElement?) : AutoPieStructuredEvent
+    data class Progress(val value: Int) : AutoPieStructuredEvent
     data class Unsupported(val type: String) : AutoPieStructuredEvent
 }
 
@@ -1237,7 +1258,14 @@ internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? 
                 title = event.stringOrNull("title") ?: return null,
                 body = event.stringOrNull("body") ?: return null
             )
-            "progress" -> AutoPieStructuredEvent.Progress(event.get("value"))
+            "progress" -> {
+                val value = event.get("value")
+                    ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }
+                    ?.asDouble
+                    ?.roundToInt()
+                    ?: return null
+                AutoPieStructuredEvent.Progress(value.coerceIn(0, 100))
+            }
             else -> AutoPieStructuredEvent.Unsupported(type)
         }
     }.getOrNull()

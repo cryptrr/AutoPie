@@ -157,15 +157,15 @@ Use a `notification` event to post an Android notification. This works for foreg
 
 Both `title` and `body` are required strings. AutoPie must have Android notification permission, and the **AutoPie main** notification channel must be enabled.
 
-### Reserved events
+### Progress
 
-AutoPie recognizes the following event format, but its UI behavior is not implemented yet:
+Use a `progress` event to update the progress bar on an existing running-command notification:
 
 ```text
 #@AUTOPIE {"type":"progress","value":75}
 ```
 
-- `progress` is reserved for reporting command progress.
+`value` must be a JSON number representing a percentage. AutoPie rounds fractional values and clamps the result to `0..100`. Progress updates apply to commands that already have a running notification; cron and standalone commands do not create one.
 
 ## `commands.json`
 
