@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.BuildConfig
+import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.preferences.AutoPieConfigLocation
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.presentation.elements.SettingsHeader
@@ -282,6 +283,42 @@ fun SettingsToggles() {
         }
 
 
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(15.dp))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+            .fillMaxWidth()
+            .padding(vertical = 7.dp, horizontal = 15.dp)
+    ) {
+        Text(
+            "Commands Channel",
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
+        )
+
+        CommandsChannelRow(
+            title = "Main",
+            description = "Stable commands catalog.",
+            selected = mainViewModel.commandsRepositoryChannel == CommandsRepositoryChannel.MAIN,
+            onClick = {
+                mainViewModel.updateCommandsRepositoryChannel(CommandsRepositoryChannel.MAIN)
+            }
+        )
+
+        CommandsChannelRow(
+            title = "Dev",
+            description = "Preview commands that may be unstable.",
+            selected = mainViewModel.commandsRepositoryChannel == CommandsRepositoryChannel.DEV,
+            onClick = {
+                mainViewModel.updateCommandsRepositoryChannel(CommandsRepositoryChannel.DEV)
+            }
+        )
     }
 
     Spacer(modifier = Modifier.height(20.dp))
@@ -622,6 +659,21 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
+}
+
+@Composable
+private fun CommandsChannelRow(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    ConfigLocationRow(
+        title = title,
+        description = description,
+        selected = selected,
+        onClick = onClick
+    )
 }
 
 @Composable

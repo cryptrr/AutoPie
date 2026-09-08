@@ -56,8 +56,8 @@ val useCaseModule = module {
             runInteractiveCommand = RunInteractiveCommand(get()),
             toggleCommandDebugMode = ToggleCommandDebugMode(get()),
             storeCommandExtraInputs = StoreCommandExtraInputs(get(), get()),
-            installCloudCommand = InstallCloudCommand(get(), get(), get()),
-            getCloudCommandDocumentation = GetCloudCommandDocumentation()
+            installCloudCommand = InstallCloudCommand(get(), get(), get(), get()),
+            getCloudCommandDocumentation = GetCloudCommandDocumentation(get())
         )
     }
 }

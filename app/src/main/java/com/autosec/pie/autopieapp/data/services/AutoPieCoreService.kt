@@ -11,6 +11,9 @@ import android.system.Os
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.autopi.autopieapp.data.AutoPieConstants
+import com.autopi.autopieapp.data.CommandsRepositoryChannel
+import com.autopi.autopieapp.data.CommandsRepositoryUrls
+import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelError
@@ -46,6 +49,7 @@ class AutoPieCoreService {
         val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
         private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
         private val autoPieConfigPathProvider: AutoPieConfigPathProvider by inject(AutoPieConfigPathProvider::class.java)
+        private val appPreferences: AppPreferences by inject(AppPreferences::class.java)
         private var termuxBootstrapTriggered = false
         private val repositoryRefreshMutex = Mutex()
         private const val REPOSITORY_CACHE_MAX_AGE_MILLIS = 24L * 60L * 60L * 1000L
@@ -589,7 +593,17 @@ class AutoPieCoreService {
             }
         }
 
-        fun repositoryJsonFile(): File = File(application.filesDir, "repolist.json")
+        private fun commandsRepositoryChannel(): CommandsRepositoryChannel =
+            CommandsRepositoryChannel.fromPreference(
+                appPreferences.getStringSync(AppPreferences.COMMANDS_REPOSITORY_CHANNEL)
+            )
+
+        fun repositoryJsonFile(
+            channel: CommandsRepositoryChannel = commandsRepositoryChannel()
+        ): File = File(
+            application.filesDir,
+            if (channel == CommandsRepositoryChannel.MAIN) "repolist.json" else "repolist-dev.json"
+        )
 
         fun isRepositoryJsonStale(
             maxAgeMillis: Long = REPOSITORY_CACHE_MAX_AGE_MILLIS,
@@ -601,15 +615,19 @@ class AutoPieCoreService {
 
         suspend fun fetchLatestRepositoryJson(forceRefresh: Boolean = false): Boolean =
             repositoryRefreshMutex.withLock {
-                val repositoryJsonFile = repositoryJsonFile()
-                if (!forceRefresh && !isRepositoryJsonStale()) {
+                val channel = commandsRepositoryChannel()
+                val repositoryJsonFile = repositoryJsonFile(channel)
+                if (
+                    !forceRefresh &&
+                    !isRepositoryFileStale(repositoryJsonFile, REPOSITORY_CACHE_MAX_AGE_MILLIS)
+                ) {
                     return@withLock true
                 }
 
                 Timber.d("Fetching latest commands repository")
                 try {
-                    val repositoryJsonNewFile = File(application.filesDir, "repolist.json.new")
-                    val repositoryJsonBackupFile = File(application.filesDir, "repolist.json.bak")
+                    val repositoryJsonNewFile = File("${repositoryJsonFile.absolutePath}.new")
+                    val repositoryJsonBackupFile = File("${repositoryJsonFile.absolutePath}.bak")
 
                     if (repositoryJsonNewFile.exists() && !repositoryJsonNewFile.delete()) {
                         Timber.e("Unable to delete existing new repository file ${repositoryJsonNewFile.absolutePath}")
@@ -617,7 +635,7 @@ class AutoPieCoreService {
                     }
 
                     val isDownloaded = downloadFileNatively(
-                        AutoPieConstants.AUTOPIE_FULL_COMMANDS_REPO_URL,
+                        CommandsRepositoryUrls.catalog(channel),
                         repositoryJsonNewFile.absolutePath
                     )
 

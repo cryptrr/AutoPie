@@ -40,6 +40,7 @@ class AppPreferences(private val context: Context) : MyPreferences {
         val AUTOPIE_CONFIG_LOCATION = stringPreferencesKey("autoPieConfigLocation")
         val FILE_LOGGING_ENABLED = booleanPreferencesKey("fileLoggingEnabled")
         val INIT_PACKAGE_COMMANDS_PROMPT_HANDLED = booleanPreferencesKey("initPackageCommandsPromptHandled")
+        val COMMANDS_REPOSITORY_CHANNEL = stringPreferencesKey("commandsRepositoryChannel")
     }
 
     override fun getString(key: Preferences.Key<String>)  = context.dataStore.data.map {

@@ -4,6 +4,9 @@ import android.app.Application
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.JobType
+import com.autopi.autopieapp.data.CommandsRepositoryChannel
+import com.autopi.autopieapp.data.CommandsRepositoryUrls
+import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.ViewModelError
@@ -25,10 +28,12 @@ import java.net.URL
 class InstallCloudCommand(
     private val jsonService: JsonService,
     private val processManagerService: ProcessManagerService,
-    private val application: Application
+    private val application: Application,
+    private val appPreferences: AppPreferences
 ) {
     suspend operator fun invoke(commandId: String, manifestYaml: String? = null) {
-        installResolvedCommands(listOf(resolveCloudCommand(commandId, manifestYaml)))
+        val channel = commandsRepositoryChannel()
+        installResolvedCommands(listOf(resolveCloudCommand(commandId, channel, manifestYaml)))
     }
 
     suspend fun installAll(commandIds: List<String>, runInstallScripts: Boolean = true) {
@@ -41,6 +46,7 @@ class InstallCloudCommand(
             return
         }
 
+        val channel = commandsRepositoryChannel()
         val fetchSemaphore = Semaphore(MAX_PARALLEL_COMMAND_FETCHES)
         val resolvedCommands = coroutineScope {
             uniqueCommandIds.map { commandId ->
@@ -48,6 +54,7 @@ class InstallCloudCommand(
                     fetchSemaphore.withPermit {
                         resolveCloudCommand(
                             commandId,
+                            channel,
                             includeInstallScript = runInstallScripts
                         )
                     }
@@ -60,10 +67,11 @@ class InstallCloudCommand(
 
     private fun resolveCloudCommand(
         commandId: String,
+        channel: CommandsRepositoryChannel,
         manifestYaml: String? = null,
         includeInstallScript: Boolean = true
     ): ResolvedCloudCommand {
-        val folderUrl = cloudCommandFolderUrl(commandId)
+        val folderUrl = cloudCommandFolderUrl(commandId, channel)
         val resolvedManifestYaml = manifestYaml ?: fetchCloudCommandText("$folderUrl/manifest.yaml")
         val manifest = cloudManifestToShareCommandJson(resolvedManifestYaml)
         val installScript = if (includeInstallScript) {
@@ -79,6 +87,11 @@ class InstallCloudCommand(
             installScript = installScript?.let { CloudCommandInstallScript(manifest.commandKey, it) }
         )
     }
+
+    private fun commandsRepositoryChannel(): CommandsRepositoryChannel =
+        CommandsRepositoryChannel.fromPreference(
+            appPreferences.getStringSync(AppPreferences.COMMANDS_REPOSITORY_CHANNEL)
+        )
 
     private fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
         val installScripts = resolvedCommands.mapNotNull { it.installScript }
@@ -153,9 +166,12 @@ private fun String.sanitizedForShellLabel(): String = replace('\n', ' ').replace
 
 private fun String.shellSingleQuote(): String = "'${replace("'", "'\\''")}'"
 
-class GetCloudCommandDocumentation {
+class GetCloudCommandDocumentation(private val appPreferences: AppPreferences) {
     operator fun invoke(commandId: String): CloudCommandDocumentation {
-        val folderUrl = cloudCommandFolderUrl(commandId)
+        val channel = CommandsRepositoryChannel.fromPreference(
+            appPreferences.getStringSync(AppPreferences.COMMANDS_REPOSITORY_CHANNEL)
+        )
+        val folderUrl = cloudCommandFolderUrl(commandId, channel)
         val manifestYaml = fetchCloudCommandText("$folderUrl/manifest.yaml")
         val docs = cloudManifestDocs(manifestYaml)
 
@@ -352,14 +368,17 @@ private fun Map<String, Any?>.stringListValue(key: String): List<String>? {
 private fun Any?.asMap(): Map<String, Any?> =
     this as? Map<String, Any?> ?: throw ViewModelError.InvalidCommandRepoFile
 
-internal fun cloudCommandFolderUrl(commandId: String): String {
+internal fun cloudCommandFolderUrl(
+    commandId: String,
+    channel: CommandsRepositoryChannel = CommandsRepositoryChannel.MAIN
+): String {
     val commandPath = commandId.trim().split(".")
         .filter(String::isNotBlank)
         .joinToString("/")
 
     if (commandPath.isBlank()) throw ViewModelError.CommandNotFound
 
-    return "$COMMANDS_RAW_BASE/$commandPath"
+    return CommandsRepositoryUrls.commandFolder(channel, commandPath)
 }
 
 internal fun fetchCloudCommandText(url: String): String {
@@ -379,8 +398,5 @@ internal fun fetchCloudCommandText(url: String): String {
         connection.disconnect()
     }
 }
-
-private const val COMMANDS_RAW_BASE =
-    "https://raw.githubusercontent.com/cryptrr/autopie-commands/main/commands"
 
 private const val MAX_PARALLEL_COMMAND_FETCHES = 4

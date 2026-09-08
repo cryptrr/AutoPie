@@ -18,6 +18,7 @@ import com.autopi.BuildConfig
 import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.JobType
 import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.preferences.AppPreferences
@@ -36,6 +37,7 @@ import com.autopi.autopieapp.data.services.ReleaseInfo
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -122,6 +124,14 @@ class MainViewModel(
         }
     }
 
+    var commandsRepositoryChannel by mutableStateOf(
+        CommandsRepositoryChannel.fromPreference(
+            appPreferences.getStringSync(AppPreferences.COMMANDS_REPOSITORY_CHANNEL)
+        )
+    )
+        private set
+    private var commandsRepositoryChannelUpdateJob: Job? = null
+
     var storageManagerPermissionGranted by mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         Environment.isExternalStorageManager()
     } else {
@@ -174,6 +184,20 @@ class MainViewModel(
     fun updateFileLoggingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             appPreferences.setBool(AppPreferences.FILE_LOGGING_ENABLED, enabled)
+        }
+    }
+
+    fun updateCommandsRepositoryChannel(channel: CommandsRepositoryChannel) {
+        if (channel == commandsRepositoryChannel) return
+
+        commandsRepositoryChannel = channel
+        commandsRepositoryChannelUpdateJob?.cancel()
+        commandsRepositoryChannelUpdateJob = viewModelScope.launch(dispatchers.io) {
+            appPreferences.setString(
+                AppPreferences.COMMANDS_REPOSITORY_CHANNEL,
+                channel.preferenceValue
+            )
+            AutoPieCoreService.fetchLatestRepositoryJson(forceRefresh = true)
         }
     }
 
