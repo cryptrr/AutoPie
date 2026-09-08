@@ -3,7 +3,10 @@ package com.autopi.autopieapp.data.services
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.use_case.AutoPieUseCases
+import com.autopi.utils.Utils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import org.koin.java.KoinJavaComponent.inject
@@ -28,6 +31,12 @@ class CronJobWorker(
         return try {
             Timber.d("Cron job fired for '$commandKey' (attempt $runAttemptCount)")
             val command = useCases.getCommandDetails(commandKey)
+            // Reconciliation is asynchronous and config may have changed while this work waited.
+            if (command.type != CommandType.CRON ||
+                Utils.parseTimeInterval(command.cronInterval.orEmpty()) == null) {
+                Timber.d("Skipping obsolete cron work for '$commandKey'")
+                return Result.success()
+            }
             // The widgets branch needs the CRON-specific runner so lifecycle/output events carry
             // JobType.CRON and update command widgets correctly.
             val receipt = useCases.runCronCommand(command, emptyList(), processId).first()
@@ -43,6 +52,10 @@ class CronJobWorker(
             }
         } catch (error: CancellationException) {
             throw error
+        } catch (error: ViewModelError.CommandNotFound) {
+            // A deleted command cannot become runnable by retrying this occurrence.
+            Timber.d("Skipping deleted cron command '$commandKey'")
+            Result.success()
         } catch (error: Exception) {
             Timber.e(error, "Cron command '$commandKey' could not be executed")
             if (runAttemptCount < MAX_RETRY_ATTEMPTS) Result.retry() else Result.failure()

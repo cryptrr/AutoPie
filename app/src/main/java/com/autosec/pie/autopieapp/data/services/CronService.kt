@@ -17,6 +17,7 @@ import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.utils.Utils
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
@@ -56,8 +57,14 @@ class CronService(private val jsonService: JsonService) {
      */
     fun setUpCronJobs() {
         schedulerScope.launch {
-            reconciliationMutex.withLock {
-                reconcileCronJobs()
+            try {
+                reconciliationMutex.withLock {
+                    reconcileCronJobs()
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.e(error, "Failed to reconcile cron jobs; a later config change or startup will retry")
             }
         }
     }
@@ -92,50 +99,56 @@ class CronService(private val jsonService: JsonService) {
         parsedData.values
             .filterValues { command -> command.type == CommandType.CRON }
             .forEach { (commandKey, command) ->
-                val parsedInterval = Utils.parseTimeInterval(command.cronInterval.orEmpty())
-                if (parsedInterval == null) {
-                    Timber.w("Skipping cron '$commandKey': invalid interval '${command.cronInterval}'")
-                    return@forEach
-                }
+                try {
+                    val parsedInterval = Utils.parseTimeInterval(command.cronInterval.orEmpty())
+                    if (parsedInterval == null) {
+                        Timber.w("Skipping cron '$commandKey': invalid interval '${command.cronInterval}'")
+                        return@forEach
+                    }
 
-                val requestedIntervalMillis = parsedInterval.second.toMillis(parsedInterval.first)
-                val effectiveIntervalMillis = maxOf(
-                    requestedIntervalMillis,
-                    PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
-                )
-                val workName = workName(commandKey)
-                requestedWorkNames += workName
-
-                if (effectiveIntervalMillis != requestedIntervalMillis) {
-                    Timber.w("Cron '$commandKey' is below Android's 15 minute minimum; using 15 minutes")
-                }
-
-                val inputData = Data.Builder()
-                    .putString(CronJobWorker.COMMAND_KEY, commandKey)
-                    .build()
-
-                val request = PeriodicWorkRequestBuilder<CronJobWorker>(
-                    effectiveIntervalMillis,
-                    TimeUnit.MILLISECONDS
-                )
-                    // Without an initial delay, a newly-created periodic request may run at once.
-                    .setInitialDelay(effectiveIntervalMillis, TimeUnit.MILLISECONDS)
-                    .setBackoffCriteria(
-                        BackoffPolicy.EXPONENTIAL,
-                        RETRY_BACKOFF_MINUTES,
-                        TimeUnit.MINUTES
+                    val requestedIntervalMillis = parsedInterval.second.toMillis(parsedInterval.first)
+                    val effectiveIntervalMillis = maxOf(
+                        requestedIntervalMillis,
+                        PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
                     )
-                    .setInputData(inputData)
-                    .addTag(CRON_WORK_TAG)
-                    .addTag(workName)
-                    .build()
+                    val workName = workName(commandKey)
+                    requestedWorkNames += workName
 
-                workManager.enqueueUniquePeriodicWork(
-                    workName,
-                    ExistingPeriodicWorkPolicy.UPDATE,
-                    request
-                )
-                Timber.d("Scheduled cron '$commandKey' every ${effectiveIntervalMillis}ms")
+                    if (effectiveIntervalMillis != requestedIntervalMillis) {
+                        Timber.w("Cron '$commandKey' is below Android's 15 minute minimum; using 15 minutes")
+                    }
+
+                    val inputData = Data.Builder()
+                        .putString(CronJobWorker.COMMAND_KEY, commandKey)
+                        .build()
+
+                    val request = PeriodicWorkRequestBuilder<CronJobWorker>(
+                        effectiveIntervalMillis,
+                        TimeUnit.MILLISECONDS
+                    )
+                        // Without an initial delay, a newly-created periodic request may run at once.
+                        .setInitialDelay(effectiveIntervalMillis, TimeUnit.MILLISECONDS)
+                        .setBackoffCriteria(
+                            BackoffPolicy.EXPONENTIAL,
+                            RETRY_BACKOFF_MINUTES,
+                            TimeUnit.MINUTES
+                        )
+                        .setInputData(inputData)
+                        .addTag(CRON_WORK_TAG)
+                        .addTag(workName)
+                        .build()
+
+                    workManager.enqueueUniquePeriodicWork(
+                        workName,
+                        ExistingPeriodicWorkPolicy.UPDATE,
+                        request
+                    ).await()
+                    Timber.d("Scheduled cron '$commandKey' every ${effectiveIntervalMillis}ms")
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    Timber.e(error, "Failed to schedule cron '$commandKey'; continuing with other commands")
+                }
             }
 
         removeObsoleteCronWork(workManager, requestedWorkNames)
@@ -154,6 +167,8 @@ class CronService(private val jsonService: JsonService) {
                     Timber.d("Cancelling obsolete cron work ${workInfo.id}")
                     workManager.cancelWorkById(workInfo.id).await()
                 }
+        } catch (error: CancellationException) {
+            throw error
         } catch (error: Exception) {
             Timber.e(error, "Failed to remove obsolete cron work")
         }
