@@ -123,7 +123,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     text = viewModel.rawJson,
                     title = "RAW JSON*",
                     subtitle = "Add one or more commands as an object keyed by command name. Existing commands with the same name will be replaced.",
-                    placeholder = "{\n  \"Key\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    placeholder = "{\n  \"local.command-id\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 220.dp)
                 )

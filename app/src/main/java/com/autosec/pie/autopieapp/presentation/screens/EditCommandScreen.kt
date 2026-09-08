@@ -261,7 +261,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     text = viewModel.rawJson,
                     title = "RAW JSON*",
                     subtitle = "Edit exactly one command as an object keyed by its name.",
-                    placeholder = "{\n  \"Key\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    placeholder = "{\n  \"local.command-id\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 260.dp)
                 )
