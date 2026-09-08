@@ -50,7 +50,7 @@ class ChangeCommandDetails(
             val jsonArray = JsonArray()
 
             selectors.value.split(",").map { string ->
-                jsonArray.add(JsonParser.parseString(string.trim()))
+                jsonArray.add(string.trim())
             }
 
             jsonArray
