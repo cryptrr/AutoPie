@@ -147,16 +147,24 @@ jq -cn --arg source "Reddit" --argjson count 3 \
   | sed 's/^/#@AUTOPIE /'
 ```
 
-### Reserved events
+### Notifications
 
-AutoPie recognizes the following event formats, but their UI behavior is not implemented yet:
+Use a `notification` event to post an Android notification. This works for foreground, standalone, observer, and cron commands. Tapping the notification opens the command log.
 
 ```text
 #@AUTOPIE {"type":"notification","title":"Reddit","body":"3 new posts"}
+```
+
+Both `title` and `body` are required strings. AutoPie must have Android notification permission, and the **AutoPie main** notification channel must be enabled.
+
+### Reserved events
+
+AutoPie recognizes the following event format, but its UI behavior is not implemented yet:
+
+```text
 #@AUTOPIE {"type":"progress","value":75}
 ```
 
-- `notification` is reserved for requesting a notification with a title and body.
 - `progress` is reserved for reporting command progress.
 
 ## `commands.json`

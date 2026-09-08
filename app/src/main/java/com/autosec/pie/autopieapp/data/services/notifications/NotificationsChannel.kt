@@ -108,7 +108,15 @@ class AutoPieNotification(
     }
 
 
-    fun sendNotification(contentTitle: String, contentText: String,command: CommandModel?, logFile: String, processId: Int) {
+    fun sendNotification(
+        contentTitle: String,
+        contentText: String,
+        command: CommandModel?,
+        logFile: String,
+        processId: Int,
+        silent: Boolean = true,
+        autoCancel: Boolean = false
+    ) {
         val channelId = MAIN_CHANNEL
         val notificationId = System.currentTimeMillis().toInt()
 
@@ -127,12 +135,12 @@ class AutoPieNotification(
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setSilent(true)
+            .setSilent(silent)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(false)
+            .setAutoCancel(autoCancel)
 
         // Show the notification
         with(NotificationManagerCompat.from(context)) {

@@ -12,6 +12,7 @@ import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.AutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.parseAutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
+import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DefaultDispatchers
@@ -19,6 +20,7 @@ import com.autopi.utils.Shell
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -50,7 +52,8 @@ class ProcessManagerTests : KoinTest {
     private data class ProcessManagerFixture(
         val service: ProcessManagerService,
         val configPathProvider: AutoPieConfigPathProvider,
-        val mainViewModel: MainViewModel
+        val mainViewModel: MainViewModel,
+        val autoPieNotification: AutoPieNotification
     )
 
     private fun createProcessManagerService(
@@ -80,6 +83,7 @@ class ProcessManagerTests : KoinTest {
         every { Environment.getExternalStorageDirectory() } returns testRoot
 
         val autoPieConfigPathProvider = AutoPieConfigPathProvider(mockApplication, mockedPreferences)
+        val autoPieNotification = mockk<AutoPieNotification>(relaxed = true)
         val mainViewModel = MainViewModel(
             mockApplication,
             mockedPreferences,
@@ -92,10 +96,12 @@ class ProcessManagerTests : KoinTest {
                 DefaultDispatchers(),
                 mockApplication,
                 autoPieConfigPathProvider,
-                Shell.Timeout(5, TimeUnit.SECONDS)
+                Shell.Timeout(5, TimeUnit.SECONDS),
+                autoPieNotification = autoPieNotification
             ),
             configPathProvider = autoPieConfigPathProvider,
-            mainViewModel = mainViewModel
+            mainViewModel = mainViewModel,
+            autoPieNotification = autoPieNotification
         )
     }
 
@@ -136,6 +142,61 @@ class ProcessManagerTests : KoinTest {
                 "#@AUTOPIE {\"type\":\"output\",\"value\":\"{\\\"count\\\":3,\\\"fresh\\\":true}\"}"
             )
         )
+    }
+
+    @Test
+    fun `AutoPie notification directive requires and parses title and body`() {
+        assertEquals(
+            AutoPieStructuredEvent.Notification("Reddit", "3 new posts"),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\"}"
+            )
+        )
+        assertEquals(
+            null,
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\"}"
+            )
+        )
+    }
+
+    @Test
+    fun `notification directive from stdout posts an Android notification`() = runTest {
+        val fixture = createProcessManagerService("structured-notification")
+        val command = CommandModel(
+            id = "structured-notification-command",
+            type = CommandType.CRON,
+            name = "Structured notification",
+            path = "",
+            command = "printf '%s\\n' '#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\"}'",
+            exec = "",
+            extras = emptyList()
+        )
+
+        val result = fixture.service.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = 61550,
+            jobType = JobType.CRON,
+            usePython = false
+        )
+
+        assertTrue(result.success)
+        verify(exactly = 1) {
+            fixture.autoPieNotification.sendNotification(
+                contentTitle = "Reddit",
+                contentText = "3 new posts",
+                command = command,
+                logFile = any(),
+                processId = 61550,
+                silent = false,
+                autoCancel = true
+            )
+        }
     }
 
     @Test

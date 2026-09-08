@@ -24,6 +24,7 @@ import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
+import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.autopieapp.widget.updateCommandWidgets
@@ -60,6 +61,7 @@ class ProcessManagerService(
     private val autoPieConfigPathProvider: AutoPieConfigPathProvider,
     private val shellTimeout: Shell.Timeout? = null,
     private val secretsService: SecretsService = SecretsService(activity),
+    private val autoPieNotification: AutoPieNotification,
 ){
 
     private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
@@ -630,6 +632,24 @@ class ProcessManagerService(
                                 )
                             }
                         }
+                        is AutoPieStructuredEvent.Notification -> {
+                            try {
+                                autoPieNotification.sendNotification(
+                                    contentTitle = event.title,
+                                    contentText = event.body,
+                                    command = commandModel,
+                                    logFile = logFile.absolutePath,
+                                    processId = processId,
+                                    silent = false,
+                                    autoCancel = true
+                                )
+                            } catch (error: Throwable) {
+                                Timber.e(
+                                    error,
+                                    "Unable to send structured notification for ${commandObject.name}"
+                                )
+                            }
+                        }
                         else -> Unit
                     }
                 }
@@ -1192,7 +1212,7 @@ private const val AUTOPIE_EVENT_PREFIX = "#@AUTOPIE"
 
 internal sealed interface AutoPieStructuredEvent {
     data class Output(val rawValue: String) : AutoPieStructuredEvent
-    data class Notification(val title: String?, val body: String?) : AutoPieStructuredEvent
+    data class Notification(val title: String, val body: String) : AutoPieStructuredEvent
     data class Progress(val value: JsonElement?) : AutoPieStructuredEvent
     data class Unsupported(val type: String) : AutoPieStructuredEvent
 }
@@ -1214,8 +1234,8 @@ internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? 
                 rawValue = event.get("value")?.toWidgetRawValue() ?: return null
             )
             "notification" -> AutoPieStructuredEvent.Notification(
-                title = event.stringOrNull("title"),
-                body = event.stringOrNull("body")
+                title = event.stringOrNull("title") ?: return null,
+                body = event.stringOrNull("body") ?: return null
             )
             "progress" -> AutoPieStructuredEvent.Progress(event.get("value"))
             else -> AutoPieStructuredEvent.Unsupported(type)
