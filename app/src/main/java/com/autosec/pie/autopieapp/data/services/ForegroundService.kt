@@ -1,283 +1,185 @@
 package com.autopi.autopieapp.data.services
 
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.os.Process
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.viewModelScope
 import com.autopi.R
-import com.autopi.autopieapp.data.CommandExtraInput
-import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.use_case.AutoPieUseCases
-import com.autopi.utils.Utils
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 import kotlin.system.exitProcess
 
 class ForegroundService : Service() {
-
     private val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
+    private val autoPieNotification: AutoPieNotification by inject(AutoPieNotification::class.java)
+    private val serviceScope by lazy { CoroutineScope(SupervisorJob() + dispatchers.main) }
 
-    private val autoPieNotification: AutoPieNotification by inject(
-        AutoPieNotification::class.java)
-
-
-    private var notificationManager: NotificationManager? = null
-
-    private var processIds : List<Int> = emptyList()
-    private var successProcessIds : List<Int> = emptyList()
-    private var failedProcessIds : List<Int> = emptyList()
-    private var stoppedProcessList : List<Int> = emptyList()
-
-
-
-    private var foregroundServiceId : Int? = null
-
-    init {
-        //TODO: Change
-        mainViewModel.viewModelScope.launch {
-            mainViewModel.eventFlow.collect{
-                when(it){
-                    is ViewModelEvent.CommandCompleted -> {
-                        if (it.jobType == JobType.CRON) return@collect
-                        try {
-
-                            //Add it to the success list
-                            successProcessIds = successProcessIds + it.processId
-
-                            //Remove from the current running processIds list
-                            processIds = processIds.filter {item -> item !=  it.processId}
-
-                            Timber.d("ProcessIds at completion of command: $processIds")
-
-                            autoPieNotification.cancelNotification(it.processId)
-
-                            //Close if no processes remain in the list
-                            if(processIds.isEmpty()){
-                                Timber.d("All processed completed")
-                                onDestroy()
-                            }
-                        }catch (e: Exception){
-                            Timber.e(e)
-                        }
-                    }
-
-                    is ViewModelEvent.CommandFailed -> {
-                        if (it.jobType == JobType.CRON) return@collect
-                        try {
-
-                            //Add it to the failed list
-                            failedProcessIds = failedProcessIds + it.processId
-
-                            //Remove from the current running processIds list
-                            processIds = processIds.filter {item -> item !=  it.processId}
-
-                            Timber.d("ProcessIds at completion of command: $processIds")
-
-                            autoPieNotification.cancelNotification(it.processId)
-
-                            //Close if no processes remain in the list
-                            if(processIds.isEmpty()){
-                                Timber.d("All processed completed")
-                                onDestroy()
-                            }
-                        }catch (e: Exception){
-                            Timber.e(e)
-                        }
-                    }
-
-                    is ViewModelEvent.CommandStoppedByUser -> {
-                        try {
-
-                            //Add it to the failed list
-                            stoppedProcessList = stoppedProcessList + it.processId
-
-                            //Remove from the current running processIds list
-                            processIds = processIds.filter {item -> item !=  it.processId}
-
-                            Timber.d("ProcessIds at completion of command: $processIds")
-
-                            autoPieNotification.cancelNotification(it.processId)
-
-                            //Close if no processes remain in the list
-                            if(processIds.isEmpty()){
-                                Timber.d("All processed completed")
-                                onDestroy()
-                            }
-                        }catch (e: Exception){
-                            Timber.e(e)
-                        }
-                    }
-
-                    is ViewModelEvent.StopAutoPie -> {
-                        Timber.d("Stopping the current AutoPie instance")
-
-                        autoPieNotification.cancelAllNotifications()
-
-                        Process.killProcess(Process.myPid())
-                        exitProcess(0)
-                    }
-                    is ViewModelEvent.CommandStarted -> {
-                        if (it.jobType == JobType.CRON) return@collect
-                        Timber.d("Event: Command has started for processId: ${it.processId} with log at ${it.logFile}")
-
-
-                        if(it.jobType != JobType.STANDALONE){
-                            autoPieNotification.sendBroadcastNotification(
-                                it.command.name, it.input, it.command, it.processId,
-                                logFile = it.logFile,
-                            )
-                        }
-
-                    }
-                    else -> {}
-                }
-            }
-        }
-    }
-
+    // Accessed only on the main dispatcher. One process may have consecutive multistage requests.
+    private val runs = mutableMapOf<Job, Int>()
+    private var latestStartId = 0
+    private var destroyed = false
 
     override fun onCreate() {
         super.onCreate()
-        // Create a notification channel for API 26+
-
-        val foregroundServiceId = (100000..999999).random()
-
-
-        Timber.d("ForegroundService created with id: $foregroundServiceId")
-
-
         val intent = Intent(this, ProcessBroadcastReceiver::class.java).apply {
             action = "${this@ForegroundService.packageName}.CANCEL_ALL_PROCESSES"
         }
-
-        val pendingButtonIntent: PendingIntent = PendingIntent.getBroadcast(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val cancelIntent = PendingIntent.getBroadcast(
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-
         val notification = NotificationCompat.Builder(this, AutoPieNotification.FOREGROUND_CHANNEL)
             .setContentTitle("AutoPie Running")
             .setSmallIcon(R.drawable.ic_notification)
             .setOngoing(true)
-            .addAction(
-                R.drawable.ic_notification,
-                "Cancel",
-                pendingButtonIntent
-            )
+            .addAction(R.drawable.ic_notification, "Cancel", cancelIntent)
             .build()
+        startForeground((100000..999999).random(), notification)
 
-        startForeground(foregroundServiceId, notification)
+        serviceScope.launch {
+            mainViewModel.eventFlow.collect { event ->
+                when (event) {
+                    is ViewModelEvent.CommandStarted -> {
+                        if (event.processId in runs.values && event.jobType != JobType.CRON &&
+                            event.jobType != JobType.STANDALONE) {
+                            notifySafely {
+                                autoPieNotification.sendBroadcastNotification(
+                                    event.command.name, event.input, event.command, event.processId,
+                                    logFile = event.logFile
+                                )
+                            }
+                        }
+                    }
+                    is ViewModelEvent.CancelProcess -> cancelRuns(event.processId)
+                    is ViewModelEvent.CommandStoppedByUser -> cancelRuns(event.processId)
+                    is ViewModelEvent.CancelAllProcesses -> runs.keys.toList().forEach { it.cancel() }
+                    is ViewModelEvent.StopAutoPie -> {
+                        autoPieNotification.cancelAllNotifications()
+                        Process.killProcess(Process.myPid())
+                        exitProcess(0)
+                    }
+                    // A completion event is per file/step, not completion of the collected flow.
+                    else -> Unit
+                }
+            }
+        }
+    }
+
+    private fun cancelRuns(processId: Int) {
+        runs.filterValues { it == processId }.keys.toList().forEach { it.cancel() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        intent?.let {
-
-            CoroutineScope(dispatchers.io).launch {
-
-                var processId = 0
-                var command: CommandModel? = null
-                var logsFile : File? = null
-
-                try {
-
-                    processId = it.getIntExtra("processId", (100000..999999).random())
-
-                    processIds = processIds + processId
-
-                    Timber.d("ProcessIds at starting command: $processIds")
-
-                    val commandString = it.getStringExtra("command")
-                    val inputText = it.getStringExtra("inputText")
-                    val inputFilesString = it.getStringExtra("inputFiles")
-                    val commandExtraInputsString = it.getStringExtra("commandExtraInputs")
-
-                    val listType = object : TypeToken<List<String>>() {}.type
-                    val commandExtraInputListType = object : TypeToken<List<CommandExtraInput>>() {}.type
-
-                    command = Gson().fromJson(commandString, CommandModel::class.java)
-
-                    val inputFiles: List<String> = Gson().fromJson(inputFilesString, listType)
-
-                    val commandExtraInputs: List<CommandExtraInput> = try {
-                        Gson().fromJson(commandExtraInputsString, commandExtraInputListType)
-                    }catch (e: Exception){
-                        emptyList()
-                    }
-
-
-                    //The logs file is created with processId as its prefix in the caches directory when the command starts.
-                    logsFile = File(application.cacheDir, "${processId}.log")
-
-                    useCases.runCommand(command, inputText, inputFiles, commandExtraInputs, processId).catch { e ->
-
-                        if (command.multiStage == true) {
-                            mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
-                        }
-                        Timber.e(e)
-
-                        autoPieNotification.sendNotification("Command Failed", "${command.name}  ${e.message}", command , logsFile.absolutePath, processId)
-
-                    }.collect{ receipt ->
-                        if (receipt.success) {
-                            Timber.d("Process Success".uppercase())
-                            autoPieNotification.sendNotification("Command Success", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
-                            if (command.multiStage == true && !receipt.partial) {
-                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
-                            }
-                        } else {
-                            Timber.d("Process FAILED".uppercase())
-                            if (command.multiStage == true) {
-                                mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
-                            }
-                            autoPieNotification.sendNotification("Command Failed", "${command.name} ${receipt.jobKey}",command, logsFile.absolutePath, processId)
-                        }
-                    }
-
-                }catch (e: Exception){
-                    Timber.e(e)
-                    if (command?.multiStage == true) {
-                        mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
-                    }
-                    //TODO: Could change the !! operator
-                    autoPieNotification.sendNotification("Command Failed", "" ,command, logsFile!!.absolutePath, processId)
-                    onDestroy()
-
-                }
+        latestStartId = startId
+        if (intent == null) {
+            stopIfIdle()
+            return START_NOT_STICKY
+        }
+        val processId = intent.getIntExtra("processId", (100000..999999).random())
+        val logPath = File(application.cacheDir, "${processId}.log").absolutePath
+        val request = try {
+            parseShareCommandRequest(
+                intent.getStringExtra("command"), intent.getStringExtra("inputText"),
+                intent.getStringExtra("inputFiles"), intent.getStringExtra("commandExtraInputs")
+            )
+        } catch (error: Exception) {
+            Timber.e(error, "Invalid SHARE command request")
+            notifySafely {
+                autoPieNotification.sendNotification("Command Failed", error.message.orEmpty(), null, logPath, processId)
             }
-
+            stopIfIdle()
+            return START_NOT_STICKY
         }
 
+        lateinit var run: Job
+        run = serviceScope.launch(start = CoroutineStart.LAZY) {
+            try {
+                withContext(dispatchers.io) {
+                    var keepMultistageShell = false
+                    try {
+                        useCases.runCommand(
+                            request.command, request.inputText, request.inputFiles, request.extras, processId
+                        ).collect { receipt ->
+                            currentCoroutineContext().ensureActive()
+                            keepMultistageShell = receipt.success && receipt.partial
+                            notifySafely {
+                                autoPieNotification.sendNotification(
+                                    if (receipt.success) "Command Success" else "Command Failed",
+                                    "${request.command.name} ${receipt.jobKey}", request.command, logPath, processId
+                                )
+                            }
+                        }
+                    } catch (error: CancellationException) {
+                        keepMultistageShell = false
+                        throw error
+                    } catch (error: Exception) {
+                        keepMultistageShell = false
+                        Timber.e(error, "SHARE command failed")
+                        notifySafely {
+                            autoPieNotification.sendNotification(
+                                "Command Failed", "${request.command.name} ${error.message}",
+                                request.command, logPath, processId
+                            )
+                        }
+                    } finally {
+                        if (request.command.multiStage == true && !keepMultistageShell) {
+                            mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
+                    }
+                }
+            } finally {
+                runs.remove(run)
+                if (processId !in runs.values) {
+                    notifySafely { autoPieNotification.cancelNotification(processId) }
+                }
+                stopIfIdle()
+            }
+        }
+        runs[run] = processId
+        run.start()
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+    private fun stopIfIdle() {
+        if (!destroyed && runs.isEmpty()) stopSelfResult(latestStartId)
     }
 
+    private inline fun notifySafely(block: () -> Unit) {
+        try {
+            block()
+        } catch (error: Exception) {
+            Timber.e(error, "Unable to update SHARE notification")
+        }
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onDestroy() {
+        destroyed = true
+        runs.values.toSet().forEach { mainViewModel.dispatchEvent(ViewModelEvent.CancelProcess(it)) }
+        serviceScope.cancel()
+        runs.clear()
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
         super.onDestroy()
     }
 }

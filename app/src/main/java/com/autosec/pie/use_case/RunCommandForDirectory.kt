@@ -29,7 +29,8 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
             Timber.d("runCommandForDirectory")
 
 
-            val currentItems = inputDir.listFiles()!!
+            val currentItems = inputDir.listFiles()
+                ?: throw java.io.IOException("Cannot read input directory: ${inputDir.absolutePath}")
 
 
             currentItems.map { path ->
