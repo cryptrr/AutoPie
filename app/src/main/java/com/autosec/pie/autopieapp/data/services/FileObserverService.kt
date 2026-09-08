@@ -2,11 +2,11 @@ package com.autopi.autopieapp.data.services
 
 import android.app.job.JobParameters
 import android.app.job.JobService
+import android.os.Environment
 import android.os.FileObserver
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.preferences.AppPreferences
-import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.core.DispatcherProvider
 import com.autopi.use_case.AutoPieUseCases
 import com.google.gson.Gson
@@ -28,7 +28,6 @@ class FileObserverJobService : JobService() {
     private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
     private val preferences: AppPreferences by inject(AppPreferences::class.java)
-    private val pathProvider: AutoPieConfigPathProvider by inject(AutoPieConfigPathProvider::class.java)
     private val jsonService: JsonService by inject(JsonService::class.java)
     private val serviceScope by lazy { CoroutineScope(SupervisorJob() + dispatchers.main) }
     private val observers = mutableListOf<DirectoryFileObserver>()
@@ -56,7 +55,10 @@ class FileObserverJobService : JobService() {
                         .filterValues { it.type == CommandType.FILE_OBSERVER }
                         .mapNotNull { (key, command) ->
                             try {
-                                val directory = resolveObserverDirectory(pathProvider.getCommandBaseDirectory(), command.path)
+                                val directory = resolveObserverDirectory(
+                                    Environment.getExternalStorageDirectory(),
+                                    command.path
+                                )
                                 require(directory.isDirectory && directory.canRead()) { "Unreadable observer directory: $directory" }
                                 Triple(command.copy(id = command.id.ifBlank { key }, name = key), directory,
                                     ObserverFileEvents(command.selectors.orEmpty()))

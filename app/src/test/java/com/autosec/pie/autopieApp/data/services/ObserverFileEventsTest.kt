@@ -70,10 +70,13 @@ class ObserverFileEventsTest {
         assertNull(resolveObservedFile(directory, "link"))
     }
 
-    @Test fun resolvesRelativeAndAbsoluteWatchDirectories() {
-        val base = temp.newFolder("base").canonicalFile
+    @Test fun resolvesRelativeWatchDirectoriesFromExternalStorageAndPreservesAbsolutePaths() {
+        val externalStorage = temp.newFolder("external-storage").canonicalFile
         val absolute = temp.newFolder("elsewhere").canonicalFile
-        assertEquals(File(base, "Download"), resolveObserverDirectory(base, "Download"))
-        assertEquals(absolute, resolveObserverDirectory(base, absolute.path))
+        assertEquals(
+            File(externalStorage, "Pictures/Screenshots"),
+            resolveObserverDirectory(externalStorage, "Pictures/Screenshots")
+        )
+        assertEquals(absolute, resolveObserverDirectory(externalStorage, absolute.path))
     }
 }
