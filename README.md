@@ -22,7 +22,7 @@ AutoPie is a command hub and workflow runner for Android. It gives shell command
 - Share-sheet commands for text, URLs, one or many files, and directories.
 - File observers with regular-expression filename filters.
 - Periodic commands through Android WorkManager.
-- Manual runs from the command hub and pinned home-screen shortcuts.
+- Manual runs from the command hub, pinned home-screen shortcuts, and per-command home-screen widgets.
 - Calls from other Android apps through an explicit intent, with asynchronous or final result reporting.
 - Rich command inputs: strings, booleans, single-select, multi-select, flags, sliders, passwords/secrets, and file pickers.
 - Conditional inputs, persistent internal configuration, environment-backed options, and realtime controls.
@@ -95,6 +95,67 @@ Examples:
 | Extract audio from a video | `ffmpeg -i "$INPUT_FILE" -b:a 192K -vn "$DIRECTORY/$FILENAME_NO_EXT.mp3"` |
 | Combine images horizontally | `magick "${INPUT_FILES_ARR[@]}" +append "$DIRECTORY/$FILENAME_NO_EXT-horiz-$RAND.jpeg"` |
 | Run inline Python | `#@PYTHON` followed by Python source on the next line |
+
+## Structured stdout events
+
+A running command can send structured events to AutoPie by printing a single line to standard output. The line must begin with `#@AUTOPIE`, followed by a JSON object:
+
+```text
+#@AUTOPIE {"type":"output","value":"3 new posts"}
+```
+
+Event lines are still included in the normal command log. Malformed events and unknown event types are ignored without interrupting the command.
+
+### Widget output
+
+An `output` event immediately updates every home-screen widget connected to the running command:
+
+```text
+#@AUTOPIE {"type":"output","value":"3 new posts"}
+#@AUTOPIE {"type":"output","value":75}
+#@AUTOPIE {"type":"output","value":["First item","Second item"]}
+#@AUTOPIE {"type":"output","value":{"newPosts":3,"source":"Reddit"}}
+```
+
+The JSON shape of `value` controls the widget presentation:
+
+| `value` shape | Widget presentation |
+| --- | --- |
+| Number | Large centered number |
+| String | Left-aligned text |
+| Array of strings | List |
+| Object or other JSON value | Pretty-printed, syntax-highlighted JSON |
+
+The latest `output` event is retained as the command's final widget value when the command does not export an `OUTPUT` environment variable. An explicitly exported `OUTPUT` takes precedence when the command finishes.
+
+For Python, construct the entire event and encode it once. This preserves whether `output` is a string, number, list, or dictionary:
+
+```python
+import json
+
+output = {"newPosts": 3, "source": "Reddit"}
+print("#@AUTOPIE " + json.dumps({"type": "output", "value": output}))
+```
+
+For Bash, `jq` is useful when values are dynamic:
+
+```bash
+jq -cn --arg source "Reddit" --argjson count 3 \
+  '{type:"output", value:{source:$source, newPosts:$count}}' \
+  | sed 's/^/#@AUTOPIE /'
+```
+
+### Reserved events
+
+AutoPie recognizes the following event formats, but their UI behavior is not implemented yet:
+
+```text
+#@AUTOPIE {"type":"notification","title":"Reddit","body":"3 new posts"}
+#@AUTOPIE {"type":"progress","value":75}
+```
+
+- `notification` is reserved for requesting a notification with a title and body.
+- `progress` is reserved for reporting command progress.
 
 ## `commands.json`
 
