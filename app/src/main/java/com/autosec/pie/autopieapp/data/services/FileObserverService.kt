@@ -1,248 +1,152 @@
 package com.autopi.autopieapp.data.services
 
-import android.app.job.JobInfo
 import android.app.job.JobParameters
-import android.app.job.JobScheduler
 import android.app.job.JobService
-import android.content.ComponentName
-import android.content.Context
 import android.os.FileObserver
-import androidx.lifecycle.viewModelScope
-import androidx.work.Configuration
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
-import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.dispatchers
-import com.autopi.autopieapp.domain.ViewModelEvent
-import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.use_case.AutoPieUseCases
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent.inject
 import timber.log.Timber
 import java.io.File
 
 class FileObserverJobService : JobService() {
-
-    private val fileObservers = mutableListOf<DirectoryFileObserver>()
-
-    val main: MainViewModel by inject(MainViewModel::class.java)
-    val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
+    private val dispatchers: DispatcherProvider by inject(DispatcherProvider::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
-    private val autoPieConfigPathProvider: AutoPieConfigPathProvider by inject(
-        AutoPieConfigPathProvider::class.java
-    )
+    private val preferences: AppPreferences by inject(AppPreferences::class.java)
+    private val pathProvider: AutoPieConfigPathProvider by inject(AutoPieConfigPathProvider::class.java)
+    private val jsonService: JsonService by inject(JsonService::class.java)
+    private val serviceScope by lazy { CoroutineScope(SupervisorJob() + dispatchers.main) }
+    private val observers = mutableListOf<DirectoryFileObserver>()
+    private var session: Job? = null
+    private var activeParams: JobParameters? = null
 
-
-    val jsonService: JsonService by inject(JsonService::class.java)
-
-    init {
-        Configuration.Builder().setJobSchedulerJobIdRange(0, 1000).build()
-
-        try {
-            main.viewModelScope.launch {
-                main.eventFlow.collect{
-                    when(it){
-                        is ViewModelEvent.CommandsConfigChanged -> {
-                            Timber.d("Commands config changed: Restarting observers")
-                            restart()
-                        }
-                        else -> {}
-                    }
-                }
-            }
-        }catch (e:Exception){
-            Timber.e(e)
-        }
-    }
-
-    private fun restart(){
-        try {
-            val componentName = ComponentName(this, FileObserverJobService::class.java)
-            val jobInfo = JobInfo.Builder(123, componentName)
-                .setPersisted(true) // Keep the job alive after device reboot
-                .setRequiresCharging(false)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
-                .setRequiresDeviceIdle(false)
-                .build()
-
-            val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-            jobScheduler.schedule(jobInfo)
-        }catch (e: Exception){
-            Timber.e(e)
-        }
-    }
-
-
-    override fun onStartJob(params: JobParameters?): Boolean {
-
-        Timber.d("Job is starting")
-
-        CoroutineScope(dispatchers.default).launch {
-
-            Timber.d("Thread Running on: ${Thread.currentThread().name}")
-
-
-            try {
-                if(!main.storageManagerPermissionGranted){
-                    Timber.d("Storage permission not granted to start FileObserverService")
-                    return@launch
-                }
-
-                val commandsConfig = try {
-                    jsonService.readCommandsConfig()
-                }catch (e: Exception){
-                    Timber.e(e)
-                    return@launch
-                }
-
-
-                if (commandsConfig == null) {
-                    Timber.d("Commands file not available")
-                    main.schedulerConfigAvailable = false
-                    return@launch
-                } else {
-                    main.schedulerConfigAvailable = true
-                }
-
-
-                val observerCommands = Gson().fromJsonObjectEntries(
-                    commandsConfig,
-                    CommandModel::class.java
-                ).values.filterValues { it.type == CommandType.FILE_OBSERVER }
-
-                for (entry in observerCommands.entries) {
-                    val key = entry.key
-
-                    val commandModel = useCases.getCommandDetails(key)
-                    val fullPath = File(
-                        autoPieConfigPathProvider.getCommandBaseDirectory(),
-                        commandModel.path
-                    ).absolutePath
-
-                    Timber.d("Starting $key observer for ${commandModel.path}")
-
-
-
-
-                    val fileObserver =
-                        DirectoryFileObserver(commandModel, fullPath)
-                    fileObservers.add(fileObserver)
-                    fileObserver.startWatching()
-                }
-            }catch (e: Exception){
-                Timber.e(e)
-            }
-        }
-
-
+    override fun onStartJob(params: JobParameters): Boolean {
+        activeParams = params
+        startSession(params)
         return true
     }
 
-
-    override fun onStopJob(params: JobParameters?): Boolean {
-        Timber.d("Job is Stopped")
-
-        fileObservers.forEach {
-            it.stopWatching()
-        }
-        return true // Job should be rescheduled
-    }
-
-    class DirectoryFileObserver(
-        private val commandModel: CommandModel,
-        private val dirPath: String
-    ) : FileObserver(dirPath, CREATE) {
-
-        //val activity: Activity by inject(Context::class.java)
-
-        private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
-
-        private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
-
-        private var processIds : List<Int> = emptyList()
-
-
-        override fun onEvent(event: Int, path: String?) {
-            Timber.d("Event Fired: $event")
-            if (event == CREATE && path != null) {
-                Timber.d("New file created: $path")
-                try {
-                    checkFileCompletion(File("$path"))
-                }catch (e: Exception){
-                    Timber.e(e)
-                }
-            }
-
-//            if (event == MODIFY && path != null) {
-//                Timber.d("File modified: $path")
-//                //checkFileCompletion(File("$path"))
-//                execCommand(File("$path"))
-//            }
-
-        }
-
-        private fun checkFileCompletion(file: File) {
-
-            CoroutineScope(dispatchers.io).launch {
-
-                var lastSize = -1L
-
-                val regSelectors = commandModel.selectors?.map { it.toRegex() } ?: emptyList()
-
-                if((regSelectors.isNotEmpty() && !regSelectors.any { file.name.matches(it) }) || file.name.contains(".conv")) {
-                    Timber.d("File does not pass filter")
+    // Lifecycle changes and observer installation are serialized on the main dispatcher.
+    private fun startSession(params: JobParameters) {
+        stopSession()
+        session = serviceScope.launch {
+            try {
+                if (!preferences.getBool(AppPreferences.IS_FILE_OBSERVERS_ON).first()) {
+                    finishSession(params)
                     return@launch
                 }
-
-                while (true) {
-                    delay(1000)  // Check every 1 second
-                    val currentSize = file.length()
-                    if (currentSize == lastSize) {
-
-                        //Do operation here
-
-                        Timber.d("File is completely written: " + file.name)
-
-                        Timber.d("File abs path " + file.absoluteFile.absolutePath)
-
-                        Timber.d("Edited abs path " + commandModel.path + file.absolutePath)
-
-                        val processId = (100000..999999).random()
-
-                        processIds = processIds + processId
-
-                        //This is to prevent .pending files from causing errors.
-                        val fileName =
-                            if (!file.name.startsWith(".pending")) file.name else file.name.split("-")
-                                .subList(2, file.name.split("-").size).joinToString("-")
-
-                        val fullFilepath = processManagerService.getConfigRelativePath(
-                            File(commandModel.path, fileName).path
-                        )
-
-                        Timber.d("Edited Filename: $fileName")
-
-                        //Checking if file passes selectors list
-                        if (regSelectors.isEmpty() || regSelectors.any { file.name.matches(it) }) {
-                            Timber.d("Selector matched for file")
-
-                            val result = useCases.runCommandForFiles(commandModel, null, listOf(fullFilepath), emptyList(), processId).first()
-
-                        } else {
-                            Timber.d("File does not match selector")
+                val configs = withContext(dispatchers.io) {
+                    val config = jsonService.readCommandsConfig() ?: return@withContext emptyList()
+                    Gson().fromJsonObjectEntries(config, CommandModel::class.java).values
+                        .filterValues { it.type == CommandType.FILE_OBSERVER }
+                        .mapNotNull { (key, command) ->
+                            try {
+                                val directory = resolveObserverDirectory(pathProvider.getCommandBaseDirectory(), command.path)
+                                require(directory.isDirectory && directory.canRead()) { "Unreadable observer directory: $directory" }
+                                Triple(command.copy(id = command.id.ifBlank { key }, name = key), directory,
+                                    ObserverFileEvents(command.selectors.orEmpty()))
+                            } catch (e: Exception) {
+                                Timber.e(e, "Skipping invalid file observer: $key")
+                                null
+                            }
                         }
-
-                        break
+                }
+                for ((command, directory, events) in configs) {
+                    val observer = DirectoryFileObserver(directory, events) { file ->
+                        useCases.runCommandForFiles(command, null, listOf(file.absolutePath), emptyList(),
+                            (100000..999999).random()).collect { result ->
+                            if (!result.success) Timber.w("File observer command failed: ${command.name}")
+                        }
                     }
-                    lastSize = currentSize
+                    observers.add(observer)
+                    observer.startWatching()
+                }
+                if (observers.isEmpty()) finishSession(params)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to start file observers")
+                finishSession(params)
+            }
+        }
+    }
+
+    private fun finishSession(params: JobParameters) {
+        if (activeParams !== params) return
+        activeParams = null
+        stopSession()
+        jobFinished(params, false)
+    }
+
+    private fun stopSession() {
+        session?.cancel()
+        session = null
+        observers.forEach { it.close() }
+        observers.clear()
+    }
+
+    override fun onStopJob(params: JobParameters): Boolean {
+        activeParams = null
+        stopSession()
+        return true
+    }
+
+    override fun onDestroy() {
+        activeParams = null
+        stopSession()
+        serviceScope.cancel()
+        super.onDestroy()
+    }
+
+    private inner class DirectoryFileObserver(
+        private val directory: File,
+        private val events: ObserverFileEvents,
+        runFile: suspend (File) -> Unit
+    ) : FileObserver(directory.absolutePath, CREATE or CLOSE_WRITE or MOVED_TO or MOVED_FROM or DELETE) {
+        private val queue = Channel<String>(64)
+        private val worker = serviceScope.launch(dispatchers.io) {
+            for (name in queue) {
+                try {
+                    val file = resolveObservedFile(directory, name) ?: continue
+                    runFile(file)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "File observer failed for $name")
                 }
             }
         }
 
+        override fun onEvent(event: Int, path: String?) {
+            // This callback runs on the shared native observer thread; never block it.
+            try {
+                val ready = events.onEvent(event, path) ?: return
+                if (queue.trySend(ready).isFailure) Timber.w("File observer queue unavailable; skipped $ready")
+            } catch (e: Exception) {
+                Timber.e(e, "Invalid file observer event")
+            }
+        }
+
+        fun close() {
+            events.close()
+            stopWatching()
+            queue.cancel()
+            worker.cancel()
+        }
     }
 }

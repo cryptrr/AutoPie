@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
@@ -144,11 +145,11 @@ class MainViewModel(
     fun toggleFileObservers(){
         viewModelScope.launch {
             if(appPreferences.getBoolSync(AppPreferences.IS_FILE_OBSERVERS_ON)){
-                cancelJob(application)
                 appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_ON, false)
+                cancelJob(application)
             }else{
-                scheduleJob(application)
                 appPreferences.setBool(AppPreferences.IS_FILE_OBSERVERS_ON, true)
+                scheduleJob(application)
             }
         }
     }
@@ -272,6 +273,13 @@ class MainViewModel(
 
     private suspend fun emitEvent(event: ViewModelEvent) {
         when (event) {
+            is ViewModelEvent.CommandsConfigChanged -> {
+                // Schedule here so adding the first observer also works after an empty job ended.
+                if (appPreferences.getBool(AppPreferences.IS_FILE_OBSERVERS_ON).first()) {
+                    scheduleJob(application)
+                }
+            }
+
             is ViewModelEvent.CreateShell -> withContext(dispatchers.io) {
                 processManagerService.createShell(event.processId)
             }

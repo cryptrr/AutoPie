@@ -61,6 +61,8 @@ You can also browse the command catalog to install ready-made commands and their
 
 Android limits periodic work to a minimum interval of 15 minutes. AutoPie raises shorter cron intervals to that minimum. File observers can be disabled globally from Settings.
 
+File observers watch direct children of an existing directory. Newly created files run after a write-close event; files moved or renamed into the directory run under their final filename. Finish writing before moving a file into a watched directory. Existing-file edits, subdirectories, names starting with `.pending`, and names containing `.conv` are ignored. Selectors match the entire filename; an invalid regex disables that observer and is logged. Each observer runs commands sequentially with up to 64 waiting files; overflow is logged and skipped. Observation is best effort while Android allows the job to run, and files arriving while it is stopped are not replayed.
+
 The three types live together in `commands.json`. If `type` is omitted, AutoPie treats the entry as a share command.
 
 ## Command environment
