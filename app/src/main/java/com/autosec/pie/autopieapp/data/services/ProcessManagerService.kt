@@ -642,7 +642,7 @@ class ProcessManagerService(
                                     logFile = logFile.absolutePath,
                                     processId = processId,
                                     silent = false,
-                                    autoCancel = true
+                                    autoCancel = false
                                 )
                             } catch (error: Throwable) {
                                 Timber.e(
