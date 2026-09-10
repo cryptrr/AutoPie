@@ -1,9 +1,6 @@
 package com.autopi.autopieapp.data.services
 
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import timber.log.Timber
@@ -25,16 +22,10 @@ class ScreenStateReceiver : BroadcastReceiver() {
     }
 
     private fun scheduleJob(context: Context) {
-        val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        val builder = JobInfo.Builder(123, ComponentName(context, FileObserverJobService::class.java))
-        // configure your job (e.g., network constraints)
-        jobScheduler.schedule(builder.build())
-        Timber.d("FileObserverJobService restarted")
+        FileObserverScheduler.schedule(context)
     }
 
     private fun cancelJob(context: Context) {
-        val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        jobScheduler.cancel(123)
-        Timber.d("FileObserverJobService stopped")
+        FileObserverScheduler.cancel(context)
     }
 }

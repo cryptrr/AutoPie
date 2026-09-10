@@ -1,9 +1,6 @@
 package com.autopi
 
 import android.app.Application
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -15,7 +12,7 @@ import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.createEmptyCookieFile
 import com.autopi.autopieapp.data.services.CronService
-import com.autopi.autopieapp.data.services.FileObserverJobService
+import com.autopi.autopieapp.data.services.FileObserverScheduler
 import com.autopi.autopieapp.data.services.ProcessBroadcastReceiver
 import com.autopi.autopieapp.data.services.ScreenStateReceiver
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
@@ -91,17 +88,7 @@ class MyApplication : Application() {
 
     private fun scheduleJob() {
         if(mainViewModel.turnOnFileObservers){
-            val componentName = ComponentName(this, FileObserverJobService::class.java)
-            val jobInfo = JobInfo.Builder(123, componentName)
-                .setPersisted(true) // Keep the job alive after device reboot
-                .setRequiresCharging(false)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
-                .setRequiresDeviceIdle(false)
-                //.setPeriodic(15 * 60 * 1000) // Minimum interval for periodic jobs is 15 minutes
-                .build()
-
-            val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-            jobScheduler.schedule(jobInfo)
+            FileObserverScheduler.schedule(this)
         }
     }
     private fun scheduleCron(){

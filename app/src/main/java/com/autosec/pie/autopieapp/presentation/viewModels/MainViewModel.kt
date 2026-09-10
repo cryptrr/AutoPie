@@ -1,9 +1,6 @@
 package com.autopi.autopieapp.presentation.viewModels
 
 import android.app.Application
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -30,7 +27,7 @@ import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.ConfigBackupService
-import com.autopi.autopieapp.data.services.FileObserverJobService
+import com.autopi.autopieapp.data.services.FileObserverScheduler
 import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.ReleaseInfo
@@ -443,17 +440,11 @@ class MainViewModel(
     }
 
     private fun scheduleJob(context: Context) {
-        val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        val builder = JobInfo.Builder(123, ComponentName(context, FileObserverJobService::class.java))
-        // configure your job (e.g., network constraints)
-        jobScheduler.schedule(builder.build())
-        Timber.d("FileObserverJobService restarted")
+        FileObserverScheduler.schedule(context)
     }
 
     private fun cancelJob(context: Context) {
-        val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        jobScheduler.cancel(123)
-        Timber.d("FileObserverJobService stopped")
+        FileObserverScheduler.cancel(context)
     }
 
 
