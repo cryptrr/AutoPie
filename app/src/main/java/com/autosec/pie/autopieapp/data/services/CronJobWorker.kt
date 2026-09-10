@@ -40,6 +40,13 @@ class CronJobWorker(
             // The widgets branch needs the CRON-specific runner so lifecycle/output events carry
             // JobType.CRON and update command widgets correctly.
             val receipt = useCases.runCronCommand(command, emptyList(), processId).first()
+            useCases.addCommandToHistory(
+                command = command,
+                currentLink = null,
+                fileUris = emptyList(),
+                success = receipt.success,
+                processId = processId
+            )
 
             if (receipt.success) {
                 Timber.d("Cron command '$commandKey' succeeded")

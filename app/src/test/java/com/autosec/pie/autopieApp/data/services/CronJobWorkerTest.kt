@@ -83,6 +83,15 @@ class CronJobWorkerTest {
         )
         assertEquals(Result.failure(), worker().doWork())
         verify(exactly = 1) { useCases.runCronCommand(command, emptyList(), any()) }
+        verify(exactly = 1) {
+            useCases.addCommandToHistory(
+                command = command,
+                currentLink = null,
+                fileUris = emptyList(),
+                success = false,
+                processId = any()
+            )
+        }
     }
 
     @Test fun missingKeyDoesNotLoadOrRunCommand() = runTest {
