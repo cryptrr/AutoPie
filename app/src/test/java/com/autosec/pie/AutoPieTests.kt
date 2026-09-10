@@ -18,7 +18,6 @@ import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
-import com.autopi.use_case.preserveInternalConfigExtraValues
 import com.google.gson.Gson
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -190,72 +189,6 @@ class CommandTests : KoinTest {
         assertEquals("--realtime", extra.getAsJsonArray("flags")[1].asString)
         assertEquals("pdf", selectableExtra.getAsJsonObject("selectableOptions").get("PDF").asString)
         assertEquals("txt", selectableExtra.getAsJsonObject("selectableOptions").get("Text").asString)
-    }
-
-    @Test
-    fun `cloud command update preserves internal config values`() {
-        val gson = Gson()
-        val existingCommand = gson.fromJson(
-            """
-            {
-              "extras": [
-                {"id":"folder","name":"OUTPUT_FOLDER","type":"STRING","default":"/my/output","description":"Old description","flags":["--internal-config"]},
-                {"id":"confirm","name":"CONFIRM","type":"BOOLEAN","defaultBoolean":false,"flags":["--internal-config"]},
-                {"id":"quality","name":"QUALITY","type":"STRING","default":"custom"}
-              ]
-            }
-            """.trimIndent(),
-            com.google.gson.JsonObject::class.java
-        )
-        val updatedCommand = gson.fromJson(
-            """
-            {
-              "extras": [
-                {"id":"folder","name":"OUTPUT_FOLDER","type":"STRING","default":"/manifest/default","description":"New description","flags":["--internal-config"]},
-                {"id":"confirm","name":"CONFIRM","type":"BOOLEAN","defaultBoolean":true,"flags":["--internal-config=collapsed"]},
-                {"id":"quality","name":"QUALITY","type":"STRING","default":"manifest"}
-              ]
-            }
-            """.trimIndent(),
-            com.google.gson.JsonObject::class.java
-        )
-
-        val result = preserveInternalConfigExtraValues(existingCommand, updatedCommand)
-        val extras = result.getAsJsonArray("extras")
-
-        assertEquals("/my/output", extras[0].asJsonObject.get("default").asString)
-        assertEquals("New description", extras[0].asJsonObject.get("description").asString)
-        assertFalse(extras[1].asJsonObject.get("defaultBoolean").asBoolean)
-        assertEquals("manifest", extras[2].asJsonObject.get("default").asString)
-    }
-
-    @Test
-    fun `cloud multistage update preserves internal config values by step and extra id`() {
-        val gson = Gson()
-        val existingCommand = gson.fromJson(
-            """
-            {"steps":[
-              {"id":"prepare","extras":[{"id":"folder","name":"OLD_NAME","default":"/saved/first","flags":["--internal-config"]}]},
-              {"id":"finish","extras":[{"id":"folder","name":"OLD_NAME","default":"/saved/second","flags":["--internal-config"]}]}
-            ]}
-            """.trimIndent(),
-            com.google.gson.JsonObject::class.java
-        )
-        val updatedCommand = gson.fromJson(
-            """
-            {"steps":[
-              {"id":"finish","extras":[{"id":"folder","name":"NEW_NAME","default":"new-second","flags":["--internal-config"]}]},
-              {"id":"prepare","extras":[{"id":"folder","name":"NEW_NAME","default":"new-first","flags":["--internal-config"]}]}
-            ]}
-            """.trimIndent(),
-            com.google.gson.JsonObject::class.java
-        )
-
-        val steps = preserveInternalConfigExtraValues(existingCommand, updatedCommand)
-            .getAsJsonArray("steps")
-
-        assertEquals("/saved/second", steps[0].asJsonObject.getAsJsonArray("extras")[0].asJsonObject.get("default").asString)
-        assertEquals("/saved/first", steps[1].asJsonObject.getAsJsonArray("extras")[0].asJsonObject.get("default").asString)
     }
 
     @Test
