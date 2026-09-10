@@ -41,6 +41,7 @@ import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,12 +145,6 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             processIds = processIds + it.processId
-                            publishWidgetState(
-                                commandObject = it.command,
-                                rawOutput = null,
-                                status = "running",
-                                replaceOutput = false
-                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -161,17 +156,6 @@ class ProcessManagerService(
                         try {
                             //Add it to the success list
                             successProcessIds = successProcessIds + it.processId
-                            if (!it.partial) {
-                                publishWidgetState(
-                                    commandObject = it.command,
-                                    rawOutput = it.exportedOutput,
-                                    status = "success",
-                                    replaceOutput = shouldReplaceWidgetOutput(
-                                        jobType = it.jobType,
-                                        exportedOutput = it.exportedOutput
-                                    )
-                                )
-                            }
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -182,12 +166,6 @@ class ProcessManagerService(
                         try {
                             //Add it to the failed list
                             failedProcessIds = failedProcessIds + it.processId
-                            publishWidgetState(
-                                commandObject = it.command,
-                                rawOutput = null,
-                                status = "failed",
-                                replaceOutput = false
-                            )
                         }catch (e: Exception){
                             Timber.e(e)
                         }
@@ -569,7 +547,15 @@ class ProcessManagerService(
             Timber.d("Script file written ${scriptFile.absolutePath}}")
 
 
-            main.dispatchEvent(ViewModelEvent.CommandStarted(processId, commandModel, logFile.absolutePath, rawInput, jobType))
+            dispatchCommandLifecycleEvent(
+                ViewModelEvent.CommandStarted(
+                    processId,
+                    commandModel,
+                    logFile.absolutePath,
+                    rawInput,
+                    jobType
+                )
+            )
 
             if (Utils.isOpenLogsCommand(commandObject.command)) {
                 openOutputViewer(logFile.absolutePath, commandObject.name)
@@ -615,6 +601,7 @@ class ProcessManagerService(
 
             val executionCommand = buildExecutionCommand(scriptFile, commandObject.multiStage == true)
             val latestStructuredOutput = AtomicReference<String?>(null)
+            val pendingWidgetUpdates = mutableListOf<Job>()
 
             val result = shell.run(executionCommand) {
                 timeout = shellTimeout
@@ -624,7 +611,7 @@ class ProcessManagerService(
                     when (val event = parseAutoPieStructuredEvent(line)) {
                         is AutoPieStructuredEvent.Output -> {
                             latestStructuredOutput.set(event.rawValue)
-                            main.viewModelScope.launch(dispatchers.io) {
+                            pendingWidgetUpdates += main.viewModelScope.launch(dispatchers.io) {
                                 publishWidgetState(
                                     commandObject = commandObject,
                                     rawOutput = event.rawValue,
@@ -681,6 +668,7 @@ class ProcessManagerService(
 
 
             val output = result.output()
+            pendingWidgetUpdates.forEach { it.join() }
             val exportedOutput = exportedOutputFile
                 .takeIf(File::isFile)
                 ?.readText()
@@ -704,7 +692,7 @@ class ProcessManagerService(
             }
 
             if (result.isSuccess) {
-                main.dispatchEvent(
+                dispatchCommandLifecycleEvent(
                     ViewModelEvent.CommandCompleted(
                         processId = processId,
                         command = commandModel,
@@ -715,7 +703,7 @@ class ProcessManagerService(
                     )
                 )
             } else {
-                main.dispatchEvent(
+                dispatchCommandLifecycleEvent(
                     ViewModelEvent.CommandFailed(
                         processId = processId,
                         command = commandModel,
@@ -737,7 +725,7 @@ class ProcessManagerService(
         }
         catch (e: Exception) {
             Timber.e(e.toString())
-            main.dispatchEvent(
+            dispatchCommandLifecycleEvent(
                 ViewModelEvent.CommandFailed(
                     processId = processId,
                     command = commandModel,
@@ -771,7 +759,41 @@ class ProcessManagerService(
         }
     }
 
-    fun runCommandInTermuxShell(
+    /**
+     * Applies lifecycle side effects before broadcasting the event. The event flow is deliberately
+     * fire-and-forget, so correctness-critical widget state must not depend on a collector running.
+     */
+    private suspend fun dispatchCommandLifecycleEvent(event: ViewModelEvent) {
+        when (event) {
+            is ViewModelEvent.CommandStarted -> publishWidgetState(
+                commandObject = event.command,
+                rawOutput = null,
+                status = "running",
+                replaceOutput = false
+            )
+            is ViewModelEvent.CommandCompleted -> if (!event.partial) {
+                publishWidgetState(
+                    commandObject = event.command,
+                    rawOutput = event.exportedOutput,
+                    status = "success",
+                    replaceOutput = shouldReplaceWidgetOutput(
+                        jobType = event.jobType,
+                        exportedOutput = event.exportedOutput
+                    )
+                )
+            }
+            is ViewModelEvent.CommandFailed -> publishWidgetState(
+                commandObject = event.command,
+                rawOutput = null,
+                status = "failed",
+                replaceOutput = false
+            )
+            else -> error("Unsupported command lifecycle event: $event")
+        }
+        main.dispatchEvent(event)
+    }
+
+    suspend fun runCommandInTermuxShell(
         commandObject: CommandInterface,
         exec: String,
         command: String,
@@ -792,7 +814,7 @@ class ProcessManagerService(
 
         try {
             logFile.createNewFile()
-            main.dispatchEvent(
+            dispatchCommandLifecycleEvent(
                 ViewModelEvent.CommandStarted(
                     processId,
                     commandModel,
@@ -868,7 +890,7 @@ class ProcessManagerService(
             }
 
             val partial = commandObject.multiStage == true && commandObject.steps.size > 1
-            main.dispatchEvent(
+            dispatchCommandLifecycleEvent(
                 ViewModelEvent.CommandCompleted(
                     processId = processId,
                     command = commandModel,
@@ -889,7 +911,7 @@ class ProcessManagerService(
 
         }catch (e: Exception){
             Timber.e(e)
-            main.dispatchEvent(
+            dispatchCommandLifecycleEvent(
                 ViewModelEvent.CommandFailed(
                     processId = processId,
                     command = commandModel,

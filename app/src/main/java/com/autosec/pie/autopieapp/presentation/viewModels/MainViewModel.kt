@@ -255,7 +255,7 @@ class MainViewModel(
         }
     }
 
-    private fun runKeywordInstallCommands(keywords: List<String>) {
+    private suspend fun runKeywordInstallCommands(keywords: List<String>) {
         val installCommand = keywordInstallScriptFor(keywords)
         if (installCommand.isBlank()) {
             return

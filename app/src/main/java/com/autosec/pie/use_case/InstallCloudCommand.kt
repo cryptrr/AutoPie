@@ -94,7 +94,7 @@ class InstallCloudCommand(
             appPreferences.getStringSync(AppPreferences.COMMANDS_REPOSITORY_CHANNEL)
         )
 
-    private fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
+    private suspend fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
         val installScripts = resolvedCommands.mapNotNull { it.installScript }
         runInstallScripts(installScripts)
 
@@ -116,7 +116,7 @@ class InstallCloudCommand(
         jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
-    private fun runInstallScripts(installScripts: List<CloudCommandInstallScript>) {
+    private suspend fun runInstallScripts(installScripts: List<CloudCommandInstallScript>) {
         if (installScripts.isEmpty()) {
             return
         }
