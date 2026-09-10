@@ -251,17 +251,10 @@ fun CommandExtrasBottomSheet(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         onDismissRequest = {
             scope.launch {
-                viewModel.currentExtrasDetails.value?.let { (_, command, inputs) ->
-                    if (command.multiStage == true) {
-                        inputs.processId?.let { processId ->
-                            viewModel.main.dispatchEvent(ViewModelEvent.StopShell(processId))
-                        }
-                    }
-                }
+                viewModel.abandonCurrentInvocation()
                 if(callerName == "DIRECT_ICON" || callerName == "EXTERNAL_APP"){
                     activity?.finish()
                 }
-                viewModel.currentExtrasDetails.value = null
             }
         }
     )

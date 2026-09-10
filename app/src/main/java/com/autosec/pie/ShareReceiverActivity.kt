@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -199,6 +200,14 @@ fun ShareContextMenuBottomSheet(
 
     val activity = LocalContext.current.getActivity()
 
+    DisposableEffect(activity, shareReceiverViewModel) {
+        onDispose {
+            if (activity?.isChangingConfigurations != true) {
+                shareReceiverViewModel.abandonCurrentInvocation()
+            }
+        }
+    }
+
 
     LaunchedEffect(key1 = inputText, inputFiles) {
         shareReceiverViewModel.main.eventFlow.collect {
@@ -273,9 +282,10 @@ fun ShareContextMenuBottomSheet(
                                 shape = RoundedCornerShape(15.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 onClick = {
-                                val intent = Intent(activity, MainActivity::class.java)
-                                activity?.startActivity(intent)
-                            }
+                                    shareReceiverViewModel.abandonCurrentInvocation()
+                                    val intent = Intent(activity, MainActivity::class.java)
+                                    activity?.startActivity(intent)
+                                }
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Settings,
@@ -368,6 +378,7 @@ fun ShareContextMenuBottomSheet(
         properties = ModalBottomSheetDefaults.properties(),
         onDismissRequest = {
             scope.launch {
+                shareReceiverViewModel.abandonCurrentInvocation()
                 state.hide()
                 activity?.finish()
             }
