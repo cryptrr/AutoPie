@@ -3,6 +3,7 @@ package com.autopi.use_case
 import android.app.Application
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.CommandsRepositoryUrls
@@ -99,7 +100,16 @@ class InstallCloudCommand(
 
         val commands = jsonService.readCommandsConfig() ?: throw ViewModelError.CommandConfigUnavailable
         resolvedCommands.forEach { resolvedCommand ->
-            commands.add(resolvedCommand.manifest.commandKey, resolvedCommand.manifest.commandObject)
+            val commandKey = resolvedCommand.manifest.commandKey
+            val updatedCommand = resolvedCommand.manifest.commandObject
+            val existingCommand = commands.get(commandKey)
+                ?.takeIf { it.isJsonObject }
+                ?.asJsonObject
+
+            commands.add(
+                commandKey,
+                preserveInternalConfigExtraValues(existingCommand, updatedCommand)
+            )
         }
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
@@ -141,6 +151,88 @@ class InstallCloudCommand(
     }
 
 }
+
+internal fun preserveInternalConfigExtraValues(
+    existingCommand: JsonObject?,
+    updatedCommand: JsonObject
+): JsonObject {
+    if (existingCommand == null) return updatedCommand
+
+    preserveInternalConfigExtraValues(
+        existingCommand.getAsJsonArray("extras"),
+        updatedCommand.getAsJsonArray("extras")
+    )
+
+    val existingSteps = existingCommand.getAsJsonArray("steps") ?: return updatedCommand
+    val updatedSteps = updatedCommand.getAsJsonArray("steps") ?: return updatedCommand
+    val existingStepsById = existingSteps.mapNotNull { element ->
+        element.takeIf { it.isJsonObject }
+            ?.asJsonObject
+            ?.takeIf { it.stringProperty("id").isNotBlank() }
+            ?.let { it.stringProperty("id") to it }
+    }.toMap()
+
+    updatedSteps.forEachIndexed { index, element ->
+        if (!element.isJsonObject) return@forEachIndexed
+        val updatedStep = element.asJsonObject
+        val existingStep = updatedStep.stringProperty("id")
+            .takeIf(String::isNotBlank)
+            ?.let(existingStepsById::get)
+            ?: existingSteps.getOrNull(index)
+                ?.takeIf { it.isJsonObject }
+                ?.asJsonObject
+            ?: return@forEachIndexed
+
+        preserveInternalConfigExtraValues(
+            existingStep.getAsJsonArray("extras"),
+            updatedStep.getAsJsonArray("extras")
+        )
+    }
+
+    return updatedCommand
+}
+
+private fun preserveInternalConfigExtraValues(existingExtras: JsonArray?, updatedExtras: JsonArray?) {
+    if (existingExtras == null || updatedExtras == null) return
+
+    val existingConfigExtras = existingExtras
+        .mapNotNull { it.takeIf { element -> element.isJsonObject }?.asJsonObject }
+        .filter(JsonObject::isInternalConfigExtra)
+    val existingConfigExtrasById = existingConfigExtras
+        .filter { it.stringProperty("id").isNotBlank() }
+        .associateBy { it.stringProperty("id") }
+    val existingConfigExtrasByName = existingConfigExtras
+        .filter { it.stringProperty("name").isNotBlank() }
+        .associateBy { it.stringProperty("name") }
+
+    updatedExtras.forEach { element ->
+        if (!element.isJsonObject) return@forEach
+        val updatedExtra = element.asJsonObject
+        if (!updatedExtra.isInternalConfigExtra()) return@forEach
+
+        val existingExtra = existingConfigExtrasById[updatedExtra.stringProperty("id")]
+            ?: existingConfigExtrasByName[updatedExtra.stringProperty("name")]
+            ?: return@forEach
+
+        INTERNAL_CONFIG_VALUE_PROPERTIES.forEach { property ->
+            existingExtra.get(property)?.let { updatedExtra.add(property, it.deepCopy()) }
+        }
+    }
+}
+
+private fun JsonObject.isInternalConfigExtra(): Boolean =
+    getAsJsonArray("flags")
+        ?.any { flag ->
+            flag.isJsonPrimitive &&
+                flag.asString.substringBefore("=").trim() == ExtraFlags.INTERNAL_CONFIG.value
+        } == true
+
+private fun JsonObject.stringProperty(name: String): String =
+    get(name)?.takeIf { it.isJsonPrimitive }?.asString.orEmpty()
+
+private fun JsonArray.getOrNull(index: Int) = if (index in 0 until size()) get(index) else null
+
+private val INTERNAL_CONFIG_VALUE_PROPERTIES = listOf("default", "defaultBoolean")
 
 private data class ResolvedCloudCommand(
     val manifest: CloudManifestCommand,
