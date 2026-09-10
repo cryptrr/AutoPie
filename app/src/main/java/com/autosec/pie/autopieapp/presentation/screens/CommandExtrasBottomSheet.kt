@@ -5,6 +5,9 @@ import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Build
 import android.widget.Space
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -211,7 +214,27 @@ fun CommandExtrasBottomSheet(
                 viewModel.currentExtrasDetails.value?.let {
                     val activeCommand = it.second.firstStepOrSelf()
                     key(activeCommand.steps.size, activeCommand.path, activeCommand.command) {
-                        CommandExtraInputs(activeCommand, parentSheetState, open, state, callerName, isAsync)
+                        var isVisible by remember { mutableStateOf(false) }
+
+                        LaunchedEffect(Unit) {
+                            isVisible = true
+                        }
+
+                        AnimatedVisibility(
+                            visible = isVisible,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 300))
+                        ) {
+                            Column {
+                                CommandExtraInputs(
+                                    activeCommand,
+                                    parentSheetState,
+                                    open,
+                                    state,
+                                    callerName,
+                                    isAsync
+                                )
+                            }
+                        }
                     }
                 }
 
