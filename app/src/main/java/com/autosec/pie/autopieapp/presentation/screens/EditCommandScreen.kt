@@ -261,7 +261,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     text = viewModel.rawJson,
                     title = "RAW JSON*",
                     subtitle = "Edit exactly one command as an object keyed by its name.",
-                    placeholder = "{\n  \"local.command-id\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    placeholder = "{\n  \"Command Name\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 260.dp)
                 )
@@ -269,26 +269,6 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
 
                 GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
 
-//            Spacer(modifier = Modifier.height(20.dp))
-//            GenericTextFormField(text = viewModel.execFile, "PROGRAM", placeholder = "exec file"){
-//                Box(
-//                    Modifier
-//                        .padding(horizontal = 5.dp)
-//                        .clip(RoundedCornerShape(15.dp))
-//                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
-//                        .clickable {
-//                            showPackagesDialog = true
-//                        }
-//                        .padding(10.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.UnfoldMore,
-//                        tint = MaterialTheme.colorScheme.primary,
-//                        contentDescription = "Show more options",
-//                        modifier = Modifier.size(22.dp)
-//                    )
-//                }
-//            }
 
                 Spacer(modifier = Modifier.height(20.dp))
 

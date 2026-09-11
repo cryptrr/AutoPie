@@ -123,7 +123,7 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     text = viewModel.rawJson,
                     title = "RAW JSON*",
                     subtitle = "Add one or more commands as an object keyed by command name. Existing commands with the same name will be replaced.",
-                    placeholder = "{\n  \"local.command-id\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
+                    placeholder = "{\n  \"Command Name\": {\n    \"command\": \"echo hello\",\n    \"type\": \"SHARE\"\n  }\n}",
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 220.dp)
                 )
@@ -159,26 +159,6 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
                 GenericTextFormField(text = viewModel.commandName, "NAME*")
 
-//            Spacer(modifier = Modifier.height(20.dp))
-//            GenericTextFormField(text = viewModel.execFile, "PROGRAM*"){
-//                Box(
-//                    Modifier
-//                        .padding(horizontal = 5.dp)
-//                        .clip(RoundedCornerShape(15.dp))
-//                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp))
-//                        .clickable {
-//                            showPackagesDialog = true
-//                        }
-//                        .padding(10.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.UnfoldMore,
-//                        tint = MaterialTheme.colorScheme.primary,
-//                        contentDescription = "Show more options",
-//                        modifier = Modifier.size(22.dp)
-//                    )
-//                }
-//            }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -259,30 +239,6 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
 
 
         Row {
-//            Button(
-//                modifier = Modifier
-//                    .padding(vertical = 15.dp)
-//                    .height(52.dp)
-//                    .width(75.dp),
-//                enabled = viewModel.isValidCommand,
-//                shape = RoundedCornerShape(20),
-//                contentPadding = PaddingValues(vertical = 10.dp),
-//                onClick = {
-//                    addExtra()
-//                },
-//
-//                ) {
-//                Icon(
-//                    modifier = Modifier
-//
-//                        .size(27.dp),
-//                    imageVector = Icons.Default.AddCircle,
-//                    contentDescription = "Extras",
-//                )
-//
-//            }
-//
-//            Spacer(modifier = Modifier.width(11.dp))
 
 
             Button(
@@ -309,14 +265,6 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
         }
 
     }
-//    PackagesListDialog(
-//        showDialog = showPackagesDialog,
-//        title = "Installed Packages",
-//        value= viewModel.execFile,
-//        onDismissRequest = {
-//            showPackagesDialog = false
-//        }
-//    )
     }
 
 @Composable
