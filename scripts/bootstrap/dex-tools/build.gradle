@@ -1,0 +1,16 @@
+// Isolated host tooling: no Android SDK or application configuration required.
+repositories { mavenCentral() }
+configurations { smaliTools }
+dependencies {
+    smaliTools 'org.smali:smali:2.5.2'
+    smaliTools 'org.smali:baksmali:2.5.2'
+}
+tasks.register('writeClasspath') {
+    def destination = layout.buildDirectory.file('classpath.txt')
+    inputs.files(configurations.smaliTools)
+    outputs.file(destination)
+    doLast {
+        destination.get().asFile.parentFile.mkdirs()
+        destination.get().asFile.text = configurations.smaliTools.asPath
+    }
+}

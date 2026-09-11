@@ -5,7 +5,9 @@ import argparse
 import codecs
 import os
 import shutil
+import subprocess
 import tempfile
+import zipfile
 from pathlib import Path
 
 OLD_PACKAGE = "com.termux"
@@ -137,6 +139,69 @@ def is_termux_am_apk(path: Path) -> bool:
     return normalized.endswith("/libexec/termux-am/am.apk")
 
 
+def rewrite_termux_am_apk(
+    data: bytes, rewrites: list[tuple[bytes, bytes]]
+) -> bytes:
+    """Rebuild DEX tables and code references after variable-length rewriting.
+
+    am.apk is a classpath container, not an installed Android application.
+    Its manifest/resources stay untouched; only executable DEX is reassembled.
+    The normal text rewriter updates bin/am to the same class namespace.
+    """
+    classpath = os.environ.get("AUTOPIE_SMALI_CLASSPATH")
+    if not classpath:
+        raise RuntimeError(
+            "Rebuilding termux-am requires AUTOPIE_SMALI_CLASSPATH; "
+            "run scripts/prepare-termux-bootstrap.sh to prepare the tools"
+        )
+    java_home = os.environ.get("JAVA_HOME")
+    java = str(Path(java_home) / "bin/java") if java_home else "java"
+    with tempfile.TemporaryDirectory(prefix="autopie-am-") as temp:
+        work = Path(temp)
+        source = work / "source.apk"
+        output = work / "rebuilt.apk"
+        source.write_bytes(data)
+        dex_count = 0
+        with zipfile.ZipFile(source) as zin, zipfile.ZipFile(output, "w") as zout:
+            for info in zin.infolist():
+                content = zin.read(info)
+                if info.filename.endswith(".dex"):
+                    if not is_dex_file(content):
+                        raise ValueError(f"Invalid DEX in am.apk: {info.filename}")
+                    dex_count += 1
+                    dex = work / "classes.dex"
+                    smali = work / "smali"
+                    dex.write_bytes(content)
+                    subprocess.run(
+                        [java, "-cp", classpath, "org.jf.baksmali.Main",
+                         "disassemble", str(dex), "-o", str(smali)], check=True,
+                    )
+                    for path in smali.rglob("*.smali"):
+                        path.write_bytes(rewrite_text_bytes(path.read_bytes(), rewrites))
+                    rebuilt_dex = work / "rebuilt.dex"
+                    rebuilt_dex.unlink(missing_ok=True)
+                    subprocess.run(
+                        [java, "-cp", classpath, "org.jf.smali.Main",
+                         "assemble", str(smali), "-o", str(rebuilt_dex)], check=True,
+                    )
+                    # Some assembler errors do not set a nonzero exit status.
+                    # Never silently reuse the input DEX if no output was made.
+                    content = rebuilt_dex.read_bytes()
+                    shutil.rmtree(smali)
+                # Reassembly invalidates JAR signatures, if present. app_process
+                # loads DEX directly and does not need APK/JAR signing.
+                upper = info.filename.upper()
+                if upper.startswith("META-INF/") and (
+                    upper.endswith((".SF", ".RSA", ".DSA", ".EC"))
+                    or upper == "META-INF/MANIFEST.MF"
+                ):
+                    continue
+                zout.writestr(info, content)
+        if not dex_count:
+            raise ValueError("No DEX found in termux-am/am.apk")
+        return output.read_bytes()
+
+
 def is_dex_file(data: bytes) -> bool:
     return len(data) >= 32 and data.startswith(b"dex\n")
 
@@ -177,14 +242,6 @@ def rewrite_file(
     dry_run: bool = False,
     backup: bool = False,
 ) -> bool:
-    # Rewriting variable-length values in DEX string_data_item entries without
-    # rebuilding the complete DEX data section makes the file fail verification
-    # and causes app_process to abort. The direct am launcher is replaced with
-    # the socket-backed launcher by prepare-termux-bootstrap.sh, so this APK
-    # must remain byte-for-byte valid and does not need package rewriting.
-    if is_termux_am_apk(path):
-        return False
-
     try:
         original = path.read_bytes()
     except (OSError, PermissionError):
@@ -194,7 +251,12 @@ def rewrite_file(
 
     if is_dex_file(original):
         return False
-    if is_text:
+    if is_termux_am_apk(path):
+        if dry_run:
+            print(f"[DRY:dex] {path}")
+            return True
+        updated = rewrite_termux_am_apk(original, rewrites)
+    elif is_text:
         updated = rewrite_text_bytes(original, rewrites)
     else:
         updated = rewrite_binary_bytes(original, rewrites)

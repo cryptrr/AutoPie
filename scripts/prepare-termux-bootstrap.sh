@@ -85,7 +85,6 @@ WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-bootstrap.XXXXXX")"
 EXTRACTED_DIR="$WORK_DIR/extracted"
 PATCHED_ZIP="$WORK_DIR/bootstrap-$ARCH.zip"
 PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
-PATCHED_AM_WRAPPER="$WORK_DIR/am"
 
 cleanup() {
     rm -rf "$WORK_DIR"
@@ -165,31 +164,19 @@ if [[ "${#EXTRA_PACKAGE_ARGS[@]}" -gt 0 ]]; then
         "${EXTRA_PACKAGE_ARGS[@]}"
 fi
 
+# Reassemble termux-am's DEX instead of padding package names in compiled data.
+# Keep this tooling separate from the Android build and cache pinned dependencies.
+echo "Preparing termux-am DEX tools"
+GRADLE_USER_HOME="$GRADLE_USER_HOME" bash "$ROOT_DIR/gradlew" \
+    -p "$ROOT_DIR/scripts/bootstrap/dex-tools" --no-daemon writeClasspath
+export AUTOPIE_SMALI_CLASSPATH
+AUTOPIE_SMALI_CLASSPATH="$(cat "$ROOT_DIR/scripts/bootstrap/dex-tools/build/classpath.txt")"
+
 echo "Patching bootstrap strings"
 python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
     --old-package "$OLD_PACKAGE" \
     --new-package "$NEW_PACKAGE" \
     --new-root-dir "$TARGET_ROOT_DIR"
-
-# The app_process-based am launcher embeds package names in a DEX file. Shorter
-# custom package names used to be written into that DEX with NUL padding, which
-# makes Android abort while verifying it. Route am through AutoPie's already
-# running TermuxAm socket server instead; this also avoids app_process's
-# secondary-user assumptions.
-echo "Installing socket-backed am wrapper"
-python3 - "$PATCHED_AM_WRAPPER" "$TARGET_PREFIX" <<'PY'
-from pathlib import Path
-import sys
-
-dest = Path(sys.argv[1])
-prefix = sys.argv[2].rstrip("/")
-dest.write_text(
-    f"#!{prefix}/bin/sh\n"
-    f'exec "{prefix}/bin/termux-am" "$@"\n',
-    encoding="utf-8",
-)
-PY
-install -m 0700 "$PATCHED_AM_WRAPPER" "$EXTRACTED_DIR/bin/am"
 
 echo "Installing dpkg wrapper"
 if [[ ! -f "$EXTRACTED_DIR/bin/dpkg" ]]; then
