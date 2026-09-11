@@ -3,13 +3,9 @@ from __future__ import annotations
 
 import argparse
 import codecs
-import hashlib
 import os
 import shutil
-import struct
 import tempfile
-import zipfile
-import zlib
 from pathlib import Path
 
 OLD_PACKAGE = "com.termux"
@@ -124,10 +120,8 @@ def build_rewrites(
         unique_rewrites[old.encode()] = new.encode()
         unique_rewrites[old.encode("utf-16le")] = new.encode("utf-16le")
 
-        # Java/Dex class descriptors use slash-separated package names, while
-        # command-line entry points use dot-separated names. The termux-am APK
-        # must be rewritten in both forms or app_process may load a class from
-        # one package while FakeContext still reports another.
+        # Some compiled resources use slash-separated package names, while
+        # command-line entry points use dot-separated names.
         if "." in old:
             unique_rewrites[old.replace(".", "/").encode()] = new.replace(".", "/").encode()
 
@@ -138,220 +132,13 @@ def build_rewrites(
     )
 
 
-def should_rewrite_nested_zip(path: Path) -> bool:
+def is_termux_am_apk(path: Path) -> bool:
     normalized = path.as_posix()
     return normalized.endswith("/libexec/termux-am/am.apk")
 
 
-def rewrite_zip_file(
-    path: Path,
-    rewrites: list[tuple[bytes, bytes]],
-    dry_run: bool = False,
-    backup: bool = False,
-) -> bool:
-    changed = False
-    entries: list[tuple[zipfile.ZipInfo, bytes]] = []
-
-    try:
-        with zipfile.ZipFile(path, "r") as zin:
-            for info in zin.infolist():
-                data = zin.read(info.filename)
-                if info.is_dir():
-                    updated = data
-                elif is_dex_file(data):
-                    updated = rewrite_dex_bytes(data, rewrites)
-                else:
-                    updated = rewrite_binary_bytes(data, rewrites)
-                if updated != data and is_dex_file(updated):
-                    updated = repair_dex_header(updated)
-                if updated != data:
-                    changed = True
-                entries.append((info, updated))
-    except (OSError, zipfile.BadZipFile):
-        return False
-
-    if not changed:
-        return False
-
-    if dry_run:
-        print(f"[DRY:zip] {path}")
-        return True
-
-    if backup:
-        backup_path = path.with_name(path.name + ".bak")
-        if not backup_path.exists():
-            shutil.copy2(path, backup_path)
-
-    st = path.stat()
-    fd, tmp_name = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
-    os.close(fd)
-    try:
-        with zipfile.ZipFile(tmp_name, "w") as zout:
-            for info, data in entries:
-                new_info = zipfile.ZipInfo(info.filename, date_time=info.date_time)
-                new_info.comment = info.comment
-                new_info.extra = info.extra
-                new_info.internal_attr = info.internal_attr
-                new_info.external_attr = info.external_attr
-                new_info.create_system = info.create_system
-                new_info.compress_type = info.compress_type
-                new_info._compresslevel = getattr(info, "_compresslevel", None)
-
-                if info.is_dir():
-                    zout.writestr(new_info, b"")
-                else:
-                    zout.writestr(new_info, data)
-
-        os.chmod(tmp_name, st.st_mode)
-        try:
-            os.utime(tmp_name, ns=(st.st_atime_ns, st.st_mtime_ns))
-        except OSError:
-            pass
-
-        os.replace(tmp_name, path)
-    finally:
-        try:
-            if os.path.exists(tmp_name):
-                os.unlink(tmp_name)
-        except OSError:
-            pass
-
-    print(f"[OK:zip] {path}")
-    return True
-
-
 def is_dex_file(data: bytes) -> bool:
     return len(data) >= 32 and data.startswith(b"dex\n")
-
-
-def read_uleb128(data: bytes, offset: int) -> tuple[int, int]:
-    result = 0
-    shift = 0
-    cursor = offset
-    while cursor < len(data):
-        byte = data[cursor]
-        cursor += 1
-        result |= (byte & 0x7F) << shift
-        if byte & 0x80 == 0:
-            return result, cursor
-        shift += 7
-        if shift > 35:
-            break
-    raise ValueError(f"Invalid uleb128 at offset {offset}")
-
-
-def write_uleb128(value: int) -> bytes:
-    encoded = bytearray()
-    while True:
-        byte = value & 0x7F
-        value >>= 7
-        if value:
-            encoded.append(byte | 0x80)
-        else:
-            encoded.append(byte)
-            return bytes(encoded)
-
-
-def rewrite_dex_bytes(data: bytes, rewrites: list[tuple[bytes, bytes]]) -> bytes:
-    """
-    Rewrite DEX string_data_item values in place.
-
-    Generic binary rewriting pads shorter replacements with NUL bytes. That is
-    fine for many binaries, but DEX class descriptors like
-    `Lcom/termux/termuxam/Am;` would become `Lcom/pie\\0\\0\\0/termuxam/Am;`
-    for shorter package names and app_process may abort while loading them.
-    DEX strings have a uleb128 UTF-16 length prefix, so update that prefix and
-    leave any unused bytes after the string terminator as unreferenced padding.
-    """
-    if len(data) < 112:
-        return data
-
-    string_ids_size = struct.unpack_from("<I", data, 56)[0]
-    string_ids_off = struct.unpack_from("<I", data, 60)[0]
-    if string_ids_off <= 0 or string_ids_off + string_ids_size * 4 > len(data):
-        return data
-
-    updated = bytearray(data)
-    changed = False
-    byte_rewrites = [
-        (old, new)
-        for old, new in rewrites
-        if b"\x00" not in old and b"\x00" not in new
-    ]
-
-    for index in range(string_ids_size):
-        string_data_off = struct.unpack_from("<I", data, string_ids_off + index * 4)[0]
-        if string_data_off <= 0 or string_data_off >= len(data):
-            continue
-
-        try:
-            old_utf16_size, string_start = read_uleb128(data, string_data_off)
-        except ValueError:
-            continue
-
-        string_end = data.find(b"\x00", string_start)
-        if string_end < 0:
-            continue
-
-        declared_ascii_end = string_start + old_utf16_size
-        repaired_padded_string = False
-        if (
-            declared_ascii_end < len(data)
-            and string_end < declared_ascii_end
-            and any(new in data[string_start:declared_ascii_end] for _, new in byte_rewrites)
-        ):
-            # Repair DEX strings previously processed by fixed-width binary
-            # replacement, for example `Lcom/pie\0\0\0/termuxam/Am;`.
-            original_bytes = data[string_start:declared_ascii_end].replace(b"\x00", b"")
-            old_item_size = declared_ascii_end + 1 - string_data_off
-            repaired_padded_string = True
-        else:
-            original_bytes = data[string_start:string_end]
-            old_item_size = string_end + 1 - string_data_off
-
-        rewritten_bytes = rewrite_text_bytes(original_bytes, byte_rewrites)
-        if rewritten_bytes == original_bytes and not repaired_padded_string:
-            continue
-
-        try:
-            rewritten_text = rewritten_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            continue
-
-        new_size_bytes = write_uleb128(len(rewritten_text))
-        new_item_size = len(new_size_bytes) + len(rewritten_bytes) + 1
-        if new_item_size > old_item_size:
-            print(
-                f"[SKIP] Cannot rewrite DEX string {original_bytes!r} "
-                f"to {rewritten_bytes!r} (too long)"
-            )
-            continue
-
-        updated[string_data_off : string_data_off + old_item_size] = b"\x00" * old_item_size
-        cursor = string_data_off
-        updated[cursor : cursor + len(new_size_bytes)] = new_size_bytes
-        cursor += len(new_size_bytes)
-        updated[cursor : cursor + len(rewritten_bytes)] = rewritten_bytes
-        cursor += len(rewritten_bytes)
-        updated[cursor] = 0
-        changed = True
-
-    return bytes(updated) if changed else data
-
-
-def repair_dex_header(data: bytes) -> bytes:
-    """
-    Recompute the DEX header signature and checksum after byte patching.
-
-    DEX bytes 12..31 store SHA-1 over bytes 32..end, and bytes 8..11
-    store Adler32 over bytes 12..end. app_process may abort early if these
-    values are stale.
-    """
-    updated = bytearray(data)
-    updated[12:32] = hashlib.sha1(updated[32:]).digest()
-    checksum = zlib.adler32(updated[12:]) & 0xFFFFFFFF
-    updated[8:12] = checksum.to_bytes(4, "little")
-    return bytes(updated)
 
 
 def rewrite_text_bytes(data: bytes, rewrites: list[tuple[bytes, bytes]]) -> bytes:
@@ -390,8 +177,13 @@ def rewrite_file(
     dry_run: bool = False,
     backup: bool = False,
 ) -> bool:
-    if should_rewrite_nested_zip(path):
-        return rewrite_zip_file(path, rewrites, dry_run=dry_run, backup=backup)
+    # Rewriting variable-length values in DEX string_data_item entries without
+    # rebuilding the complete DEX data section makes the file fail verification
+    # and causes app_process to abort. The direct am launcher is replaced with
+    # the socket-backed launcher by prepare-termux-bootstrap.sh, so this APK
+    # must remain byte-for-byte valid and does not need package rewriting.
+    if is_termux_am_apk(path):
+        return False
 
     try:
         original = path.read_bytes()
@@ -400,10 +192,10 @@ def rewrite_file(
 
     is_text = looks_like_text(original)
 
+    if is_dex_file(original):
+        return False
     if is_text:
         updated = rewrite_text_bytes(original, rewrites)
-    elif is_dex_file(original):
-        updated = rewrite_dex_bytes(original, rewrites)
     else:
         updated = rewrite_binary_bytes(original, rewrites)
 

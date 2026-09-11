@@ -85,6 +85,7 @@ WORK_DIR="$(mktemp -d "$ROOT_DIR/.termux-bootstrap.XXXXXX")"
 EXTRACTED_DIR="$WORK_DIR/extracted"
 PATCHED_ZIP="$WORK_DIR/bootstrap-$ARCH.zip"
 PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
+PATCHED_AM_WRAPPER="$WORK_DIR/am"
 
 cleanup() {
     rm -rf "$WORK_DIR"
@@ -169,6 +170,26 @@ python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
     --old-package "$OLD_PACKAGE" \
     --new-package "$NEW_PACKAGE" \
     --new-root-dir "$TARGET_ROOT_DIR"
+
+# The app_process-based am launcher embeds package names in a DEX file. Shorter
+# custom package names used to be written into that DEX with NUL padding, which
+# makes Android abort while verifying it. Route am through AutoPie's already
+# running TermuxAm socket server instead; this also avoids app_process's
+# secondary-user assumptions.
+echo "Installing socket-backed am wrapper"
+python3 - "$PATCHED_AM_WRAPPER" "$TARGET_PREFIX" <<'PY'
+from pathlib import Path
+import sys
+
+dest = Path(sys.argv[1])
+prefix = sys.argv[2].rstrip("/")
+dest.write_text(
+    f"#!{prefix}/bin/sh\n"
+    f'exec "{prefix}/bin/termux-am" "$@"\n',
+    encoding="utf-8",
+)
+PY
+install -m 0700 "$PATCHED_AM_WRAPPER" "$EXTRACTED_DIR/bin/am"
 
 echo "Installing dpkg wrapper"
 if [[ ! -f "$EXTRACTED_DIR/bin/dpkg" ]]; then
