@@ -33,9 +33,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                 ?: throw java.io.IOException("Cannot read input directory: ${inputDir.absolutePath}")
 
 
-            currentItems.map { path ->
-
-
+            suspend fun runCommand(path: File): CommandResult {
                 val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
                 val cwdPath = processManagerService.getCommandWorkingDirectory(item.path)
@@ -92,10 +90,16 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
 
 
 
-                val result = processResult.toCommandResult(JobType.DIRECTORY, inputDir.path)
+                return processResult.toCommandResult(JobType.DIRECTORY, inputDir.path)
+            }
 
-                emit(result)
-
+            if (item.command.contains("INPUT_FILES")) {
+                Timber.d("Multiple input files detected; running directory command once")
+                emit(runCommand(currentItems.firstOrNull() ?: inputDir))
+            } else {
+                currentItems.forEach { path ->
+                    emit(runCommand(path))
+                }
             }
 
         }
