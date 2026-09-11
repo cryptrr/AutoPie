@@ -1,7 +1,5 @@
 package com.autopi.autopieapp.presentation.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +50,7 @@ import com.autopi.autopieapp.presentation.elements.CommandExtraElement
 import com.autopi.autopieapp.presentation.elements.GenericFormSwitch
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.PackagesListDialog
+import com.autopi.autopieapp.presentation.elements.RawJsonReadmeBanner
 import com.autopi.utils.Utils
 import com.autopi.autopieapp.presentation.viewModels.CreateCommandViewModel
 import kotlinx.coroutines.delay
@@ -63,7 +62,6 @@ import org.koin.androidx.compose.koinViewModel
 fun CreateCommandScreen(open: MutableState<Boolean>) {
 
     val viewModel: CreateCommandViewModel = koinViewModel()
-
     var showPackagesDialog by remember { mutableStateOf(false) }
 
 
@@ -127,6 +125,10 @@ fun CreateCommandScreen(open: MutableState<Boolean>) {
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 220.dp)
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RawJsonReadmeBanner()
             } else {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     viewModel.commandTypeOptions.forEachIndexed { index, label ->

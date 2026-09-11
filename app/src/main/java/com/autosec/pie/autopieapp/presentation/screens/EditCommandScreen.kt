@@ -69,6 +69,7 @@ import com.autopi.autopieapp.presentation.elements.YesNoDialog
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.presentation.elements.PackagesListDialog
+import com.autopi.autopieapp.presentation.elements.RawJsonReadmeBanner
 import com.autopi.ui.theme.GreenGrey60
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
@@ -265,6 +266,10 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                     singleLine = false,
                     modifier = Modifier.defaultMinSize(minHeight = 260.dp)
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RawJsonReadmeBanner()
             } else {
 
                 GenericTextFormField(text = viewModel.commandName, "NAME", placeholder = "name")
