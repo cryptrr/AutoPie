@@ -10,15 +10,21 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -27,11 +33,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -47,11 +56,13 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
+import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.presentation.elements.AppBottomBar
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
 import com.autopi.autopieapp.presentation.elements.SnackbarHostCustom
@@ -104,6 +115,7 @@ class MainActivity : ComponentActivity() {
 
             val autoPieStates = rememberAutoPieStates()
             val context = LocalContext.current
+            val uriHandler = LocalUriHandler.current
 
 
             AutoPieTheme {
@@ -152,25 +164,41 @@ class MainActivity : ComponentActivity() {
                                 LargeTopAppBar(
                                     title = {
                                         Row(
-                                            Modifier.fillMaxWidth(),
+                                            modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             AutoPieLogo()
-//                                            IconButton(
-//                                                onClick = { /*TODO*/ }, modifier = Modifier
-//                                                    .clip(
-//                                                        RoundedCornerShape(10.dp)
-//                                                    )
-//                                                    .padding(end = 17.dp)
-//                                            ) {
-//                                                Icon(
-//                                                    imageVector = Icons.Outlined.Settings,
-//                                                    contentDescription = "Settings",
-//                                                    tint = MaterialTheme.colorScheme.onSurface,
-//                                                    modifier = Modifier.size(28.dp)
-//                                                )
-//                                            }
+                                            OutlinedButton(
+                                                onClick = { uriHandler.openUri(AutoPieStrings.GITHUB_URL) },
+                                                modifier = Modifier
+                                                    .padding(end = 12.dp)
+                                                    .height(40.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                border = BorderStroke(
+                                                    width = 1.dp,
+                                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                                                ),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = MaterialTheme.colorScheme
+                                                        .surfaceColorAtElevation(3.dp),
+                                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                            ) {
+                                                Text(
+                                                    text = "GitHub",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Star,
+                                                    contentDescription = "Star AutoPie on GitHub",
+                                                    modifier = Modifier
+                                                        .padding(start = 4.dp)
+                                                        .size(18.dp),
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                )
+                                            }
                                         }
                                     },
                                     //colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black),
