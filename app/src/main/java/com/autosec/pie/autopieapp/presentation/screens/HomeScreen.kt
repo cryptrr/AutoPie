@@ -57,6 +57,7 @@ import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.LoadingBadge
+import com.autopi.autopieapp.presentation.elements.RecipeCreationTipBanner
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.autopieapp.presentation.elements.YesNoDialog
 import com.autopi.ui.theme.GreenGrey60
@@ -247,6 +248,9 @@ fun HomeScreen(
                 }
             }
 
+            item {
+                RecipeCreationTipBanner()
+            }
 
 
         }
