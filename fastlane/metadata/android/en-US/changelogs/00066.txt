@@ -1,0 +1,9 @@
+What's Changed
+
+- Added structured widget output for text, numbers, lists, and JSON.
+- Added live progress and output notifications.
+- Added stable and development command catalog channels.
+- Improved cron history, stale-job cleanup, and file observers.
+- Fixed share-flow state, saved extras, directory runs, and secondary-user commands.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.17.6-beta...v0.18.0-beta
