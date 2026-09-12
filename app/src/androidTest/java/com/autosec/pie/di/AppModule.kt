@@ -1,7 +1,5 @@
 package com.autopi.di
 
-import android.app.Application
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.autopi.core.DispatcherProvider
 import com.autopi.core.TestDispatchers
 import com.autopi.autopieapp.data.apiService.ApiService
@@ -23,28 +21,19 @@ import com.autopi.autopieapp.presentation.viewModels.InstalledPackagesViewModel
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.autopi.use_case.AutoPieUseCases
-import com.autopi.use_case.CreateCommand
-import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
-import com.autopi.use_case.GetShareCommands
+import com.google.gson.JsonParser
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.spyk
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-fun mockMainViewModel(app: Application): MainViewModel {
-    return spyk(MainViewModel(
-        app,
-        appPreferences = TODO(),
-        autoPieConfigPathProvider = TODO(),
-        dispatchers = TODO()
-    )) {
+fun mockMainViewModel(): MainViewModel {
+    return mockk(relaxed = true) {
         every { storageManagerPermissionGranted } returns true
         every { showError(any()) } just Runs
         every { eventFlow } returns MutableSharedFlow()
@@ -55,20 +44,31 @@ val useCaseModule = module {
     single<AutoPieUseCases> {
         AutoPieUseCases(
             getCommandsList = GetCommandsList(get()),
-            getShareCommands = GetShareCommands(get()),
-            createCommand = CreateCommand(get()),
-            getCommandDetails = GetCommandDetails(get()),
-            runCommand = TODO(),
-            runCommandForDirectory = TODO(),
-            runCommandForUrl = TODO(),
-            runCommandForFiles = TODO(),
-            runCommandForText = TODO(),
-            runStandaloneCommand = TODO(),
-            changeCommandDetails = TODO(),
-            deleteCommand = TODO(),
-            addCommandToHistory = TODO(),
-            getHistoryOfCommand = TODO(),
-            getLatestUsedPackages = TODO()
+            getRepoCommandsList = mockk(relaxed = true),
+            getShareCommands = mockk(relaxed = true),
+            createCommand = mockk(relaxed = true),
+            getCommandDetails = mockk(relaxed = true),
+            runCommand = mockk(relaxed = true),
+            runCommandForDirectory = mockk(relaxed = true),
+            runCommandForUrl = mockk(relaxed = true),
+            runCommandForFiles = mockk(relaxed = true),
+            runCommandForText = mockk(relaxed = true),
+            runStandaloneCommand = mockk(relaxed = true),
+            runCronCommand = mockk(relaxed = true),
+            changeCommandDetails = mockk(relaxed = true),
+            deleteCommand = mockk(relaxed = true),
+            addCommandToHistory = mockk(relaxed = true),
+            getHistoryOfCommand = mockk(relaxed = true),
+            getLatestUsedPackages = mockk(relaxed = true),
+            getUserTags = mockk(relaxed = true),
+            addUserTag = mockk(relaxed = true),
+            deleteUserTag = mockk(relaxed = true),
+            getInstalledPackages = mockk(relaxed = true),
+            runInteractiveCommand = mockk(relaxed = true),
+            toggleCommandDebugMode = mockk(relaxed = true),
+            storeCommandExtraInputs = mockk(relaxed = true),
+            installCloudCommand = mockk(relaxed = true),
+            getCloudCommandDocumentation = mockk(relaxed = true)
         )
     }
 }
@@ -80,10 +80,22 @@ fun getTestModule(dispatcher: TestDispatchers): Module {
 
         single<DispatcherProvider> { dispatcher }
 
-        single<MainViewModel> { mockMainViewModel(get()) }
+        single<JsonService> {
+            mockk {
+                every { readCommandsConfig() } returns JsonParser.parseString(
+                    """
+                    {
+                      "Extract Audio": { "id": "extract-audio", "type": "SHARE" },
+                      "RSYNC Sync Folder": { "id": "rsync-sync-folder", "type": "SHARE" }
+                    }
+                    """.trimIndent()
+                ).asJsonObject
+            }
+        }
+        single<MainViewModel> { mockMainViewModel() }
         single<SecretsService> { SecretsService(get()) }
         viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get()) }
-        viewModel<CloudCommandsViewModel> { CloudCommandsViewModel() }
+        viewModel<CloudCommandsViewModel> { CloudCommandsViewModel(get()) }
         viewModel<CloudPackagesViewModel> { CloudPackagesViewModel() }
 
         single<HTTPClientService> { AutoSecHTTPClient() }

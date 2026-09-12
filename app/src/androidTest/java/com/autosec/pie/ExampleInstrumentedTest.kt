@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TestWatcher
@@ -28,6 +29,7 @@ import org.junit.runner.Description
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.stopKoin
 import org.koin.java.KoinJavaComponent.inject
 import org.koin.test.KoinTest
 import timber.log.Timber
@@ -52,6 +54,11 @@ class AutoPieInstrumentedTests : KoinTest {
 
         startKoinIfNeeded(application)
 
+    }
+
+    @After
+    fun teardown() {
+        stopKoin()
     }
 
     private fun startKoinIfNeeded(application: Context) {

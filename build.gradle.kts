@@ -12,5 +12,7 @@ subprojects {
         // F-Droid flags OpenCensus as a tracker when Gradle resolves Android test tooling.
         // AutoPie does not use it, so keep it out of all project dependency graphs.
         exclude(group = "io.opencensus")
+        // Guava already provides ListenableFuture; AndroidX's standalone copy duplicates it.
+        exclude(group = "com.google.guava", module = "listenablefuture")
     }
 }

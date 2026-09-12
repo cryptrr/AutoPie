@@ -352,7 +352,6 @@ class CommandTests : KoinTest {
                   type: "SELECTABLE"
                   default: "pdf"
                   description: "Output type."
-                  required: true
                   selectableOptions:
                     PDF: "pdf"
                     Text: "txt"

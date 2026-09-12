@@ -88,10 +88,6 @@ android {
     }
 }
 
-configurations.all {
-    exclude(group = "com.google.guava", module = "listenablefuture")
-}
-
 dependencies {
     implementation(libs.material)
     implementation(libs.timber)
