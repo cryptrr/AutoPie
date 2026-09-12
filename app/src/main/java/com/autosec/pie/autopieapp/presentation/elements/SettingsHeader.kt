@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -155,10 +156,9 @@ fun SettingsHeader() {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = githubTitle)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(imageVector = Icons.Default.StarOutline, contentDescription = null)
+                Icon(imageVector = Icons.Default.Star, contentDescription = null)
             }
         }
     }
 }
-
 
