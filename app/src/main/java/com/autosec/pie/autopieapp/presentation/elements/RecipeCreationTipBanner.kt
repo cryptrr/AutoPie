@@ -52,7 +52,7 @@ fun RecipeCreationTipBanner(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1F)) {
             Text(
-                text = "Tip: Create recipes faster with AI",
+                text = "Tip: Create your own recipes faster with AI",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer

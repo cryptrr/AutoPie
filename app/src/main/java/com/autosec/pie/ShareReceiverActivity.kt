@@ -78,6 +78,7 @@ import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasUnsetRequiredExtras
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.AutoPieLogo
+import com.autopi.autopieapp.presentation.elements.RecipeCreationTipBanner
 import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.autopieapp.presentation.screens.CloudCommandCard
 import com.autopi.autopieapp.presentation.screens.CloudCommandDetails
@@ -350,6 +351,9 @@ fun ShareContextMenuBottomSheet(
                                 }
                             )
                         }
+                    }
+                    item {
+                        RecipeCreationTipBanner()
                     }
                 }
 
