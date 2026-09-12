@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,10 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autopi.autopieapp.data.AutoPieStrings
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -96,6 +102,8 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
 
     val state = rememberLazyListState()
     val installedCommandVersions = viewModel.installedCommandVersions.collectAsState()
+    val contributionBannerDismissed = viewModel.contributionBannerDismissed.value
+    val isLoading = viewModel.isLoading.value
 
     val isAtBottom = !state.canScrollForward
 
@@ -104,6 +112,7 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top),
             state = state
         ) {
@@ -137,6 +146,18 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
             item {
                 SearchBar(viewModel.searchCommandQuery,"Search command catalog"){
                     viewModel.searchInCommands(viewModel.searchCommandQuery.value)
+                }
+            }
+
+            if (!isLoading && (!contributionBannerDismissed || cloudCommands.isEmpty())) {
+                item {
+                    CommandsContributionBanner(
+                        onDismiss = if (contributionBannerDismissed) {
+                            null
+                        } else {
+                            viewModel::dismissContributionBanner
+                        }
+                    )
                 }
             }
 
@@ -177,10 +198,80 @@ fun CloudCommandsList(cloudCommands: List<CloudCommandModel>, viewModel: CloudCo
                 }
             }
 
+            if (!isLoading && contributionBannerDismissed && cloudCommands.isNotEmpty()) {
+                item {
+                    CommandsContributionBanner()
+                }
+            }
+
 
         }
     }
 
+}
+
+@Composable
+private fun CommandsContributionBanner(onDismiss: (() -> Unit)? = null) {
+    val uriHandler = LocalUriHandler.current
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(15.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7F)
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    top = 16.dp,
+                    end = 52.dp,
+                    bottom = 10.dp
+                )
+            ) {
+                Text(
+                    text = "Have a working recipe?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Share it with the community by adding it to the AutoPie commands repository.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                TextButton(
+                    onClick = { uriHandler.openUri(AutoPieStrings.COMMANDS_REPOSITORY_URL) },
+                    contentPadding = PaddingValues(horizontal = 0.dp)
+                ) {
+                    Text("Contribute on GitHub")
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            if (onDismiss != null) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Dismiss contribution banner"
+                    )
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -280,7 +371,7 @@ fun CloudCommandCard(
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary.copy(0.8F),
+                        color = MaterialTheme.colorScheme.primary.copy(0.85F),
                         modifier = Modifier.fillMaxWidth(.85F)
                     )
                     Spacer(modifier = Modifier.height(8.dp))

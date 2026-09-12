@@ -34,7 +34,7 @@ fun RawJsonReadmeBanner(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(0.85F))
             .clickable(
                 role = Role.Button,
                 onClickLabel = "Open commands JSON documentation"

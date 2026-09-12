@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.apiService.ApiService
+import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.services.GithubApiService
 import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.ProcessManagerService
@@ -44,6 +45,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
     private val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
+    private val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
     val processManagerService: ProcessManagerService by KoinJavaComponent.inject(
         ProcessManagerService::class.java)
@@ -63,6 +65,9 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     val isLoading = mutableStateOf(false)
     val installInProgress = mutableStateOf(false)
     val detailsLoading = mutableStateOf(false)
+    val contributionBannerDismissed = mutableStateOf(
+        appPreferences.getBoolSync(AppPreferences.COMMANDS_CONTRIBUTION_BANNER_DISMISSED)
+    )
     val selectedCommandDocumentation = mutableStateOf<CloudCommandDocumentation?>(null)
     private var loadedDocumentationCommandId: String? = null
 
@@ -122,6 +127,18 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
             sortCloudCommandsForCatalog(filteredCommands, installedCommandVersions.value)
         }
 
+    }
+
+    fun dismissContributionBanner() {
+        if (contributionBannerDismissed.value) return
+
+        contributionBannerDismissed.value = true
+        viewModelScope.launch(dispatchers.io) {
+            appPreferences.setBool(
+                AppPreferences.COMMANDS_CONTRIBUTION_BANNER_DISMISSED,
+                true
+            )
+        }
     }
 
     fun selectCommand(command: CloudCommandModel, installedVersion: String? = null) {
