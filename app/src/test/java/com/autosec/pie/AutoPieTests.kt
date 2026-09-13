@@ -227,6 +227,33 @@ class CommandTests : KoinTest {
     }
 
     @Test
+    fun `package manifest uses runtime command type`() = runTest {
+        val command = cloudManifestToShareCommandJson(
+            """
+            schemaVersion: "2026.6.1"
+            version: "1.0.0"
+            id: "autopie.github-repo-monitor"
+            namespace: "autopie"
+            name: "GitHub Repo Monitor"
+            commandSlug: ""
+            summary: "A 15-minute GitHub repository monitor cron designed for display as an Android widget."
+            type: "PACKAGE"
+            tags: ["python", "github", "cron", "widget"]
+            runtime:
+              path: ""
+              type: "CRON"
+              cronInterval: "15m"
+              command: |-
+                echo monitor
+            """.trimIndent()
+        ).commandObject
+
+        assertEquals("CRON", command.get("type").asString)
+        assertEquals("15m", command.get("cronInterval").asString)
+        assertEquals("echo monitor", command.get("command").asString)
+    }
+
+    @Test
     fun `cloud command update is available when catalog version is newer`() = runTest {
         assertEquals(true, isCloudCommandUpdateAvailable("1.1.0", "1.0.0"))
         assertEquals(false, isCloudCommandUpdateAvailable("1.0.0", "1.0.0"))

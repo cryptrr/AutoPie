@@ -220,7 +220,7 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     val version = manifest.stringValue("version", required = false)
     val name = manifest.stringValue("name").ifBlank { id }
     val commandSlug = manifest.stringValue("commandSlug", required = false)
-    val commandType = manifest.commandType()
+    val commandType = manifest.commandType(runtime)
     val commandObject = JsonObject().apply {
         addProperty("id", id)
         addProperty("version", version)
@@ -295,8 +295,10 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     )
 }
 
-private fun Map<String, Any?>.commandType(): CommandType = when (
-    stringValue("type", required = false).uppercase()
+private fun Map<String, Any?>.commandType(runtime: Map<String, Any?>): CommandType = when (
+    runtime.stringValue("type", required = false)
+        .ifBlank { stringValue("type", required = false) }
+        .uppercase()
 ) {
     "", "PACKAGE", "SHARE" -> CommandType.SHARE
     "FILE_OBSERVER" -> CommandType.FILE_OBSERVER
