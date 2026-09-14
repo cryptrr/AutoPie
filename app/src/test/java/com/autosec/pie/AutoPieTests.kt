@@ -111,11 +111,13 @@ class CommandTests : KoinTest {
               "${'$'}schema": "schema/2026.6.1/catalog.schema.json",
               "commands": {
                 "autopie.change-volume-on-mac": {
+                  "addedAt": "2026-07-14T11:24:14Z",
                   "name": "Change Volume on Mac",
                   "namespace": "autopie",
                   "status": "stable",
                   "summary": "AutoPie command for Change Volume on Mac",
                   "tags": ["openssh"],
+                  "updatedAt": "2026-07-15T20:52:09Z",
                   "version": "1.0.0"
                 }
               }
@@ -130,6 +132,8 @@ class CommandTests : KoinTest {
         assertEquals("Change Volume on Mac", commands.first().name)
         assertEquals("AutoPie command for Change Volume on Mac", commands.first().summary)
         assertEquals(listOf("openssh"), commands.first().tags)
+        assertEquals("2026-07-14T11:24:14Z", commands.first().addedAt)
+        assertEquals("2026-07-15T20:52:09Z", commands.first().updatedAt)
         assertEquals("", commands.first().command)
     }
 
@@ -278,6 +282,49 @@ class CommandTests : KoinTest {
         )
 
         assertEquals(listOf("autopie.a-update", "autopie.b-new", "autopie.z-current"), sorted.map { it.id })
+    }
+
+    @Test
+    fun `cloud commands are sorted by updated timestamp with added timestamp fallback`() = runTest {
+        val commands = listOf(
+            CloudCommandModel(
+                id = "autopie.updated-old",
+                name = "Updated Old",
+                addedAt = "2026-09-10T00:00:00Z",
+                updatedAt = "2026-09-11T00:00:00Z"
+            ),
+            CloudCommandModel(
+                id = "autopie.added-fallback",
+                name = "Added Fallback",
+                addedAt = "2026-09-13T00:00:00Z"
+            ),
+            CloudCommandModel(
+                id = "autopie.updated-new",
+                name = "Updated New",
+                addedAt = "2026-09-09T00:00:00Z",
+                updatedAt = "2026-09-14T00:00:00Z"
+            ),
+            CloudCommandModel(
+                id = "autopie.invalid-updated",
+                name = "Invalid Updated",
+                addedAt = "2026-09-12T00:00:00Z",
+                updatedAt = "unavailable"
+            ),
+            CloudCommandModel(id = "autopie.no-timestamp", name = "No Timestamp")
+        )
+
+        val sorted = sortCloudCommandsForCatalog(commands, emptyMap())
+
+        assertEquals(
+            listOf(
+                "autopie.updated-new",
+                "autopie.added-fallback",
+                "autopie.invalid-updated",
+                "autopie.updated-old",
+                "autopie.no-timestamp"
+            ),
+            sorted.map { it.id }
+        )
     }
 
     @Test

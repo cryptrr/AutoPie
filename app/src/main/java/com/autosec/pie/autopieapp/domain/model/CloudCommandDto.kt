@@ -34,7 +34,9 @@ data class CloudCommandModel(
     val status: String = "",
     val summary: String = "",
     val tags: List<String> = emptyList(),
-    val version: String = ""
+    val version: String = "",
+    val addedAt: String? = null,
+    val updatedAt: String? = null
 ) : CloudCommandInterface
 
 fun CloudCommandModel.matchesSearch(query: String): Boolean {

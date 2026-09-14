@@ -39,6 +39,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
+import java.time.Instant
 import kotlin.getValue
 
 class CloudCommandsViewModel(private val application: Application) : ViewModel(), KoinComponent {
@@ -240,5 +241,15 @@ internal fun sortCloudCommandsForCatalog(
             installedVersions[command.id]?.let { installedVersion ->
                 isCloudCommandUpdateAvailable(command.version, installedVersion)
             } == true
-        }.thenBy { it.name.lowercase() }
+        }.thenByDescending { it.catalogTimestamp() }
+            .thenBy { it.name.lowercase() }
+            .thenBy { it.id }
     )
+
+private fun CloudCommandModel.catalogTimestamp(): Instant? =
+    sequenceOf(updatedAt, addedAt)
+        .filterNotNull()
+        .mapNotNull { timestamp ->
+            runCatching { Instant.parse(timestamp) }.getOrNull()
+        }
+        .firstOrNull()
