@@ -101,8 +101,24 @@ fun CommandStep.namespacedId(parentId: String): String =
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 
-fun CommandModel.summaryOrCommandPreview(): String =
-    summary.takeIf(String::isNotBlank) ?: firstStepOrSelf().command
+enum class HomeCommandPreview(val preferenceValue: String) {
+    SUMMARY("summary"),
+    COMMAND("command");
+
+    companion object {
+        fun fromPreference(value: String): HomeCommandPreview =
+            entries.firstOrNull { it.preferenceValue == value } ?: SUMMARY
+    }
+}
+
+fun CommandModel.homePreview(mode: HomeCommandPreview): String =
+    if (mode == HomeCommandPreview.SUMMARY) {
+        summary.takeIf(String::isNotBlank) ?: commandPreview()
+    } else {
+        commandPreview()
+    }
+
+private fun CommandModel.commandPreview(): String = firstStepOrSelf().command
         .lines()
         .filter(String::isNotBlank)
         .joinToString("\n")

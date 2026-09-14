@@ -16,6 +16,7 @@ import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
+import com.autopi.autopieapp.data.HomeCommandPreview
 import com.autopi.autopieapp.data.JobType
 import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.preferences.AppPreferences
@@ -129,6 +130,13 @@ class MainViewModel(
         private set
     private var commandsRepositoryChannelUpdateJob: Job? = null
 
+    var homeCommandPreview by mutableStateOf(
+        HomeCommandPreview.fromPreference(
+            appPreferences.getStringSync(AppPreferences.HOME_COMMAND_PREVIEW)
+        )
+    )
+        private set
+
     var storageManagerPermissionGranted by mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         Environment.isExternalStorageManager()
     } else {
@@ -195,6 +203,15 @@ class MainViewModel(
                 channel.preferenceValue
             )
             AutoPieCoreService.fetchLatestRepositoryJson(forceRefresh = true)
+        }
+    }
+
+    fun updateHomeCommandPreview(preview: HomeCommandPreview) {
+        if (preview == homeCommandPreview) return
+
+        homeCommandPreview = preview
+        viewModelScope.launch(dispatchers.io) {
+            appPreferences.setString(AppPreferences.HOME_COMMAND_PREVIEW, preview.preferenceValue)
         }
     }
 

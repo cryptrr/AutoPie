@@ -6,7 +6,8 @@ import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
-import com.autopi.autopieapp.data.summaryOrCommandPreview
+import com.autopi.autopieapp.data.HomeCommandPreview
+import com.autopi.autopieapp.data.homePreview
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.matchesSearch
@@ -401,16 +402,23 @@ class CommandTests : KoinTest {
     }
 
     @Test
-    fun `installed command preview prefers summary and falls back to command`() = runTest {
+    fun `home command preview supports summary and command modes`() = runTest {
+        val command = CommandModel(summary = "Friendly summary", command = "echo fallback")
+
+        assertEquals(HomeCommandPreview.SUMMARY, HomeCommandPreview.fromPreference(""))
+        assertEquals(HomeCommandPreview.COMMAND, HomeCommandPreview.fromPreference("command"))
         assertEquals(
             "Friendly summary",
-            CommandModel(summary = "Friendly summary", command = "echo fallback")
-                .summaryOrCommandPreview()
+            command.homePreview(HomeCommandPreview.SUMMARY)
+        )
+        assertEquals(
+            "echo fallback",
+            command.homePreview(HomeCommandPreview.COMMAND)
         )
         assertEquals(
             "echo fallback",
             CommandModel(summary = "", command = "\necho fallback\n")
-                .summaryOrCommandPreview()
+                .homePreview(HomeCommandPreview.SUMMARY)
         )
     }
 

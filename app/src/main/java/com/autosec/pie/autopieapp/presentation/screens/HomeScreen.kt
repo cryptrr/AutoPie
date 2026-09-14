@@ -53,7 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
-import com.autopi.autopieapp.data.summaryOrCommandPreview
+import com.autopi.autopieapp.data.HomeCommandPreview
+import com.autopi.autopieapp.data.homePreview
 import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.LoadingBadge
@@ -200,7 +201,10 @@ fun HomeScreen(
 
                 filteredListOfCommands.value.isNotEmpty() -> {
                     items(filteredListOfCommands.value, key = {it.name}) { item ->
-                        CommandCard(card = item)
+                        CommandCard(
+                            card = item,
+                            previewMode = commandsListScreenViewModel.main.homeCommandPreview
+                        )
                     }
                 }
 
@@ -317,7 +321,8 @@ private fun InstallNewCommandsBadge(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CommandCard(
-    card: CommandModel
+    card: CommandModel,
+    previewMode: HomeCommandPreview = HomeCommandPreview.SUMMARY
 ) {
 
     val activity = LocalContext.current.getActivity()
@@ -426,7 +431,7 @@ fun CommandCard(
                     Text(text = card.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = card.summaryOrCommandPreview(),
+                        text = card.homePreview(previewMode),
                         maxLines = 2,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,

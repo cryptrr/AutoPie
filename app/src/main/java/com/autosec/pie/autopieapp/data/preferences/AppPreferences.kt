@@ -41,6 +41,7 @@ class AppPreferences(private val context: Context) : MyPreferences {
         val FILE_LOGGING_ENABLED = booleanPreferencesKey("fileLoggingEnabled")
         val INIT_PACKAGE_COMMANDS_PROMPT_HANDLED = booleanPreferencesKey("initPackageCommandsPromptHandled")
         val COMMANDS_REPOSITORY_CHANNEL = stringPreferencesKey("commandsRepositoryChannel")
+        val HOME_COMMAND_PREVIEW = stringPreferencesKey("homeCommandPreview")
         val COMMANDS_CONTRIBUTION_BANNER_DISMISSED =
             booleanPreferencesKey("commandsContributionBannerDismissed")
     }
