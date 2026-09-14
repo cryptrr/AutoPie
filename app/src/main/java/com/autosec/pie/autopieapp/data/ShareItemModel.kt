@@ -30,6 +30,7 @@ data class CommandModel(
     override val multiStage: Boolean? = false,
     override val steps: List<CommandStep> = emptyList(),
     override val version: String = "",
+    override val summary: String = "",
     ) : CommandInterface
 
 data class CommandStep(
@@ -100,10 +101,18 @@ fun CommandStep.namespacedId(parentId: String): String =
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 
+fun CommandModel.summaryOrCommandPreview(): String =
+    summary.takeIf(String::isNotBlank) ?: firstStepOrSelf().command
+        .lines()
+        .filter(String::isNotBlank)
+        .joinToString("\n")
+        .ifBlank { steps.map { it.commandId }.joinToString("\n") }
+
 fun CommandModel.matchesSearch(query: String): Boolean {
     if (query.isBlank()) return true
 
     return name.contains(query, ignoreCase = true) ||
+        summary.contains(query, ignoreCase = true) ||
         command.contains(query, ignoreCase = true) ||
         exec.contains(query, ignoreCase = true) ||
         type.toString().contains(query, ignoreCase = true) ||
@@ -141,6 +150,7 @@ interface CommandInterface {
     val id: String
     val type: CommandType?
     val name: String
+    val summary: String
     val path: String
     val command: String
     val exec: String?

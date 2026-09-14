@@ -6,6 +6,7 @@ import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.summaryOrCommandPreview
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.matchesSearch
@@ -397,6 +398,20 @@ class CommandTests : KoinTest {
 
             assertTrue(command.matchesSearch(type.name.lowercase()))
         }
+    }
+
+    @Test
+    fun `installed command preview prefers summary and falls back to command`() = runTest {
+        assertEquals(
+            "Friendly summary",
+            CommandModel(summary = "Friendly summary", command = "echo fallback")
+                .summaryOrCommandPreview()
+        )
+        assertEquals(
+            "echo fallback",
+            CommandModel(summary = "", command = "\necho fallback\n")
+                .summaryOrCommandPreview()
+        )
     }
 
     @Test
