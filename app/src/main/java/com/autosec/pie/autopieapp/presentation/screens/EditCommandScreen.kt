@@ -71,6 +71,7 @@ import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.presentation.elements.PackagesListDialog
 import com.autopi.autopieapp.presentation.elements.RawJsonReadmeBanner
 import com.autopi.ui.theme.GreenGrey60
+import com.autopi.ui.theme.PastelBlue
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
 import com.autopi.utils.Utils
@@ -196,6 +197,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         .background(
                             when (viewModel.type.value) {
                                 "SHARE" -> PastelPurple
+                                "MANUAL" -> PastelBlue
                                 "FILE_OBSERVER" -> Purple10
                                 "CRON" -> GreenGrey60
                                 else -> Purple10
@@ -207,6 +209,15 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         "SHARE" -> {
                             Text(
                                 text = "SHARE",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+
+                        "MANUAL" -> {
+                            Text(
+                                text = "MANUAL",
                                 fontSize = 13.3.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black

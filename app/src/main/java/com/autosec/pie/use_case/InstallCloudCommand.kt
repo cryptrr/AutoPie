@@ -285,7 +285,8 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
         CommandType.CRON -> {
             commandObject.addProperty("cronInterval", runtime.stringValue("cronInterval"))
         }
-        CommandType.SHARE -> Unit
+        CommandType.SHARE,
+        CommandType.MANUAL -> Unit
     }
 
     return CloudManifestCommand(
@@ -301,6 +302,7 @@ private fun Map<String, Any?>.commandType(runtime: Map<String, Any?>): CommandTy
         .uppercase()
 ) {
     "", "PACKAGE", "SHARE" -> CommandType.SHARE
+    "MANUAL" -> CommandType.MANUAL
     "FILE_OBSERVER" -> CommandType.FILE_OBSERVER
     "CRON" -> CommandType.CRON
     else -> throw ViewModelError.InvalidCommandRepoFile

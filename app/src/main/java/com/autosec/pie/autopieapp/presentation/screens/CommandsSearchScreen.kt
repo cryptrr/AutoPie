@@ -61,6 +61,7 @@ import com.autopi.autopieapp.presentation.elements.SearchBar
 import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
 import com.autopi.ui.theme.GreenGrey60
 import com.autopi.ui.theme.PastelGreen
+import com.autopi.ui.theme.PastelBlue
 import com.autopi.ui.theme.PastelPurple
 import com.autopi.ui.theme.Purple10
 import org.koin.androidx.compose.koinViewModel
@@ -330,6 +331,7 @@ fun CloudCommandCard(
                     updateAvailable -> Color(0xFFFFD166)
                     isInstalled -> PastelGreen
                     card.type == CommandType.SHARE -> PastelPurple
+                    card.type == CommandType.MANUAL -> PastelBlue
                     card.type == CommandType.FILE_OBSERVER -> Purple10
                     card.type == CommandType.CRON -> GreenGrey60
                     else -> MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)

@@ -67,6 +67,7 @@ import com.autopi.utils.getActivity
 import com.autopi.autopieapp.presentation.viewModels.CommandsListScreenViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import com.autopi.ui.theme.PastelGreen
+import com.autopi.ui.theme.PastelBlue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -371,6 +372,7 @@ fun CommandCard(
                         .background(
                             when (card.type) {
                                 CommandType.SHARE -> PastelPurple
+                                CommandType.MANUAL -> PastelBlue
                                 CommandType.FILE_OBSERVER -> Purple10
                                 CommandType.CRON -> GreenGrey60
                                 null -> PastelPurple
@@ -382,6 +384,15 @@ fun CommandCard(
                         CommandType.SHARE -> {
                             Text(
                                 text = "SHARE",
+                                fontSize = 13.3.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+
+                        CommandType.MANUAL -> {
+                            Text(
+                                text = "MANUAL",
                                 fontSize = 13.3.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black

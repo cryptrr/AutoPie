@@ -5,6 +5,7 @@ import android.os.Environment
 import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.CreateCommand
@@ -117,6 +118,7 @@ class CommandTests : KoinTest {
                   "status": "stable",
                   "summary": "AutoPie command for Change Volume on Mac",
                   "tags": ["openssh"],
+                  "type": "MANUAL",
                   "updatedAt": "2026-07-15T20:52:09Z",
                   "version": "1.0.0"
                 }
@@ -132,9 +134,33 @@ class CommandTests : KoinTest {
         assertEquals("Change Volume on Mac", commands.first().name)
         assertEquals("AutoPie command for Change Volume on Mac", commands.first().summary)
         assertEquals(listOf("openssh"), commands.first().tags)
+        assertEquals(CommandType.MANUAL, commands.first().type)
         assertEquals("2026-07-14T11:24:14Z", commands.first().addedAt)
         assertEquals("2026-07-15T20:52:09Z", commands.first().updatedAt)
         assertEquals("", commands.first().command)
+    }
+
+    @Test
+    fun `manual runtime type is preserved in installed command json`() = runTest {
+        val command = cloudManifestToShareCommandJson(
+            """
+            schemaVersion: "2026.6.1"
+            version: "1.0.0"
+            id: "autopie.change-volume-on-mac"
+            namespace: "autopie"
+            name: "Change Volume on Mac"
+            commandSlug: "openssh"
+            summary: "Set a Mac's output volume remotely over SSH."
+            kind: "APP"
+            tags: ["openssh"]
+            runtime:
+              path: ""
+              type: "MANUAL"
+            """.trimIndent()
+        ).commandObject
+
+        assertEquals("MANUAL", command.get("type").asString)
+        assertEquals("openssh", command.get("exec").asString)
     }
 
     @Test

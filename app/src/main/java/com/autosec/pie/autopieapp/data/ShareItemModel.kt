@@ -298,6 +298,7 @@ data class CommandExtraInput(
 
 enum class CommandType {
     SHARE,
+    MANUAL,
     FILE_OBSERVER,
     CRON
 }
