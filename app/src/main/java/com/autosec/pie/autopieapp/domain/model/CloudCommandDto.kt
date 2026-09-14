@@ -43,6 +43,7 @@ fun CloudCommandModel.matchesSearch(query: String): Boolean {
     if (query.isBlank()) return true
 
     return id.contains(query, ignoreCase = true) ||
+        type.name.contains(query, ignoreCase = true) ||
         name.contains(query, ignoreCase = true) ||
         namespace.contains(query, ignoreCase = true) ||
         status.contains(query, ignoreCase = true) ||

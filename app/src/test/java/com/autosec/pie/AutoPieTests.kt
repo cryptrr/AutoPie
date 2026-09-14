@@ -8,6 +8,7 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
+import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.CreateCommand
 import com.autopi.use_case.ChangeCommandDetails
 import com.autopi.use_case.GetCommandDetails
@@ -378,6 +379,19 @@ class CommandTests : KoinTest {
         assertEquals(true, ffmpegCommand.matchesAnyCloudKeyword(selectedKeywords))
         assertEquals(true, imageMagickCommand.matchesAnyCloudKeyword(selectedKeywords))
         assertEquals(false, unrelatedCommand.matchesAnyCloudKeyword(selectedKeywords))
+    }
+
+    @Test
+    fun `cloud command search matches every command type`() = runTest {
+        CommandType.entries.forEach { type ->
+            val command = CloudCommandModel(
+                id = "autopie.type-search",
+                type = type,
+                name = "Type Search"
+            )
+
+            assertTrue(command.matchesSearch(type.name.lowercase()))
+        }
     }
 
     @Test
