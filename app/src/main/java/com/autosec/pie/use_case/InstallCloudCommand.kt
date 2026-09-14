@@ -219,11 +219,13 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     val id = manifest.stringValue("id")
     val version = manifest.stringValue("version", required = false)
     val name = manifest.stringValue("name").ifBlank { id }
+    val summary = manifest.stringValue("summary", required = false)
     val commandSlug = manifest.stringValue("commandSlug", required = false)
     val commandType = manifest.commandType(runtime)
     val commandObject = JsonObject().apply {
         addProperty("id", id)
         addProperty("version", version)
+        summary.takeIf(String::isNotBlank)?.let { addProperty("summary", it) }
         addProperty("type", commandType.name)
         addProperty("path", "")
         addProperty("exec", commandSlug)

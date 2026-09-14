@@ -162,6 +162,10 @@ class CommandTests : KoinTest {
 
         assertEquals("MANUAL", command.get("type").asString)
         assertEquals("openssh", command.get("exec").asString)
+        assertEquals(
+            "Set a Mac's output volume remotely over SSH.",
+            command.get("summary").asString
+        )
     }
 
     @Test
@@ -238,6 +242,7 @@ class CommandTests : KoinTest {
 
         assertEquals("FILE_OBSERVER", command.get("type").asString)
         assertEquals(".*\\.mp4", command.getAsJsonArray("selectors")[0].asString)
+        assertFalse(command.has("summary"))
     }
 
     @Test
