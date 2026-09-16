@@ -16,6 +16,9 @@ package com.autopi.utils
  * limitations under the License.
  */
 
+import android.system.ErrnoException
+import android.system.Os
+import android.system.OsConstants
 import timber.log.Timber
 import java.io.*
 import java.util.*
@@ -46,13 +49,17 @@ typealias EnvironmentMap = Map<Variable, Value>
  * @property path        The path to the shell to start.
  * @property environment Map of all environment variables to include with the system environment.
  *                       Default value is an empty map.
+ * @property isolateProcessGroup Whether to launch the shell as the leader of a new Unix session.
+ *                               Isolated shells terminate their complete process group when
+ *                               interrupted or shut down.
  * @throws Shell.NotFoundException If the shell cannot be opened this runtime exception is thrown.
  * @author Jared Rummler (jaredrummler@gmail.com)
  * @since 05-05-2021
  */
 class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     val path: String,
-    val environment: EnvironmentMap = emptyMap()
+    val environment: EnvironmentMap = emptyMap(),
+    private val isolateProcessGroup: Boolean = false
 ) {
 
     /**
@@ -84,15 +91,29 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     private val stderrReader: StreamReader
     private var watchdog: Watchdog? = null
     private var state: State = State.Idle
+    private val terminationLock = Any()
     val process: Process
+    /** The Unix session owned by this shell, or `null` for a non-isolated shell. */
+    var sessionId: Int? = null
+        private set
+    /** The process group signalled during termination. Equal to [sessionId] for isolated shells. */
+    val processGroupId: Int?
+        get() = sessionId
 
     init {
+        var launchedProcess: Process? = null
         try {
-            process = runWithEnv(path, environment)
+            val isolated = isolateProcessGroup && isAndroidRuntime()
+            launchedProcess = runWithEnv(path, environment, isolated)
+            process = launchedProcess
             stdin = StandardInputStream(process.outputStream)
             stdoutReader = StreamReader.createAndStart(THREAD_NAME_STDOUT, process.inputStream)
             stderrReader = StreamReader.createAndStart(THREAD_NAME_STDERR, process.errorStream)
+            if (isolated) {
+                sessionId = readShellProcessId()
+            }
         } catch (cause: Exception) {
+            launchedProcess?.destroyForcibly()
             throw NotFoundException(String.format(EXCEPTION_SHELL_CANNOT_OPEN, path), cause)
         }
     }
@@ -334,12 +355,15 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     }
 
     /**
-     * Interrupt waiting for a command to complete.
+     * Interrupt waiting for a command to complete and terminate every process owned by this
+     * shell's isolated process group.
      */
     fun interrupt() {
-
-        watchdog?.abort()
-        process.destroyForcibly()
+        try {
+            terminateOwnedProcesses()
+        } finally {
+            watchdog?.abort()
+        }
     }
 
     /**
@@ -350,20 +374,89 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     fun shutdown() {
         try {
             write("exit")
-            if (!process.waitFor(2, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                process.waitFor(2, TimeUnit.SECONDS)
+            val shellExited = waitForProcessExit(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            if (!shellExited || isProcessGroupAlive()) {
+                terminateOwnedProcesses()
             }
+        } finally {
             stdin.closeQuietly()
             onStdOutListeners.clear()
             onStdErrListeners.clear()
-            stdoutReader.join(1000)
-            stderrReader.join(1000)
+            joinReader(stdoutReader)
+            joinReader(stderrReader)
             process.destroy()
-        } catch (ignored: IOException) {
-        } finally {
             state = State.Shutdown
         }
+    }
+
+    /**
+     * Terminate the shell and all descendants that remain in its isolated process group.
+     * Non-isolated shells retain the previous single-process fallback.
+     */
+    private fun terminateOwnedProcesses() = synchronized(terminationLock) {
+        val groupId = processGroupId
+        if (groupId == null) {
+            process.destroyForcibly()
+            waitForProcessExit(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            return@synchronized
+        }
+
+        signalProcessGroup(groupId, OsConstants.SIGTERM)
+        if (!waitForProcessGroupExit(groupId, TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            signalProcessGroup(groupId, OsConstants.SIGKILL)
+            waitForProcessGroupExit(groupId, TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        }
+        waitForProcessExit(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    }
+
+    private fun waitForProcessExit(timeout: Long, unit: TimeUnit): Boolean = try {
+        process.waitFor(timeout, unit)
+    } catch (interrupted: InterruptedException) {
+        Thread.currentThread().interrupt()
+        false
+    }
+
+    private fun signalProcessGroup(groupId: Int, signal: Int) {
+        try {
+            // A negative pid targets every process in the process group.
+            Os.kill(-groupId, signal)
+        } catch (error: ErrnoException) {
+            if (error.errno != OsConstants.ESRCH) {
+                Timber.e(error, "Unable to signal shell process group $groupId")
+                process.destroyForcibly()
+            }
+        }
+    }
+
+    private fun isProcessGroupAlive(): Boolean {
+        val groupId = processGroupId ?: return process.isAlive
+        return isProcessGroupAlive(groupId)
+    }
+
+    private fun isProcessGroupAlive(groupId: Int): Boolean = try {
+        Os.kill(-groupId, 0)
+        true
+    } catch (error: ErrnoException) {
+        error.errno != OsConstants.ESRCH
+    }
+
+    private fun waitForProcessGroupExit(
+        groupId: Int,
+        timeout: Long,
+        unit: TimeUnit
+    ): Boolean {
+        val deadline = System.nanoTime() + unit.toNanos(timeout)
+        while (isProcessGroupAlive(groupId)) {
+            val remainingNanos = deadline - System.nanoTime()
+            if (remainingNanos <= 0) return false
+            try {
+                TimeUnit.NANOSECONDS.sleep(minOf(remainingNanos, GROUP_POLL_INTERVAL_NANOS))
+            } catch (interrupted: InterruptedException) {
+                Thread.currentThread().interrupt()
+                return false
+            }
+        }
+        return true
     }
 
     private fun write(vararg commands: String) = try {
@@ -372,9 +465,23 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
     } catch (ignored: IOException) {
     }
 
+    private fun readShellProcessId(): Int {
+        val rawProcessId = run("printf '%s\\n' \"\$\$\"").stdout().trim()
+        return rawProcessId.toLongOrNull()?.toProcessId()
+            ?: throw IOException("Unable to read isolated shell process id: $rawProcessId")
+    }
+
     private fun DataOutputStream.closeQuietly() = try {
         close()
     } catch (ignored: IOException) {
+    }
+
+    private fun joinReader(reader: StreamReader) {
+        try {
+            reader.join(1000)
+        } catch (interrupted: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
     }
 
     /**
@@ -781,6 +888,9 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
 
         private const val EXCEPTION_SHELL_CANNOT_OPEN = "Error opening shell: '%s'"
         private const val EXCEPTION_SHELL_SHUTDOWN = "The shell is shutdown"
+        private const val SHUTDOWN_TIMEOUT_SECONDS = 2L
+        private const val TERMINATION_TIMEOUT_SECONDS = 1L
+        private val GROUP_POLL_INTERVAL_NANOS = TimeUnit.MILLISECONDS.toNanos(25)
 
         private val instances by lazy { mutableMapOf<String, Shell>() }
 
@@ -811,8 +921,54 @@ class Shell @Throws(NotFoundException::class) @JvmOverloads constructor(
          *     If the requested program could not be executed.
          */
         @Throws(IOException::class)
-        private fun runWithEnv(command: String, environment: EnvironmentMap): Process =
-            Runtime.getRuntime().exec(command, (System.getenv() + environment).toArray())
+        private fun runWithEnv(
+            command: String,
+            environment: EnvironmentMap,
+            isolateProcessGroup: Boolean
+        ): Process {
+            val mergedEnvironment = System.getenv() + environment
+            if (!isolateProcessGroup) {
+                return Runtime.getRuntime().exec(command, mergedEnvironment.toArray())
+            }
+
+            val launchCommand = findSetSidCommand(command, mergedEnvironment)
+                ?: throw IOException("Unable to create an isolated shell: setsid was not found")
+            return Runtime.getRuntime().exec(launchCommand, mergedEnvironment.toArray())
+        }
+
+        private fun findSetSidCommand(
+            shellPath: String,
+            environment: EnvironmentMap
+        ): Array<String>? {
+            val candidates = linkedSetOf<File>()
+            File(shellPath).parentFile?.let { candidates += File(it, "setsid") }
+            environment["PATH"]
+                ?.split(File.pathSeparatorChar)
+                ?.filter(String::isNotBlank)
+                ?.forEach { candidates += File(it, "setsid") }
+            candidates += File("/system/bin/setsid")
+
+            candidates.firstOrNull { it.isFile && it.canExecute() }?.let { setsid ->
+                return arrayOf(setsid.absolutePath, shellPath)
+            }
+
+            val toybox = File("/system/bin/toybox")
+            return if (toybox.isFile && toybox.canExecute()) {
+                arrayOf(toybox.absolutePath, "setsid", shellPath)
+            } else {
+                null
+            }
+        }
+
+        private fun isAndroidRuntime(): Boolean =
+            System.getProperty("java.vm.name")?.contains("Dalvik", ignoreCase = true) == true
+
+        private fun Long.toProcessId(): Int {
+            if (this <= 0 || this > Int.MAX_VALUE) {
+                throw IOException("Invalid shell process id: $this")
+            }
+            return toInt()
+        }
 
         /**
          * Convert an array to an [EnvironmentMap] with each variable/value separated by '='.

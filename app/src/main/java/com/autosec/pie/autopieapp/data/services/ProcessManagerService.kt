@@ -114,7 +114,7 @@ class ProcessManagerService(
                             val runningShell = shells[it.processId]
 
                             if (runningShell != null) {
-                                runningShell.process.destroyForcibly()
+                                runningShell.interrupt()
                                 shells.remove(it.processId)
                                 Timber.d("Process terminated: ${it.processId}")
                                 main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(it.processId))
@@ -131,7 +131,7 @@ class ProcessManagerService(
                             Timber.d("Shells List: ${shells.keys}")
 
                             for(runningShell in shells.entries){
-                                runningShell.value.process.destroyForcibly()
+                                runningShell.value.interrupt()
                                 shells.remove(runningShell.key)
                                 Timber.d("Process terminated: ${runningShell.key}")
                                 main.dispatchEvent(ViewModelEvent.CommandStoppedByUser(runningShell.key))
@@ -312,12 +312,13 @@ class ProcessManagerService(
 
     }
 
-    private fun getNewShell(): Shell {
+    private fun getNewShell(isolateProcessGroup: Boolean = false): Shell {
         val shellPath = File(activity.filesDir, SHELL_PATH).absolutePath
 
         val newShell = Shell(
             shellPath,
             getTermuxShellEnvironment(),
+            isolateProcessGroup
         )
 
         Timber.d(". ." + activity.filesDir.absolutePath + "/env.sh " + activity.filesDir.absolutePath)
@@ -330,7 +331,7 @@ class ProcessManagerService(
     }
 
     private fun getOrCreateShell(processId: Int): Shell =
-        shells.computeIfAbsent(processId) { getNewShell() }
+        shells.computeIfAbsent(processId) { getNewShell(isolateProcessGroup = true) }
 
     private fun silentShellConfig(): Shell.Command.Config =
         Shell.Command.Config.Builder().apply {
