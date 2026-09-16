@@ -1,0 +1,7 @@
+What's New
+
+- Consolidated multi-stage command progress into a single notification that updates through completion.
+- Fixed command cancellation so the entire shell process group, including spawned child processes, is terminated reliably.
+- Process Cancellation and notifications fixed.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.18.2-beta...v0.18.3-beta

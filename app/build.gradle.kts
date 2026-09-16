@@ -20,8 +20,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 68
-        versionName = "0.18.2-beta"
+        versionCode = 69
+        versionName = "0.18.3-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
@@ -59,7 +59,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            //signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
