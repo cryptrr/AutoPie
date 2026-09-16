@@ -1,0 +1,9 @@
+What's Changed
+
+- Added manual command support to imported recipes and command screens.
+- Added recipe summaries to imported commands and home-screen cards.
+- Added a setting to switch home previews between summaries and commands.
+- Improved online command search with command types and timestamp-based ordering.
+- Fixed cron recipe conversion.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.18.1-beta...v0.18.2-beta
