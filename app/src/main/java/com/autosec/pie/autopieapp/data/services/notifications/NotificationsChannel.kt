@@ -115,10 +115,15 @@ class AutoPieNotification(
         logFile: String,
         processId: Int,
         silent: Boolean = true,
-        autoCancel: Boolean = false
+        autoCancel: Boolean = false,
+        reuseProcessNotification: Boolean = false
     ) {
         val channelId = MAIN_CHANNEL
-        val notificationId = System.currentTimeMillis().toInt()
+        val notificationId = if (reuseProcessNotification) {
+            processId
+        } else {
+            System.currentTimeMillis().toInt()
+        }
 
 
         val intent = Intent(Intent.ACTION_MAIN).apply {

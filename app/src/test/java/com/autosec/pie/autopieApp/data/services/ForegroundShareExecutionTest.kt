@@ -50,7 +50,7 @@ class ForegroundShareExecutionTest {
         coEvery { useCases.runCommand(any(), any(), any(), any(), any()) } answers {
             val id = arg<Int>(4)
             flow {
-                emit(CommandResult("test", id, true, "", JobType.FILE, "first"))
+                emit(CommandResult("test", id, true, "", JobType.FILE, "first", partial = true))
                 gates[id - 1].await()
                 emit(CommandResult("test", id, true, "", JobType.FILE, "second"))
             }
@@ -58,7 +58,8 @@ class ForegroundShareExecutionTest {
         fun intent(id: Int) = mockk<Intent>().also {
             every { it.getIntExtra("processId", any()) } returns id
             every { it.getStringExtra(any()) } returns null
-            every { it.getStringExtra("command") } returns """{"name":"test","command":"echo ok"}"""
+            every { it.getStringExtra("command") } returns
+                """{"name":"test","command":"echo ok","multiStage":true}"""
         }
 
         service.onStartCommand(intent(1), 0, 10)
@@ -71,7 +72,18 @@ class ForegroundShareExecutionTest {
         gates[1].complete(Unit)
         advanceUntilIdle()
         verify(exactly = 1) { service.stopSelfResult(11) }
-        verify(exactly = 4) { notification.sendNotification("Command Success", any(), any(), any(), any()) }
+        verify(exactly = 2) {
+            notification.sendNotification(
+                "Open Logs", any(), any(), any(), any(),
+                reuseProcessNotification = true
+            )
+        }
+        verify(exactly = 2) {
+            notification.sendNotification(
+                "Command Success", any(), any(), any(), any(),
+                reuseProcessNotification = true
+            )
+        }
         coVerify(exactly = 2) { useCases.runCommand(any(), null, emptyList(), emptyList(), any()) }
 
         coEvery { useCases.runCommand(any(), any(), any(), any(), any()) } returns emptyFlow()
@@ -83,6 +95,11 @@ class ForegroundShareExecutionTest {
         service.onStartCommand(intent(4), 0, 13)
         advanceUntilIdle()
         verify(exactly = 1) { service.stopSelfResult(13) }
-        verify(exactly = 1) { notification.sendNotification("Command Failed", any(), any(), any(), 4) }
+        verify(exactly = 1) {
+            notification.sendNotification(
+                "Command Failed", any(), any(), any(), 4,
+                reuseProcessNotification = true
+            )
+        }
     }
 }

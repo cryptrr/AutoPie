@@ -367,7 +367,8 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             "${item.name}  ${e.message}",
                             item,
                             logsFile.absolutePath,
-                            processId
+                            processId,
+                            reuseProcessNotification = item.multiStage == true
                         )
                     }
 
@@ -375,7 +376,14 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     if (receipt.success) {
                         Timber.d("Process Success".uppercase())
                         if (sendNotifications) {
-                            autoPieNotification.sendNotification("Command Success", "${item.name} ${receipt.jobKey}",item, logsFile.absolutePath, processId)
+                            autoPieNotification.sendNotification(
+                                if (receipt.partial) "Open Logs" else "Command Success",
+                                "${item.name} ${receipt.jobKey}",
+                                item,
+                                logsFile.absolutePath,
+                                processId,
+                                reuseProcessNotification = item.multiStage == true
+                            )
                         }
                         if (item.multiStage == true && !receipt.partial && !keepShellAlive) {
                             main.dispatchEvent(ViewModelEvent.StopShell(processId))
@@ -386,7 +394,14 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                             main.dispatchEvent(ViewModelEvent.StopShell(processId))
                         }
                         if (sendNotifications) {
-                            autoPieNotification.sendNotification("Command Failed", "${item.name} ${receipt.jobKey}",item, logsFile.absolutePath, processId)
+                            autoPieNotification.sendNotification(
+                                "Command Failed",
+                                "${item.name} ${receipt.jobKey}",
+                                item,
+                                logsFile.absolutePath,
+                                processId,
+                                reuseProcessNotification = item.multiStage == true
+                            )
                         }
                     }
 

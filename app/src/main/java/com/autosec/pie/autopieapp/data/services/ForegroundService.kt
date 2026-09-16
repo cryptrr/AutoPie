@@ -116,6 +116,7 @@ class ForegroundService : Service() {
             try {
                 withContext(dispatchers.io) {
                     var keepMultistageShell = false
+                    var retainProcessNotification = false
                     try {
                         useCases.runCommand(
                             request.command, request.inputText, request.inputFiles, request.extras, processId
@@ -124,13 +125,23 @@ class ForegroundService : Service() {
                             keepMultistageShell = receipt.success && receipt.partial
                             notifySafely {
                                 autoPieNotification.sendNotification(
-                                    if (receipt.success) "Command Success" else "Command Failed",
-                                    "${request.command.name} ${receipt.jobKey}", request.command, logPath, processId
+                                    when {
+                                        !receipt.success -> "Command Failed"
+                                        receipt.partial -> "Open Logs"
+                                        else -> "Command Success"
+                                    },
+                                    "${request.command.name} ${receipt.jobKey}",
+                                    request.command,
+                                    logPath,
+                                    processId,
+                                    reuseProcessNotification = request.command.multiStage == true
                                 )
                             }
+                            retainProcessNotification = request.command.multiStage == true
                         }
                     } catch (error: CancellationException) {
                         keepMultistageShell = false
+                        retainProcessNotification = false
                         throw error
                     } catch (error: Exception) {
                         keepMultistageShell = false
@@ -138,20 +149,22 @@ class ForegroundService : Service() {
                         notifySafely {
                             autoPieNotification.sendNotification(
                                 "Command Failed", "${request.command.name} ${error.message}",
-                                request.command, logPath, processId
+                                request.command, logPath, processId,
+                                reuseProcessNotification = request.command.multiStage == true
                             )
                         }
+                        retainProcessNotification = request.command.multiStage == true
                     } finally {
                         if (request.command.multiStage == true && !keepMultistageShell) {
                             mainViewModel.dispatchEvent(ViewModelEvent.StopShell(processId))
+                        }
+                        if (!retainProcessNotification) {
+                            notifySafely { autoPieNotification.cancelNotification(processId) }
                         }
                     }
                 }
             } finally {
                 runs.remove(run)
-                if (processId !in runs.values) {
-                    notifySafely { autoPieNotification.cancelNotification(processId) }
-                }
                 stopIfIdle()
             }
         }
