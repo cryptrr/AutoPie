@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.AutoPieTheme" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AutoPieTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
 
     <style name="ShareTheme" parent="@android:style/Theme.Translucent.NoTitleBar">
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -27,4 +29,3 @@
     </style>
     <style name="Theme.Ktsh.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark"/>
 </resources>
-
