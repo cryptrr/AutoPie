@@ -59,7 +59,9 @@ class ChangeCommandDetails(
         }
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-        storeSecretExtras(commandName.value, commandExtras.value, oldCommandName.value)
+        val commandId = commandObject.get("id")?.asString?.takeIf(String::isNotBlank)
+            ?: oldCommandName.value
+        storeSecretExtras(commandId, commandExtras.value, oldCommandName.value)
         val configExtras = commandExtras.value.map { it.withoutStoredSecretDefault() }
 
 
@@ -139,14 +141,16 @@ class ChangeCommandDetails(
         jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
-    private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>, previousCommandId: String) {
+    private fun storeSecretExtras(commandId: String, extras: List<CommandExtra>, legacyCommandId: String) {
         val service = secretsService ?: return
         extras.filter { it.isSecretExtra() }.forEach { extra ->
             val newKey = extra.secretKey(commandId)
-            val oldKey = extra.secretKey(previousCommandId)
+            val oldKey = extra.secretKey(legacyCommandId)
             val submittedValue = extra.default.takeUnless { it == SECRET_VALUE_PLACEHOLDER }.orEmpty()
             val value = submittedValue.ifBlank {
-                if (oldKey != newKey) service.get(oldKey).orEmpty() else service.get(newKey).orEmpty()
+                service.get(newKey).orEmpty().ifBlank {
+                    if (oldKey != newKey) service.get(oldKey).orEmpty() else ""
+                }
             }
 
             if (value.isNotEmpty()) {

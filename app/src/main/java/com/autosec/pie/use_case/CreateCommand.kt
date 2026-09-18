@@ -16,6 +16,8 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import timber.log.Timber
+import java.text.Normalizer
+import java.util.Locale
 
 class CreateCommand(
     private val jsonService: JsonService,
@@ -30,8 +32,9 @@ class CreateCommand(
 
 
         val commandObject = JsonObject()
+        val commandId = localCommandId(newCommand.commandName)
 
-
+        commandObject.addProperty("id", commandId)
         commandObject.addProperty("path", newCommand.directory)
         commandObject.addProperty("exec", newCommand.exec)
         commandObject.addProperty("command", newCommand.command)
@@ -52,7 +55,7 @@ class CreateCommand(
 
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
-        storeSecretExtras(newCommand.commandName, newCommand.commandExtras)
+        storeSecretExtras(commandId, newCommand.commandExtras)
         val configExtras = newCommand.commandExtras.map { it.withoutStoredSecretDefault() }
 
         if(configExtras.isNotEmpty()){
@@ -119,4 +122,14 @@ class CreateCommand(
             }
         }
     }
+}
+
+internal fun localCommandId(commandName: String): String {
+    val slug = Normalizer.normalize(commandName.trim(), Normalizer.Form.NFKD)
+        .replace("\\p{M}+".toRegex(), "")
+        .lowercase(Locale.ROOT)
+        .replace("[^a-z0-9]+".toRegex(), "-")
+        .trim('-')
+        .ifBlank { "command" }
+    return "local.$slug"
 }

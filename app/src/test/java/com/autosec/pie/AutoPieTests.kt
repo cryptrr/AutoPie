@@ -582,6 +582,8 @@ class CommandTests : KoinTest {
 
         createCommand(newCommand)
 
+        val created = jsonService.readCommandsConfig()!!.getAsJsonObject("Create Plumbus")
+        assertEquals("local.create-plumbus", created.get("id").asString)
 
         val getCommandsList = GetCommandsList(jsonService)
 
