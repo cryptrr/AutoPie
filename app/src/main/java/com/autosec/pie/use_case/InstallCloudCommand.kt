@@ -55,7 +55,7 @@ class InstallCloudCommand(
                         resolveCloudCommand(
                             commandId,
                             channel,
-                            includeInstallScript = runInstallScripts
+                            includeInstallation = runInstallScripts
                         )
                     }
                 }
@@ -69,12 +69,12 @@ class InstallCloudCommand(
         commandId: String,
         channel: CommandsRepositoryChannel,
         manifestYaml: String? = null,
-        includeInstallScript: Boolean = true
+        includeInstallation: Boolean = true
     ): ResolvedCloudCommand {
         val folderUrl = cloudCommandFolderUrl(commandId, channel)
         val resolvedManifestYaml = manifestYaml ?: fetchCloudCommandText("$folderUrl/manifest.yaml")
         val manifest = cloudManifestToShareCommandJson(resolvedManifestYaml)
-        val installScript = if (includeInstallScript) {
+        val installScript = if (includeInstallation) {
             manifest.installScript
                 ?.takeIf(String::isNotBlank)
                 ?.let { installScriptName -> fetchCloudCommandText("$folderUrl/$installScriptName") }
@@ -82,9 +82,21 @@ class InstallCloudCommand(
             null
         }
 
+        val installation = if (includeInstallation &&
+            (manifest.installDependencies.isNotEmpty() || installScript != null)
+        ) {
+            CloudCommandInstallation(
+                commandName = manifest.commandKey,
+                dependencies = manifest.installDependencies,
+                script = installScript
+            )
+        } else {
+            null
+        }
+
         return ResolvedCloudCommand(
             manifest = manifest,
-            installScript = installScript?.let { CloudCommandInstallScript(manifest.commandKey, it) }
+            installation = installation
         )
     }
 
@@ -94,8 +106,8 @@ class InstallCloudCommand(
         )
 
     private suspend fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
-        val installScripts = resolvedCommands.mapNotNull { it.installScript }
-        runInstallScripts(installScripts)
+        val installations = resolvedCommands.mapNotNull { it.installation }
+        runInstallations(installations)
 
         val commands = jsonService.readCommandsConfig() ?: throw ViewModelError.CommandConfigUnavailable
         resolvedCommands.forEach { resolvedCommand ->
@@ -106,14 +118,14 @@ class InstallCloudCommand(
         jsonService.writeCommandsConfig(gson.toJson(commands))
     }
 
-    private suspend fun runInstallScripts(installScripts: List<CloudCommandInstallScript>) {
-        if (installScripts.isEmpty()) {
+    private suspend fun runInstallations(installations: List<CloudCommandInstallation>) {
+        if (installations.isEmpty()) {
             return
         }
 
-        val installCommand = combinedCloudCommandInstallScript(installScripts)
-        val commandName = if (installScripts.size == 1) {
-            installScripts.single().commandName
+        val installCommand = combinedCloudCommandInstallScript(installations)
+        val commandName = if (installations.size == 1) {
+            installations.single().commandName
         } else {
             "Cloud commands"
         }
@@ -144,21 +156,39 @@ class InstallCloudCommand(
 
 private data class ResolvedCloudCommand(
     val manifest: CloudManifestCommand,
-    val installScript: CloudCommandInstallScript?
+    val installation: CloudCommandInstallation?
 )
 
-internal data class CloudCommandInstallScript(
+internal data class CloudCommandInstallation(
     val commandName: String,
-    val script: String
+    val dependencies: CloudCommandDependencies = CloudCommandDependencies(),
+    val script: String? = null
 )
 
-internal fun combinedCloudCommandInstallScript(installScripts: List<CloudCommandInstallScript>): String =
-    installScripts.joinToString(separator = "\n\n", postfix = "\n") { installScript ->
+internal data class CloudCommandDependencies(
+    val pkg: List<String> = emptyList(),
+    val pip: List<String> = emptyList()
+) {
+    fun isNotEmpty(): Boolean = pkg.isNotEmpty() || pip.isNotEmpty()
+}
+
+internal fun combinedCloudCommandInstallScript(installations: List<CloudCommandInstallation>): String =
+    installations.joinToString(separator = "\n\n", postfix = "\n") { installation ->
         buildString {
             append("printf '%s\\n' ")
-            append("Installing ${installScript.commandName.sanitizedForShellLabel()}".shellSingleQuote())
-            append('\n')
-            append(installScript.script.trimEnd())
+            append("Installing ${installation.commandName.sanitizedForShellLabel()}".shellSingleQuote())
+            installation.dependencies.pkg.takeIf(List<String>::isNotEmpty)?.let { packages ->
+                append("\npkg install -y ")
+                append(packages.joinToString(" ") { it.shellSingleQuote() })
+            }
+            installation.dependencies.pip.takeIf(List<String>::isNotEmpty)?.let { packages ->
+                append("\npip install ")
+                append(packages.joinToString(" ") { it.shellSingleQuote() })
+            }
+            installation.script?.takeIf(String::isNotBlank)?.let { script ->
+                append('\n')
+                append(script.trimEnd())
+            }
         }
     }
 
@@ -186,6 +216,7 @@ class GetCloudCommandDocumentation(private val appPreferences: AppPreferences) {
 internal data class CloudManifestCommand(
     val commandKey: String,
     val commandObject: JsonObject,
+    val installDependencies: CloudCommandDependencies,
     val installScript: String?
 )
 
@@ -216,6 +247,7 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
         ?: throw ViewModelError.InvalidCommandRepoFile
     val runtime = manifest.mapValue("runtime")
     val install = manifest.mapValue("install", required = false)
+    val dependencies = install.mapValue("dependencies", required = false)
     val id = manifest.stringValue("id")
     val version = manifest.stringValue("version", required = false)
     val name = manifest.stringValue("name").ifBlank { id }
@@ -294,6 +326,10 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     return CloudManifestCommand(
         commandKey = name,
         commandObject = commandObject,
+        installDependencies = CloudCommandDependencies(
+            pkg = dependencies.stringListValue("pkg").orEmpty(),
+            pip = dependencies.stringListValue("pip").orEmpty()
+        ),
         installScript = install.stringValue("script", required = false)
     )
 }

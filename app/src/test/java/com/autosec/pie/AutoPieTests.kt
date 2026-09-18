@@ -22,6 +22,9 @@ import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
+import com.autopi.use_case.CloudCommandDependencies
+import com.autopi.use_case.CloudCommandInstallation
+import com.autopi.use_case.combinedCloudCommandInstallScript
 import com.google.gson.Gson
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -205,6 +208,9 @@ class CommandTests : KoinTest {
                   PDF: "pdf"
                   Text: "txt"
             install:
+              dependencies:
+                pkg: [ffmpeg]
+                pip: [yt-dlp]
               script: "install.sh"
             """.trimIndent()
         )
@@ -215,6 +221,8 @@ class CommandTests : KoinTest {
         val selectableExtra = extras[1].asJsonObject
 
         assertEquals("Change Volume on Mac", manifest.commandKey)
+        assertEquals(listOf("ffmpeg"), manifest.installDependencies.pkg)
+        assertEquals(listOf("yt-dlp"), manifest.installDependencies.pip)
         assertEquals("install.sh", manifest.installScript)
         assertEquals("autopie.change-volume-on-mac", command.get("id").asString)
         assertEquals("1.0.0", command.get("version").asString)
@@ -434,6 +442,44 @@ class CommandTests : KoinTest {
         assertEquals(1, "autopie_pip_install_once yt-dlp".toRegex().findAll(installScript).count())
         assertFalse(installScript.contains("imagemagick"))
         assertFalse(installScript.contains("unknown"))
+    }
+
+    @Test
+    fun `cloud install puts manifest dependencies before optional script`() = runTest {
+        val installCommand = combinedCloudCommandInstallScript(
+            listOf(
+                CloudCommandInstallation(
+                    commandName = "Download video",
+                    dependencies = CloudCommandDependencies(
+                        pkg = listOf("ffmpeg"),
+                        pip = listOf("yt-dlp")
+                    ),
+                    script = "echo custom setup"
+                )
+            )
+        )
+
+        val pkgInstall = "pkg install -y 'ffmpeg'"
+        val pipInstall = "pip install 'yt-dlp'"
+        val customInstall = "echo custom setup"
+        assertTrue(installCommand.indexOf(pkgInstall) < installCommand.indexOf(pipInstall))
+        assertTrue(installCommand.indexOf(pipInstall) < installCommand.indexOf(customInstall))
+    }
+
+    @Test
+    fun `cloud install falls back to script when dependencies are absent`() = runTest {
+        val installCommand = combinedCloudCommandInstallScript(
+            listOf(
+                CloudCommandInstallation(
+                    commandName = "Legacy command",
+                    script = "echo legacy setup"
+                )
+            )
+        )
+
+        assertTrue(installCommand.contains("echo legacy setup"))
+        assertFalse(installCommand.contains("pkg install"))
+        assertFalse(installCommand.contains("pip install"))
     }
 
     @Test

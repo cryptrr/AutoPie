@@ -544,7 +544,17 @@ Treat the cookie jar as sensitive because it may contain active login sessions.
 
 ## Command catalog and packages
 
-The **Commands** catalog is backed by [autopie-commands](https://github.com/cryptrr/autopie-commands). You can search by name, ID, summary, or tag; read a command's README and changelog; install it; and update it when a newer catalog version is available. A catalog command can include an install script for its Termux or Python dependencies.
+The **Commands** catalog is backed by [autopie-commands](https://github.com/cryptrr/autopie-commands). You can search by name, ID, summary, or tag; read a command's README and changelog; install it; and update it when a newer catalog version is available. A catalog command can declare Termux and Python dependencies and may also include a custom install script:
+
+```yaml
+install:
+  dependencies:
+    pkg: [ffmpeg]
+    pip: [yt-dlp]
+  script: install.sh
+```
+
+AutoPie installs declared `pkg` dependencies first, then `pip` dependencies, and finally runs `install.script` when provided. Manifests without `dependencies` continue to use the install script directly.
 
 The embedded terminal is still the fastest way to install arbitrary tools:
 
