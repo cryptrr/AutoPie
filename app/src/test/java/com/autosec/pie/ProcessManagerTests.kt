@@ -55,7 +55,8 @@ class ProcessManagerTests : KoinTest {
         val service: ProcessManagerService,
         val configPathProvider: AutoPieConfigPathProvider,
         val mainViewModel: MainViewModel,
-        val autoPieNotification: AutoPieNotification
+        val autoPieNotification: AutoPieNotification,
+        val termuxBin: File
     )
 
     private fun createProcessManagerService(
@@ -104,7 +105,8 @@ class ProcessManagerTests : KoinTest {
             ),
             configPathProvider = autoPieConfigPathProvider,
             mainViewModel = mainViewModel,
-            autoPieNotification = autoPieNotification
+            autoPieNotification = autoPieNotification,
+            termuxBin = File(testFilesDir, "usr/bin")
         )
     }
 
@@ -115,6 +117,37 @@ class ProcessManagerTests : KoinTest {
         assertFalse(shouldReplaceWidgetOutput(JobType.CRON, "   "))
         assertTrue(shouldReplaceWidgetOutput(JobType.CRON, "42"))
         assertTrue(shouldReplaceWidgetOutput(JobType.STANDALONE, ""))
+    }
+
+    @Test
+    fun `dependency check reports only packages missing from Termux shell`() = runTest {
+        val fixture = createProcessManagerService("dependency-check")
+        File(fixture.termuxBin, "dpkg").apply {
+            writeText(
+                """
+                #!/bin/sh
+                [ "${'$'}1" = "-s" ] && [ "${'$'}2" = "ffmpeg" ]
+                """.trimIndent()
+            )
+            setExecutable(true)
+        }
+        File(fixture.termuxBin, "pip").apply {
+            writeText(
+                """
+                #!/bin/sh
+                [ "${'$'}1" = "show" ] && [ "${'$'}2" = "yt-dlp" ]
+                """.trimIndent()
+            )
+            setExecutable(true)
+        }
+
+        val missing = fixture.service.findMissingTermuxDependencies(
+            pkgPackages = listOf("ffmpeg", "aria2"),
+            pipPackages = listOf("yt-dlp", "gallery-dl")
+        )
+
+        assertEquals(listOf("aria2"), missing.pkg)
+        assertEquals(listOf("gallery-dl"), missing.pip)
     }
 
     @Test

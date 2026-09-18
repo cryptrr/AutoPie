@@ -344,7 +344,7 @@ fun EditCommandScreen(commandKey: String, open: MutableState<Boolean>) {
                         extrasElements = extrasElements,
                         onAddCommandExtra = { viewModel.addCommandExtra(it) },
                         onRemoveCommandExtra = { viewModel.removeCommandExtra(it) },
-                        commandId = viewModel.oldCommandName.value.ifBlank { commandKey }
+                        commandId = viewModel.commandId.value.ifBlank { commandKey }
                     )
                 }
 

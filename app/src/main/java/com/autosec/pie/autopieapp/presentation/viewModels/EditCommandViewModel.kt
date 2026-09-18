@@ -35,6 +35,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
 
 
     val oldCommandName = mutableStateOf("")
+    val commandId = mutableStateOf("")
     val commandName = mutableStateOf("")
     val execFile = mutableStateOf("")
     val command = mutableStateOf("")
@@ -87,6 +88,7 @@ class EditCommandViewModel(application: Application, private val jsonService: Js
                     .toJson(rawCommandWrapper)
                 withContext(dispatchers.main) {
                     oldCommandName.value = key
+                    commandId.value = commandModel.id.ifBlank { key }
                     commandName.value = key
                     //TODO: Careful
                     type.value = commandModel.type.toString()

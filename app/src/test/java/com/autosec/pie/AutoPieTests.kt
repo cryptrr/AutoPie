@@ -1,6 +1,7 @@
 package com.autopi
 
 
+import android.app.Application
 import android.os.Environment
 import com.autopi.autopieApp.data.services.FakeJSONService
 import com.autopi.autopieapp.data.CommandCreationModel
@@ -8,6 +9,8 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.HomeCommandPreview
 import com.autopi.autopieapp.data.homePreview
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.matchesSearch
@@ -16,18 +19,25 @@ import com.autopi.use_case.ChangeCommandDetails
 import com.autopi.use_case.GetCommandDetails
 import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
+import com.autopi.use_case.InstallCloudCommand
 import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
 import com.autopi.autopieapp.presentation.viewModels.keywordInstallScriptFor
 import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
+import com.autopi.autopieapp.data.services.MissingTermuxDependencies
 import com.autopi.use_case.cloudManifestDocs
 import com.autopi.use_case.cloudManifestToShareCommandJson
 import com.autopi.use_case.CloudCommandDependencies
 import com.autopi.use_case.CloudCommandInstallation
+import com.autopi.use_case.CloudCommandInstallationState
 import com.autopi.use_case.combinedCloudCommandInstallScript
+import com.autopi.use_case.pendingCloudCommandInstallations
 import com.google.gson.Gson
 import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockkStatic
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -483,6 +493,124 @@ class CommandTests : KoinTest {
         assertTrue(installCommand.contains("echo legacy setup"))
         assertFalse(installCommand.contains("pkg install"))
         assertFalse(installCommand.contains("pip install"))
+    }
+
+    @Test
+    fun `cloud install keeps only missing dependencies and skips unchanged installer`() = runTest {
+        val pendingInstallations = pendingCloudCommandInstallations(
+            states = listOf(
+                CloudCommandInstallationState(
+                    installation = CloudCommandInstallation(
+                        commandName = "Download video",
+                        dependencies = CloudCommandDependencies(
+                            pkg = listOf("ffmpeg", "aria2"),
+                            pip = listOf("yt-dlp")
+                        ),
+                        script = "echo custom setup",
+                        installerVersion = "2.1.0"
+                    ),
+                    installedInstallerVersion = "2.1.0"
+                )
+            ),
+            missingDependencies = MissingTermuxDependencies(pkg = listOf("aria2"))
+        )
+
+        assertEquals(1, pendingInstallations.size)
+        assertEquals(listOf("aria2"), pendingInstallations.single().dependencies.pkg)
+        assertTrue(pendingInstallations.single().dependencies.pip.isEmpty())
+        assertEquals(null, pendingInstallations.single().script)
+    }
+
+    @Test
+    fun `cloud install is skipped when dependencies and installer are current`() = runTest {
+        val pendingInstallations = pendingCloudCommandInstallations(
+            states = listOf(
+                CloudCommandInstallationState(
+                    installation = CloudCommandInstallation(
+                        commandName = "Download video",
+                        dependencies = CloudCommandDependencies(pkg = listOf("ffmpeg")),
+                        script = "echo custom setup",
+                        installerVersion = "2.1.0"
+                    ),
+                    installedInstallerVersion = "2.1.0"
+                )
+            ),
+            missingDependencies = MissingTermuxDependencies()
+        )
+
+        assertTrue(pendingInstallations.isEmpty())
+    }
+
+    @Test
+    fun `cloud install does not open Termux when every dependency exists`() = runTest {
+        val processManagerService = mockk<ProcessManagerService>(relaxed = true)
+        coEvery {
+            processManagerService.findMissingTermuxDependencies(any(), any())
+        } returns MissingTermuxDependencies()
+        val appPreferences = mockk<AppPreferences>(relaxed = true)
+        every { appPreferences.getStringSync(any()) } returns ""
+        val installer = InstallCloudCommand(
+            jsonService = FakeJSONService(),
+            processManagerService = processManagerService,
+            application = mockk<Application>(relaxed = true),
+            appPreferences = appPreferences
+        )
+
+        installer(
+            commandId = "autopie.dependencies-current",
+            manifestYaml =
+                """
+                id: "autopie.dependencies-current"
+                name: "Dependencies current"
+                runtime:
+                  command: "echo ready"
+                install:
+                  dependencies:
+                    pkg: [ffmpeg]
+                    pip: [yt-dlp]
+                """.trimIndent()
+        )
+
+        coVerify(exactly = 0) {
+            processManagerService.runCommandInTermuxShell(
+                commandObject = any(),
+                exec = any(),
+                command = any(),
+                cwd = any(),
+                commandExtraInputs = any(),
+                rawInput = any(),
+                processId = any(),
+                jobType = any(),
+                usePython = any(),
+                isShellScript = any()
+            )
+        }
+    }
+
+    @Test
+    fun `legacy or changed installer still runs when dependencies are current`() = runTest {
+        val pendingInstallations = pendingCloudCommandInstallations(
+            states = listOf(
+                CloudCommandInstallationState(
+                    installation = CloudCommandInstallation(
+                        commandName = "Changed installer",
+                        script = "echo changed",
+                        installerVersion = "2.1.0"
+                    ),
+                    installedInstallerVersion = "2.0.0"
+                ),
+                CloudCommandInstallationState(
+                    installation = CloudCommandInstallation(
+                        commandName = "Legacy installer",
+                        script = "echo legacy"
+                    ),
+                    installedInstallerVersion = null
+                )
+            ),
+            missingDependencies = MissingTermuxDependencies()
+        )
+
+        assertEquals(listOf("echo changed", "echo legacy"), pendingInstallations.map { it.script })
     }
 
     @Test

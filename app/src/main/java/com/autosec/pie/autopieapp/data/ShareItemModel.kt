@@ -12,6 +12,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.annotations.JsonAdapter
 import java.lang.reflect.Type
+import java.util.Locale
 
 const val SECRET_VALUE_PLACEHOLDER = "⬤⬤⬤⬤⬤⬤⬤⬤"
 
@@ -196,7 +197,13 @@ data class CommandExtra(
 )
 
 fun CommandExtra.isSecretExtra(): Boolean =
-    flags.hasFlag(ExtraFlags.PASSWORD) || flags.hasFlag(ExtraFlags.SECRET)
+    flags.hasFlag(ExtraFlags.PASSWORD) ||
+        flags.hasFlag(ExtraFlags.SECRET) ||
+        name.uppercase(Locale.ROOT).let { normalizedName ->
+            normalizedName.endsWith("PASSWORD") ||
+                normalizedName.endsWith("PASSWD") ||
+                normalizedName.endsWith("SECRET")
+        }
 
 fun CommandExtra.secretKey(commandId: String): String = "$commandId@$name"
 

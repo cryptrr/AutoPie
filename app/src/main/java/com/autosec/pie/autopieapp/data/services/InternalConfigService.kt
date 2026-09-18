@@ -3,6 +3,7 @@ package com.autopi.autopieapp.data.services
 import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isSecretExtra
 import com.tencent.mmkv.MMKV
 
 class InternalConfigService(
@@ -17,6 +18,27 @@ class InternalConfigService(
     fun set(commandId: String, extraId: String, value: String): Boolean {
         if (commandId.isBlank() || extraId.isBlank()) return false
         return mmkv.encode(storageKey(commandId, extraId), value)
+    }
+
+    fun delete(commandId: String, extraId: String): Boolean {
+        if (commandId.isBlank() || extraId.isBlank()) return false
+        mmkv.removeValueForKey(storageKey(commandId, extraId))
+        return true
+    }
+
+    fun sync(commandId: String, extra: CommandExtra): Boolean {
+        if (!extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) || extra.isSecretExtra()) {
+            return delete(commandId, extra.id)
+        }
+
+        val value = when (extra.type) {
+            "BOOLEAN" -> extra.defaultBoolean.toString()
+            "FLAG" -> if (extra.defaultBoolean) extra.default else ""
+            "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> extra.default
+            "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> extra.default.takeIf(String::isNotBlank)
+            else -> null
+        }
+        return if (value == null) delete(commandId, extra.id) else set(commandId, extra.id, value)
     }
 
     fun resolve(commandId: String, extra: CommandExtra): CommandExtra {

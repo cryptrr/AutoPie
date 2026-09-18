@@ -38,4 +38,19 @@ class InternalConfigServiceTest {
 
         assertEquals(false, resolved.defaultBoolean)
     }
+
+    @Test
+    fun `sync replaces persisted string with edited default`() {
+        every { mmkv.encode(any<String>(), "new value") } returns true
+        val extra = CommandExtra(
+            id = "folder",
+            type = "STRING",
+            default = "new value",
+            flags = listOf(ExtraFlags.INTERNAL_CONFIG.value)
+        )
+
+        service.sync("local.command", extra)
+
+        verify { mmkv.encode("13:local.command6:folder", "new value") }
+    }
 }

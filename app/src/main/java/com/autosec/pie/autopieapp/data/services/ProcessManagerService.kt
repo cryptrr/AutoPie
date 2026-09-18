@@ -1046,6 +1046,37 @@ class ProcessManagerService(
         }
     }
 
+    internal suspend fun findMissingTermuxDependencies(
+        pkgPackages: List<String>,
+        pipPackages: List<String>
+    ): MissingTermuxDependencies = withContext(dispatchers.io) {
+        val requestedPkgPackages = pkgPackages.distinct()
+        val requestedPipPackages = pipPackages.distinct()
+        if (requestedPkgPackages.isEmpty() && requestedPipPackages.isEmpty()) {
+            return@withContext MissingTermuxDependencies()
+        }
+
+        val checkShell = getNewShell()
+        try {
+            MissingTermuxDependencies(
+                pkg = requestedPkgPackages.filter { packageName ->
+                    !checkShell.run(
+                        "dpkg -s ${packageName.shellQuote()} >/dev/null 2>&1",
+                        silentShellConfig()
+                    ).isSuccess
+                },
+                pip = requestedPipPackages.filter { packageName ->
+                    !checkShell.run(
+                        "pip show ${packageName.shellQuote()} >/dev/null 2>&1",
+                        silentShellConfig()
+                    ).isSuccess
+                }
+            )
+        } finally {
+            checkShell.shutdown()
+        }
+    }
+
     fun linkBusyboxAr(): Boolean {
         Timber.d("Linking busybox ar to usr/bin")
 
@@ -1252,6 +1283,11 @@ class ProcessManagerService(
 
 
 }
+
+internal data class MissingTermuxDependencies(
+    val pkg: List<String> = emptyList(),
+    val pip: List<String> = emptyList()
+)
 
 internal fun shouldReplaceWidgetOutput(
     jobType: JobType,

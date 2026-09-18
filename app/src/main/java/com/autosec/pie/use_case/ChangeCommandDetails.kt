@@ -6,17 +6,20 @@ import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.data.withoutStoredSecretDefault
 import com.autopi.autopieapp.domain.ViewModelError
 import com.google.gson.GsonBuilder
+import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 import timber.log.Timber
 
 class ChangeCommandDetails(
     private val jsonService: JsonService,
-    private val secretsService: SecretsService? = null
+    private val secretsService: SecretsService? = null,
+    private val internalConfigService: InternalConfigService? = null
 ) {
     suspend operator fun invoke(key: String, commandExtras: MutableState<List<CommandExtra>>, oldCommandName: MutableState<String>, selectors: MutableState<String>, commandName: MutableState<String>, directory: MutableState<String>, execFile: MutableState<String>, command: MutableState<String>, type: MutableState<String>, cronInterval: MutableState<String>) {
         Timber.tag("ThreadCheck").d("Running on: ${Thread.currentThread().name}")
@@ -62,6 +65,7 @@ class ChangeCommandDetails(
         val commandId = commandObject.get("id")?.asString?.takeIf(String::isNotBlank)
             ?: oldCommandName.value
         storeSecretExtras(commandId, commandExtras.value, oldCommandName.value)
+        syncInternalConfigExtras(commandId, commandExtras.value)
         val configExtras = commandExtras.value.map { it.withoutStoredSecretDefault() }
 
 
@@ -133,6 +137,19 @@ class ChangeCommandDetails(
             throw ViewModelError.CommandNotFound
         }
 
+        val previousCommand = commands.getAsJsonObject(key)
+        val commandId = newValue.asJsonObject.get("id")?.asString?.takeIf(String::isNotBlank)
+            ?: previousCommand?.get("id")?.asString?.takeIf(String::isNotBlank)
+            ?: key
+        val editedExtras = newValue.asJsonObject.get("extras")
+            ?.takeIf { it.isJsonArray }
+            ?.asJsonArray
+            ?.mapNotNull { extra ->
+                runCatching { Gson().fromJson(extra, CommandExtra::class.java) }.getOrNull()
+            }
+            .orEmpty()
+        syncInternalConfigExtras(commandId, editedExtras)
+
         if (newKey != key) {
             commands.remove(key)
         }
@@ -158,6 +175,11 @@ class ChangeCommandDetails(
                 if (oldKey != newKey) service.delete(oldKey)
             }
         }
+    }
+
+    private fun syncInternalConfigExtras(commandId: String, extras: List<CommandExtra>) {
+        val service = internalConfigService ?: return
+        extras.forEach { service.sync(commandId, it) }
     }
 
 }

@@ -8,6 +8,7 @@ import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.CommandsRepositoryUrls
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.MissingTermuxDependencies
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.ViewModelError
 import com.google.gson.Gson
@@ -88,7 +89,8 @@ class InstallCloudCommand(
             CloudCommandInstallation(
                 commandName = manifest.commandKey,
                 dependencies = manifest.installDependencies,
-                script = installScript
+                script = installScript,
+                installerVersion = manifest.installerVersion
             )
         } else {
             null
@@ -106,10 +108,35 @@ class InstallCloudCommand(
         )
 
     private suspend fun installResolvedCommands(resolvedCommands: List<ResolvedCloudCommand>) {
-        val installations = resolvedCommands.mapNotNull { it.installation }
-        runInstallations(installations)
-
         val commands = jsonService.readCommandsConfig() ?: throw ViewModelError.CommandConfigUnavailable
+        val installationStates = resolvedCommands.mapNotNull { resolvedCommand ->
+            resolvedCommand.installation?.let { installation ->
+                CloudCommandInstallationState(
+                    installation = installation,
+                    installedInstallerVersion = commands.installedInstallerVersionFor(
+                        resolvedCommand.manifest
+                    )
+                )
+            }
+        }
+        val requestedDependencies = installationStates
+            .map { it.installation.dependencies }
+            .fold(CloudCommandDependencies()) { combined, dependencies ->
+                CloudCommandDependencies(
+                    pkg = combined.pkg + dependencies.pkg,
+                    pip = combined.pip + dependencies.pip
+                )
+            }
+        val missingDependencies = processManagerService.findMissingTermuxDependencies(
+            pkgPackages = requestedDependencies.pkg,
+            pipPackages = requestedDependencies.pip
+        )
+        val pendingInstallations = pendingCloudCommandInstallations(
+            states = installationStates,
+            missingDependencies = missingDependencies
+        )
+        runInstallations(pendingInstallations)
+
         resolvedCommands.forEach { resolvedCommand ->
             commands.add(resolvedCommand.manifest.commandKey, resolvedCommand.manifest.commandObject)
         }
@@ -162,7 +189,13 @@ private data class ResolvedCloudCommand(
 internal data class CloudCommandInstallation(
     val commandName: String,
     val dependencies: CloudCommandDependencies = CloudCommandDependencies(),
-    val script: String? = null
+    val script: String? = null,
+    val installerVersion: String? = null
+)
+
+internal data class CloudCommandInstallationState(
+    val installation: CloudCommandInstallation,
+    val installedInstallerVersion: String?
 )
 
 internal data class CloudCommandDependencies(
@@ -170,6 +203,31 @@ internal data class CloudCommandDependencies(
     val pip: List<String> = emptyList()
 ) {
     fun isNotEmpty(): Boolean = pkg.isNotEmpty() || pip.isNotEmpty()
+}
+
+internal fun pendingCloudCommandInstallations(
+    states: List<CloudCommandInstallationState>,
+    missingDependencies: MissingTermuxDependencies
+): List<CloudCommandInstallation> {
+    val remainingPkgPackages = missingDependencies.pkg.toMutableSet()
+    val remainingPipPackages = missingDependencies.pip.toMutableSet()
+
+    return states.mapNotNull { state ->
+        val installation = state.installation
+        val pendingDependencies = CloudCommandDependencies(
+            pkg = installation.dependencies.pkg.filter(remainingPkgPackages::remove),
+            pip = installation.dependencies.pip.filter(remainingPipPackages::remove)
+        )
+        val installerVersion = installation.installerVersion?.takeIf(String::isNotBlank)
+        val pendingScript = installation.script?.takeUnless {
+            installerVersion != null && installerVersion == state.installedInstallerVersion
+        }
+
+        installation.copy(
+            dependencies = pendingDependencies,
+            script = pendingScript
+        ).takeIf { pendingDependencies.isNotEmpty() || pendingScript != null }
+    }
 }
 
 internal fun combinedCloudCommandInstallScript(installations: List<CloudCommandInstallation>): String =
@@ -217,6 +275,7 @@ internal data class CloudManifestCommand(
     val commandKey: String,
     val commandObject: JsonObject,
     val installDependencies: CloudCommandDependencies,
+    val installerVersion: String?,
     val installScript: String?
 )
 
@@ -333,8 +392,27 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
             pkg = dependencies.stringListValue("pkg").orEmpty(),
             pip = dependencies.stringListValue("pip").orEmpty()
         ),
+        installerVersion = installerVersion.takeIf(String::isNotBlank),
         installScript = install.stringValue("script", required = false)
     )
+}
+
+private fun JsonObject.installedInstallerVersionFor(manifest: CloudManifestCommand): String? {
+    val commandId = manifest.commandObject.get("id")?.asString
+    val installedCommand = get(manifest.commandKey)
+        ?.takeIf { it.isJsonObject }
+        ?.asJsonObject
+        ?: entrySet().asSequence()
+            .map { it.value }
+            .filter { it.isJsonObject }
+            .map { it.asJsonObject }
+            .firstOrNull { it.get("id")?.asString == commandId }
+
+    return installedCommand
+        ?.get("installerVersion")
+        ?.takeIf { it.isJsonPrimitive }
+        ?.asString
+        ?.takeIf(String::isNotBlank)
 }
 
 private fun Map<String, Any?>.commandType(runtime: Map<String, Any?>): CommandType = when (

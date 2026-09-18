@@ -471,10 +471,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         "STRING" -> {
 
                             val isPasswordField = remember(extra.name, extra.flags) {
-                                extra.flags.hasFlag(ExtraFlags.PASSWORD) ||
-                                    extra.name.endsWith("PASSWORD") ||
-                                    extra.name.endsWith("PASSWD") ||
-                                    extra.name.endsWith("SECRET")
+                                extra.isSecretExtra()
                             }
                             val useMultiFilePicker = remember(extra.name, extra.flags) {
                                 extra.flags.hasFlag(ExtraFlags.MULTI_FILE_PICKER) || extra.name.endsWith("FILES")

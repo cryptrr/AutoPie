@@ -5,6 +5,7 @@ import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isSecretExtra
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import org.junit.Assert.assertEquals
@@ -29,6 +30,14 @@ class CommandExtraFlagsTest {
         val extra = Gson().fromJson("""{"id":"1"}""", CommandExtra::class.java)
 
         assertTrue(extra.flags.orEmpty().isEmpty())
+    }
+
+    @Test
+    fun `password-like extra names are treated as secrets without flags`() {
+        assertTrue(CommandExtra(id = "1", name = "PASSWORD").isSecretExtra())
+        assertTrue(CommandExtra(id = "2", name = "api_secret").isSecretExtra())
+        assertTrue(CommandExtra(id = "3", name = "ssh_passwd").isSecretExtra())
+        assertFalse(CommandExtra(id = "4", name = "USERNAME").isSecretExtra())
     }
 
     @Test
