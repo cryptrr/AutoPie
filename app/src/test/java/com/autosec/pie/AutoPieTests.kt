@@ -167,6 +167,7 @@ class CommandTests : KoinTest {
 
         assertEquals("MANUAL", command.get("type").asString)
         assertEquals("openssh", command.get("exec").asString)
+        assertFalse(command.has("installerVersion"))
         assertEquals(
             "Set a Mac's output volume remotely over SSH.",
             command.get("summary").asString
@@ -208,6 +209,7 @@ class CommandTests : KoinTest {
                   PDF: "pdf"
                   Text: "txt"
             install:
+              installerVersion: "2.1.0"
               dependencies:
                 pkg: [ffmpeg]
                 pip: [yt-dlp]
@@ -226,6 +228,7 @@ class CommandTests : KoinTest {
         assertEquals("install.sh", manifest.installScript)
         assertEquals("autopie.change-volume-on-mac", command.get("id").asString)
         assertEquals("1.0.0", command.get("version").asString)
+        assertEquals("2.1.0", command.get("installerVersion").asString)
         assertEquals("SHARE", command.get("type").asString)
         assertEquals("AutoSec/scripts", command.get("path").asString)
         assertEquals("openssh", command.get("exec").asString)

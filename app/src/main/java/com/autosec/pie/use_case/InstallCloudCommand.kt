@@ -250,6 +250,7 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     val dependencies = install.mapValue("dependencies", required = false)
     val id = manifest.stringValue("id")
     val version = manifest.stringValue("version", required = false)
+    val installerVersion = install.stringValue("installerVersion", required = false)
     val name = manifest.stringValue("name").ifBlank { id }
     val summary = manifest.stringValue("summary", required = false)
     val commandSlug = manifest.stringValue("commandSlug", required = false)
@@ -257,6 +258,8 @@ internal fun cloudManifestToShareCommandJson(manifestYaml: String): CloudManifes
     val commandObject = JsonObject().apply {
         addProperty("id", id)
         addProperty("version", version)
+        installerVersion.takeIf(String::isNotBlank)
+            ?.let { addProperty("installerVersion", it) }
         summary.takeIf(String::isNotBlank)?.let { addProperty("summary", it) }
         addProperty("type", commandType.name)
         addProperty("path", "")

@@ -30,6 +30,7 @@ data class CommandModel(
     override val multiStage: Boolean? = false,
     override val steps: List<CommandStep> = emptyList(),
     override val version: String = "",
+    val installerVersion: String? = null,
     override val summary: String = "",
     ) : CommandInterface
 

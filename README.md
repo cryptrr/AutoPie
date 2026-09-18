@@ -548,6 +548,7 @@ The **Commands** catalog is backed by [autopie-commands](https://github.com/cryp
 
 ```yaml
 install:
+  installerVersion: "2.1.0"
   dependencies:
     pkg: [ffmpeg]
     pip: [yt-dlp]
