@@ -64,7 +64,7 @@ fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): C
 
 fun CommandModel.firstStepOrSelf(): CommandModel {
     if (multiStage != true) return this
-    val parentId = name.ifBlank { id }
+    val parentId = id.ifBlank { name }
     val identifiedSteps = steps.mapIndexed { index, step ->
         if (step.id.isBlank()) step.copy(id = index.toString()) else step
     }
@@ -85,7 +85,7 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
     if (multiStage != true || steps.size <= 1) return null
     val remainingSteps = steps.drop(1)
     val nextStep = remainingSteps.first()
-    val parentId = name.ifBlank { id.substringBeforeLast('.', id) }
+    val parentId = id.substringBeforeLast('.', id).ifBlank { name }
     return copy(
         id = nextStep.namespacedId(parentId),
         path = nextStep.path,

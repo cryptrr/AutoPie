@@ -59,7 +59,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            //signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.navigation.compose)
     implementation(libs.material.icons.extended)
+    implementation(libs.mmkv)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))

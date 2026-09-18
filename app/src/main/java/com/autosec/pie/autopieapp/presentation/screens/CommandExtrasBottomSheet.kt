@@ -83,6 +83,7 @@ import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
 import com.autopi.autopieapp.data.resolveEnvironmentBackedValue
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.SecretsService
+import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.toMultiSelectableValue
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.elements.GenericTextFormField
@@ -269,6 +270,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
     val viewModel: ShareReceiverViewModel = koinViewModel()
     val secretsService: SecretsService by KoinJavaComponent.inject(SecretsService::class.java)
+    val internalConfigService: InternalConfigService by KoinJavaComponent.inject(InternalConfigService::class.java)
 
     // Keep these tied to the active invocation. Remembering the first values caused a
     // reused sheet to retain the null inputs from an earlier non-share invocation.
@@ -309,10 +311,13 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     }
 
 
-    val commandExtraInputs = remember(command.extras) {
+    val resolvedExtras = remember(command.id, command.extras) {
+        command.extras.orEmpty().map { internalConfigService.resolve(command.id, it) }
+    }
+
+    val commandExtraInputs = remember(resolvedExtras) {
         mutableStateOf(
-            command.extras.orEmpty()
-                .map { extra -> extra.toInitialInput() }
+            resolvedExtras.map { extra -> extra.toInitialInput() }
         )
     }
 
@@ -328,7 +333,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         }
     }
 
-    val internalConfigExtras = command.extras.orEmpty()
+    val internalConfigExtras = resolvedExtras
         .filter { it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) }
     val hasEmptyInternalConfigExtra = internalConfigExtras.any(::isUnsetInternalConfigExtra)
     var showInternalConfigExtras by rememberSaveable(command.id, internalConfigExtras.map { it.id }.joinToString()) {
@@ -336,7 +341,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     }
 
     val extraValuesById = commandExtraInputs.value.associate { it.id to it.value }
-    val visibleExtras = command.extras.orEmpty()
+    val visibleExtras = resolvedExtras
         .filter { extra ->
             !extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) || showInternalConfigExtras
         }
@@ -361,7 +366,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     val isRealtimeCommand = command.flags.hasFlag(CommandFlags.REALTIME)
     val realtimeInputs = commandExtraInputs.value
     val realtimeTriggerInputs = realtimeInputs.filter { input ->
-        val extra = command.extras.orEmpty()
+        val extra = resolvedExtras
             .firstOrNull { extra -> extra.id == input.id || extra.name == input.name }
         extra?.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) != true &&
             (isRealtimeCommand || extra?.flags.hasFlag(ExtraFlags.REALTIME) == true)

@@ -17,6 +17,7 @@ ktsh = "1.0.0"
 lifecycleRuntimeKtx = "2.9.2"
 material = "1.12.0"
 materialIconsExtended = "1.7.8"
+mmkv = "2.4.2"
 multiplatformMarkdownRendererM3 = "0.35.0"
 navigationCompose = "2.9.2"
 roomCompiler = "2.7.2"
@@ -52,6 +53,7 @@ language-json = { module = "com.blacksquircle.ui:language-json", version.ref = "
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 material3 = { module = "androidx.compose.material3:material3" }
 multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatformMarkdownRendererM3" }
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRendererM3" }

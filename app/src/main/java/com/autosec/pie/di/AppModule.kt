@@ -17,6 +17,7 @@ import com.autopi.autopieapp.data.services.JSONServiceImpl
 import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.SecretsService
+import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.presentation.viewModels.CloudPackagesViewModel
 import com.autopi.autopieapp.presentation.viewModels.CommandHistoryViewModel
@@ -53,10 +54,12 @@ val appModule = module {
             get(),
             get(),
             secretsService = get(),
-            autoPieNotification = get()
+            autoPieNotification = get(),
+            internalConfigService = get()
         )
     }
     single<SecretsService> { SecretsService(get()) }
+    single<InternalConfigService> { InternalConfigService() }
     viewModel<ShareReceiverViewModel> { ShareReceiverViewModel(get())}
     viewModel<OutputViewerViewModel> { OutputViewerViewModel(get())}
     viewModel<CommandHistoryViewModel> { CommandHistoryViewModel(get())}

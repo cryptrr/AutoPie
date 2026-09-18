@@ -64,6 +64,7 @@ class ProcessManagerService(
     private val shellTimeout: Shell.Timeout? = null,
     private val secretsService: SecretsService = SecretsService(activity),
     private val autoPieNotification: AutoPieNotification,
+    private val internalConfigService: InternalConfigService,
 ){
 
     private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
@@ -401,6 +402,8 @@ class ProcessManagerService(
                 //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
                 val extraValue = if (extra.isSecretExtra()) {
                     secretsService.get(extra.secretKey(commandObject.secretCommandId())) ?: extra.default
+                } else if (extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) {
+                    internalConfigService.get(commandObject.id, extra.id) ?: extra.default
                 } else {
                     extra.default
                 }

@@ -8,12 +8,10 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.nextStepOrNull
-import com.autopi.autopieapp.data.services.JsonService
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import com.autopi.autopieapp.data.services.InternalConfigService
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StoreCommandExtraInputsTest {
@@ -27,30 +25,25 @@ class StoreCommandExtraInputsTest {
 
     @Test
     fun updatesOnlyFallbackIdentifiedMultistageStep() {
-        val jsonService = MemoryJsonService(multistageConfig())
+        val store = memoryInternalConfigService()
         val command = pipeline().firstStepOrSelf().nextStepOrNull()!!
 
-        val result = StoreCommandExtraInputs(jsonService)(command, listOf(input("new-value")))
+        StoreCommandExtraInputs(store)(command, listOf(input("new-value")))
 
-        assertTrue(result.updatedConfig)
         assertEquals("Pipeline.1", command.id)
-        val steps = jsonService.commands.getAsJsonObject("Pipeline").getAsJsonArray("steps")
-        assertEquals("first", steps[0].asJsonObject.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
-        assertEquals("new-value", steps[1].asJsonObject.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
-        assertFalse(steps[1].asJsonObject.has("id"))
+        assertEquals("new-value", store.get("Pipeline.1", "token"))
+        assertEquals(null, store.get("Pipeline.0", "token"))
     }
 
     @Test
     fun explicitStepIdIsNamespacedWithoutChangingStoredId() {
-        val jsonService = MemoryJsonService(multistageConfig(secondStepId = "publish"))
+        val store = memoryInternalConfigService()
         val command = pipeline(secondStepId = "publish").firstStepOrSelf().nextStepOrNull()!!
 
-        StoreCommandExtraInputs(jsonService)(command, listOf(input("new-value")))
+        StoreCommandExtraInputs(store)(command, listOf(input("new-value")))
 
         assertEquals("Pipeline.publish", command.id)
-        val step = jsonService.commands.getAsJsonObject("Pipeline").getAsJsonArray("steps")[1].asJsonObject
-        assertEquals("publish", step["id"].asString)
-        assertEquals("new-value", step.getAsJsonArray("extras")[0].asJsonObject["default"].asString)
+        assertEquals("new-value", store.get("Pipeline.publish", "token"))
     }
 
     @Test
@@ -75,17 +68,30 @@ class StoreCommandExtraInputsTest {
 
     @Test
     fun booleanInternalConfigValueIsPersistedAsBooleanDefault() {
-        assertBooleanDefaultIsPersisted("BOOLEAN", value = "false", expected = false)
+        assertBooleanDefaultIsPersisted("BOOLEAN", value = "false")
     }
 
     @Test
     fun enabledFlagInternalConfigValueIsPersistedAsBooleanDefault() {
-        assertBooleanDefaultIsPersisted("FLAG", value = "--force", expected = true)
+        assertBooleanDefaultIsPersisted("FLAG", value = "--force")
     }
 
     @Test
     fun disabledFlagInternalConfigValueIsPersistedAsBooleanDefault() {
-        assertBooleanDefaultIsPersisted("FLAG", value = "", expected = false)
+        assertBooleanDefaultIsPersisted("FLAG", value = "")
+    }
+
+    @Test
+    fun valueMatchingJsonDefaultIsStillPersisted() {
+        val store = memoryInternalConfigService()
+        val extra = internalExtra.copy(default = "same")
+
+        StoreCommandExtraInputs(store)(
+            singleExtraCommand(extra),
+            listOf(input(extra, "same"))
+        )
+
+        assertEquals("same", store.get("Single", "token"))
     }
 
     private fun assertSelectableInternalConfigValueIsPersisted(type: String) {
@@ -94,10 +100,7 @@ class StoreCommandExtraInputsTest {
             default = "first",
             selectableOptions = linkedMapOf("First" to "first", "Second" to "second")
         )
-        val config = JsonParser.parseString(
-            """{"Selector":{"extras":[{"id":"token","name":"TOKEN","type":"$type","default":"first","flags":["--internal-config"],"selectableOptions":{"First":"first","Second":"second"}}]}}"""
-        ).asJsonObject
-        val jsonService = MemoryJsonService(config)
+        val store = memoryInternalConfigService()
         val command = CommandModel(
             id = "Selector",
             name = "Selector",
@@ -114,40 +117,29 @@ class StoreCommandExtraInputsTest {
             description = extra.description
         )
 
-        val result = StoreCommandExtraInputs(jsonService)(command, listOf(input))
+        StoreCommandExtraInputs(store)(command, listOf(input))
 
-        assertTrue(result.updatedConfig)
-        assertEquals("second", result.command.extras!![0].default)
-        val storedExtra = jsonService.commands
-            .getAsJsonObject("Selector")
-            .getAsJsonArray("extras")[0]
-            .asJsonObject
-        assertEquals("second", storedExtra["default"].asString)
+        assertEquals("second", store.get("Selector", "token"))
     }
 
     private fun assertStringDefaultIsPersisted(type: String, value: String) {
         val extra = internalExtra.copy(type = type, default = "old")
-        val jsonService = MemoryJsonService(singleExtraConfig(extra))
+        val store = memoryInternalConfigService()
         val command = singleExtraCommand(extra)
 
-        val result = StoreCommandExtraInputs(jsonService)(command, listOf(input(extra, value)))
+        StoreCommandExtraInputs(store)(command, listOf(input(extra, value)))
 
-        assertTrue(result.updatedConfig)
-        assertEquals(value, result.command.extras!![0].default)
-        assertEquals(value, storedExtra(jsonService)["default"].asString)
+        assertEquals(value, store.get("Single", "token"))
     }
 
-    private fun assertBooleanDefaultIsPersisted(type: String, value: String, expected: Boolean) {
-        val extra = internalExtra.copy(type = type, default = "--force", defaultBoolean = !expected)
-        val jsonService = MemoryJsonService(singleExtraConfig(extra))
+    private fun assertBooleanDefaultIsPersisted(type: String, value: String) {
+        val extra = internalExtra.copy(type = type, default = "--force")
+        val store = memoryInternalConfigService()
         val command = singleExtraCommand(extra)
 
-        val result = StoreCommandExtraInputs(jsonService)(command, listOf(input(extra, value)))
+        StoreCommandExtraInputs(store)(command, listOf(input(extra, value)))
 
-        assertTrue(result.updatedConfig)
-        assertEquals(expected, result.command.extras!![0].defaultBoolean)
-        assertEquals(expected, storedExtra(jsonService)["defaultBoolean"].asBoolean)
-        assertEquals("--force", storedExtra(jsonService)["default"].asString)
+        assertEquals(value, store.get("Single", "token"))
     }
 
     private fun singleExtraCommand(extra: CommandExtra) = CommandModel(
@@ -156,17 +148,6 @@ class StoreCommandExtraInputsTest {
         type = CommandType.SHARE,
         extras = listOf(extra)
     )
-
-    private fun singleExtraConfig(extra: CommandExtra): JsonObject = JsonObject().apply {
-        add("Single", JsonObject().apply {
-            add("extras", com.google.gson.Gson().toJsonTree(listOf(extra)))
-        })
-    }
-
-    private fun storedExtra(jsonService: MemoryJsonService) = jsonService.commands
-        .getAsJsonObject("Single")
-        .getAsJsonArray("extras")[0]
-        .asJsonObject
 
     private fun pipeline(secondStepId: String = "") = CommandModel(
         id = "Pipeline",
@@ -199,30 +180,16 @@ class StoreCommandExtraInputsTest {
         description = extra.description
     )
 
-    private fun multistageConfig(secondStepId: String? = null): JsonObject {
-        val id = secondStepId?.let { "\"id\": \"$it\"," }.orEmpty()
-        return JsonParser.parseString(
-            """
-                {
-                  "Pipeline": {
-                    "multiStage": true,
-                    "steps": [
-                      {"command": "first", "extras": [{"id":"token","name":"TOKEN","type":"STRING","default":"first","flags":["--internal-config"]}]},
-                      {$id "command": "second", "extras": [{"id":"token","name":"TOKEN","type":"STRING","default":"second","flags":["--internal-config"]}]}
-                    ]
-                  }
-                }
-            """.trimIndent()
-        ).asJsonObject
-    }
-
-    private class MemoryJsonService(initialCommands: JsonObject) : JsonService {
-        var commands: JsonObject = initialCommands
-
-        override fun readCommandsConfig(): JsonObject = commands
-        override fun writeCommandsConfig(jsonString: String) {
-            commands = JsonParser.parseString(jsonString).asJsonObject
+    private fun memoryInternalConfigService(): InternalConfigService {
+        val values = mutableMapOf<Pair<String, String>, String>()
+        return mockk {
+            every { get(any(), any()) } answers {
+                values[firstArg<String>() to secondArg<String>()]
+            }
+            every { set(any(), any(), any()) } answers {
+                values[firstArg<String>() to secondArg<String>()] = thirdArg()
+                true
+            }
         }
-        override fun readRepoList(path: String): JsonObject = JsonObject()
     }
 }

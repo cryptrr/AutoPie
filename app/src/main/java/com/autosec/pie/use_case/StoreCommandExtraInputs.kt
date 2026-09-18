@@ -9,62 +9,38 @@ import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
-import com.autopi.autopieapp.data.services.JsonService
+import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.services.SecretsService
-import com.autopi.autopieapp.data.withoutStoredSecretDefault
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-
-data class StoreCommandExtraInputsResult(
-    val command: CommandModel,
-    val updatedConfig: Boolean
-)
 
 class StoreCommandExtraInputs(
-    private val jsonService: JsonService,
+    private val internalConfigService: InternalConfigService,
     private val secretsService: SecretsService? = null
 ) {
     operator fun invoke(
         command: CommandModel,
         commandExtraInputs: List<CommandExtraInput>
-    ): StoreCommandExtraInputsResult {
+    ) {
         val extras = command.extras.orEmpty()
         if (extras.isEmpty() || commandExtraInputs.isEmpty()) {
-            return StoreCommandExtraInputsResult(command, updatedConfig = false)
+            return
         }
 
         val inputsById = commandExtraInputs.associateBy { it.id }
         val inputsByName = commandExtraInputs.associateBy { it.name }
-        var changedConfigExtra = false
-
-        val updatedExtras = extras.map { extra ->
-            val input = inputsById[extra.id] ?: inputsByName[extra.name] ?: return@map extra
+        extras.forEach { extra ->
+            val input = inputsById[extra.id] ?: inputsByName[extra.name] ?: return@forEach
             val value = input.value.takeUnless { it == SECRET_VALUE_PLACEHOLDER }.orEmpty()
 
             if (extra.isSecretExtra()) {
                 storeSecret(command, extra, value)
-                extra
             } else {
-                val updatedExtra = extra.withUpdatedInternalConfigDefault(value)
-                if (updatedExtra != extra) {
-                    changedConfigExtra = true
+                val isPersistableInternalConfig = extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
+                    extra.acceptsInternalConfigValue(value)
+                if (isPersistableInternalConfig) {
+                    internalConfigService.set(command.id, extra.id, value)
                 }
-                updatedExtra
             }
         }
-
-        val updatedConfig = if (changedConfigExtra) {
-            storeUpdatedConfigExtras(command, updatedExtras)
-        } else {
-            false
-        }
-
-        return StoreCommandExtraInputsResult(
-            command = command.copy(extras = updatedExtras),
-            updatedConfig = updatedConfig
-        )
     }
 
     private fun storeSecret(command: CommandModel, extra: CommandExtra, value: String) {
@@ -74,51 +50,11 @@ class StoreCommandExtraInputs(
         service.set(extra.secretKey(commandId), value)
     }
 
-    private fun CommandExtra.withUpdatedInternalConfigDefault(value: String): CommandExtra {
-        if (!flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) return this
-
-        return when (type) {
-            "BOOLEAN" -> value.trim().lowercase().let { booleanValue ->
-                when (booleanValue) {
-                    "true" -> copy(defaultBoolean = true)
-                    "false" -> copy(defaultBoolean = false)
-                    else -> this
-                }
-            }
-            "FLAG" -> copy(defaultBoolean = value.isNotEmpty())
-            "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> copy(default = value)
-            "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> {
-                if (value.isNotBlank()) copy(default = value) else this
-            }
-            else -> this
-        }
+    private fun CommandExtra.acceptsInternalConfigValue(value: String): Boolean = when (type) {
+        "BOOLEAN" -> value.trim().lowercase().toBooleanStrictOrNull() != null
+        "FLAG", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> true
+        "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> value.isNotBlank()
+        else -> false
     }
 
-    private fun storeUpdatedConfigExtras(command: CommandModel, extras: List<CommandExtra>): Boolean {
-        val commandKey = command.name.ifBlank { command.id }
-        if (commandKey.isBlank()) return false
-
-        val commands = jsonService.readCommandsConfig() ?: return false
-        val commandObject = commands.getAsJsonObject(commandKey) ?: return false
-        val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-        val storedExtras = gson.toJsonTree(extras.map { it.withoutStoredSecretDefault() })
-        if (command.multiStage == true) {
-            val steps = commandObject.getAsJsonArray("steps") ?: return false
-            val step = steps.findStep(commandKey, command.id) ?: return false
-            step.add("extras", storedExtras)
-        } else {
-            commandObject.add("extras", storedExtras)
-        }
-        jsonService.writeCommandsConfig(gson.toJson(commands))
-        return true
-    }
-
-    private fun JsonArray.findStep(parentId: String, namespacedStepId: String): JsonObject? =
-        mapIndexedNotNull { index, element ->
-            element.takeIf(JsonElement::isJsonObject)?.asJsonObject?.let { step ->
-                val stepId = step.get("id")?.asString?.takeIf(String::isNotBlank)
-                    ?: index.toString()
-                step.takeIf { "$parentId.$stepId" == namespacedStepId }
-            }
-        }.firstOrNull()
 }

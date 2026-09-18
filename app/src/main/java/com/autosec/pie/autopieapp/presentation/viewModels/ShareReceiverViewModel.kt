@@ -554,14 +554,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
             try {
                 val resolvedProcessId = processId ?: (100000..999999).random()
-                val storedExtrasResult = useCases.storeCommandExtraInputs(
+                useCases.storeCommandExtraInputs(
                     command,
                     commandExtraInputs
                 )
-                if (storedExtrasResult.updatedConfig) {
-                    main.dispatchEvent(ViewModelEvent.RefreshCommandsList)
-                }
-                val runnableCommand = prepareCommand(storedExtrasResult.command, resolvedProcessId)?.firstStepOrSelf()
+                val runnableCommand = prepareCommand(command, resolvedProcessId)?.firstStepOrSelf()
                     ?: return@launch
 
                 val gson = Gson()

@@ -33,6 +33,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
+import com.tencent.mmkv.MMKV
 
 
 class MyApplication : Application() {
@@ -48,6 +49,7 @@ class MyApplication : Application() {
 
         TermuxAppSharedProperties.init(this@MyApplication)
         onCreateTermux()
+        MMKV.initialize(this)
 
         startKoin {
             androidContext(this@MyApplication)

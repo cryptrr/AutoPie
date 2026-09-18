@@ -9,6 +9,7 @@ import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.services.AutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.parseAutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
@@ -97,7 +98,8 @@ class ProcessManagerTests : KoinTest {
                 mockApplication,
                 autoPieConfigPathProvider,
                 Shell.Timeout(5, TimeUnit.SECONDS),
-                autoPieNotification = autoPieNotification
+                autoPieNotification = autoPieNotification,
+                internalConfigService = mockk(relaxed = true)
             ),
             configPathProvider = autoPieConfigPathProvider,
             mainViewModel = mainViewModel,

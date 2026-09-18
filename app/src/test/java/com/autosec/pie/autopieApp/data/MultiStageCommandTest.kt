@@ -60,6 +60,18 @@ class MultiStageCommandTest {
     }
 
     @Test
+    fun explicitCommandIdBacksStepIdsInsteadOfDisplayName() {
+        val identified = command.copy(
+            id = "stable-id",
+            steps = command.steps.mapIndexed { index, step ->
+                if (index == 0) step.copy(id = "prepare") else step
+            }
+        )
+
+        assertEquals("stable-id.prepare", identified.firstStepOrSelf().id)
+    }
+
+    @Test
     fun gsonAcceptsMultiStageCommandWithoutTopLevelPathOrCommand() {
         val parsed = Gson().fromJson(
             """
