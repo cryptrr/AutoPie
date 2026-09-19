@@ -626,7 +626,10 @@ class ProcessManagerService(
                             }
                         }
                         is AutoPieStructuredEvent.Notification -> {
-                            val openUrl = (event.action as? AutoPieNotificationAction.OpenUrl)?.url
+                            val openUrl = when (val action = event.action) {
+                                is AutoPieNotificationAction.OpenUrl -> action.url
+                                AutoPieNotificationAction.OpenOutput, null -> null
+                            }
                             try {
                                 autoPieNotification.sendNotification(
                                     contentTitle = event.title,
@@ -635,7 +638,7 @@ class ProcessManagerService(
                                     logFile = logFile.absolutePath,
                                     processId = processId,
                                     silent = false,
-                                    autoCancel = true,
+                                    autoCancel = openUrl != null,
                                     openUrl = openUrl
                                 )
                             } catch (error: Throwable) {
@@ -1308,6 +1311,7 @@ internal sealed interface AutoPieStructuredEvent {
 }
 
 internal sealed interface AutoPieNotificationAction {
+    data object OpenOutput : AutoPieNotificationAction
     data class OpenUrl(val url: String) : AutoPieNotificationAction
 }
 
@@ -1366,15 +1370,18 @@ private fun com.google.gson.JsonObject.notificationActionOrNull(): AutoPieNotifi
         ?.takeIf { it.isJsonObject }
         ?.asJsonObject
         ?: return null
-    if (action.stringOrNull("type") != "open_url") return null
-
-    val url = action.stringOrNull("url") ?: return null
-    val uri = runCatching { URI(url) }.getOrNull() ?: return null
-    val supportedScheme = uri.scheme.equals("https", ignoreCase = true) ||
-            uri.scheme.equals("http", ignoreCase = true)
-    return url
-        .takeIf { supportedScheme && !uri.host.isNullOrBlank() }
-        ?.let { AutoPieNotificationAction.OpenUrl(it) }
+    return when (action.stringOrNull("type")) {
+        "open_output" -> AutoPieNotificationAction.OpenOutput
+        "open_url" -> {
+            val url = action.stringOrNull("url") ?: return null
+            val uri = runCatching { URI(url) }.getOrNull() ?: return null
+            val supportedScheme = uri.scheme.equals("https", ignoreCase = true) ||
+                    uri.scheme.equals("http", ignoreCase = true)
+            url.takeIf { supportedScheme && !uri.host.isNullOrBlank() }
+                ?.let { AutoPieNotificationAction.OpenUrl(it) }
+        }
+        else -> null
+    }
 }
 
 private fun String.shellQuote(): String {

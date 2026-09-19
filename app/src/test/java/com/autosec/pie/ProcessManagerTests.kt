@@ -213,6 +213,20 @@ class ProcessManagerTests : KoinTest {
     }
 
     @Test
+    fun `AutoPie notification directive parses an open output action`() {
+        assertEquals(
+            AutoPieStructuredEvent.Notification(
+                title = "Reddit",
+                body = "3 new posts",
+                action = AutoPieNotificationAction.OpenOutput
+            ),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_output\"}}"
+            )
+        )
+    }
+
+    @Test
     fun `AutoPie notification directive ignores unsupported or unsafe actions`() {
         val expected = AutoPieStructuredEvent.Notification("Reddit", "3 new posts")
 
@@ -238,7 +252,7 @@ class ProcessManagerTests : KoinTest {
             type = CommandType.CRON,
             name = "Structured notification",
             path = "",
-            command = "printf '%s\\n' '#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\"}'",
+            command = "printf '%s\\n' '#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_output\"}}'",
             exec = "",
             extras = emptyList()
         )
