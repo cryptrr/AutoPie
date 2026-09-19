@@ -157,6 +157,14 @@ Use a `notification` event to post an Android notification. This works for foreg
 
 Both `title` and `body` are required strings. AutoPie must have Android notification permission, and the **AutoPie main** notification channel must be enabled.
 
+To open a web page when the notification is tapped, add an `open_url` action:
+
+```text
+#@AUTOPIE {"type":"notification","title":"Reddit","body":"3 new posts","action":{"type":"open_url","url":"https://www.reddit.com/"}}
+```
+
+Only absolute `http` and `https` URLs are supported. Missing, malformed, or unsupported actions fall back to opening the command log.
+
 ### Progress
 
 Use a `progress` event to update the progress bar on an existing running-command notification:

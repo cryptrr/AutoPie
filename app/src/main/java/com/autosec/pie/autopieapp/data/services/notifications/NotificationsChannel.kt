@@ -116,7 +116,8 @@ class AutoPieNotification(
         processId: Int,
         silent: Boolean = true,
         autoCancel: Boolean = false,
-        reuseProcessNotification: Boolean = false
+        reuseProcessNotification: Boolean = false,
+        openUrl: String? = null
     ) {
         val channelId = MAIN_CHANNEL
         val notificationId = if (reuseProcessNotification) {
@@ -126,7 +127,11 @@ class AutoPieNotification(
         }
 
 
-        val intent = Intent(Intent.ACTION_MAIN).apply {
+        val intent = openUrl?.toSupportedWebUriOrNull()?.let { uri ->
+            Intent(Intent.ACTION_VIEW, uri).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        } ?: Intent(Intent.ACTION_MAIN).apply {
             setClass(context, OutputViewerActivity::class.java)
             putExtra("logFile", logFile)
             putExtra("commandName", command?.name ?: "")
@@ -134,7 +139,7 @@ class AutoPieNotification(
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context, logFile.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
 
@@ -164,6 +169,13 @@ class AutoPieNotification(
 
         Timber.d("Send notification for $contentTitle, $contentText, $logFile")
 
+    }
+
+    private fun String.toSupportedWebUriOrNull(): Uri? {
+        val uri = toUri()
+        val supportedScheme = uri.scheme.equals("https", ignoreCase = true) ||
+                uri.scheme.equals("http", ignoreCase = true)
+        return uri.takeIf { supportedScheme && !it.host.isNullOrBlank() }
     }
 
     fun sendBroadcastNotification(

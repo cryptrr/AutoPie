@@ -11,6 +11,7 @@ import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.services.AutoPieStructuredEvent
+import com.autopi.autopieapp.data.services.AutoPieNotificationAction
 import com.autopi.autopieapp.data.services.parseAutoPieStructuredEvent
 import com.autopi.autopieapp.data.services.shouldReplaceWidgetOutput
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
@@ -163,6 +164,40 @@ class ProcessManagerTests : KoinTest {
     }
 
     @Test
+    fun `AutoPie notification directive parses an open url action`() {
+        assertEquals(
+            AutoPieStructuredEvent.Notification(
+                title = "Reddit",
+                body = "3 new posts",
+                action = AutoPieNotificationAction.OpenUrl(
+                    "https://www.reddit.com/r/android/"
+                )
+            ),
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_url\",\"url\":\"https://www.reddit.com/r/android/\"}}"
+            )
+        )
+    }
+
+    @Test
+    fun `AutoPie notification directive ignores unsupported or unsafe actions`() {
+        val expected = AutoPieStructuredEvent.Notification("Reddit", "3 new posts")
+
+        assertEquals(
+            expected,
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_url\",\"url\":\"file:///data/local/tmp/secret\"}}"
+            )
+        )
+        assertEquals(
+            expected,
+            parseAutoPieStructuredEvent(
+                "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"run_command\",\"command\":\"anything\"}}"
+            )
+        )
+    }
+
+    @Test
     fun `notification directive from stdout posts an Android notification`() = runTest {
         val fixture = createProcessManagerService("structured-notification")
         val command = CommandModel(
@@ -196,7 +231,48 @@ class ProcessManagerTests : KoinTest {
                 logFile = any(),
                 processId = 61550,
                 silent = false,
-                autoCancel = false
+                autoCancel = false,
+                openUrl = null
+            )
+        }
+    }
+
+    @Test
+    fun `notification open url action is passed to Android notification`() = runTest {
+        val fixture = createProcessManagerService("structured-notification-url")
+        val command = CommandModel(
+            id = "structured-notification-url-command",
+            type = CommandType.CRON,
+            name = "Structured URL notification",
+            path = "",
+            command = "printf '%s\\n' '#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_url\",\"url\":\"https://www.reddit.com/r/android/\"}}'",
+            exec = "",
+            extras = emptyList()
+        )
+
+        val result = fixture.service.runCommandForShareWithEnv2(
+            command,
+            command.exec,
+            command.command,
+            command.path,
+            commandExtraInputs = emptyList(),
+            rawInput = "",
+            processId = 61551,
+            jobType = JobType.CRON,
+            usePython = false
+        )
+
+        assertTrue(result.success)
+        verify(exactly = 1) {
+            fixture.autoPieNotification.sendNotification(
+                contentTitle = "Reddit",
+                contentText = "3 new posts",
+                command = command,
+                logFile = any(),
+                processId = 61551,
+                silent = false,
+                autoCancel = true,
+                openUrl = "https://www.reddit.com/r/android/"
             )
         }
     }

@@ -49,6 +49,7 @@ import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
+import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
@@ -625,6 +626,7 @@ class ProcessManagerService(
                             }
                         }
                         is AutoPieStructuredEvent.Notification -> {
+                            val openUrl = (event.action as? AutoPieNotificationAction.OpenUrl)?.url
                             try {
                                 autoPieNotification.sendNotification(
                                     contentTitle = event.title,
@@ -633,7 +635,8 @@ class ProcessManagerService(
                                     logFile = logFile.absolutePath,
                                     processId = processId,
                                     silent = false,
-                                    autoCancel = false
+                                    autoCancel = openUrl != null,
+                                    openUrl = openUrl
                                 )
                             } catch (error: Throwable) {
                                 Timber.e(
@@ -1259,9 +1262,17 @@ private const val AUTOPIE_EVENT_PREFIX = "#@AUTOPIE"
 
 internal sealed interface AutoPieStructuredEvent {
     data class Output(val rawValue: String) : AutoPieStructuredEvent
-    data class Notification(val title: String, val body: String) : AutoPieStructuredEvent
+    data class Notification(
+        val title: String,
+        val body: String,
+        val action: AutoPieNotificationAction? = null
+    ) : AutoPieStructuredEvent
     data class Progress(val value: Int) : AutoPieStructuredEvent
     data class Unsupported(val type: String) : AutoPieStructuredEvent
+}
+
+internal sealed interface AutoPieNotificationAction {
+    data class OpenUrl(val url: String) : AutoPieNotificationAction
 }
 
 internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? {
@@ -1282,7 +1293,8 @@ internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? 
             )
             "notification" -> AutoPieStructuredEvent.Notification(
                 title = event.stringOrNull("title") ?: return null,
-                body = event.stringOrNull("body") ?: return null
+                body = event.stringOrNull("body") ?: return null,
+                action = event.notificationActionOrNull()
             )
             "progress" -> {
                 val value = event.get("value")
@@ -1312,6 +1324,22 @@ private fun com.google.gson.JsonObject.stringOrNull(key: String): String? =
     get(key)
         ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isString }
         ?.asString
+
+private fun com.google.gson.JsonObject.notificationActionOrNull(): AutoPieNotificationAction? {
+    val action = get("action")
+        ?.takeIf { it.isJsonObject }
+        ?.asJsonObject
+        ?: return null
+    if (action.stringOrNull("type") != "open_url") return null
+
+    val url = action.stringOrNull("url") ?: return null
+    val uri = runCatching { URI(url) }.getOrNull() ?: return null
+    val supportedScheme = uri.scheme.equals("https", ignoreCase = true) ||
+            uri.scheme.equals("http", ignoreCase = true)
+    return url
+        .takeIf { supportedScheme && !uri.host.isNullOrBlank() }
+        ?.let { AutoPieNotificationAction.OpenUrl(it) }
+}
 
 private fun String.shellQuote(): String {
     return "'${replace("'", "'\"'\"'")}'"
