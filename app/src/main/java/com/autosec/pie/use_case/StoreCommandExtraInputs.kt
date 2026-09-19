@@ -53,7 +53,7 @@ class StoreCommandExtraInputs(
     private fun CommandExtra.acceptsInternalConfigValue(value: String): Boolean = when (type) {
         "BOOLEAN" -> value.trim().lowercase().toBooleanStrictOrNull() != null
         "FLAG", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> true
-        "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> value.isNotBlank()
+        "STRING", "TEXT", "SELECTABLE", "SELECTABLE_FLAT" -> value.isNotBlank()
         else -> false
     }
 

@@ -1484,7 +1484,7 @@ internal fun resolveExtraPathValue(
     value: String,
     externalStorageRoot: File
 ): String {
-    if (type != "STRING" || value.isBlank()) return value
+    if ((type != "STRING" && type != "TEXT") || value.isBlank()) return value
 
     fun resolve(path: String): String {
         val trimmedPath = path.trim()

@@ -121,6 +121,12 @@ class MultiStageCommandTest {
         assertFalse(CommandModel(multiStage = true, extras = listOf(optionalExtra)).hasUnsetRequiredExtras())
         assertFalse(CommandModel(multiStage = true, extras = listOf(populatedRequiredExtra)).hasUnsetRequiredExtras())
         assertTrue(CommandModel(multiStage = true, extras = listOf(unsetRequiredExtra)).hasUnsetRequiredExtras())
+        assertTrue(
+            CommandModel(
+                multiStage = true,
+                extras = listOf(unsetRequiredExtra.copy(type = "TEXT"))
+            ).hasUnsetRequiredExtras()
+        )
     }
 
     @Test

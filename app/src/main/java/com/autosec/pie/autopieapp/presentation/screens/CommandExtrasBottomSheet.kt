@@ -464,11 +464,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                     val displayName = extra.name.replace('_', ' ')
                     val useSmallWidth = extra.description.isEmpty() &&
                         !extra.flags.hasFlag(ExtraFlags.LARGE) &&
+                        extra.type != "TEXT" &&
                         extra.type != "SELECTABLE_FLAT" &&
                         extra.type != "MULTI_SELECTABLE_FLAT"
                     Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
                     when (extra.type) {
-                        "STRING" -> {
+                        "STRING", "TEXT" -> {
 
                             val isPasswordField = remember(extra.name, extra.flags) {
                                 extra.isSecretExtra()
@@ -529,13 +530,22 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
                             if(isPasswordField){
-                                PasswordFormField(text = textValue, title = displayName, subtitle = extra.description, mask = '⬤')
+                                PasswordFormField(
+                                    text = textValue,
+                                    title = displayName,
+                                    subtitle = extra.description,
+                                    mask = '⬤',
+                                    singleLine = extra.type != "TEXT",
+                                    minLines = if (extra.type == "TEXT") 4 else 1
+                                )
                             }
                             else{
                                 GenericTextFormField(
                                     text = textValue,
                                     title = displayName,
                                     subtitle = extra.description,
+                                    singleLine = extra.type != "TEXT",
+                                    minLines = if (extra.type == "TEXT") 4 else 1,
                                     trailingIcon = if(useFolderPicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

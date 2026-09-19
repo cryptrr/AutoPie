@@ -35,7 +35,7 @@ class InternalConfigService(
             "BOOLEAN" -> extra.defaultBoolean.toString()
             "FLAG" -> if (extra.defaultBoolean) extra.default else ""
             "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> extra.default
-            "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> extra.default.takeIf(String::isNotBlank)
+            "STRING", "TEXT", "SELECTABLE", "SELECTABLE_FLAT" -> extra.default.takeIf(String::isNotBlank)
             else -> null
         }
         return if (value == null) delete(commandId, extra.id) else set(commandId, extra.id, value)
@@ -61,7 +61,7 @@ private fun CommandExtra.withInternalConfigValue(value: String): CommandExtra = 
         ?: this
     "FLAG" -> copy(defaultBoolean = value.isNotEmpty())
     "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> copy(default = value)
-    "STRING", "SELECTABLE", "SELECTABLE_FLAT" -> {
+    "STRING", "TEXT", "SELECTABLE", "SELECTABLE_FLAT" -> {
         if (value.isNotBlank()) copy(default = value) else this
     }
     else -> this

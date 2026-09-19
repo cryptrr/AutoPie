@@ -53,4 +53,20 @@ class InternalConfigServiceTest {
 
         verify { mmkv.encode("13:local.command6:folder", "new value") }
     }
+
+    @Test
+    fun `sync persists multiline text like a string`() {
+        val value = "first line\nsecond line"
+        every { mmkv.encode(any<String>(), value) } returns true
+        val extra = CommandExtra(
+            id = "prompt",
+            type = "TEXT",
+            default = value,
+            flags = listOf(ExtraFlags.INTERNAL_CONFIG.value)
+        )
+
+        service.sync("local.command", extra)
+
+        verify { mmkv.encode("13:local.command6:prompt", value) }
+    }
 }

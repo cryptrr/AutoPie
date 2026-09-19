@@ -172,6 +172,7 @@ fun CommandExtraInputElement(
         rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
     val options = listOf(
         "STRING",
+        "TEXT",
         "SELECTABLE",
         "SELECTABLE_FLAT",
         "MULTI_SELECTABLE",
@@ -285,7 +286,7 @@ fun CommandExtraInputElement(
 
 
         when (selectedCommandType.value) {
-            "STRING" -> {
+            "STRING", "TEXT" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -298,6 +299,8 @@ fun CommandExtraInputElement(
                     text = default,
                     "",
                     placeholder = "DEFAULT",
+                    singleLine = selectedCommandType.value != "TEXT",
+                    minLines = if (selectedCommandType.value == "TEXT") 4 else 1,
                     isError = default.value.isBlank(),
                     trailingIcon = if(
                         command.flags.hasFlag(ExtraFlags.FOLDER_PICKER) ||
