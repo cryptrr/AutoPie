@@ -77,6 +77,7 @@ import com.autopi.autopieapp.data.environmentVariableReferenceOrNull
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.hasNextStep
+import com.autopi.autopieapp.data.isMultilineText
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.matchesExtraValues
 import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
@@ -462,9 +463,10 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             for(extra in visibleExtras.filter { it.type != "FLAG" }) {
                 key(extra.id) {
                     val displayName = extra.name.replace('_', ' ')
+                    val isMultilineText = extra.isMultilineText()
                     val useSmallWidth = extra.description.isEmpty() &&
                         !extra.flags.hasFlag(ExtraFlags.LARGE) &&
-                        extra.type != "TEXT" &&
+                        !isMultilineText &&
                         extra.type != "SELECTABLE_FLAT" &&
                         extra.type != "MULTI_SELECTABLE_FLAT"
                     Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
@@ -535,8 +537,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     title = displayName,
                                     subtitle = extra.description,
                                     mask = '⬤',
-                                    singleLine = extra.type != "TEXT",
-                                    minLines = if (extra.type == "TEXT") 4 else 1
+                                    singleLine = !isMultilineText,
+                                    minLines = if (isMultilineText) 4 else 1
                                 )
                             }
                             else{
@@ -544,8 +546,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     text = textValue,
                                     title = displayName,
                                     subtitle = extra.description,
-                                    singleLine = extra.type != "TEXT",
-                                    minLines = if (extra.type == "TEXT") 4 else 1,
+                                    singleLine = !isMultilineText,
+                                    minLines = if (isMultilineText) 4 else 1,
                                     trailingIcon = if(useFolderPicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

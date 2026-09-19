@@ -5,7 +5,9 @@ import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isMultilineText
 import com.autopi.autopieapp.data.isSecretExtra
+import com.autopi.autopieapp.data.withFlag
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import org.junit.Assert.assertEquals
@@ -129,6 +131,27 @@ class CommandExtraFlagsTest {
     fun `realtime extra flag is detected`() {
         assertTrue(listOf("--realtime").hasFlag(ExtraFlags.REALTIME))
         assertFalse(emptyList<String>().hasFlag(ExtraFlags.REALTIME))
+    }
+
+    @Test
+    fun `multiline string and text alias use multiline presentation`() {
+        assertTrue(
+            CommandExtra(
+                id = "prompt",
+                type = "STRING",
+                flags = listOf("--multiline")
+            ).isMultilineText()
+        )
+        assertTrue(CommandExtra(id = "prompt", type = "TEXT").isMultilineText())
+        assertFalse(CommandExtra(id = "prompt", type = "STRING").isMultilineText())
+    }
+
+    @Test
+    fun `multiline flag can be normalized without changing other flags`() {
+        val flags = listOf("--secret").withFlag(ExtraFlags.MULTILINE, enabled = true)
+
+        assertEquals(listOf("--secret", "--multiline"), flags)
+        assertEquals(listOf("--secret"), flags.withFlag(ExtraFlags.MULTILINE, enabled = false))
     }
 
     @Test

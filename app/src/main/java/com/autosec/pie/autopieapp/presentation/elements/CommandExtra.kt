@@ -54,8 +54,10 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isMultilineText
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
+import com.autopi.autopieapp.data.withFlag
 import com.autopi.autopieapp.data.services.SecretsService
 import org.koin.java.KoinJavaComponent
 
@@ -169,7 +171,12 @@ fun CommandExtraInputElement(
 
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
-        rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
+        rememberSaveable {
+            mutableStateOf(
+                if (command.isMultilineText()) "TEXT"
+                else command.type.split(",").firstOrNull() ?: ""
+            )
+        }
     val options = listOf(
         "STRING",
         "TEXT",
@@ -220,7 +227,7 @@ fun CommandExtraInputElement(
         val commandExtra = CommandExtra(
             id = command.id,
             name = name.value,
-            type = selectedCommandType.value,
+            type = if (selectedCommandType.value == "TEXT") "STRING" else selectedCommandType.value,
             default = when{
                 selectedCommandType.value == "SELECTABLE" ||
                     selectedCommandType.value == "SELECTABLE_FLAT" ||
@@ -233,7 +240,10 @@ fun CommandExtraInputElement(
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = parsedSelectableOptions,
             required = isRequired.value,
-            flags = command.flags,
+            flags = command.flags.withFlag(
+                ExtraFlags.MULTILINE,
+                selectedCommandType.value == "TEXT"
+            ),
             visibleWhen = command.visibleWhen
         )
 

@@ -417,8 +417,8 @@ An extra becomes an environment variable. For example, an extra named `QUALITY` 
 
 | Extra type | UI and exported value |
 | --- | --- |
-| `STRING` | Text input; can also become a password, file picker, or folder picker. |
-| `TEXT` | Multiline text input; exported and processed like `STRING`. |
+| `STRING` | Text input; can also become multiline, a password, file picker, or folder picker. |
+| `TEXT` | Accepted as a multiline string alias. New commands are saved as `STRING` with `--multiline`. |
 | `BOOLEAN` | `true` or `false`. |
 | `SELECTABLE` | One value from a label-to-value map. |
 | `SELECTABLE_FLAT` | One value from an always-visible vertical list. |
@@ -453,6 +453,7 @@ Extra flags:
 | `--mime-type=audio/*` | Restricts a file picker; the default is `*/*`. |
 | `--int` | Makes a slider use integer values. |
 | `--large` | Forces the input to use the full available row width. |
+| `--multiline` | Renders a `STRING` as a full-width multiline text field. Older clients ignore it and fall back to a single-line field. |
 | `--realtime` | Re-runs the current command when this extra changes. |
 
 `STRING` and `TEXT` extras ending in `FILE`, `FILES`, or `FOLDER` are resolved to usable paths when relative values are supplied.
