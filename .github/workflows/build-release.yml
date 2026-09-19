@@ -26,7 +26,7 @@ jobs:
       HOME: /home/vagrant
       LC_ALL: C.UTF-8
       TERMUX_NATIVE_SKIP_HOST_SETUP: "true"
-      TERMUX_REF: 084d709fbf23ea83b5cb85fd3d795c775be06676
+      TERMUX_REF: 401bbe54b8f4e68302b1ff70678015a24628fb1d
       TZ: UTC
 
     steps:

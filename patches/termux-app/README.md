@@ -5,13 +5,13 @@ commits in the `termux-app` submodule fork. They are applied in filename order
 by `scripts/prepare-termux-app.sh`.
 
 The series was rebased and verified against official Termux commit
-`084d709fbf23ea83b5cb85fd3d795c775be06676` on 2026-09-18.
+`401bbe54b8f4e68302b1ff70678015a24628fb1d` on 2026-06-22.
 
 The preparation script uses the latest official `master` by default. Pin a
 specific revision or use another repository when needed:
 
 ```sh
-TERMUX_REF=084d709fbf23ea83b5cb85fd3d795c775be06676 \
+TERMUX_REF=401bbe54b8f4e68302b1ff70678015a24628fb1d \
   ./build_with_termux.sh :app:assembleRelease
 
 TERMUX_REPO=https://github.com/example/termux-app.git TERMUX_REF=my-branch \
