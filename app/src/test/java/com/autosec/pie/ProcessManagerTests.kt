@@ -264,7 +264,7 @@ class ProcessManagerTests : KoinTest {
                 logFile = any(),
                 processId = 61550,
                 silent = false,
-                autoCancel = false,
+                autoCancel = true,
                 openUrl = null
             )
         }

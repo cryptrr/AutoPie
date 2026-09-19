@@ -635,7 +635,7 @@ class ProcessManagerService(
                                     logFile = logFile.absolutePath,
                                     processId = processId,
                                     silent = false,
-                                    autoCancel = openUrl != null,
+                                    autoCancel = true,
                                     openUrl = openUrl
                                 )
                             } catch (error: Throwable) {
