@@ -1,0 +1,10 @@
+What's New
+
+- Per-command dependencies are now deduplicated and wont attempt to install on each command installation.
+- Notifications can open HTTP/HTTPS links when tapped.
+- Internal configuration values now persist independently from command definitions.
+- Local commands now receive stable slug-based IDs.
+- Fixed secret persistence when creating or editing commands.
+- Added a theme-aware splash screen.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.18.3-beta...v0.19.0-beta
