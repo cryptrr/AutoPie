@@ -8,6 +8,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +30,8 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -182,6 +187,7 @@ fun CommandExtraInputElement(
         "TEXT",
         "SELECTABLE",
         "SELECTABLE_FLAT",
+        "BUTTON",
         "MULTI_SELECTABLE",
         "MULTI_SELECTABLE_FLAT",
         "FLAG",
@@ -231,6 +237,7 @@ fun CommandExtraInputElement(
             default = when{
                 selectedCommandType.value == "SELECTABLE" ||
                     selectedCommandType.value == "SELECTABLE_FLAT" ||
+                    selectedCommandType.value == "BUTTON" ||
                     selectedCommandType.value == "MULTI_SELECTABLE" ||
                     selectedCommandType.value == "MULTI_SELECTABLE_FLAT" ->
                     parsedSelectableOptions.values.firstOrNull() ?: ""
@@ -391,7 +398,7 @@ fun CommandExtraInputElement(
                 )
             }
 
-            "SELECTABLE", "SELECTABLE_FLAT", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
+            "SELECTABLE", "SELECTABLE_FLAT", "BUTTON", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -598,6 +605,61 @@ fun OptionSelector(
                         expanded.value = false
                     },
                     text = { Text(label) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ButtonOptionSelector(
+    options: Map<String, String>,
+    selectedOption: MutableState<String>,
+    enabled: Boolean = true,
+    onOptionClick: (String) -> Unit = {},
+) {
+    if (!enabled) {
+        Text(
+            text = "Error fetching",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F)
+        )
+        return
+    }
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        options.forEach { (label, value) ->
+            val selected = selectedOption.value == value
+            Button(
+                onClick = {
+                    selectedOption.value = value
+                    onOptionClick(value)
+                },
+                modifier = Modifier
+                    .height(52.dp)
+                    .widthIn(min = 88.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    contentColor = if (selected) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            ) {
+                Text(
+                    text = label,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

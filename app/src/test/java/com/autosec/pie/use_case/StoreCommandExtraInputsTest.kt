@@ -57,6 +57,11 @@ class StoreCommandExtraInputsTest {
     }
 
     @Test
+    fun buttonInternalConfigValueIsPersistedAsDefault() {
+        assertSelectableInternalConfigValueIsPersisted("BUTTON")
+    }
+
+    @Test
     fun multilineTextInternalConfigValueIsPersistedAsDefault() {
         assertStringDefaultIsPersisted("TEXT", "first line\nsecond line")
     }

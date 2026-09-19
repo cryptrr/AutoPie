@@ -91,6 +91,7 @@ import com.autopi.autopieapp.presentation.elements.GenericTextFormField
 import com.autopi.autopieapp.presentation.elements.OptionSelector
 import com.autopi.autopieapp.data.services.ForegroundService
 import com.autopi.autopieapp.presentation.elements.EmptyItemsBadge
+import com.autopi.autopieapp.presentation.elements.ButtonOptionSelector
 import com.autopi.autopieapp.presentation.elements.FlagSelector
 import com.autopi.autopieapp.presentation.elements.FlatMultiOptionSelector
 import com.autopi.autopieapp.presentation.elements.FlatOptionSelector
@@ -144,7 +145,7 @@ private fun CommandExtra.toInitialInput(): CommandExtraInput =
                 }
             }
             type == "FLAG" -> if (defaultBoolean) default else ""
-            type == "SELECTABLE" || type == "SELECTABLE_FLAT" -> {
+            type == "SELECTABLE" || type == "SELECTABLE_FLAT" || type == "BUTTON" -> {
                 selectableOptions[default] ?: default
             }
             else -> default
@@ -291,7 +292,6 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     var isLoading by remember(command) {
         mutableStateOf(false)
     }
-
     val requestedProcessId = viewModel.currentExtrasDetails.value?.third?.processId
     val processId = remember(command, requestedProcessId) {
         requestedProcessId ?: (100000..999999).random()
@@ -350,18 +350,19 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             extra.visibleWhen?.matchesExtraValues(extraValuesById) != false
         }
 
-    fun addToExtraInputs(commandExtraInput: CommandExtraInput) {
-        if (commandExtraInputs.value.any { it.id == commandExtraInput.id }) {
-            commandExtraInputs.value = commandExtraInputs.value.toMutableList().also {
+    fun addToExtraInputs(commandExtraInput: CommandExtraInput): List<CommandExtraInput> {
+        val updatedInputs = if (commandExtraInputs.value.any { it.id == commandExtraInput.id }) {
+            commandExtraInputs.value.toMutableList().also {
                 val index = it.indexOfFirst { it.id == commandExtraInput.id }
 
                 it.set(index, commandExtraInput)
             }
         } else {
-            commandExtraInputs.value =
-                commandExtraInputs.value.toMutableList().also { it.add(0, commandExtraInput) }
+            commandExtraInputs.value.toMutableList().also { it.add(0, commandExtraInput) }
         }
+        commandExtraInputs.value = updatedInputs
         Timber.d("Extra commands list: $commandExtraInputs")
+        return updatedInputs
     }
 
     val isRealtimeCommand = command.flags.hasFlag(CommandFlags.REALTIME)
@@ -369,10 +370,16 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
     val realtimeTriggerInputs = realtimeInputs.filter { input ->
         val extra = resolvedExtras
             .firstOrNull { extra -> extra.id == input.id || extra.name == input.name }
-        extra?.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) != true &&
+        extra?.type != "BUTTON" &&
+            extra?.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) != true &&
             (isRealtimeCommand || extra?.flags.hasFlag(ExtraFlags.REALTIME) == true)
     }
-    val isRealtimeEnabled = isRealtimeCommand || realtimeTriggerInputs.isNotEmpty()
+    val hasRealtimeButton = resolvedExtras.any { extra ->
+        extra.type == "BUTTON" &&
+            !extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
+            (isRealtimeCommand || extra.flags.hasFlag(ExtraFlags.REALTIME))
+    }
+    val isRealtimeEnabled = isRealtimeCommand || realtimeTriggerInputs.isNotEmpty() || hasRealtimeButton
     val realtimeInputTextKey = if (isRealtimeCommand) inputText else null
     val realtimeInputFilesKey = if (isRealtimeCommand) inputFiles else null
     val realtimeExtraInputKey = if (isRealtimeCommand) extraInput.value else null
@@ -386,6 +393,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
         realtimeExtraInputListKey
     ) {
         if (!isRealtimeEnabled) return@LaunchedEffect
+        // Realtime BUTTON presses are dispatched by their click handler so every
+        // press is retained instead of being collapsed by this debounce.
+        if (!isRealtimeCommand && realtimeTriggerInputs.isEmpty()) return@LaunchedEffect
 
         delay(150L)
         viewModel.runCommandDirectly(
@@ -468,7 +478,8 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                         !extra.flags.hasFlag(ExtraFlags.LARGE) &&
                         !isMultilineText &&
                         extra.type != "SELECTABLE_FLAT" &&
-                        extra.type != "MULTI_SELECTABLE_FLAT"
+                        extra.type != "MULTI_SELECTABLE_FLAT" &&
+                        extra.type != "BUTTON"
                     Column(Modifier.fillMaxWidth(if (useSmallWidth) 0.47F else 1F)) {
                     when (extra.type) {
                         "STRING", "TEXT" -> {
@@ -642,8 +653,9 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             )
                         }
 
-                        "SELECTABLE", "SELECTABLE_FLAT" -> {
+                        "SELECTABLE", "SELECTABLE_FLAT", "BUTTON" -> {
                             val isFlat = extra.type == "SELECTABLE_FLAT"
+                            val isButton = extra.type == "BUTTON"
                             val expanded = remember { mutableStateOf(false) }
                             val configuredOptions = extra.selectableOptions
                             val shellEnvironmentVariable = remember(configuredOptions) {
@@ -729,7 +741,41 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                if (isFlat) {
+                                if (isButton) {
+                                    ButtonOptionSelector(
+                                        options = options,
+                                        selectedOption = selectedOption,
+                                        enabled = !selectableFetchFailed,
+                                        onOptionClick = { value ->
+                                            val updatedInputs = addToExtraInputs(
+                                                CommandExtraInput(
+                                                    extra.name,
+                                                    value,
+                                                    value,
+                                                    extra.type,
+                                                    extra.defaultBoolean,
+                                                    extra.id,
+                                                    extra.description
+                                                )
+                                            )
+                                            if (
+                                                isRealtimeCommand ||
+                                                extra.flags.hasFlag(ExtraFlags.REALTIME)
+                                            ) {
+                                                viewModel.runCommandDirectly(
+                                                    command,
+                                                    inputText ?: extraInput.value,
+                                                    inputFiles ?: extraInputList.value,
+                                                    updatedInputs,
+                                                    processId,
+                                                    sendNotifications = false,
+                                                    closeExtrasOnComplete = false,
+                                                    keepShellAlive = true
+                                                )
+                                            }
+                                        }
+                                    )
+                                } else if (isFlat) {
                                     FlatOptionSelector(
                                         options = options,
                                         selectedOption = selectedOption,
