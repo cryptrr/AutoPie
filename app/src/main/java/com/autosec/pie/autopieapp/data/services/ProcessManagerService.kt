@@ -1049,6 +1049,25 @@ class ProcessManagerService(
         }
     }
 
+    internal suspend fun installRestoreDependency(manager: String, packageName: String): Boolean =
+        withContext(dispatchers.io) {
+            require(manager == "pkg" || manager == "pip")
+            require(packageName.isNotBlank() && !packageName.startsWith("-"))
+            val installShell = getNewShell()
+            try {
+                val command = if (manager == "pkg") {
+                    "DEBIAN_FRONTEND=noninteractive pkg install -y ${packageName.shellQuote()} </dev/null"
+                } else {
+                    "pip install --no-input ${packageName.shellQuote()} </dev/null"
+                }
+                installShell.run(command, Shell.Command.Config.Builder().apply {
+                    timeout = Shell.Timeout(15, java.util.concurrent.TimeUnit.MINUTES)
+                }.create()).isSuccess
+            } finally {
+                installShell.shutdown()
+            }
+        }
+
     internal suspend fun findMissingTermuxDependencies(
         pkgPackages: List<String>,
         pipPackages: List<String>

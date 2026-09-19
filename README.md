@@ -647,6 +647,15 @@ The following kind of observer can automatically convert every new screenshot to
 
 ## Configuration, logs, and troubleshooting
 
+Settings → Restore From Backup restores `commands.json` and checks the current catalog
+for dependencies of restored command IDs and workflow references. Review the missing
+Termux and Python packages, then choose **Install missing packages**. Your restored
+command definitions are preserved; recipe installation scripts are not executed.
+Custom or unknown commands and unavailable recipes are listed for follow-up. Offline
+checks and partial installations can be retried from **Check / retry command packages**
+in Settings. Dependency repair uses current recipes and does not restore secrets,
+custom executables, or missing referenced command definitions.
+
 AutoPie can store `AutoSec` in either shared external storage or its private app-data home. Change the location in **Settings → AutoPie Config Path**; AutoPie moves the directory when possible. External storage survives an uninstall but is less private. App-data storage is more private but is normally removed with the app.
 
 Important files and directories inside `AutoSec` include:
