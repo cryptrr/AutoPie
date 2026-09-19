@@ -565,9 +565,11 @@ class CommandTests : KoinTest {
                 runtime:
                   command: "echo ready"
                 install:
+                  installerVersion: "2.1.0"
                   dependencies:
                     pkg: [ffmpeg]
                     pip: [yt-dlp]
+                  script: "install.sh"
                 """.trimIndent()
         )
 

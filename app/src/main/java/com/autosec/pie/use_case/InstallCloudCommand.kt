@@ -75,7 +75,10 @@ class InstallCloudCommand(
         val folderUrl = cloudCommandFolderUrl(commandId, channel)
         val resolvedManifestYaml = manifestYaml ?: fetchCloudCommandText("$folderUrl/manifest.yaml")
         val manifest = cloudManifestToShareCommandJson(resolvedManifestYaml)
-        val installScript = if (includeInstallation) {
+        // Continue accepting script metadata for manifest compatibility, but do not fetch or
+        // execute repository install scripts in this client release. Dependencies are the only
+        // automatic installation mechanism currently enabled.
+        val installScript = if (includeInstallation && CLOUD_INSTALL_SCRIPTS_ENABLED) {
             manifest.installScript
                 ?.takeIf(String::isNotBlank)
                 ?.let { installScriptName -> fetchCloudCommandText("$folderUrl/$installScriptName") }
@@ -523,3 +526,4 @@ internal fun fetchCloudCommandText(url: String): String {
 }
 
 private const val MAX_PARALLEL_COMMAND_FETCHES = 4
+private const val CLOUD_INSTALL_SCRIPTS_ENABLED = false

@@ -555,7 +555,7 @@ install:
   script: install.sh
 ```
 
-AutoPie checks the embedded Termux environment before installation and installs only missing `pkg` dependencies, followed by missing `pip` dependencies. It runs `install.script` when its `installerVersion` differs from the currently installed command. If no dependencies are missing and the installer version is unchanged, AutoPie does not open a Termux installation session. Manifests without `dependencies` continue to use the install script directly; scripts without an `installerVersion` run on every installation or update.
+AutoPie checks the embedded Termux environment before installation and installs only missing `pkg` dependencies, followed by missing `pip` dependencies. The current client accepts `script` for manifest compatibility and retains `installerVersion`, but does not download or execute `install.script`. If no dependencies are missing, AutoPie does not open a Termux installation session.
 
 The embedded terminal is still the fastest way to install arbitrary tools:
 
