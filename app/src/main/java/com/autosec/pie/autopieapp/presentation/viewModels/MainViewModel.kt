@@ -118,20 +118,16 @@ class MainViewModel(
         restorePackagesMessage = "Preparing installation…"
         viewModelScope.launch {
             try {
-                val result = dependencyRestore.install(plan) { progress ->
-                    restorePackagesMessage = progress
-                }
-                restorePackagesPlan = result
-                restorePackagesMessage = if (result.missingCount == 0) {
-                    "All identified dependencies are installed."
-                } else {
-                    "${result.missingCount} packages are still missing. You can retry their installation."
-                }
+                val opened = dependencyRestore.install(plan)
+                restorePackagesPlan = null
+                restorePackagesMessage = if (opened) {
+                    "Installation opened in Termux. View the results there, then use Check / retry command packages if needed."
+                } else "All identified dependencies are already installed."
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 Timber.e(error)
-                restorePackagesMessage = "Could not finish checking installation. Retry to check and install only missing packages."
+                restorePackagesMessage = "Could not open installation in Termux. Retry to check and install missing packages."
             } finally {
                 restorePackagesBusy = false
             }

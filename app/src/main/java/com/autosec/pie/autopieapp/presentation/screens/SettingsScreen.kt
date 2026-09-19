@@ -174,7 +174,7 @@ fun SettingsToggles() {
                     }
                 } else if (plan == null || plan.failedIds.isNotEmpty()) {
                     TextButton(enabled = !busy, onClick = mainViewModel::checkRestoredPackages) {
-                        Text("Retry package check")
+                        Text("Check / retry packages")
                     }
                 }
             },

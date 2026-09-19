@@ -86,22 +86,27 @@ class RestoreCommandDependencies(
         )
     }
 
-    suspend fun install(plan: DependencyRestorePlan, onProgress: (String) -> Unit): DependencyRestorePlan {
+    suspend fun install(plan: DependencyRestorePlan): Boolean {
         // Check again in case packages were installed since the preview was opened.
         val missing = processManager.findMissingTermuxDependencies(plan.pkg, plan.pip)
-        val packages = missing.pkg.map { "pkg" to it } + missing.pip.map { "pip" to it }
-        packages.forEachIndexed { index, (manager, name) ->
-            onProgress("Installing ${index + 1}/${packages.size}: $name")
-            try {
-                processManager.installRestoreDependency(manager, name)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (_: Exception) {
-                // Continue other packages; the final check determines what needs retrying.
-            }
-        }
-        onProgress("Checking installed packages…")
-        val remaining = processManager.findMissingTermuxDependencies(plan.pkg, plan.pip)
-        return plan.copy(missingPkg = remaining.pkg, missingPip = remaining.pip)
+        if (missing.pkg.isEmpty() && missing.pip.isEmpty()) return false
+        processManager.openRestoreInstallation(restoreInstallScript(missing.pkg, missing.pip))
+        return true
     }
+}
+
+internal fun restoreInstallScript(pkg: List<String>, pip: List<String>): String = buildString {
+    appendLine("failed=(); installed=0")
+    val packages = pkg.distinct().map { "pkg" to it } + pip.distinct().map { "pip" to it }
+    packages.forEachIndexed { index, (manager, name) ->
+        require(name.isNotBlank() && !name.startsWith("-"))
+        val quoted = "'${name.replace("'", "'\\''")}'"
+        appendLine("printf '\\n[%s/${packages.size}] %s: %s\\n' '${index + 1}' '$manager' $quoted")
+        val install = if (manager == "pkg") "pkg install -y $quoted" else "pip install $quoted"
+        appendLine("if $install; then installed=\$((installed + 1)); else failed+=(\"$manager: \"$quoted); fi")
+    }
+    appendLine("printf '\\nInstallation finished. Successful: %s. Failed: %s.\\n' \"\$installed\" \"\${#failed[@]}\"")
+    appendLine("if (( \${#failed[@]} )); then printf 'Failed: %s\\n' \"\${failed[@]}\"; fi")
+    appendLine("printf '%s\\n' 'Use Settings > Check / retry command packages to recheck, or fix packages here manually.'")
+    appendLine("(( \${#failed[@]} == 0 ))")
 }

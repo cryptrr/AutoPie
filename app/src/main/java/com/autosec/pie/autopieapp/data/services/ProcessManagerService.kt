@@ -1049,23 +1049,41 @@ class ProcessManagerService(
         }
     }
 
-    internal suspend fun installRestoreDependency(manager: String, packageName: String): Boolean =
+    internal suspend fun openRestoreInstallation(script: String) =
         withContext(dispatchers.io) {
-            require(manager == "pkg" || manager == "pip")
-            require(packageName.isNotBlank() && !packageName.startsWith("-"))
-            val installShell = getNewShell()
-            try {
-                val command = if (manager == "pkg") {
-                    "DEBIAN_FRONTEND=noninteractive pkg install -y ${packageName.shellQuote()} </dev/null"
-                } else {
-                    "pip install --no-input ${packageName.shellQuote()} </dev/null"
-                }
-                installShell.run(command, Shell.Command.Config.Builder().apply {
-                    timeout = Shell.Timeout(15, java.util.concurrent.TimeUnit.MINUTES)
-                }.create()).isSuccess
-            } finally {
-                installShell.shutdown()
+            // Python is bundled with the bootstrap. Its OS lock is released even if
+            // installation is interrupted, and does not require persisted job state.
+            val lockRunner = """
+                import fcntl, subprocess, sys
+                with open(sys.argv[1], 'a') as lock:
+                    try:
+                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except BlockingIOError:
+                        print('Another package restore is running. Wait for it to finish.', flush=True)
+                        sys.exit(1)
+                    sys.exit(subprocess.call(['bash', '-c', sys.argv[2]]))
+            """.trimIndent()
+            val scriptFile = File.createTempFile("restore-packages-", ".sh", activity.cacheDir)
+            val lockFile = File(activity.filesDir, "restore-packages.lock")
+            scriptFile.writeText(
+                "python -c ${lockRunner.shellQuote()} ${lockFile.absolutePath.shellQuote()} ${script.shellQuote()}\n" +
+                    "printf '\\nInstallation session ended.\\n'\n" +
+                    "rm -- ${scriptFile.absolutePath.shellQuote()}\n" +
+                    "exec bash -i\n"
+            )
+            val intent = Intent(activity, RunCommandService::class.java).apply {
+                action = TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.ACTION_RUN_COMMAND
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH,
+                    "${activity.filesDir}/usr/bin/bash")
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS,
+                    arrayOf("-i", scriptFile.absolutePath))
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_WORKDIR,
+                    activity.filesDir.absolutePath)
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND, false)
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_SESSION_ACTION,
+                    TermuxConstants.TERMUX_APP.TERMUX_SERVICE.VALUE_EXTRA_SESSION_ACTION_SWITCH_TO_NEW_SESSION_AND_OPEN_ACTIVITY.toString())
             }
+            checkNotNull(activity.startForegroundService(intent)) { "Could not open Termux installation" }
         }
 
     internal suspend fun findMissingTermuxDependencies(

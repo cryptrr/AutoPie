@@ -649,7 +649,10 @@ The following kind of observer can automatically convert every new screenshot to
 
 Settings → Restore From Backup restores `commands.json` and checks the current catalog
 for dependencies of restored command IDs and workflow references. Review the missing
-Termux and Python packages, then choose **Install missing packages**. Your restored
+Termux and Python packages, then choose **Install missing packages**. Installation
+opens a Termux foreground-service session with live output and a final summary.
+You can leave Settings while it runs and fix failures in the terminal or check again
+afterward. Only one restore installation can run at a time. Your restored
 command definitions are preserved; recipe installation scripts are not executed.
 Custom or unknown commands and unavailable recipes are listed for follow-up. Offline
 checks and partial installations can be retried from **Check / retry command packages**

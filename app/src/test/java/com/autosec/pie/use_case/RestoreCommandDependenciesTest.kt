@@ -51,23 +51,32 @@ class RestoreCommandDependenciesTest {
     }
 
     @Test
-    fun `installation continues after failure and retries only remaining packages`() = runTest {
+    fun `installation opens Termux only for packages still missing`() = runTest {
         val manager = mockk<ProcessManagerService>()
         coEvery { manager.findMissingTermuxDependencies(any(), any()) } returnsMany listOf(
-            MissingTermuxDependencies(listOf("ffmpeg"), listOf("yt-dlp")),
-            MissingTermuxDependencies(pip = listOf("yt-dlp")),
             MissingTermuxDependencies(pip = listOf("yt-dlp")),
             MissingTermuxDependencies()
         )
-        coEvery { manager.installRestoreDependency("pkg", "ffmpeg") } returns true
-        coEvery { manager.installRestoreDependency("pip", "yt-dlp") } throws IllegalStateException("offline")
+        coEvery { manager.openRestoreInstallation(any()) } returns mockk()
         val restore = RestoreCommandDependencies(manager)
         val plan = DependencyRestorePlan(emptyList(), emptyList(), emptyList(), listOf("ffmpeg"), listOf("yt-dlp"), listOf("ffmpeg"), listOf("yt-dlp"))
-        val result = restore.install(plan) {}
-        assertEquals(1, result.missingCount)
-        coEvery { manager.installRestoreDependency("pip", "yt-dlp") } returns true
-        assertEquals(0, restore.install(result) {}.missingCount)
-        coVerify(exactly = 1) { manager.installRestoreDependency("pkg", "ffmpeg") }
-        coVerify(exactly = 2) { manager.installRestoreDependency("pip", "yt-dlp") }
+        assertEquals(true, restore.install(plan))
+        assertEquals(false, restore.install(plan))
+        coVerify(exactly = 1) { manager.openRestoreInstallation(restoreInstallScript(emptyList(), listOf("yt-dlp"))) }
+    }
+
+    @Test
+    fun `script continues after failure and safely quotes package names`() {
+        val script = restoreInstallScript(listOf("broken", "good'\$(echo injected)"), listOf("python-tool"))
+        val process = ProcessBuilder("bash", "-c", """
+            pkg() { [[ "${'$'}3" != broken ]]; }
+            pip() { return 0; }
+            $script
+        """.trimIndent()).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().readText()
+        assertEquals(1, process.waitFor())
+        org.junit.Assert.assertTrue(output.contains("Successful: 2. Failed: 1."))
+        org.junit.Assert.assertTrue(output.contains("Failed: pkg: broken"))
+        org.junit.Assert.assertTrue(output.contains("good'\$(echo injected)"))
     }
 }
