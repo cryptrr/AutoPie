@@ -673,3 +673,14 @@ It installs the generated archive at `app/src/main/assets/bootstrap-aarch64.zip`
 - [Termux](https://github.com/termux)
 
 AutoPie is licensed under the [Apache License 2.0](LICENSE).
+
+## Git hooks
+
+Enable the repository's Git hooks once after cloning:
+
+```shell
+git config core.hooksPath .githooks
+```
+
+The pre-push hook cancels a push when the release build type in
+`app/build.gradle.kts` explicitly uses the debug signing configuration.
