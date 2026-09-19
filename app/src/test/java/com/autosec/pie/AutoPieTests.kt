@@ -21,6 +21,7 @@ import com.autopi.use_case.GetCommandsList
 import com.autopi.use_case.GetRepoCommandsList
 import com.autopi.use_case.InstallCloudCommand
 import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
+import com.autopi.autopieapp.presentation.viewModels.filterUninstalledCloudCommands
 import com.autopi.autopieapp.presentation.viewModels.keywordInstallScriptFor
 import com.autopi.autopieapp.presentation.viewModels.matchesAnyCloudKeyword
 import com.autopi.autopieapp.presentation.viewModels.sortCloudCommandsForCatalog
@@ -337,6 +338,21 @@ class CommandTests : KoinTest {
         )
 
         assertEquals(listOf("autopie.a-update", "autopie.b-new", "autopie.z-current"), sorted.map { it.id })
+    }
+
+    @Test
+    fun `home catalog search excludes commands that are already installed`() = runTest {
+        val commands = listOf(
+            CloudCommandModel(id = "autopie.installed", name = "Installed"),
+            CloudCommandModel(id = "autopie.available", name = "Available")
+        )
+
+        val availableCommands = filterUninstalledCloudCommands(
+            commands,
+            installedVersions = mapOf("autopie.installed" to "1.0.0")
+        )
+
+        assertEquals(listOf("autopie.available"), availableCommands.map { it.id })
     }
 
     @Test
