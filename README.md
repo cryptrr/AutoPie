@@ -173,7 +173,7 @@ Use a `progress` event to update the progress bar on an existing running-command
 #@AUTOPIE {"type":"progress","value":75}
 ```
 
-`value` must be a JSON number representing a percentage. AutoPie rounds fractional values and clamps the result to `0..100`. Progress updates apply to commands that already have a running notification; cron and standalone commands do not create one.
+`value` must be a JSON number representing a percentage. AutoPie rounds fractional values and clamps the result to `0..100`. Progress updates apply to commands that already have a running notification; cron commands do not create one.
 
 ## `commands.json`
 
