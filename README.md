@@ -703,3 +703,60 @@ git config core.hooksPath .githooks
 
 The pre-push hook cancels a push when the release build type in
 `app/build.gradle.kts` explicitly uses the debug signing configuration.
+
+### Output viewer
+
+Command history includes **OPEN OUTPUT** beside the existing log action. The viewer
+presents the command's captured `OUTPUT` value independently from stdout/stderr.
+Text and JSON strings appear as selectable text, numbers as large values, arrays
+as lists, and other JSON as formatted text. HTTP(S) URLs in text are clickable.
+
+Use typed JSON objects for richer output (objects can be nested in arrays or lists):
+
+```sh
+OUTPUT='{"type":"list","title":"Results","items":[
+  "Completed 3 tasks",
+  42,
+  {"type":"image","path":"/sdcard/Pictures/result.png","caption":"Result preview"},
+  {"type":"link","text":"View details","url":"https://example.com/results"}
+]}'
+```
+
+Supported objects:
+
+- `{"type":"text","text":"Hello"}`
+- `{"type":"image","src":"https://example.com/image.png","alt":"Preview"}`
+  (`path` is an alias for `src`; `caption` is an alias for `alt`). Sources may be
+  absolute file paths, `file://`, readable `content://` URIs, or image URLs.
+- `{"type":"link","text":"Open","url":"https://example.com"}`
+- `{"type":"list","title":"Results","items":[...]}` (`column` is also accepted).
+
+Unknown or incomplete typed objects fall back to formatted JSON. Local images
+must be readable by AutoPie; a path alone does not grant access to another app's
+private files. Missing output files and image loading failures display a message.
+
+From Android code, launch `OutputPresentationActivity.createIntent(context,
+output, title)` or `OutputPresentationActivity.fileIntent(context, file, title)`.
+The activity also accepts string extras `output`, `outputFile`, and `commandName`,
+or `Intent.EXTRA_TEXT`. Direct text takes precedence over a file. For example:
+
+```sh
+am start -n com.autopi/.OutputPresentationActivity --es output "$OUTPUT"
+```
+
+Use `com.autopi.debug` as the package for debug builds. For large output, pass
+`--es outputFile /absolute/path/to/output.json` to avoid Intent size limits.
+
+Structured notification events can open the output viewer directly when tapped:
+
+```text
+#@AUTOPIE {"type":"notification","title":"Results","body":"Tap to view","action":{"type":"open_output","value":{"type":"list","items":[42,{"type":"link","text":"Details","url":"https://example.com"}]}}}
+```
+
+`action.value` accepts the same values as an `output` event, including image and
+list presentation objects. Omit `value` to use the latest preceding structured
+`output` event; if none exists, the viewer reads the run's captured OUTPUT file.
+The action changes the notification's main tap destination; it does not add a
+button. When event output is available, each notification saves a snapshot in the
+app cache so later output events do not change its content. Cache cleanup can
+remove these snapshots, just as it can remove command logs.

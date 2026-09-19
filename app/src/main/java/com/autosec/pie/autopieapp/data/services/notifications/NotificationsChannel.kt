@@ -26,6 +26,7 @@ import java.io.File
 import androidx.core.net.toUri
 import com.autopi.BuildConfig
 import com.autopi.OutputViewerActivity
+import com.autopi.OutputPresentationActivity
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessBroadcastReceiver
@@ -117,7 +118,9 @@ class AutoPieNotification(
         silent: Boolean = true,
         autoCancel: Boolean = false,
         reuseProcessNotification: Boolean = false,
-        openUrl: String? = null
+        openUrl: String? = null,
+        openOutput: Boolean = false,
+        rawOutput: String? = null
     ) {
         val channelId = MAIN_CHANNEL
         val notificationId = if (reuseProcessNotification) {
@@ -127,15 +130,14 @@ class AutoPieNotification(
         }
 
 
-        val intent = openUrl?.toSupportedWebUriOrNull()?.let { uri ->
-            Intent(Intent.ACTION_VIEW, uri).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-        } ?: Intent(Intent.ACTION_MAIN).apply {
-            setClass(context, OutputViewerActivity::class.java)
-            putExtra("logFile", logFile)
-            putExtra("commandName", command?.name ?: "")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        val intent = when {
+            openOutput -> outputIntent(processId, command, rawOutput)
+            openUrl != null -> openUrl.toSupportedWebUriOrNull()?.let { uri ->
+                Intent(Intent.ACTION_VIEW, uri).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            } ?: logIntent(command, logFile)
+            else -> logIntent(command, logFile)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
@@ -169,6 +171,33 @@ class AutoPieNotification(
 
         Timber.d("Send notification for $contentTitle, $contentText, $logFile")
 
+    }
+
+    private fun logIntent(command: CommandModel?, logFile: String) =
+        Intent(Intent.ACTION_MAIN).apply {
+            setClass(context, OutputViewerActivity::class.java)
+            putExtra("logFile", logFile)
+            putExtra("commandName", command?.name ?: "")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+
+    private fun outputIntent(
+        processId: Int,
+        command: CommandModel?,
+        rawOutput: String? = null
+    ): Intent {
+        val outputFile = if (rawOutput != null) {
+            File.createTempFile("notification-output-$processId-", ".json", context.cacheDir)
+                .apply { writeText(rawOutput) }
+        } else File(context.cacheDir, "$processId.output")
+        return OutputPresentationActivity.fileIntent(
+            context,
+            outputFile,
+            command?.name ?: "Command"
+        ).apply {
+            action = "${context.packageName}.VIEW_OUTPUT.${outputFile.name}"
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
     }
 
     private fun String.toSupportedWebUriOrNull(): Uri? {

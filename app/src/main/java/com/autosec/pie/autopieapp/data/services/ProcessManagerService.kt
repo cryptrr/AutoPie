@@ -626,10 +626,8 @@ class ProcessManagerService(
                             }
                         }
                         is AutoPieStructuredEvent.Notification -> {
-                            val openUrl = when (val action = event.action) {
-                                is AutoPieNotificationAction.OpenUrl -> action.url
-                                AutoPieNotificationAction.OpenOutput, null -> null
-                            }
+                            val openUrl = (event.action as? AutoPieNotificationAction.OpenUrl)?.url
+                            val outputAction = event.action as? AutoPieNotificationAction.OpenOutput
                             try {
                                 autoPieNotification.sendNotification(
                                     contentTitle = event.title,
@@ -638,8 +636,10 @@ class ProcessManagerService(
                                     logFile = logFile.absolutePath,
                                     processId = processId,
                                     silent = false,
-                                    autoCancel = openUrl != null,
-                                    openUrl = openUrl
+                                    autoCancel = true,
+                                    openUrl = openUrl,
+                                    openOutput = outputAction != null,
+                                    rawOutput = outputAction?.rawValue ?: latestStructuredOutput.get()
                                 )
                             } catch (error: Throwable) {
                                 Timber.e(
@@ -1311,8 +1311,8 @@ internal sealed interface AutoPieStructuredEvent {
 }
 
 internal sealed interface AutoPieNotificationAction {
-    data object OpenOutput : AutoPieNotificationAction
     data class OpenUrl(val url: String) : AutoPieNotificationAction
+    data class OpenOutput(val rawValue: String? = null) : AutoPieNotificationAction
 }
 
 internal fun parseAutoPieStructuredEvent(line: String): AutoPieStructuredEvent? {
@@ -1371,7 +1371,9 @@ private fun com.google.gson.JsonObject.notificationActionOrNull(): AutoPieNotifi
         ?.asJsonObject
         ?: return null
     return when (action.stringOrNull("type")) {
-        "open_output" -> AutoPieNotificationAction.OpenOutput
+        "open_output" -> AutoPieNotificationAction.OpenOutput(
+            action.get("value")?.toWidgetRawValue()
+        )
         "open_url" -> {
             val url = action.stringOrNull("url") ?: return null
             val uri = runCatching { URI(url) }.getOrNull() ?: return null

@@ -218,7 +218,7 @@ class ProcessManagerTests : KoinTest {
             AutoPieStructuredEvent.Notification(
                 title = "Reddit",
                 body = "3 new posts",
-                action = AutoPieNotificationAction.OpenOutput
+                action = AutoPieNotificationAction.OpenOutput()
             ),
             parseAutoPieStructuredEvent(
                 "#@AUTOPIE {\"type\":\"notification\",\"title\":\"Reddit\",\"body\":\"3 new posts\",\"action\":{\"type\":\"open_output\"}}"
@@ -279,7 +279,9 @@ class ProcessManagerTests : KoinTest {
                 processId = 61550,
                 silent = false,
                 autoCancel = true,
-                openUrl = null
+                openUrl = null,
+                openOutput = true,
+                rawOutput = null
             )
         }
     }
@@ -320,6 +322,50 @@ class ProcessManagerTests : KoinTest {
                 silent = false,
                 autoCancel = true,
                 openUrl = "https://www.reddit.com/r/android/"
+            )
+        }
+    }
+
+    @Test
+    fun `notification open output action retains typed presentation JSON`() {
+        val event = parseAutoPieStructuredEvent(
+            """#@AUTOPIE {"type":"notification","title":"Results","body":"Ready","action":{"type":"open_output","value":{"type":"list","items":[42,{"type":"image","path":"/tmp/result.png"}]}}}"""
+        ) as AutoPieStructuredEvent.Notification
+        assertEquals(
+            AutoPieNotificationAction.OpenOutput("""{"type":"list","items":[42,{"type":"image","path":"/tmp/result.png"}]}"""),
+            event.action
+        )
+        assertEquals(
+            AutoPieNotificationAction.OpenOutput(),
+            (parseAutoPieStructuredEvent(
+                """#@AUTOPIE {"type":"notification","title":"Results","body":"Ready","action":{"type":"open_output"}}"""
+            ) as AutoPieStructuredEvent.Notification).action
+        )
+    }
+
+    @Test
+    fun `notification open output uses the latest structured output`() = runTest {
+        val fixture = createProcessManagerService("structured-notification-output")
+        val command = CommandModel(
+            id = "structured-notification-output-command",
+            type = CommandType.CRON,
+            name = "Structured output notification",
+            path = "",
+            command = """printf '%s\n' '#@AUTOPIE {"type":"output","value":["First",42]}' '#@AUTOPIE {"type":"notification","title":"Results","body":"Ready","action":{"type":"open_output"}}'""",
+            exec = "",
+            extras = emptyList()
+        )
+        val result = fixture.service.runCommandForShareWithEnv2(
+            command, command.exec, command.command, command.path,
+            commandExtraInputs = emptyList(), rawInput = "", processId = 61552,
+            jobType = JobType.CRON, usePython = false
+        )
+        assertTrue(result.success)
+        verify(exactly = 1) {
+            fixture.autoPieNotification.sendNotification(
+                contentTitle = "Results", contentText = "Ready", command = command,
+                logFile = any(), processId = 61552, silent = false, autoCancel = true,
+                openUrl = null, openOutput = true, rawOutput = """["First",42]"""
             )
         }
     }

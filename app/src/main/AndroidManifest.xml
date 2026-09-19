@@ -189,6 +189,14 @@
             android:taskAffinity="${applicationId}.output"
             >
         </activity>
+        <activity
+            android:name=".OutputPresentationActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="View output"
+            android:theme="@style/ShareTheme"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.presentation" />
         <activity android:name=".LoadingActivity"
             android:exported="true"
             android:noHistory="true"
