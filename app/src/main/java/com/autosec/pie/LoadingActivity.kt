@@ -14,7 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.autopi.ui.theme.AutoPieTheme
+import com.autopi.ui.theme.AppTheme
 import java.lang.ref.WeakReference
 
 class LoadingActivity : ComponentActivity() {
@@ -76,7 +76,7 @@ class LoadingActivity : ComponentActivity() {
         }
 
         setContent {
-            AutoPieTheme() {
+            AppTheme {
                 Surface {
                     Box(
                         modifier = Modifier.fillMaxSize(),
