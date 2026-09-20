@@ -13,12 +13,13 @@ import org.junit.Test
 
 class RestoreCommandDependenciesTest {
     @Test
-    fun `plan preserves config and collects references while tolerating failed recipes`() = runTest {
+    fun `plan replaces full catalog definitions and collects dependencies from the same recipes`() = runTest {
         val manager = mockk<ProcessManagerService>()
         coEvery { manager.findMissingTermuxDependencies(listOf("ffmpeg"), listOf("yt-dlp")) } returns
             MissingTermuxDependencies(listOf("ffmpeg"), listOf("yt-dlp"))
         val commands = JsonParser.parseString("""{
-            "Edited": {"id":"catalog.one", "command":"my custom command"},
+            "Edited": {"id":"catalog.one", "command":"my custom command", "extras":[{"name":"OLD"}], "version":"1"},
+            "Unavailable": {"id":"catalog.broken", "command":"keep this"},
             "Workflow": {"id":"local.flow", "steps":[
                 {"commandId":"catalog.two"}, {"commandId":"catalog.one"}, {"commandId":"catalog.broken"}
             ]},
@@ -34,6 +35,7 @@ class RestoreCommandDependenciesTest {
             """
                 id: $id
                 name: Example
+                version: "2"
                 runtime:
                   command: echo replaced
                 install:
@@ -48,6 +50,34 @@ class RestoreCommandDependenciesTest {
         assertEquals(listOf("ffmpeg"), plan.missingPkg)
         assertEquals(listOf("yt-dlp"), plan.missingPip)
         assertEquals(original, commands.toString())
+        val refreshed = requireNotNull(plan.refreshedCommands)
+        assertEquals(false, refreshed.has("Edited"))
+        assertEquals("echo replaced", refreshed.getAsJsonObject("Example").get("command").asString)
+        assertEquals("2", refreshed.getAsJsonObject("Example").get("version").asString)
+        assertEquals(false, refreshed.getAsJsonObject("Example").has("extras"))
+        assertEquals(commands.get("Workflow"), refreshed.get("Workflow"))
+        assertEquals(commands.get("Unavailable"), refreshed.get("Unavailable"))
+        assertEquals(commands.get("Legacy"), refreshed.get("Legacy"))
+        assertEquals(1, plan.updatedCount)
+    }
+
+    @Test
+    fun `recipe rename cannot overwrite local command with same name`() {
+        val commands = JsonParser.parseString("""{
+            "Old name":{"id":"catalog.one","command":"old"},
+            "New name":{"id":"local.one","command":"custom"}
+        }""").asJsonObject
+        val manifest = cloudManifestToShareCommandJson("""
+            id: catalog.one
+            name: New name
+            runtime:
+              command: echo latest
+        """.trimIndent())
+        val result = replaceRestoredCommands(commands, listOf(manifest))
+        assertEquals(commands.get("New name"), result.get("New name"))
+        assertEquals("echo latest", result.getAsJsonObject("New name (catalog.one)").get("command").asString)
+        assertEquals(false, result.has("Old name"))
+        assertEquals(result, replaceRestoredCommands(result, listOf(manifest)))
     }
 
     @Test

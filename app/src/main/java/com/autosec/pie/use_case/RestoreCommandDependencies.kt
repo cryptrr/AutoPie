@@ -19,6 +19,8 @@ data class DependencyRestorePlan(
     val pip: List<String>,
     val missingPkg: List<String>,
     val missingPip: List<String>,
+    val refreshedCommands: JsonObject? = null,
+    val updatedCount: Int = 0,
 ) {
     val missingCount: Int get() = missingPkg.size + missingPip.size
 }
@@ -46,7 +48,7 @@ internal fun restoredRecipeIds(commands: JsonObject): Pair<List<String>, List<St
     return ids.toList() to unidentified
 }
 
-/** Repairs packages only; never writes command definitions or runs recipe scripts. */
+/** Resolves command replacements and dependencies from the same recipes. */
 class RestoreCommandDependencies(
     private val processManager: ProcessManagerService,
     private val fetchManifest: (String) -> String = ::fetchCloudCommandText,
@@ -67,7 +69,7 @@ class RestoreCommandDependencies(
                             fetchManifest("${cloudCommandFolderUrl(id, channel)}/manifest.yaml")
                         )
                         require(manifest.commandObject.get("id").asString == id)
-                        id to manifest.installDependencies
+                        id to manifest
                     } catch (error: CancellationException) {
                         throw error
                     } catch (_: Exception) {
@@ -76,13 +78,19 @@ class RestoreCommandDependencies(
                 }
             }
         }.awaitAll()
-        val pkg = results.flatMap { it.second?.pkg.orEmpty() }.distinct()
-        val pip = results.flatMap { it.second?.pip.orEmpty() }.distinct()
+        val pkg = results.flatMap { it.second?.installDependencies?.pkg.orEmpty() }.distinct()
+        val pip = results.flatMap { it.second?.installDependencies?.pip.orEmpty() }.distinct()
+        val replacements = results.mapNotNull { it.second }
+        val refreshed = replaceRestoredCommands(commands, replacements)
         val missing = processManager.findMissingTermuxDependencies(pkg, pip)
         DependencyRestorePlan(
             matched, unidentified + ids.filterNot { it in catalogIds },
             results.filter { it.second == null }.map { it.first },
-            pkg, pip, missing.pkg, missing.pip
+            pkg, pip, missing.pkg, missing.pip,
+            refreshed,
+            replacements.count { manifest -> commands.entrySet().any {
+                it.value.isJsonObject && it.value.asJsonObject.get("id") == manifest.commandObject.get("id")
+            } }
         )
     }
 
@@ -93,6 +101,29 @@ class RestoreCommandDependencies(
         processManager.openRestoreInstallation(restoreInstallScript(missing.pkg, missing.pip))
         return true
     }
+}
+
+internal fun replaceRestoredCommands(commands: JsonObject, manifests: List<CloudManifestCommand>): JsonObject {
+    val result = commands.deepCopy()
+    val replacements = manifests.filter { manifest -> commands.entrySet().any {
+        it.value.isJsonObject && it.value.asJsonObject.get("id") == manifest.commandObject.get("id")
+    } }
+    val ids = replacements.map { it.commandObject.get("id") }.toSet()
+    commands.entrySet().forEach { (key, value) ->
+        if (value.isJsonObject && value.asJsonObject.get("id") in ids) result.remove(key)
+    }
+    replacements.forEach { manifest ->
+        val id = manifest.commandObject.get("id").asString
+        var key = manifest.commandKey
+        var suffix = 1
+        // A catalog rename must never overwrite an unrelated local command.
+        while (result.has(key)) {
+            key = "${manifest.commandKey} ($id${if (suffix == 1) "" else "-$suffix"})"
+            suffix++
+        }
+        result.add(key, manifest.commandObject.deepCopy())
+    }
+    return result
 }
 
 internal fun restoreInstallScript(pkg: List<String>, pip: List<String>): String = buildString {
@@ -107,6 +138,6 @@ internal fun restoreInstallScript(pkg: List<String>, pip: List<String>): String 
     }
     appendLine("printf '\\nInstallation finished. Successful: %s. Failed: %s.\\n' \"\$installed\" \"\${#failed[@]}\"")
     appendLine("if (( \${#failed[@]} )); then printf 'Failed: %s\\n' \"\${failed[@]}\"; fi")
-    appendLine("printf '%s\\n' 'Use Settings > Check / retry command packages to recheck, or fix packages here manually.'")
+    appendLine("printf '%s\\n' 'Use Settings > Update commands / retry packages to recheck, or fix packages here manually.'")
     appendLine("(( \${#failed[@]} == 0 ))")
 }

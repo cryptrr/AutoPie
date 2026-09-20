@@ -155,6 +155,7 @@ fun SettingsToggles() {
                     Text(mainViewModel.restorePackagesMessage)
                     plan?.let {
                         Text("${it.matchedIds.size} catalog commands found.")
+                        Text("${it.updatedCount} commands refreshed from the latest recipes, including their inputs and defaults.")
                         if (it.missingPkg.isNotEmpty()) Text("Termux packages: ${it.missingPkg.joinToString()}")
                         if (it.missingPip.isNotEmpty()) Text("Python packages: ${it.missingPip.joinToString()}")
                         if (it.unresolved.isNotEmpty()) {
@@ -163,7 +164,7 @@ fun SettingsToggles() {
                         if (it.failedIds.isNotEmpty()) {
                             Text("Could not fetch recipes: ${it.failedIds.joinToString()}. Check again to retry.")
                         }
-                        Text("Dependencies come from the current command catalog. Custom installation scripts are not run.")
+                        Text("Commands and dependencies come from the same current recipes. Custom installation scripts are not run.")
                     }
                 }
             },
@@ -672,7 +673,7 @@ fun SettingsToggles() {
                 Text("Restore From Backup")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Restore commands.json, then check and install missing command packages.",
+                    "Restore commands.json, replace catalog commands with their latest recipes, then install missing packages.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
@@ -684,7 +685,7 @@ fun SettingsToggles() {
             enabled = !mainViewModel.restorePackagesBusy,
             onClick = mainViewModel::checkRestoredPackages
         ) {
-            Text("Check / retry command packages")
+            Text("Update commands / retry packages")
         }
 
     }

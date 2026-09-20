@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.AtomicFile
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,6 +38,7 @@ import com.autopi.use_case.AutoPieUseCases
 import com.autopi.use_case.DependencyRestorePlan
 import com.autopi.use_case.RestoreCommandDependencies
 import com.google.gson.JsonParser
+import com.google.gson.GsonBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -81,7 +83,7 @@ class MainViewModel(
         restorePackagesOpen = true
         restorePackagesBusy = true
         restorePackagesPlan = null
-        restorePackagesMessage = "Finding packages for your commands…"
+        restorePackagesMessage = "Updating catalog commands and checking packages…"
         viewModelScope.launch {
             try {
                 val plan = withContext(dispatchers.io) {
@@ -89,16 +91,32 @@ class MainViewModel(
                         "Could not refresh the command catalog. Check your connection and retry."
                     }
                     val catalog = useCases.getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath)
-                    val commands = JsonParser.parseString(
-                        autoPieConfigPathProvider.getConfigFile("commands.json").readText()
-                    ).asJsonObject
-                    dependencyRestore.plan(commands, catalog.map { it.id }.toSet(), commandsRepositoryChannel)
+                    val configFile = autoPieConfigPathProvider.getConfigFile("commands.json")
+                    val original = configFile.readText()
+                    val commands = JsonParser.parseString(original).asJsonObject
+                    val result = dependencyRestore.plan(commands, catalog.map { it.id }.toSet(), commandsRepositoryChannel)
+                    result.refreshedCommands?.takeIf { it != commands }?.let { refreshed ->
+                        check(configFile.readText() == original) { "Config changed during recipe lookup. Retry the check." }
+                        val atomicFile = AtomicFile(configFile)
+                        val output = atomicFile.startWrite()
+                        try {
+                            output.write(GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+                                .create().toJson(refreshed).toByteArray(Charsets.UTF_8))
+                            atomicFile.finishWrite(output)
+                        } catch (error: Exception) {
+                            atomicFile.failWrite(output)
+                            throw error
+                        }
+                    }
+                    result
                 }
+                emitEvent(ViewModelEvent.RefreshCommandsList)
+                emitEvent(ViewModelEvent.CommandsConfigChanged)
                 restorePackagesPlan = plan
                 restorePackagesMessage = if (plan.missingCount == 0) {
                     "All identified dependencies are installed."
                 } else {
-                    "${plan.missingCount} missing packages can be installed. Your saved commands will be preserved."
+                    "${plan.missingCount} missing packages can be installed."
                 }
             } catch (error: CancellationException) {
                 throw error
@@ -121,7 +139,7 @@ class MainViewModel(
                 val opened = dependencyRestore.install(plan)
                 restorePackagesPlan = null
                 restorePackagesMessage = if (opened) {
-                    "Installation opened in Termux. View the results there, then use Check / retry command packages if needed."
+                    "Installation opened in Termux. View the results there, then use Update commands / retry packages if needed."
                 } else "All identified dependencies are already installed."
             } catch (error: CancellationException) {
                 throw error
