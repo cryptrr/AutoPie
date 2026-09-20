@@ -164,7 +164,7 @@ fun SettingsToggles() {
                         if (it.failedIds.isNotEmpty()) {
                             Text("Could not fetch recipes: ${it.failedIds.joinToString()}. Check again to retry.")
                         }
-                        Text("Commands and dependencies come from the same current recipes. Custom installation scripts are not run.")
+                        Text("Commands and dependencies come from the same current recipes.")
                     }
                 }
             },
@@ -685,7 +685,7 @@ fun SettingsToggles() {
             enabled = !mainViewModel.restorePackagesBusy,
             onClick = mainViewModel::checkRestoredPackages
         ) {
-            Text("Update commands / retry packages")
+            Text("Fix dependencies")
         }
 
     }
