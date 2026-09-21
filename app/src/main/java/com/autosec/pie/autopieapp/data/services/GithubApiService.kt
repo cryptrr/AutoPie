@@ -1,5 +1,6 @@
 package com.autopi.autopieapp.data.services
 
+import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.google.gson.Gson
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -30,6 +31,7 @@ class GithubApiService {
                 val url = URL(GITHUB_RELEASE_LATEST_URL)
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
+                connection.setRequestProperty("User-Agent", AutoPieUserAgent.value)
 
                 // Read the response
                 val reader = InputStreamReader(connection.inputStream)

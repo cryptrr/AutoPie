@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import com.autopi.autopieapp.data.AutoPieConstants
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.CommandsRepositoryUrls
+import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.domain.AppNotification
@@ -351,6 +352,8 @@ class AutoPieCoreService {
 
             val request = DownloadManager.Request(Uri.parse(url))
 
+            request.addRequestHeader("User-Agent", AutoPieUserAgent.value)
+
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
 
             request.setTitle("Downloading Init File")
@@ -393,6 +396,7 @@ class AutoPieCoreService {
                     readTimeout = 30_000
                     instanceFollowRedirects = true
                     requestMethod = "GET"
+                    setRequestProperty("User-Agent", AutoPieUserAgent.value)
                 }
 
                 try {

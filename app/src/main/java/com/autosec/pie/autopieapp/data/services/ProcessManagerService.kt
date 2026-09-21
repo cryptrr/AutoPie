@@ -21,6 +21,7 @@ import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
+import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
@@ -969,7 +970,7 @@ class ProcessManagerService(
             if (shell?.isAlive() != true) initShell()
 
             val command =
-                "python -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
+                "python -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; opener = urllib.request.build_opener(); opener.addheaders = [('User-Agent', '${AutoPieUserAgent.value}')]; opener.retrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
 
             Timber.d(command)
 
@@ -991,7 +992,7 @@ class ProcessManagerService(
             if (shell?.isAlive() != true) initShell()
 
             val command =
-                "wcurl $url -o $fullFilePath"
+                "wcurl --header \"User-Agent: ${AutoPieUserAgent.value}\" $url -o $fullFilePath"
 
             Timber.d(command)
 
