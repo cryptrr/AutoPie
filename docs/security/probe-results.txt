@@ -1,0 +1,3 @@
+CONFIRMED: quoted input executes command substitution during export
+CONTROL: unquoted input is safely escaped
+CONFIRMED: production preamble leaks expanded secret into stderr

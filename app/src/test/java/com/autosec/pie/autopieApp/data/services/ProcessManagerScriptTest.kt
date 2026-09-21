@@ -4,6 +4,7 @@ import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ProcessManagerScriptTest {
@@ -168,18 +169,51 @@ class ProcessManagerScriptTest {
     }
 
     @Test
-    fun shellExportCommandsQuoteValuesUnlessAlreadyQuoted() {
+    fun shellExportCommandsQuoteEveryValueAsLiteralData() {
         assertEquals(
             """
                 export INPUT='one two'
                 export TITLE='Bob '"'"'quoted'"'"' it'
-                export EXISTING="already quoted"
+                export EXISTING='"already quoted"'
+                export SUBSTITUTION='$(printf AUTOPIE_AUDIT_MARKER >&2)'
             """.trimIndent(),
             linkedMapOf(
                 "INPUT" to "one two",
                 "TITLE" to "Bob 'quoted' it",
-                "EXISTING" to "\"already quoted\""
+                "EXISTING" to "\"already quoted\"",
+                "SUBSTITUTION" to "$(printf AUTOPIE_AUDIT_MARKER >&2)"
             ).toShellExportCommands()
         )
+    }
+
+    @Test
+    fun shellExportCommandsRoundTripShellSyntaxWithoutExecutingIt() {
+        val values = listOf(
+            "\"double quoted\"",
+            "embedded ' single quote",
+            "$(printf AUTOPIE_AUDIT_MARKER >&2)",
+            "`printf AUTOPIE_AUDIT_MARKER >&2`",
+            "first line\nsecond line"
+        )
+
+        values.forEach { value ->
+            val script = mapOf("VALUE" to value).toShellExportCommands() +
+                "\nprintf '%s' \"\$VALUE\""
+            val process = ProcessBuilder("bash", "-c", script).start()
+            val output = process.inputStream.bufferedReader().readText()
+            val error = process.errorStream.bufferedReader().readText()
+
+            assertEquals(0, process.waitFor())
+            assertEquals(value, output)
+            assertEquals("", error)
+        }
+    }
+
+    @Test
+    fun shellExportCommandsRejectInvalidVariableNames() {
+        assertThrows(IllegalArgumentException::class.java) {
+            mapOf("SAFE; printf AUTOPIE_AUDIT_MARKER >&2" to "value")
+                .toShellExportCommands()
+        }
     }
 }

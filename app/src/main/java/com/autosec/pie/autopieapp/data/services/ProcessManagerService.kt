@@ -67,9 +67,6 @@ class ProcessManagerService(
     private val autoPieNotification: AutoPieNotification,
     private val internalConfigService: InternalConfigService,
 ){
-
-    private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
-
     private var shell: Shell? = null
 
     private var mcpShell: Shell? = null
@@ -197,7 +194,7 @@ class ProcessManagerService(
 
     suspend fun getShellEnvironmentVariable(processId: Int, variableName: String): String? =
         withContext(dispatchers.io) {
-            if (!environmentVariableName.matches(variableName)) {
+            if (!isValidEnvironmentVariableName(variableName)) {
                 Timber.w("Invalid environment variable name requested: $variableName")
                 return@withContext null
             }
@@ -245,7 +242,7 @@ class ProcessManagerService(
         variables: Map<String, String>
     ): Boolean = withContext(dispatchers.io) {
         val validVariables = variables.filterKeys { variableName ->
-            val isValid = environmentVariableName.matches(variableName)
+            val isValid = isValidEnvironmentVariableName(variableName)
             if (!isValid) {
                 Timber.w("Invalid environment variable name requested: $variableName")
             }
@@ -835,12 +832,7 @@ class ProcessManagerService(
             )
             val envs = getEnvsFromCommand(inputParsedData, commandExtraInputs, commandObject)
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
-            scriptFile.writeText("set -x\n")
-            envs.forEach { (key, value) ->
-                scriptFile.appendText(
-                    "export $key=${value.shellExportValue()}\n"
-                )
-            }
+            scriptFile.writeText("set -x\n${envs.toShellExportCommands()}\n")
             if (!envs["INPUT_FILES"].isNullOrBlank()) {
                 scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             }
@@ -1428,12 +1420,13 @@ private fun String.shellQuote(): String {
 }
 
 private fun String.shellExportValue(): String {
-    val trimmed = trim()
-    val alreadyQuoted = (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-            (trimmed.startsWith("\"") && trimmed.endsWith("\""))
-
-    return if (alreadyQuoted) this else shellQuote()
+    return shellQuote()
 }
+
+private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
+
+private fun isValidEnvironmentVariableName(name: String): Boolean =
+    environmentVariableName.matches(name)
 
 internal data class CommandScriptPlan(
     val fullCommand: String,
@@ -1503,6 +1496,9 @@ internal fun commandOutputCapture(outputFile: File): String = buildString {
 
 internal fun Map<String, String>.toShellExportCommands(): String =
     entries.joinToString("\n") { (key, value) ->
+        require(isValidEnvironmentVariableName(key)) {
+            "Invalid environment variable name: $key"
+        }
         "export $key=${value.shellExportValue()}"
     }
 
