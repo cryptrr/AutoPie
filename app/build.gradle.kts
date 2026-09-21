@@ -59,7 +59,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            //signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -153,7 +153,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    testImplementation ("io.insert-koin:koin-test:3.5.6")
+    testImplementation ("io.insert-k" +
+            "oin:koin-test:3.5.6")
     testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
