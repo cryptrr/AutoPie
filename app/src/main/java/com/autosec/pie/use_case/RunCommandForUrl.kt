@@ -39,7 +39,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
             val execFilePath = processManagerService.getAutoPiePackagePath(item.exec)
 
-            val (execType, fullExecPath, resultCommand) = when {
+            val (_, fullExecPath, resultCommand) = when {
                 File(item.exec).isAbsolute -> {
                     Timber.d("Using package absolute path")
                     ExecAndCommand(ExecType.ABSOLUTE_PATH, item.exec, "\"${item.command}\"")
@@ -58,7 +58,6 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 }
             }
 
-            val useQuotes = execType != ExecType.SHELL_INSTALLED
             val isShellScript = Utils.isShellScript(File(fullExecPath))
             val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
             val sanitizedFilename = Utils.sanitizeAndroidFilename(filename)
@@ -71,30 +70,24 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                 it.add(
                     InputParsedData(
                         name = "INPUT_FILE",
-                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
+                        value = inputUrl
                     )
                 )
                 it.add(
                     InputParsedData(
                         name = "INPUT_URL",
-                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
+                        value = inputUrl
                     )
                 )
-                it.add(InputParsedData(name = "HOST", value = if (useQuotes) "\"$host\"" else host))
+                it.add(InputParsedData(name = "HOST", value = host))
                 it.add(
                     InputParsedData(
                         name = "FILENAME",
-                        value = if (useQuotes) "\"$sanitizedFilename\"" else sanitizedFilename
+                        value = sanitizedFilename
                     )
                 )
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
             }
-
-            val quotedCommandExtraInputs = commandExtraInputs.map {
-                it
-            }
-
-
 
             Timber.d("Command to run: ${item.exec} ${resultCommand}")
 
@@ -107,7 +100,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     resultCommand,
                     path,
                     inputParsedData,
-                    if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
+                    commandExtraInputs,
                     inputUrl,
                     processId,
                     JobType.URL,
@@ -121,7 +114,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                     resultCommand,
                     path,
                     inputParsedData,
-                    if (execType == ExecType.SHELL_INSTALLED) quotedCommandExtraInputs else commandExtraInputs,
+                    commandExtraInputs,
                     inputUrl,
                     processId,
                     JobType.URL,

@@ -31,7 +31,6 @@ Severity reflects actual prerequisites and impact. “Source-confirmed” means 
 | SEC-07 | Medium | Browser bridge accepts continuation data across origins | Requires a pending browser workflow |
 | SEC-08 | Medium | Exported viewers read arbitrary paths without size limits | Source-confirmed; device impact untested |
 | SEC-09 | Medium | Cookie export retains deleted sessions and widens paths | Source-confirmed |
-| SEC-10 | Medium | Release build uses debug signing | Guard reproduced; published certificate not checked |
 
 ### SEC-01 — Quoted input executes during environment export (CWE-78)
 
