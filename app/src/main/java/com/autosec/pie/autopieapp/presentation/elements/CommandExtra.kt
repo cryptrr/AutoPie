@@ -1,25 +1,25 @@
 package com.autopi.autopieapp.presentation.elements
 
 import android.os.Build
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -611,7 +611,6 @@ fun OptionSelector(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ButtonOptionSelector(
     options: Map<String, String>,
@@ -627,40 +626,82 @@ fun ButtonOptionSelector(
         return
     }
 
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        options.forEach { (label, value) ->
-            val selected = selectedOption.value == value
-            Button(
-                onClick = {
-                    selectedOption.value = value
-                    onOptionClick(value)
-                },
-                modifier = Modifier
-                    .height(52.dp)
-                    .widthIn(min = 88.dp),
-                shape = RoundedCornerShape(15.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                    contentColor = if (selected) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+    if (options.isEmpty()) {
+        Text(
+            text = "No options available",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        return
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columnCount = when {
+            maxWidth >= 600.dp -> 4
+            maxWidth >= 420.dp -> 3
+            else -> 2
+        }.coerceAtMost(options.size)
+        val optionRows = options.entries.chunked(columnCount)
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            optionRows.forEach { rowOptions ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    rowOptions.forEach { (label, value) ->
+                        val selected = selectedOption.value == value
+                        Button(
+                            onClick = {
+                                selectedOption.value = value
+                                onOptionClick(value)
+                            },
+                            modifier = Modifier
+                                .weight(1F)
+                                .heightIn(min = 52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (selected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                                },
+                                contentColor = if (selected) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = if (selected) 0.dp else 1.dp,
+                                pressedElevation = 0.dp
+                            ),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                horizontal = 12.dp,
+                                vertical = 10.dp
+                            )
+                        ) {
+                            Text(
+                                text = label,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
-                )
-            ) {
-                Text(
-                    text = label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+
+                    repeat(columnCount - rowOptions.size) {
+                        Spacer(modifier = Modifier.weight(1F))
+                    }
+                }
             }
         }
     }

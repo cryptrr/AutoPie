@@ -39,8 +39,8 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = ".debug"
+            //applicationIdSuffix = ".debug"
+            //versionNameSuffix = ".debug"
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher_debug"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_debug_round"
             signingConfig = signingConfigs.getByName("debug")
