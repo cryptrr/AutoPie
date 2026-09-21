@@ -675,8 +675,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                 rememberSaveable(extra.id, extra.default, configuredOptions) {
                                     mutableStateOf(
                                         configuredOptions[extra.default]
-                                            ?: extra.default.ifEmpty {
-                                                configuredOptions.values.firstOrNull().orEmpty()
+                                            ?: if (isButton) {
+                                                extra.default
+                                            } else {
+                                                extra.default.ifEmpty {
+                                                    configuredOptions.values.firstOrNull().orEmpty()
+                                                }
                                             }
                                     )
                                 }
@@ -709,8 +713,12 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     selectableFetchFailed = false
                                     options = resolvedOptions
                                     selectedOption.value = resolvedOptions[resolvedDefault]
-                                        ?: resolvedDefault.ifEmpty {
-                                            resolvedOptions.values.firstOrNull().orEmpty()
+                                        ?: if (isButton) {
+                                            resolvedDefault
+                                        } else {
+                                            resolvedDefault.ifEmpty {
+                                                resolvedOptions.values.firstOrNull().orEmpty()
+                                            }
                                         }
                                 }
                             }
