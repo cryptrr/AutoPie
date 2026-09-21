@@ -10,6 +10,7 @@ import com.autopi.autopieapp.data.CommandStep
 import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
+import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
@@ -18,6 +19,7 @@ import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DefaultDispatchers
+import com.autopi.use_case.RunStandaloneCommand
 import com.autopi.utils.Shell
 import io.mockk.every
 import io.mockk.mockk
@@ -31,6 +33,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -310,8 +313,8 @@ class ProcessManagerServiceIntegrationTest {
         service.setShellEnvironmentVariable(71002, "TEST_VALUE", "second")
         main.dispatchEvent(ViewModelEvent.CancelProcess(71001))
         mainDispatcherRule.scheduler.advanceUntilIdle()
-        awaitShellRemoval(71001)
         awaitStoppedEvents(events, 1)
+        assertNull(service.getShellEnvironmentVariable(71001, "PREFIX"))
 
         assertEquals(listOf(71001), events.filterIsInstance<ViewModelEvent.CommandStoppedByUser>().map { it.processId })
         assertEquals("second", service.getShellEnvironmentVariable(71002, "TEST_VALUE"))
@@ -326,8 +329,8 @@ class ProcessManagerServiceIntegrationTest {
         processIds.forEach(service::createShell)
         main.dispatchEvent(ViewModelEvent.CancelAllProcesses)
         mainDispatcherRule.scheduler.advanceUntilIdle()
-        processIds.forEach { awaitShellRemoval(it) }
         awaitStoppedEvents(events, 2)
+        processIds.forEach { assertNull(service.getShellEnvironmentVariable(it, "PREFIX")) }
 
         val stopped = events.filterIsInstance<ViewModelEvent.CommandStoppedByUser>()
         assertEquals(2, stopped.size)
@@ -367,13 +370,154 @@ class ProcessManagerServiceIntegrationTest {
         }
     }
 
-    // Cancellation runs on the real IO dispatcher. Poll with a real-time bound, not virtual sleeps.
-    private suspend fun awaitShellRemoval(processId: Int) = withContext(Dispatchers.IO) {
-        withTimeout(5_000) {
-            while (service.getShellEnvironmentVariable(processId, "PREFIX") != null) delay(10)
+    // Exercise the same use case used by the app, including path resolution, script selection,
+    // environment setup and ProcessResult -> CommandResult conversion. Stage advancement is
+    // explicit because the app may pause between stages to collect user input.
+    private suspend fun runStandalone(command: CommandModel, processId: Int = 71001) =
+        withContext(Dispatchers.IO) {
+            processIds.add(processId)
+            RunStandaloneCommand(service)(command, processId = processId).single()
         }
+
+    private fun standaloneCommand(script: String) = command(script).copy(path = workingDirectory.name)
+
+    @Test
+    fun `standalone use case executes a simple command and returns captured output`() = runTest {
+        val result = runStandalone(standaloneCommand("printf 'hello-shell\\n'; export OUTPUT=done"))
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+
+        assertTrue(result.output, result.success)
+        assertFalse(result.partial)
+        assertEquals(71001, result.processId)
+        assertEquals(JobType.STANDALONE, result.jobType)
+        assertEquals("", result.jobKey)
+        assertEquals("done", result.exportedOutput)
+        assertTrue(File(cache, "71001.log").readLines().contains("hello-shell"))
+        assertNull(service.getShellEnvironmentVariable(71001, "PREFIX"))
     }
 
+    @Test
+    fun `pipeline and redirection produce a real file in the resolved working directory`() = runTest {
+        val result = runStandalone(standaloneCommand("""
+            printf '%s\n' gamma alpha beta | sort | tr '[:lower:]' '[:upper:]' > 'pipeline result.txt'
+            export OUTPUT="${'$'}(cat 'pipeline result.txt')"
+        """.trimIndent()))
+
+        assertTrue(result.output, result.success)
+        assertEquals("ALPHA\nBETA\nGAMMA\n", File(workingDirectory, "pipeline result.txt").readText())
+        assertEquals("ALPHA\nBETA\nGAMMA", result.exportedOutput)
+    }
+
+    @Test
+    fun `three stages preserve shell state and pass each output through the use case`() = runTest {
+        val events = collectEvents()
+        val nextDirectory = temporaryFolder.newFolder("next stage's directory")
+        val workflow = standaloneCommand("false").copy(
+            multiStage = true,
+            steps = listOf(
+                CommandStep(path = workingDirectory.name, command = """
+                    counter=40
+                    decorate() { printf '<%s>' "${'$'}1"; }
+                    export OUTPUT="first stage's value"
+                    printf 'stage-one\n'
+                """.trimIndent()),
+                CommandStep(path = nextDirectory.name, command = """
+                    counter=${'$'}((counter + 2))
+                    export OUTPUT="${'$'}(decorate "${'$'}INPUT"):${'$'}counter"
+                    printf '%s' "${'$'}OUTPUT" > intermediate.txt
+                    printf 'stage-two\n'
+                """.trimIndent()),
+                CommandStep(path = workingDirectory.name, command = """
+                    printf '%s' "${'$'}INPUT" > final.txt
+                    export OUTPUT="finished: ${'$'}INPUT"
+                    printf 'stage-three\n'
+                """.trimIndent())
+            )
+        )
+        val first = workflow.firstStepOrSelf()
+        val firstResult = runStandalone(first)
+        assertTrue(firstResult.output, firstResult.success)
+        assertTrue(firstResult.partial)
+        assertEquals("first stage's value", firstResult.exportedOutput)
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+
+        val second = requireNotNull(first.nextStepOrNull())
+        val secondResult = runStandalone(second)
+        assertTrue(secondResult.output, secondResult.success)
+        assertTrue(secondResult.partial)
+        assertEquals("<first stage's value>:42", secondResult.exportedOutput)
+        assertEquals(secondResult.exportedOutput, File(nextDirectory, "intermediate.txt").readText())
+
+        val third = requireNotNull(second.nextStepOrNull())
+        val thirdResult = runStandalone(third)
+        assertTrue(thirdResult.output, thirdResult.success)
+        assertFalse(thirdResult.partial)
+        assertEquals("finished: <first stage's value>:42", thirdResult.exportedOutput)
+        assertEquals(secondResult.exportedOutput, File(workingDirectory, "final.txt").readText())
+        assertNull(third.nextStepOrNull())
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(true, true, false), events.filterIsInstance<ViewModelEvent.CommandCompleted>().map { it.partial })
+        assertEquals(listOf(first, second, third), events.filterIsInstance<ViewModelEvent.CommandStarted>().map { it.command })
+        assertTrue(events.none { it is ViewModelEvent.CommandFailed })
+        val lines = File(cache, "71001.log").readLines()
+        assertEquals(listOf("stage-one", "stage-two", "stage-three"), lines.filter { it.startsWith("stage-") })
+    }
+
+    @Test
+    fun `failed intermediate stage reports terminal failure without reusing earlier output`() = runTest {
+        val events = collectEvents()
+        val workflow = standaloneCommand("").copy(
+            multiStage = true,
+            steps = listOf(
+                CommandStep(path = workingDirectory.name, command = "export OUTPUT=previous"),
+                CommandStep(path = workingDirectory.name, command = "printf 'stage-failed\\n' >&2; false"),
+                CommandStep(path = workingDirectory.name, command = "printf unexpected > should-not-exist.txt")
+            )
+        ).firstStepOrSelf()
+        assertTrue(runStandalone(workflow).partial)
+        val failed = runStandalone(requireNotNull(workflow.nextStepOrNull()))
+        mainDispatcherRule.scheduler.advanceUntilIdle()
+
+        assertFalse(failed.success)
+        assertFalse(failed.partial)
+        assertNull(failed.exportedOutput)
+        assertTrue(failed.output.contains("stage-failed"))
+        assertFalse(File(cache, "71001.output").exists())
+        assertEquals(1, events.filterIsInstance<ViewModelEvent.CommandFailed>().size)
+        assertEquals(listOf(true), events.filterIsInstance<ViewModelEvent.CommandCompleted>().map { it.partial })
+        assertEquals(listOf(71001), service.failedProcessIds)
+
+        // The foreground service closes a failed multistage session before the next request.
+        service.stopShell(71001)
+        val retry = runStandalone(standaloneCommand("export OUTPUT=\"${'$'}{INPUT}fresh\""))
+        assertTrue(retry.output, retry.success)
+        assertEquals("fresh", retry.exportedOutput)
+    }
+
+    @Test
+    fun `command reading stdin receives EOF and shell remains usable for next stage`() = runTest {
+        val first = standaloneCommand("").copy(
+            multiStage = true,
+            steps = listOf(
+                CommandStep(path = workingDirectory.name,
+                    command = "if read -r value; then false; else export OUTPUT=eof; fi"),
+                CommandStep(path = workingDirectory.name,
+                    command = "export OUTPUT=\"${'$'}INPUT-next\"")
+            )
+        ).firstStepOrSelf()
+        val result = runStandalone(first)
+        assertTrue(result.output, result.success)
+        assertTrue(result.partial)
+        assertEquals("eof", result.exportedOutput)
+        val next = runStandalone(requireNotNull(first.nextStepOrNull()))
+        assertTrue(next.output, next.success)
+        assertFalse(next.partial)
+        assertEquals("eof-next", next.exportedOutput)
+    }
+
+    // Wait for cancellation's completion event before querying shell state. Polling an
+    // environment variable runs a new shell command and can race with interrupt().
     private suspend fun awaitStoppedEvents(events: List<ViewModelEvent>, count: Int) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (true) {
