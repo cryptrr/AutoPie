@@ -72,7 +72,7 @@ AutoPie exposes inputs and extras as environment variables. Use normal shell syn
 | Variable | Value |
 | --- | --- |
 | `INPUT` | The raw active input. When a folder is selected, this is the selected folder path. In a multistage workflow, the previous step's exported `OUTPUT` becomes the next step's `INPUT`. |
-| `INPUT_TEXT` | Shared or manually entered text. |
+| `INPUT_TEXT` | Shared or manually entered text, including URL input. |
 | `INPUT_FILE` | A single file path or first URL. For folder input, this is the current immediate child being processed. |
 | `INPUT_FILES` | Multiple file paths separated by newlines. For folder input, this contains the folder's immediate children. |
 | `INPUT_FILES_ARR` | `INPUT_FILES` converted to a Bash array; use `"${INPUT_FILES_ARR[@]}"`. |
