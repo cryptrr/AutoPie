@@ -24,13 +24,18 @@ class ShareFileRunnerTest {
                 any(), any(), any(), any(), capture(environments), any(), any(), any(), any(), any(), any()
             )
         } returns ProcessResult("test", 12, true, "")
-        val inputUrl = "https://example.com/path?q=value"
+        val inputUrl = "https://example.com/media/video.final.mp4?q=value"
 
         RunCommandForUrl(service)(
             CommandModel(command = "echo ok"), inputUrl, emptyList(), processId = 12
         ).toList()
 
-        assertEquals(inputUrl, environments.single().single { it.name == "INPUT_TEXT" }.value)
+        val environment = environments.single().associate { it.name to it.value }
+        assertEquals(inputUrl, environment["INPUT_TEXT"])
+        assertEquals(inputUrl, environment["INPUT_URLS"])
+        assertEquals("video.final.mp4", environment["FILENAME"])
+        assertEquals("video.final", environment["FILENAME_NO_EXT"])
+        assertEquals("mp4", environment["FILE_EXT"])
     }
 
     @Test fun perFileRunsExposeNewlineSeparatedPathsForBashArrays() = runTest {
