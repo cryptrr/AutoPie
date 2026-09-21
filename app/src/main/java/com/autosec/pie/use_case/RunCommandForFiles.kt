@@ -9,6 +9,7 @@ import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.utils.Utils
+import com.autopi.utils.extractHttpUrls
 import com.autopi.utils.toCommandResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -88,6 +89,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT", value = inputFilesString))
+                    it.addSharedTextInput(inputText)
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFilesString))
                     it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                     it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
@@ -162,6 +164,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                         it.add(InputParsedData(name = "INPUT", value = parsedPath.absolutePathString()))
+                        it.addSharedTextInput(inputText)
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString("\n")))
                         it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
                         it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
@@ -193,4 +196,13 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
             }
         }
     }
+}
+
+private fun MutableList<InputParsedData>.addSharedTextInput(inputText: String?) {
+    val text = inputText.orEmpty()
+    val urls = text.extractHttpUrls()
+
+    add(InputParsedData(name = "INPUT_TEXT", value = text))
+    add(InputParsedData(name = "INPUT_URL", value = urls.firstOrNull().orEmpty()))
+    add(InputParsedData(name = "INPUT_URLS", value = urls.joinToString(" ")))
 }

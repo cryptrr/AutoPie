@@ -26,16 +26,16 @@ class RunCommand() {
                     useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
-            inputText.isValidUrl() -> {
-                Timber.d("Is a valid url")
-                return useCases.runCommandForUrl(item, inputText!!, inputFiles, commandExtraInputs, processId).onEach { result ->
+            inputFiles.isNotEmpty() -> {
+                Timber.d("file uris not empty")
+                return useCases.runCommandForFiles(item, inputText, inputFiles, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }
 
-            inputFiles.isNotEmpty() -> {
-                Timber.d("file uris not empty")
-                return useCases.runCommandForFiles(item, inputText, inputFiles, commandExtraInputs, processId).onEach { result ->
+            inputText.isValidUrl() -> {
+                Timber.d("Is a valid url")
+                return useCases.runCommandForUrl(item, inputText!!, inputFiles, commandExtraInputs, processId).onEach { result ->
                     useCases.addCommandToHistory(item, inputText, inputFiles, commandExtraInputs, result.success ,processId)
                 }
             }

@@ -49,14 +49,47 @@ class ShareFileRunnerTest {
             )
         } returns ProcessResult("test", 12, true, "")
         val paths = listOf("/tmp/a b.txt", "/tmp/c'd.txt")
+        val inputText = "References: https://example.com/one and https://example.com/two"
         val results = RunCommandForFiles(service)(
-            CommandModel(command = "echo ok"), null, paths, processId = 12
+            CommandModel(command = "echo ok"), inputText, paths, processId = 12
         ).toList()
         assertEquals(2, results.size)
         assertEquals(2, environments.size)
         for (env in environments) {
-            assertEquals(paths, env.single { it.name == "INPUT_FILES" }.value.split("\n"))
+            val environment = env.associate { it.name to it.value }
+            assertEquals(paths, environment["INPUT_FILES"]?.split("\n"))
+            assertEquals(inputText, environment["INPUT_TEXT"])
+            assertEquals("https://example.com/one", environment["INPUT_URL"])
+            assertEquals(
+                "https://example.com/one https://example.com/two",
+                environment["INPUT_URLS"]
+            )
         }
+    }
+
+    @Test fun batchFileRunPreservesSharedTextAndUrls() = runTest {
+        val service = mockk<ProcessManagerService>(relaxed = true)
+        every { service.getAutoPiePackagePath(any()) } returns "/nonexistent/autopie/package"
+        every { service.getCommandWorkingDirectory(any()) } returns "/tmp"
+        val environments = mutableListOf<List<InputParsedData>>()
+        coEvery {
+            service.runCommandForShareWithEnv2(
+                any(), any(), any(), any(), capture(environments), any(), any(), any(), any(), any(), any()
+            )
+        } returns ProcessResult("test", 12, true, "")
+        val inputText = "Caption with https://example.com/source"
+
+        RunCommandForFiles(service)(
+            CommandModel(command = "printf '%s' \"\$INPUT_FILES\""),
+            inputText,
+            listOf("/tmp/a.txt", "/tmp/b.txt"),
+            processId = 12
+        ).toList()
+
+        val environment = environments.single().associate { it.name to it.value }
+        assertEquals(inputText, environment["INPUT_TEXT"])
+        assertEquals("https://example.com/source", environment["INPUT_URL"])
+        assertEquals("https://example.com/source", environment["INPUT_URLS"])
     }
 
     @Test(expected = IOException::class)
