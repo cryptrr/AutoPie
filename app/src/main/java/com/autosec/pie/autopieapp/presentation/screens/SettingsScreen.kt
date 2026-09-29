@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +51,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autopi.ui.theme.ThemeMode
+import com.autopi.ui.theme.rememberThemeMode
+import com.autopi.ui.theme.rememberDynamicColorsEnabled
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import kotlinx.coroutines.launch
 import com.autopi.BuildConfig
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.HomeCommandPreview
@@ -273,7 +280,11 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    //TODO: Themes - Work in Progress
+    val preferences = remember { KoinJavaComponent.get<AppPreferences>(AppPreferences::class.java) }
+    val themeMode = rememberThemeMode(preferences)
+    val dynamicColorsEnabled = rememberDynamicColorsEnabled(preferences)
+    val systemDark = isSystemInDarkTheme()
+    val themeScope = rememberCoroutineScope()
 
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
@@ -290,13 +301,18 @@ fun SettingsToggles() {
         ) {
             Text(
                 "Dark Theme",
-                color = if (false) MaterialTheme.colorScheme.onSurface else Color.Gray
+                color = MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = if (themeMode == ThemeMode.SYSTEM) 0.38f else 1f
+                )
             )
             Switch(
-                checked = false,
-                enabled = false,
-                onCheckedChange = {
-
+                checked = themeMode.isDark(systemDark),
+                enabled = themeMode != ThemeMode.SYSTEM,
+                onCheckedChange = { dark ->
+                    themeScope.launch {
+                        preferences.setString(AppPreferences.CURRENT_THEME,
+                            (if (dark) ThemeMode.DARK else ThemeMode.LIGHT).preferenceValue)
+                    }
                 })
         }
 
@@ -308,9 +324,12 @@ fun SettingsToggles() {
                 .height(55.dp)
         ) {
             Text("Use System Theme")
-            Switch(checked = true, onCheckedChange = {
-
-
+            Switch(checked = themeMode == ThemeMode.SYSTEM, onCheckedChange = { useSystem ->
+                themeScope.launch {
+                    val mode = if (useSystem) ThemeMode.SYSTEM
+                        else if (systemDark) ThemeMode.DARK else ThemeMode.LIGHT
+                    preferences.setString(AppPreferences.CURRENT_THEME, mode.preferenceValue)
+                }
             })
         }
         Row(
@@ -324,10 +343,12 @@ fun SettingsToggles() {
                 "Enable Dynamic Colors",
                 color = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MaterialTheme.colorScheme.onSurface else Color.Gray
             )
-            Switch(checked = true,
+            Switch(checked = dynamicColorsEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                 enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                onCheckedChange = {
-
+                onCheckedChange = { enabled ->
+                    themeScope.launch {
+                        preferences.setBool(AppPreferences.DYNAMIC_COLOR_ENABLED, enabled)
+                    }
                 })
         }
 
