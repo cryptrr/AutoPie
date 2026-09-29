@@ -12,7 +12,7 @@ enum class CommandsRepositoryChannel(val preferenceValue: String, val gitRef: St
 
 object CommandsRepositoryUrls {
     private const val RAW_REPOSITORY_URL =
-        "https://raw.githubusercontent.com/cryptrr/autopie-commands"
+        "https://cryptrr.github.io/autopie-commands"
 
     fun catalog(channel: CommandsRepositoryChannel): String =
         "$RAW_REPOSITORY_URL/${channel.gitRef}/catalog.json"

@@ -21,6 +21,7 @@ import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
+import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
@@ -67,9 +68,6 @@ class ProcessManagerService(
     private val autoPieNotification: AutoPieNotification,
     private val internalConfigService: InternalConfigService,
 ){
-
-    private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
-
     private var shell: Shell? = null
 
     private var mcpShell: Shell? = null
@@ -197,7 +195,7 @@ class ProcessManagerService(
 
     suspend fun getShellEnvironmentVariable(processId: Int, variableName: String): String? =
         withContext(dispatchers.io) {
-            if (!environmentVariableName.matches(variableName)) {
+            if (!isValidEnvironmentVariableName(variableName)) {
                 Timber.w("Invalid environment variable name requested: $variableName")
                 return@withContext null
             }
@@ -245,7 +243,7 @@ class ProcessManagerService(
         variables: Map<String, String>
     ): Boolean = withContext(dispatchers.io) {
         val validVariables = variables.filterKeys { variableName ->
-            val isValid = environmentVariableName.matches(variableName)
+            val isValid = isValidEnvironmentVariableName(variableName)
             if (!isValid) {
                 Timber.w("Invalid environment variable name requested: $variableName")
             }
@@ -835,12 +833,7 @@ class ProcessManagerService(
             )
             val envs = getEnvsFromCommand(inputParsedData, commandExtraInputs, commandObject)
             val scriptFile = File(activity.cacheDir, "${processId}.sh")
-            scriptFile.writeText("set -x\n")
-            envs.forEach { (key, value) ->
-                scriptFile.appendText(
-                    "export $key=${value.shellExportValue()}\n"
-                )
-            }
+            scriptFile.writeText("set -x\n${envs.toShellExportCommands()}\n")
             if (!envs["INPUT_FILES"].isNullOrBlank()) {
                 scriptFile.appendText("readarray -t INPUT_FILES_ARR <<< \"\$INPUT_FILES\"\n")
             }
@@ -977,7 +970,7 @@ class ProcessManagerService(
             if (shell?.isAlive() != true) initShell()
 
             val command =
-                "python -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; urllib.request.urlretrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
+                "python -c \"import urllib.request; url = '${url}'; output_file = '${fullFilePath}'; opener = urllib.request.build_opener(); opener.addheaders = [('User-Agent', '${AutoPieUserAgent.value}')]; opener.retrieve(url, output_file); print(f'Downloaded {url} to {output_file}')\""
 
             Timber.d(command)
 
@@ -999,7 +992,7 @@ class ProcessManagerService(
             if (shell?.isAlive() != true) initShell()
 
             val command =
-                "wcurl $url -o $fullFilePath"
+                "wcurl --header \"User-Agent: ${AutoPieUserAgent.value}\" $url -o $fullFilePath"
 
             Timber.d(command)
 
@@ -1048,6 +1041,43 @@ class ProcessManagerService(
             false
         }
     }
+
+    internal suspend fun openRestoreInstallation(script: String) =
+        withContext(dispatchers.io) {
+            // Python is bundled with the bootstrap. Its OS lock is released even if
+            // installation is interrupted, and does not require persisted job state.
+            val lockRunner = """
+                import fcntl, subprocess, sys
+                with open(sys.argv[1], 'a') as lock:
+                    try:
+                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except BlockingIOError:
+                        print('Another package restore is running. Wait for it to finish.', flush=True)
+                        sys.exit(1)
+                    sys.exit(subprocess.call(['bash', '-c', sys.argv[2]]))
+            """.trimIndent()
+            val scriptFile = File.createTempFile("restore-packages-", ".sh", activity.cacheDir)
+            val lockFile = File(activity.filesDir, "restore-packages.lock")
+            scriptFile.writeText(
+                "python -c ${lockRunner.shellQuote()} ${lockFile.absolutePath.shellQuote()} ${script.shellQuote()}\n" +
+                    "printf '\\nInstallation session ended.\\n'\n" +
+                    "rm -- ${scriptFile.absolutePath.shellQuote()}\n" +
+                    "exec bash -i\n"
+            )
+            val intent = Intent(activity, RunCommandService::class.java).apply {
+                action = TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.ACTION_RUN_COMMAND
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH,
+                    "${activity.filesDir}/usr/bin/bash")
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS,
+                    arrayOf("-i", scriptFile.absolutePath))
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_WORKDIR,
+                    activity.filesDir.absolutePath)
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND, false)
+                putExtra(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_SESSION_ACTION,
+                    TermuxConstants.TERMUX_APP.TERMUX_SERVICE.VALUE_EXTRA_SESSION_ACTION_SWITCH_TO_NEW_SESSION_AND_OPEN_ACTIVITY.toString())
+            }
+            checkNotNull(activity.startForegroundService(intent)) { "Could not open Termux installation" }
+        }
 
     internal suspend fun findMissingTermuxDependencies(
         pkgPackages: List<String>,
@@ -1391,12 +1421,13 @@ private fun String.shellQuote(): String {
 }
 
 private fun String.shellExportValue(): String {
-    val trimmed = trim()
-    val alreadyQuoted = (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-            (trimmed.startsWith("\"") && trimmed.endsWith("\""))
-
-    return if (alreadyQuoted) this else shellQuote()
+    return shellQuote()
 }
+
+private val environmentVariableName = Regex("[A-Za-z_][A-Za-z0-9_]*")
+
+private fun isValidEnvironmentVariableName(name: String): Boolean =
+    environmentVariableName.matches(name)
 
 internal data class CommandScriptPlan(
     val fullCommand: String,
@@ -1466,6 +1497,9 @@ internal fun commandOutputCapture(outputFile: File): String = buildString {
 
 internal fun Map<String, String>.toShellExportCommands(): String =
     entries.joinToString("\n") { (key, value) ->
+        require(isValidEnvironmentVariableName(key)) {
+            "Invalid environment variable name: $key"
+        }
         "export $key=${value.shellExportValue()}"
     }
 

@@ -6,6 +6,7 @@ import com.autopi.autopieapp.data.CommandType
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.CommandsRepositoryUrls
+import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.MissingTermuxDependencies
@@ -512,6 +513,7 @@ internal fun fetchCloudCommandText(url: String): String {
         connectTimeout = 30_000
         readTimeout = 30_000
         requestMethod = "GET"
+        setRequestProperty("User-Agent", AutoPieUserAgent.value)
     }
 
     try {

@@ -26,6 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material.icons.outlined.ArrowCircleRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -135,6 +138,51 @@ fun SettingsToggles() {
         contract = ActivityResultContracts.OpenDocument()
     ) { source ->
         source?.let(mainViewModel::restoreCommandsConfig)
+    }
+
+    if (mainViewModel.restorePackagesOpen) {
+        val plan = mainViewModel.restorePackagesPlan
+        val busy = mainViewModel.restorePackagesBusy
+        AlertDialog(
+            onDismissRequest = mainViewModel::dismissRestorePackages,
+            title = { Text("Restore command packages") },
+            text = {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (busy) CircularProgressIndicator()
+                    Text(mainViewModel.restorePackagesMessage)
+                    plan?.let {
+                        Text("${it.matchedIds.size} catalog commands found.")
+                        Text("${it.updatedCount} commands refreshed from the latest recipes, including their inputs and defaults.")
+                        if (it.missingPkg.isNotEmpty()) Text("Termux packages: ${it.missingPkg.joinToString()}")
+                        if (it.missingPip.isNotEmpty()) Text("Python packages: ${it.missingPip.joinToString()}")
+                        if (it.unresolved.isNotEmpty()) {
+                            Text("Custom or unknown commands — check their dependencies manually: ${it.unresolved.joinToString()}")
+                        }
+                        if (it.failedIds.isNotEmpty()) {
+                            Text("Could not fetch recipes: ${it.failedIds.joinToString()}. Check again to retry.")
+                        }
+                        Text("Commands and dependencies come from the same current recipes.")
+                    }
+                }
+            },
+            confirmButton = {
+                if (plan != null && plan.missingCount > 0) {
+                    TextButton(enabled = !busy, onClick = mainViewModel::installRestoredPackages) {
+                        Text("Install missing packages")
+                    }
+                } else if (plan == null || plan.failedIds.isNotEmpty()) {
+                    TextButton(enabled = !busy, onClick = mainViewModel::checkRestoredPackages) {
+                        Text("Check / retry packages")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !busy, onClick = mainViewModel::dismissRestorePackages) { Text("Close") }
+            }
+        )
     }
 
 
@@ -625,12 +673,19 @@ fun SettingsToggles() {
                 Text("Restore From Backup")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Replace commands.json using an AutoPie config backup ZIP.",
+                    "Restore commands.json, replace catalog commands with their latest recipes, then install missing packages.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
                 )
             }
+        }
+
+        TextButton(
+            enabled = !mainViewModel.restorePackagesBusy,
+            onClick = mainViewModel::checkRestoredPackages
+        ) {
+            Text("Fix dependencies")
         }
 
     }

@@ -48,7 +48,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                 val path = processManagerService.getCommandWorkingDirectory(item.path)
 
 
-                val (execType,fullExecPath, resultCommand) = when{
+                val (_,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
                         Timber.d("Using package absolute path")
                         ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
@@ -64,9 +64,6 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                         ExecAndCommand( ExecType.SHELL_INSTALLED,item.exec, item.command)
                     }
                 }
-
-                val useQuotes = execType != ExecType.SHELL_INSTALLED
-                //val useQuotes = true
 
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
@@ -91,11 +88,11 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     it.add(InputParsedData(name = "INPUT", value = inputFilesString))
                     it.addSharedTextInput(inputText)
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFilesString))
-                    it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                    it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
-                    it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${sanitizedFilenameNoExt}\"" else sanitizedFilenameNoExt))
-                    it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
+                    it.add(InputParsedData(name = "INPUT_FILE", value = parsedPath.absolutePathString()))
+                    it.add(InputParsedData(name = "FILENAME", value = sanitizedFilename))
+                    it.add(InputParsedData(name = "DIRECTORY", value = "${parsedPath.parent}"))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = sanitizedFilenameNoExt))
+                    it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 
@@ -137,7 +134,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                     val dirPath = processManagerService.getCommandWorkingDirectory(item.path)
 
 
-                    val (execType,fullExecPath, resultCommand) = when{
+                    val (_,fullExecPath, resultCommand) = when{
                         File(item.exec).isAbsolute -> {
                             Timber.d("Using package absolute path")
                             ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
@@ -154,8 +151,6 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                         }
                     }
 
-                    val useQuotes = execType != ExecType.SHELL_INSTALLED
-                    //val useQuotes = true
                     val isShellScript = Utils.isShellScript(File(fullExecPath))
                     val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
                     val sanitizedFilename = Utils.sanitizeAndroidFilename(parsedPath.fileName.toString())
@@ -166,11 +161,11 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
                         it.add(InputParsedData(name = "INPUT", value = parsedPath.absolutePathString()))
                         it.addSharedTextInput(inputText)
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString("\n")))
-                        it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${parsedPath.absolutePathString()}\"" else parsedPath.absolutePathString()))
-                        it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
-                        it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${parsedPath.parent}\"" else "${parsedPath.parent}"))
-                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${sanitizedFilenameNoExt}\"" else sanitizedFilenameNoExt))
-                        it.add(InputParsedData(name = "FILE_EXT", value =  if(useQuotes) "\"${parsedPath.extension}\"" else parsedPath.extension))
+                        it.add(InputParsedData(name = "INPUT_FILE", value = parsedPath.absolutePathString()))
+                        it.add(InputParsedData(name = "FILENAME", value = sanitizedFilename))
+                        it.add(InputParsedData(name = "DIRECTORY", value = "${parsedPath.parent}"))
+                        it.add(InputParsedData(name = "FILENAME_NO_EXT", value = sanitizedFilenameNoExt))
+                        it.add(InputParsedData(name = "FILE_EXT", value = parsedPath.extension))
                         it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                     }
 
