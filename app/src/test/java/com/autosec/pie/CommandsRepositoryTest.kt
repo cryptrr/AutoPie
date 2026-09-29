@@ -22,11 +22,11 @@ class CommandsRepositoryTest {
     @Test
     fun `catalog URL uses selected channel`() {
         assertEquals(
-            "https://raw.githubusercontent.com/cryptrr/autopie-commands/main/catalog.json",
+            "https://cryptrr.github.io/autopie-commands/main/catalog.json",
             CommandsRepositoryUrls.catalog(CommandsRepositoryChannel.MAIN)
         )
         assertEquals(
-            "https://raw.githubusercontent.com/cryptrr/autopie-commands/dev/catalog.json",
+            "https://cryptrr.github.io/autopie-commands/dev/catalog.json",
             CommandsRepositoryUrls.catalog(CommandsRepositoryChannel.DEV)
         )
     }
@@ -34,7 +34,7 @@ class CommandsRepositoryTest {
     @Test
     fun `command URL uses selected channel`() {
         assertEquals(
-            "https://raw.githubusercontent.com/cryptrr/autopie-commands/dev/commands/media/download",
+            "https://cryptrr.github.io/autopie-commands/dev/commands/media/download",
             cloudCommandFolderUrl("media.download", CommandsRepositoryChannel.DEV)
         )
     }

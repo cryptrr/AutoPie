@@ -39,7 +39,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                 val cwdPath = processManagerService.getCommandWorkingDirectory(item.path)
 
 
-                val (execType,fullExecPath, resultCommand) = when{
+                val (_,fullExecPath, resultCommand) = when{
                     File(item.exec).isAbsolute -> {
                         Timber.d("Using package absolute path")
                         ExecAndCommand( ExecType.ABSOLUTE_PATH,item.exec,"\"${item.command}\"")
@@ -58,8 +58,6 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
 
 
 
-                val useQuotes = execType != ExecType.SHELL_INSTALLED
-                //val useQuotes = true
                 val isShellScript = Utils.isShellScript(File(fullExecPath))
                 val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
 
@@ -71,12 +69,12 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT", value = inputDir.absolutePath))
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
-                    it.add(InputParsedData(name = "INPUT_FILE", value = if(useQuotes) "\"${path.absolutePath}\"" else path.absolutePath))
-                    it.add(InputParsedData(name = "FILENAME", value = if(useQuotes) "\"${sanitizedFilename}\"" else sanitizedFilename))
-                    it.add(InputParsedData(name = "DIRECTORY", value = if(useQuotes) "\"${path.parent}\"" else path.parent))
-                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = if(useQuotes) "\"${sanitizedFilenameNoExt}\"" else sanitizedFilenameNoExt))
-                    it.add(InputParsedData(name = "FILE_PATH", value = if(useQuotes) "\"${(path.parent ?: "")}\"" else path.parent ?: ""))
-                    it.add(InputParsedData(name = "FILE_EXT", value = if(useQuotes) "\"${path.extension}\"" else path.extension))
+                    it.add(InputParsedData(name = "INPUT_FILE", value = path.absolutePath))
+                    it.add(InputParsedData(name = "FILENAME", value = sanitizedFilename))
+                    it.add(InputParsedData(name = "DIRECTORY", value = path.parent ?: ""))
+                    it.add(InputParsedData(name = "FILENAME_NO_EXT", value = sanitizedFilenameNoExt))
+                    it.add(InputParsedData(name = "FILE_PATH", value = path.parent ?: ""))
+                    it.add(InputParsedData(name = "FILE_EXT", value = path.extension))
                     it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))
                 }
 

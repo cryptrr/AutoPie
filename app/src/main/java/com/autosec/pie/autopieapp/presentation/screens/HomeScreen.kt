@@ -91,8 +91,6 @@ fun HomeScreen(
 
     val filteredListOfCommands = commandsListScreenViewModel.filteredListOfCommands.collectAsState()
     val repositorySearchResults = commandsListScreenViewModel.repositorySearchResults.collectAsState()
-    val repositoryInstalledCommandVersions =
-        commandsListScreenViewModel.repositoryInstalledCommandVersions.collectAsState()
     val mostUsedPackages = commandsListScreenViewModel.mostUsedPackages.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -247,7 +245,7 @@ fun HomeScreen(
                     items(repositorySearchResults.value, key = { "repository:${it.id}" }) { command ->
                         CloudCommandCard(
                             card = command,
-                            installedVersion = repositoryInstalledCommandVersions.value[command.id]
+                            installedVersion = null
                         )
                     }
                 }

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,6 +27,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material.icons.outlined.ArrowCircleRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +51,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.autopi.ui.theme.ThemeMode
+import com.autopi.ui.theme.rememberThemeMode
+import com.autopi.ui.theme.rememberDynamicColorsEnabled
+import com.autopi.autopieapp.data.preferences.AppPreferences
+import kotlinx.coroutines.launch
 import com.autopi.BuildConfig
 import com.autopi.autopieapp.data.CommandsRepositoryChannel
 import com.autopi.autopieapp.data.HomeCommandPreview
@@ -137,6 +147,51 @@ fun SettingsToggles() {
         source?.let(mainViewModel::restoreCommandsConfig)
     }
 
+    if (mainViewModel.restorePackagesOpen) {
+        val plan = mainViewModel.restorePackagesPlan
+        val busy = mainViewModel.restorePackagesBusy
+        AlertDialog(
+            onDismissRequest = mainViewModel::dismissRestorePackages,
+            title = { Text("Restore command packages") },
+            text = {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (busy) CircularProgressIndicator()
+                    Text(mainViewModel.restorePackagesMessage)
+                    plan?.let {
+                        Text("${it.matchedIds.size} catalog commands found.")
+                        Text("${it.updatedCount} commands refreshed from the latest recipes, including their inputs and defaults.")
+                        if (it.missingPkg.isNotEmpty()) Text("Termux packages: ${it.missingPkg.joinToString()}")
+                        if (it.missingPip.isNotEmpty()) Text("Python packages: ${it.missingPip.joinToString()}")
+                        if (it.unresolved.isNotEmpty()) {
+                            Text("Custom or unknown commands — check their dependencies manually: ${it.unresolved.joinToString()}")
+                        }
+                        if (it.failedIds.isNotEmpty()) {
+                            Text("Could not fetch recipes: ${it.failedIds.joinToString()}. Check again to retry.")
+                        }
+                        Text("Commands and dependencies come from the same current recipes.")
+                    }
+                }
+            },
+            confirmButton = {
+                if (plan != null && plan.missingCount > 0) {
+                    TextButton(enabled = !busy, onClick = mainViewModel::installRestoredPackages) {
+                        Text("Install missing packages")
+                    }
+                } else if (plan == null || plan.failedIds.isNotEmpty()) {
+                    TextButton(enabled = !busy, onClick = mainViewModel::checkRestoredPackages) {
+                        Text("Check / retry packages")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !busy, onClick = mainViewModel::dismissRestorePackages) { Text("Close") }
+            }
+        )
+    }
+
 
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
@@ -225,7 +280,11 @@ fun SettingsToggles() {
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    //TODO: Themes - Work in Progress
+    val preferences = remember { KoinJavaComponent.get<AppPreferences>(AppPreferences::class.java) }
+    val themeMode = rememberThemeMode(preferences)
+    val dynamicColorsEnabled = rememberDynamicColorsEnabled(preferences)
+    val systemDark = isSystemInDarkTheme()
+    val themeScope = rememberCoroutineScope()
 
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
@@ -242,13 +301,18 @@ fun SettingsToggles() {
         ) {
             Text(
                 "Dark Theme",
-                color = if (false) MaterialTheme.colorScheme.onSurface else Color.Gray
+                color = MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = if (themeMode == ThemeMode.SYSTEM) 0.38f else 1f
+                )
             )
             Switch(
-                checked = false,
-                enabled = false,
-                onCheckedChange = {
-
+                checked = themeMode.isDark(systemDark),
+                enabled = themeMode != ThemeMode.SYSTEM,
+                onCheckedChange = { dark ->
+                    themeScope.launch {
+                        preferences.setString(AppPreferences.CURRENT_THEME,
+                            (if (dark) ThemeMode.DARK else ThemeMode.LIGHT).preferenceValue)
+                    }
                 })
         }
 
@@ -260,9 +324,12 @@ fun SettingsToggles() {
                 .height(55.dp)
         ) {
             Text("Use System Theme")
-            Switch(checked = true, onCheckedChange = {
-
-
+            Switch(checked = themeMode == ThemeMode.SYSTEM, onCheckedChange = { useSystem ->
+                themeScope.launch {
+                    val mode = if (useSystem) ThemeMode.SYSTEM
+                        else if (systemDark) ThemeMode.DARK else ThemeMode.LIGHT
+                    preferences.setString(AppPreferences.CURRENT_THEME, mode.preferenceValue)
+                }
             })
         }
         Row(
@@ -276,10 +343,12 @@ fun SettingsToggles() {
                 "Enable Dynamic Colors",
                 color = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MaterialTheme.colorScheme.onSurface else Color.Gray
             )
-            Switch(checked = true,
+            Switch(checked = dynamicColorsEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                 enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                onCheckedChange = {
-
+                onCheckedChange = { enabled ->
+                    themeScope.launch {
+                        preferences.setBool(AppPreferences.DYNAMIC_COLOR_ENABLED, enabled)
+                    }
                 })
         }
 
@@ -625,12 +694,19 @@ fun SettingsToggles() {
                 Text("Restore From Backup")
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "Replace commands.json using an AutoPie config backup ZIP.",
+                    "Restore commands.json, replace catalog commands with their latest recipes, then install missing packages.",
                     softWrap = true,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(0.7f)
                 )
             }
+        }
+
+        TextButton(
+            enabled = !mainViewModel.restorePackagesBusy,
+            onClick = mainViewModel::checkRestoredPackages
+        ) {
+            Text("Fix dependencies")
         }
 
     }

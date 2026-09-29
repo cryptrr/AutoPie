@@ -81,7 +81,7 @@ import com.autopi.autopieapp.data.services.AutoPieCoreService
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.presentation.screens.CommandDetailsSheet
 import com.autopi.autopieapp.presentation.screens.CommandHistorySheet
-import com.autopi.ui.theme.AutoPieTheme
+import com.autopi.ui.theme.AppTheme
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.autopieapp.presentation.viewModels.ShareReceiverViewModel
 import kotlinx.coroutines.Job
@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
             val uriHandler = LocalUriHandler.current
 
 
-            AutoPieTheme {
+            AppTheme {
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),

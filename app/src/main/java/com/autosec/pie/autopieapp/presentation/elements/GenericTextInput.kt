@@ -55,7 +55,7 @@ import timber.log.Timber
 
 
 @Composable
-fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: (@Composable (() -> Unit))? = null, contentAfterSubtitle: (@Composable (() -> Unit))? = null){
+fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, modifier: Modifier = Modifier, trailingIcon: (@Composable (() -> Unit))? = null, contentAfterSubtitle: (@Composable (() -> Unit))? = null, minLines: Int = if (singleLine) 1 else 2){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -85,8 +85,8 @@ fun GenericTextFormField(text: MutableState<String>,title: String,subtitle: Stri
             trailingIcon = trailingIcon,
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            minLines = 2,
-            maxLines = Int.MAX_VALUE,
+            minLines = minLines,
+            maxLines = maxLines ?: if (singleLine) 1 else Int.MAX_VALUE,
             colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
             //label = { Text("Search") },
             placeholder = { placeholder?.let{Text(it)} },
@@ -338,7 +338,7 @@ fun GenericFormSwitch(text: String, switchState: MutableState<Boolean>,modifier:
 
 
 @Composable
-fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, trailingIcon: (@Composable (() -> Unit))? = null, mask: Char = '⬤'){
+fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifier = Modifier,subtitle: String? = null, placeholder: String? = null, maxLines: Int? = null, singleLine: Boolean = true,isError: Boolean = false,onValueChange: (String) -> Unit = {}, trailingIcon: (@Composable (() -> Unit))? = null, mask: Char = '⬤', minLines: Int = if (singleLine) 1 else 2){
     Column {
         if(title.isNotBlank()){
             Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -363,8 +363,8 @@ fun PasswordFormField(text: MutableState<String>,title: String, modifier: Modifi
             trailingIcon = trailingIcon,
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            minLines = 2,
-            maxLines = Int.MAX_VALUE,
+            minLines = minLines,
+            maxLines = maxLines ?: if (singleLine) 1 else Int.MAX_VALUE,
             colors = OutlinedTextFieldDefaults.colors().copy(unfocusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(.75F)),
             //label = { Text("Search") },
             placeholder = { placeholder?.let{Text(it)} },

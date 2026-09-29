@@ -33,7 +33,7 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
 
             val host = inputUrlObj.host
 
-            val filename = inputUrlObj.file
+            val filename = inputUrlObj.path.substringAfterLast('/')
 
             val path = processManagerService.getCommandWorkingDirectory(item.path)
 
@@ -62,12 +62,15 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
             val isShellScript = Utils.isShellScript(File(fullExecPath))
             val usePython = Utils.isZipFile(File(fullExecPath)) || Utils.isPythonScript(item.command)
             val sanitizedFilename = Utils.sanitizeAndroidFilename(filename)
+            val sanitizedFilenameNoExt = Utils.sanitizeAndroidFilename(File(filename).nameWithoutExtension)
+            val fileExtension = File(filename).extension
 
 
             val inputParsedData = mutableListOf<InputParsedData>().also {
                 it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
                 it.add(InputParsedData(name = "COOKIE_JAR", value = processManagerService.getCookieJarPath()))
                 it.add(InputParsedData(name = "INPUT", value = inputUrl))
+                it.add(InputParsedData(name = "INPUT_TEXT", value = inputUrl))
                 it.add(
                     InputParsedData(
                         name = "INPUT_FILE",
@@ -80,11 +83,29 @@ class RunCommandForUrl(private val processManagerService: ProcessManagerService)
                         value = if (useQuotes) "\"$inputUrl\"" else inputUrl
                     )
                 )
+                it.add(
+                    InputParsedData(
+                        name = "INPUT_URLS",
+                        value = if (useQuotes) "\"$inputUrl\"" else inputUrl
+                    )
+                )
                 it.add(InputParsedData(name = "HOST", value = if (useQuotes) "\"$host\"" else host))
                 it.add(
                     InputParsedData(
                         name = "FILENAME",
                         value = if (useQuotes) "\"$sanitizedFilename\"" else sanitizedFilename
+                    )
+                )
+                it.add(
+                    InputParsedData(
+                        name = "FILENAME_NO_EXT",
+                        value = if (useQuotes) "\"$sanitizedFilenameNoExt\"" else sanitizedFilenameNoExt
+                    )
+                )
+                it.add(
+                    InputParsedData(
+                        name = "FILE_EXT",
+                        value = if (useQuotes) "\"$fileExtension\"" else fileExtension
                     )
                 )
                 it.add(InputParsedData(name = "RAND", value = (1000..9999).random().toString()))

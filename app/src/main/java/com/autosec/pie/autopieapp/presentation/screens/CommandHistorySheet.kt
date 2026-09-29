@@ -293,6 +293,15 @@ fun CommandHistoryCard(commandHistory: CommandHistoryEntity, command: CommandMod
                     Text("OPEN LOGS")
                 }
             }
+            OutlinedButton(onClick = {
+                context.startActivity(com.autopi.OutputPresentationActivity.fileIntent(
+                    context,
+                    File(context.cacheDir, "${commandHistory.processId}.output"),
+                    command?.name ?: "Command"
+                ))
+            }, shape = RoundedCornerShape(10.dp)) {
+                Text("OPEN OUTPUT")
+            }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = commandHistory.currentLink ?: commandHistory.fileUris?.toString() ?: "",
@@ -312,6 +321,5 @@ fun CommandHistoryCard(commandHistory: CommandHistoryEntity, command: CommandMod
         }
     }
 }
-
 
 

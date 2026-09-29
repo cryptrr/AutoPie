@@ -11,6 +11,7 @@ enum class ExtraFlags(val value: String) {
     INT("--int"),
     SMALL("--small"),
     LARGE("--large"),
+    MULTILINE("--multiline"),
     REALTIME("--realtime")
 }
 
@@ -44,3 +45,11 @@ fun List<String>?.flagValue(flag: ExtraFlags): String? =
         ?.removeSurrounding("\"")
         ?.removeSurrounding("'")
         ?.takeIf { it.isNotBlank() }
+
+fun List<String>?.withFlag(flag: ExtraFlags, enabled: Boolean): List<String>? {
+    val remainingFlags = orEmpty().filterNot { value ->
+        value.substringBefore("=").trim() == flag.value
+    }
+    return (if (enabled) remainingFlags + flag.value else remainingFlags)
+        .takeIf(List<String>::isNotEmpty)
+}

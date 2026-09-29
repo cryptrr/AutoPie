@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.AtomicFile
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -34,6 +35,11 @@ import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.data.services.ReleaseInfo
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.use_case.AutoPieUseCases
+import com.autopi.use_case.DependencyRestorePlan
+import com.autopi.use_case.RestoreCommandDependencies
+import com.google.gson.JsonParser
+import com.google.gson.GsonBuilder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,6 +64,93 @@ class MainViewModel(
     private val processManagerService: ProcessManagerService by inject(ProcessManagerService::class.java)
     private val useCases: AutoPieUseCases by inject(AutoPieUseCases::class.java)
     private val configBackupService = ConfigBackupService()
+    private val dependencyRestore by lazy { RestoreCommandDependencies(processManagerService) }
+    var restorePackagesOpen by mutableStateOf(false)
+        private set
+    var restorePackagesBusy by mutableStateOf(false)
+        private set
+    var restorePackagesMessage by mutableStateOf("")
+        private set
+    var restorePackagesPlan by mutableStateOf<DependencyRestorePlan?>(null)
+        private set
+
+    fun dismissRestorePackages() {
+        if (!restorePackagesBusy) restorePackagesOpen = false
+    }
+
+    fun checkRestoredPackages() {
+        if (restorePackagesBusy) return
+        restorePackagesOpen = true
+        restorePackagesBusy = true
+        restorePackagesPlan = null
+        restorePackagesMessage = "Updating catalog commands and checking packages…"
+        viewModelScope.launch {
+            try {
+                val plan = withContext(dispatchers.io) {
+                    check(AutoPieCoreService.fetchLatestRepositoryJson(forceRefresh = true)) {
+                        "Could not refresh the command catalog. Check your connection and retry."
+                    }
+                    val catalog = useCases.getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath)
+                    val configFile = autoPieConfigPathProvider.getConfigFile("commands.json")
+                    val original = configFile.readText()
+                    val commands = JsonParser.parseString(original).asJsonObject
+                    val result = dependencyRestore.plan(commands, catalog.map { it.id }.toSet(), commandsRepositoryChannel)
+                    result.refreshedCommands?.takeIf { it != commands }?.let { refreshed ->
+                        check(configFile.readText() == original) { "Config changed during recipe lookup. Retry the check." }
+                        val atomicFile = AtomicFile(configFile)
+                        val output = atomicFile.startWrite()
+                        try {
+                            output.write(GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+                                .create().toJson(refreshed).toByteArray(Charsets.UTF_8))
+                            atomicFile.finishWrite(output)
+                        } catch (error: Exception) {
+                            atomicFile.failWrite(output)
+                            throw error
+                        }
+                    }
+                    result
+                }
+                emitEvent(ViewModelEvent.RefreshCommandsList)
+                emitEvent(ViewModelEvent.CommandsConfigChanged)
+                restorePackagesPlan = plan
+                restorePackagesMessage = if (plan.missingCount == 0) {
+                    "All identified dependencies are installed."
+                } else {
+                    "${plan.missingCount} missing packages can be installed."
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.e(error)
+                restorePackagesMessage = "Package check failed. Your config is still available. Check your connection and retry."
+            } finally {
+                restorePackagesBusy = false
+            }
+        }
+    }
+
+    fun installRestoredPackages() {
+        val plan = restorePackagesPlan ?: return
+        if (restorePackagesBusy || plan.missingCount == 0) return
+        restorePackagesBusy = true
+        restorePackagesMessage = "Preparing installation…"
+        viewModelScope.launch {
+            try {
+                val opened = dependencyRestore.install(plan)
+                restorePackagesPlan = null
+                restorePackagesMessage = if (opened) {
+                    "Installation opened in Termux. View the results there, then use Update commands / retry packages if needed."
+                } else "All identified dependencies are already installed."
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.e(error)
+                restorePackagesMessage = "Could not open installation in Termux. Retry to check and install missing packages."
+            } finally {
+                restorePackagesBusy = false
+            }
+        }
+    }
 
     private val _eventFlow = MutableSharedFlow<ViewModelEvent>(replay = 0)
     val eventFlow = _eventFlow.asSharedFlow()
@@ -380,6 +473,7 @@ class MainViewModel(
                 emitEvent(ViewModelEvent.RefreshCommandsList)
                 emitEvent(ViewModelEvent.CommandsConfigChanged)
                 showNotification(AppNotification.ConfigBackupRestored)
+                withContext(dispatchers.main) { checkRestoredPackages() }
             } catch (error: Exception) {
                 Timber.e(error, "Failed to restore commands config")
                 showError(ViewModelError.ConfigRestoreFailed)

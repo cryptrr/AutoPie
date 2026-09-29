@@ -20,8 +20,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 70
-        versionName = "0.19.0-beta"
+        versionCode = 71
+        versionName = "0.19.1-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
@@ -39,8 +39,8 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = ".debug"
+            //applicationIdSuffix = ".debug"
+            //versionNameSuffix = ".debug"
             manifestPlaceholders["appIcon"]="@mipmap/ic_launcher_debug"
             manifestPlaceholders["appIconRound"]="@mipmap/ic_launcher_debug_round"
             signingConfig = signingConfigs.getByName("debug")
@@ -153,7 +153,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    testImplementation ("io.insert-koin:koin-test:3.5.6")
+    testImplementation ("io.insert-k" +
+            "oin:koin-test:3.5.6")
     testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
     androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")

@@ -5,6 +5,8 @@ import com.autopi.autopieapp.data.CommandResult
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
 
+private val HTTP_URL_REGEX = Regex("""(?i)\b(?:https?://|www\.)[^\s<>"']+""")
+
 fun String?.isValidUrl(): Boolean {
     return this != null && Patterns.WEB_URL.matcher(this).matches()
 }
@@ -16,15 +18,15 @@ fun String?.containsValidUrl(): Boolean {
 }
 
 fun String?.containsValidHttpUrl(): Boolean {
-    if (this == null) return false
-    val matcher = Patterns.WEB_URL.matcher(this)
-    while (matcher.find()) {
-        val url = matcher.group()
-        if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("www.")) {
-            return true
-        }
-    }
-    return false
+    return extractHttpUrls().isNotEmpty()
+}
+
+fun String?.extractHttpUrls(): List<String> {
+    if (this == null) return emptyList()
+    return HTTP_URL_REGEX.findAll(this)
+        .map { match -> match.value.trimEnd('.', ',', ';', '!', ')', ']', '}') }
+        .filter { it.isNotEmpty() }
+        .toList()
 }
 
 fun String?.extractFirstUrl(): String? {
@@ -40,7 +42,7 @@ fun String?.extractAllUrls(): String? {
     while (matcher.find()) {
         urls.add(matcher.group())
     }
-    return urls.joinToString{" "}
+    return urls.joinToString(" ")
 }
 
 fun ProcessResult.toCommandResult(jobType: JobType,jobKey: String): CommandResult {

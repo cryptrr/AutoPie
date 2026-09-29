@@ -60,8 +60,7 @@ class ForegroundService : Service() {
             mainViewModel.eventFlow.collect { event ->
                 when (event) {
                     is ViewModelEvent.CommandStarted -> {
-                        if (event.processId in runs.values && event.jobType != JobType.CRON &&
-                            event.jobType != JobType.STANDALONE) {
+                        if (shouldSendStartedNotification(event.processId, event.jobType, runs.values)) {
                             notifySafely {
                                 autoPieNotification.sendBroadcastNotification(
                                     event.command.name, event.input, event.command, event.processId,
@@ -196,3 +195,9 @@ class ForegroundService : Service() {
         super.onDestroy()
     }
 }
+
+internal fun shouldSendStartedNotification(
+    processId: Int,
+    jobType: JobType,
+    activeProcessIds: Collection<Int>
+): Boolean = processId in activeProcessIds && jobType != JobType.CRON

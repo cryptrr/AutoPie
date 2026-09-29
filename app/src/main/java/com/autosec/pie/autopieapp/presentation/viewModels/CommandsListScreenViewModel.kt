@@ -56,7 +56,6 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     var fullListOfCommandsShared = fullListOfCommands.asSharedFlow()
     var filteredListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
     val repositorySearchResults = MutableStateFlow<List<CloudCommandModel>>(emptyList())
-    val repositoryInstalledCommandVersions = MutableStateFlow<Map<String, String>>(emptyMap())
     val isRepositorySearchLoading = mutableStateOf(false)
     private var repositorySearchJob: Job? = null
 
@@ -189,11 +188,11 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
                 val matches = useCases
                     .getRepoCommandsList(AutoPieCoreService.repositoryJsonFile().absolutePath)
                     .filter { it.matchesSearch(query) }
+                    .let { filterUninstalledCloudCommands(it, installedVersions) }
                     .sortedBy { it.name.lowercase() }
 
                 withContext(dispatchers.main) {
                     if (searchCommandQuery.value.trim() == query) {
-                        repositoryInstalledCommandVersions.value = installedVersions
                         repositorySearchResults.value = matches
                         isRepositorySearchLoading.value = false
                     }
@@ -310,3 +309,9 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
 
 }
+
+internal fun filterUninstalledCloudCommands(
+    commands: List<CloudCommandModel>,
+    installedVersions: Map<String, String>
+): List<CloudCommandModel> =
+    commands.filterNot { command -> command.id in installedVersions }

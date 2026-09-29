@@ -147,10 +147,15 @@ fun CommandModel.hasUserFacingExtras(): Boolean = extras.orEmpty().any {
 fun CommandModel.hasUnsetRequiredExtras(): Boolean = extras.orEmpty().any {
     !it.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) &&
         !it.isSecretExtra() &&
-        it.type == "STRING" &&
+        it.type.isTextExtraType() &&
         it.default.isEmpty() &&
         it.required
 }
+
+fun String.isTextExtraType(): Boolean = this == "STRING" || this == "TEXT"
+
+fun CommandExtra.isMultilineText(): Boolean =
+    type == "TEXT" || (type == "STRING" && flags.hasFlag(ExtraFlags.MULTILINE))
 
 data class CommandCreationModel(
     val selectedCommandType: String,

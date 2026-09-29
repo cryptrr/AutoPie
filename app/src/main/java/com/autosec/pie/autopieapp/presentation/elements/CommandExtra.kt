@@ -1,12 +1,14 @@
 package com.autopi.autopieapp.presentation.elements
 
 import android.os.Build
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +30,8 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,8 +59,10 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
+import com.autopi.autopieapp.data.isMultilineText
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.secretKey
+import com.autopi.autopieapp.data.withFlag
 import com.autopi.autopieapp.data.services.SecretsService
 import org.koin.java.KoinJavaComponent
 
@@ -169,11 +176,18 @@ fun CommandExtraInputElement(
 
     var expanded = remember { mutableStateOf(false) }
     var selectedCommandType =
-        rememberSaveable { mutableStateOf(command.type.split(",").firstOrNull() ?: "") }
+        rememberSaveable {
+            mutableStateOf(
+                if (command.isMultilineText()) "TEXT"
+                else command.type.split(",").firstOrNull() ?: ""
+            )
+        }
     val options = listOf(
         "STRING",
+        "TEXT",
         "SELECTABLE",
         "SELECTABLE_FLAT",
+        "BUTTON",
         "MULTI_SELECTABLE",
         "MULTI_SELECTABLE_FLAT",
         "FLAG",
@@ -219,10 +233,11 @@ fun CommandExtraInputElement(
         val commandExtra = CommandExtra(
             id = command.id,
             name = name.value,
-            type = selectedCommandType.value,
+            type = if (selectedCommandType.value == "TEXT") "STRING" else selectedCommandType.value,
             default = when{
                 selectedCommandType.value == "SELECTABLE" ||
                     selectedCommandType.value == "SELECTABLE_FLAT" ||
+                    selectedCommandType.value == "BUTTON" ||
                     selectedCommandType.value == "MULTI_SELECTABLE" ||
                     selectedCommandType.value == "MULTI_SELECTABLE_FLAT" ->
                     parsedSelectableOptions.values.firstOrNull() ?: ""
@@ -232,7 +247,10 @@ fun CommandExtraInputElement(
             defaultBoolean = selectedOptionForBoolean.value.toBoolean(),
             selectableOptions = parsedSelectableOptions,
             required = isRequired.value,
-            flags = command.flags,
+            flags = command.flags.withFlag(
+                ExtraFlags.MULTILINE,
+                selectedCommandType.value == "TEXT"
+            ),
             visibleWhen = command.visibleWhen
         )
 
@@ -285,7 +303,7 @@ fun CommandExtraInputElement(
 
 
         when (selectedCommandType.value) {
-            "STRING" -> {
+            "STRING", "TEXT" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -298,6 +316,8 @@ fun CommandExtraInputElement(
                     text = default,
                     "",
                     placeholder = "DEFAULT",
+                    singleLine = selectedCommandType.value != "TEXT",
+                    minLines = if (selectedCommandType.value == "TEXT") 4 else 1,
                     isError = default.value.isBlank(),
                     trailingIcon = if(
                         command.flags.hasFlag(ExtraFlags.FOLDER_PICKER) ||
@@ -378,7 +398,7 @@ fun CommandExtraInputElement(
                 )
             }
 
-            "SELECTABLE", "SELECTABLE_FLAT", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
+            "SELECTABLE", "SELECTABLE_FLAT", "BUTTON", "MULTI_SELECTABLE", "MULTI_SELECTABLE_FLAT" -> {
                 GenericTextFormField(
                     text = name,
                     "",
@@ -586,6 +606,102 @@ fun OptionSelector(
                     },
                     text = { Text(label) }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ButtonOptionSelector(
+    options: Map<String, String>,
+    selectedOption: MutableState<String>,
+    enabled: Boolean = true,
+    onOptionClick: (String) -> Unit = {},
+) {
+    if (!enabled) {
+        Text(
+            text = "Error fetching",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38F)
+        )
+        return
+    }
+
+    if (options.isEmpty()) {
+        Text(
+            text = "No options available",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        return
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columnCount = when {
+            maxWidth >= 600.dp -> 4
+            maxWidth >= 420.dp -> 3
+            else -> 2
+        }.coerceAtMost(options.size)
+        val optionRows = options.entries.chunked(columnCount)
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            optionRows.forEach { rowOptions ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    rowOptions.forEach { (label, value) ->
+                        val selected = selectedOption.value == value
+                        Button(
+                            onClick = {
+                                selectedOption.value = value
+                                onOptionClick(value)
+                            },
+                            modifier = Modifier
+                                .weight(1F)
+                                .heightIn(min = 52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (selected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                                },
+                                contentColor = if (selected) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = if (selected) 0.dp else 1.dp,
+                                pressedElevation = 0.dp
+                            ),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                horizontal = 12.dp,
+                                vertical = 10.dp
+                            )
+                        ) {
+                            Text(
+                                text = label,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    repeat(columnCount - rowOptions.size) {
+                        Spacer(modifier = Modifier.weight(1F))
+                    }
+                }
             }
         }
     }
