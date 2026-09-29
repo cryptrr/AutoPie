@@ -51,6 +51,15 @@ If `pkg install` fails immediately after the first launch, reopen the terminal a
 
 You can also browse the command catalog to install ready-made commands and their dependencies.
 
+## Create command recipes with AI
+
+You can ask an AI assistant to create an AutoPie command recipe for a task you describe:
+
+1. Attach or share the [AutoPie GitHub repository](https://github.com/cryptrr/AutoPie) with your AI assistant so it can refer to the recipe format and supported features.
+2. Describe what you want the recipe to do, flags or options you need. Ask the assistant to create a valid AutoPie recipe JSON.
+3. Copy the generated JSON.
+4. In AutoPie, tap **Create Command** on the home screen and add the recipe JSON.
+
 ## Command types and triggers
 
 | Type | When it runs | Type-specific configuration |
