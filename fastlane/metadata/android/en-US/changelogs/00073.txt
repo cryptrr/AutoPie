@@ -1,0 +1,5 @@
+What's New
+
+- Fixed a launch crash when building frequent package suggestions from recipes containing only comments or script headers.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.19.2-beta...v0.19.3-beta
