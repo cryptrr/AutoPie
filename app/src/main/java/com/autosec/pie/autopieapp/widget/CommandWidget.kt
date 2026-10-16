@@ -58,6 +58,7 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -200,6 +201,27 @@ private fun CommandWidgetContent(context: Context) {
         }
     )
 
+    val imageBitmap = bitmap
+    if (output is DisplayOutput.Image && imageBitmap != null) {
+        Box(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .appWidgetBackground()
+                .background(GlanceTheme.colors.widgetBackground)
+                .cornerRadius(28.dp)
+                .clickable(primaryAction),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                provider = ImageProvider(imageBitmap),
+                contentDescription = output.description ?: "Command output image",
+                modifier = GlanceModifier.fillMaxWidth().wrapContentHeight().cornerRadius(28.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
+        return
+    }
+
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -239,19 +261,7 @@ private fun CommandWidgetContent(context: Context) {
                 is DisplayOutput.Items -> ListOutput(output.values)
                 is DisplayOutput.Json -> JsonOutput(context, output.value)
                 is DisplayOutput.PlainText -> TextOutput(output.value)
-                is DisplayOutput.Image -> {
-                    val imageBitmap = bitmap
-                    if (imageBitmap == null) {
-                        TextOutput("Unable to load image")
-                    } else {
-                        Image(
-                            provider = ImageProvider(imageBitmap),
-                            contentDescription = output.description ?: "Command output image",
-                            modifier = GlanceModifier.fillMaxSize().padding(top = 42.dp, bottom = 48.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
+                is DisplayOutput.Image -> TextOutput("Unable to load image")
             }
         }
 

@@ -134,7 +134,7 @@ The JSON shape of `value` controls the widget presentation:
 | --- | --- |
 | Number | Large centered number |
 | String | Left-aligned text (PNG/BMP paths and image data URIs render as images) |
-| Image object (`type: "image"` or `"bitmap"`) | Image scaled to fit, preserving aspect ratio |
+| Image object (`type: "image"` or `"bitmap"`) | Image fits the widget width, preserving aspect ratio |
 | Array of strings | List |
 | Object or other JSON value | Pretty-printed, syntax-highlighted JSON |
 
@@ -145,13 +145,20 @@ export OUTPUT="/sdcard/Pictures/chart.png"
 printf '%s\n' '#@AUTOPIE {"type":"output","value":{"type":"image","path":"/sdcard/Pictures/chart.bmp","caption":"Chart"}}'
 ```
 
+Images fit the widget width with no inset, title, or Run button. Tap the image
+to run its command. Proportions are preserved; taller images also fit within the
+widget height, and unused space shows the widget background.
+
 Image objects accept `src` or `path` and `caption` or `alt`. Widgets load readable
 absolute paths, `file://` and `content://` URIs, and `data:image/png;base64,...`
 or `data:image/bmp;base64,...` strings. Sources must be accessible to AutoPie;
 remote URLs are not fetched by widgets. Base64 sources are limited to 4 MiB of
-text and files to 8 MiB. Images are decoded off the UI thread and downsampled to
-at most 384 pixels on either side to bound launcher bitmap memory. Unreadable or
-invalid images display “Unable to load image”.
+text and files to 8 MiB. Images are decoded off the UI thread at their original
+resolution. Only images exceeding Android’s widget bitmap limit are downscaled,
+preserving their proportions. The limit is `6 × screen width × screen height`
+bytes (decoded ARGB pixels, not PNG file size). The launcher fits and centers the image
+inside the widget without cropping. Unreadable or invalid images display
+“Unable to load image”.
 
 The latest `output` event is retained as the command's final widget value when the command does not export an `OUTPUT` environment variable. An explicitly exported `OUTPUT` takes precedence when the command finishes.
 

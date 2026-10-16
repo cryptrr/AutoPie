@@ -106,11 +106,38 @@ class CommandWidgetOutputTest {
     }
 
     @Test
-    fun `sample size bounds large and extreme aspect ratio images`() {
-        assertEquals(1, widgetImageSampleSize(100, 200))
-        assertEquals(1, widgetImageSampleSize(384, 384))
-        assertEquals(2, widgetImageSampleSize(768, 384))
-        assertEquals(16, widgetImageSampleSize(4096, 1))
-        assertTrue(Int.MAX_VALUE / widgetImageSampleSize(Int.MAX_VALUE, 1) <= WIDGET_IMAGE_MAX_SIDE)
+    fun `sampling retains enough pixels for dense widgets and crops`() {
+        assertEquals(1, widgetImageSampleSize(1600, 800, 800, 800))
+        assertEquals(2, widgetImageSampleSize(1600, 800, 800, 400))
+        assertEquals(1, widgetImageSampleSize(100, 200, 100, 200))
+        assertEquals(4, widgetImageSampleSize(4096, 2048, 1000, 500))
+        val sample = widgetImageSampleSize(Int.MAX_VALUE, 1, 384, 1)
+        assertTrue(Int.MAX_VALUE.toLong() / sample <= 16L * 1024 * 1024)
+    }
+
+    @Test
+    fun `image pixel budget uses Android limit instead of a per-image reserve`() {
+        assertEquals(3_888_000L, widgetImagePixelBudget(1080, 2400))
+    }
+
+    @Test
+    fun `images below and exactly at budget keep original resolution`() {
+        assertEquals(WidgetImageSize(2000, 1000), widgetImageDecodeSize(2000, 1000, 3_888_000))
+        assertEquals(WidgetImageSize(2160, 1800), widgetImageDecodeSize(2160, 1800, 3_888_000))
+        assertEquals(WidgetImageSize(100, 50), widgetImageDecodeSize(100, 50, 3_888_000))
+    }
+
+    @Test
+    fun `only oversized images are reduced preserving proportions`() {
+        assertEquals(WidgetImageSize(1500, 500), widgetImageDecodeSize(6000, 2000, 750_000))
+        assertEquals(WidgetImageSize(500, 1500), widgetImageDecodeSize(2000, 6000, 750_000))
+        val size = widgetImageDecodeSize(4000, 3000, 3_888_000)
+        assertTrue(size.width.toLong() * size.height <= 3_888_000)
+    }
+
+    @Test
+    fun `very thin image still obeys bitmap budget`() {
+        assertEquals(WidgetImageSize(1000, 1), widgetImageDecodeSize(Int.MAX_VALUE, 1, 1000))
+        assertEquals(WidgetImageSize(1, 1000), widgetImageDecodeSize(1, Int.MAX_VALUE, 1000))
     }
 }
