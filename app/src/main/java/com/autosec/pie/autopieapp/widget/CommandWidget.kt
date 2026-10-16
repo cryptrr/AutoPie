@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,11 +17,20 @@ import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.layout.ContentScale
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -67,12 +77,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object CommandWidgetState {
     val commandId = stringPreferencesKey("command_id")
     val commandName = stringPreferencesKey("command_name")
     val output = stringPreferencesKey("output")
+    val outputRevision = longPreferencesKey("output_revision")
     val status = stringPreferencesKey("status")
 }
 
@@ -81,6 +93,7 @@ internal sealed interface DisplayOutput {
     data class Number(val value: String) : DisplayOutput
     data class Items(val values: List<String>) : DisplayOutput
     data class Json(val value: String) : DisplayOutput
+    data class Image(val source: String, val description: String? = null) : DisplayOutput
     data class PlainText(val value: String) : DisplayOutput
 }
 
@@ -89,9 +102,11 @@ private val prettyJson = GsonBuilder().setPrettyPrinting().create()
 internal fun parseDisplayOutput(raw: String?): DisplayOutput {
     if (raw == null) return DisplayOutput.Empty
     if (raw.isBlank()) return DisplayOutput.PlainText("")
+    if (isWidgetImageSource(raw.trim())) return DisplayOutput.Image(raw.trim())
 
     return runCatching {
         val json = JsonParser.parseString(raw)
+        if (json.isJsonObject) widgetImageDescriptor(json.asJsonObject)?.let { return it }
         when {
             json.isJsonPrimitive && json.asJsonPrimitive.isNumber -> {
                 DisplayOutput.Number(json.asJsonPrimitive.asString)
@@ -102,7 +117,9 @@ internal fun parseDisplayOutput(raw: String?): DisplayOutput {
                 DisplayOutput.Items(json.asJsonArray.map { it.asString })
             }
             json.isJsonPrimitive && json.asJsonPrimitive.isString -> {
-                DisplayOutput.PlainText(json.asString)
+                val value = json.asString
+                if (isWidgetImageSource(value)) DisplayOutput.Image(value)
+                else DisplayOutput.PlainText(value)
             }
             else -> DisplayOutput.Json(prettyJson.toJson(json))
         }
@@ -115,6 +132,15 @@ internal fun boundWidgetOutput(raw: String): String = when (val output = parseDi
     is DisplayOutput.Items -> Gson().toJson(
         output.values.take(MAX_STORED_ITEMS).map { it.take(MAX_STORED_ITEM_LENGTH) }
     )
+    is DisplayOutput.Image -> if (output.source.length <= MAX_WIDGET_IMAGE_SOURCE_LENGTH) {
+        Gson().toJson(JsonObject().apply {
+            addProperty("type", "image")
+            addProperty("src", output.source)
+            output.description?.let { addProperty("alt", it.take(MAX_STORED_ITEM_LENGTH)) }
+        })
+    } else {
+        Gson().toJson("Image is too large for the widget")
+    }
     is DisplayOutput.Json -> boundJson(output.value)
     is DisplayOutput.PlainText -> Gson().toJson(output.value.take(MAX_STORED_OUTPUT_LENGTH))
 }
@@ -148,7 +174,16 @@ private fun CommandWidgetContent(context: Context) {
     val commandId = state[CommandWidgetState.commandId]
     val commandName = state[CommandWidgetState.commandName].orEmpty()
     val status = state[CommandWidgetState.status]
-    val output = parseDisplayOutput(state[CommandWidgetState.output])
+    val output = remember(state[CommandWidgetState.output]) {
+        parseDisplayOutput(state[CommandWidgetState.output])
+    }
+    val revision = state[CommandWidgetState.outputRevision]
+    var bitmap by remember(output, revision) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(output, revision) {
+        if (output is DisplayOutput.Image) {
+            bitmap = withContext(Dispatchers.IO) { loadWidgetBitmap(context, output.source) }
+        }
+    }
 
     val primaryAction = actionStartActivity(
         if (commandId != null) {
@@ -204,6 +239,19 @@ private fun CommandWidgetContent(context: Context) {
                 is DisplayOutput.Items -> ListOutput(output.values)
                 is DisplayOutput.Json -> JsonOutput(context, output.value)
                 is DisplayOutput.PlainText -> TextOutput(output.value)
+                is DisplayOutput.Image -> {
+                    val imageBitmap = bitmap
+                    if (imageBitmap == null) {
+                        TextOutput("Unable to load image")
+                    } else {
+                        Image(
+                            provider = ImageProvider(imageBitmap),
+                            contentDescription = output.description ?: "Command output image",
+                            modifier = GlanceModifier.fillMaxSize().padding(top = 42.dp, bottom = 48.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
             }
         }
 
@@ -607,6 +655,9 @@ suspend fun updateCommandWidgets(
 
         updateAppWidgetState(context, glanceId) { preferences ->
             if (replaceOutput) {
+                // Reload even when a command overwrites the same image path.
+                preferences[CommandWidgetState.outputRevision] =
+                    (preferences[CommandWidgetState.outputRevision] ?: 0L) + 1
                 if (rawOutput == null) {
                     preferences.remove(CommandWidgetState.output)
                 } else {
