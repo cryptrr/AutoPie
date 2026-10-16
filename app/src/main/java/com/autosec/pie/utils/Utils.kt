@@ -597,11 +597,7 @@ fun getCommandExec(command: String) : String? {
         "Python"
     }
     else{
-        command.lines()
-            .first { !it.startsWith("#") }
-            .split(" ")
-            .first()
-            .takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }
+        getFirstCommandToken(command)
     }
 }
 
@@ -621,10 +617,14 @@ fun getCommandExec(command: CommandInterface) : String? {
             command.command
         }
 
-        cmd.lines()
-            .first { !it.startsWith("#") }
-            .split(" ")
-            .first()
-            .takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }
+        getFirstCommandToken(cmd)
     }
+}
+
+private fun getFirstCommandToken(command: String): String? {
+    return command.lineSequence()
+        .map { it.trim() }
+        .firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
+        ?.takeWhile { !it.isWhitespace() }
+        ?.takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }
 }
