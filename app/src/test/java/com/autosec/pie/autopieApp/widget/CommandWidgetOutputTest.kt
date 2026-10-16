@@ -140,4 +140,23 @@ class CommandWidgetOutputTest {
         assertEquals(WidgetImageSize(1000, 1), widgetImageDecodeSize(Int.MAX_VALUE, 1, 1000))
         assertEquals(WidgetImageSize(1, 1000), widgetImageDecodeSize(1, Int.MAX_VALUE, 1000))
     }
+    @Test
+    fun `tall image fills width when widget height is reduced`() {
+        assertEquals(androidx.glance.layout.ContentScale.Crop,
+            widgetImageContentScale(400, 1200, 300f, 200f))
+        assertEquals(androidx.glance.layout.ContentScale.Crop,
+            widgetImageContentScale(400, 1200, 300f, 600f))
+        assertEquals(androidx.glance.layout.ContentScale.Fit,
+            widgetImageContentScale(400, 1200, 300f, 900f))
+        assertEquals(androidx.glance.layout.ContentScale.Fit,
+            widgetImageContentScale(400, 1200, 300f, 1000f))
+    }
+
+    @Test
+    fun `wide images keep full width without unnecessary vertical cropping`() {
+        assertEquals(androidx.glance.layout.ContentScale.Fit,
+            widgetImageContentScale(1200, 400, 300f, 200f))
+        assertEquals(androidx.glance.layout.ContentScale.Crop,
+            widgetImageContentScale(1200, 400, 300f, 50f))
+    }
 }

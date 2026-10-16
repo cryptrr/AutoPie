@@ -30,6 +30,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.layout.ContentScale
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -58,7 +60,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -78,7 +79,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object CommandWidgetState {
@@ -158,19 +158,21 @@ private fun boundJson(prettyValue: String): String {
 
 class CommandWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
+    override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         bindPendingCommandIfNecessary(context, id)
+        val imageLoader = WidgetImageLoader()
         provideContent {
             GlanceTheme {
-                CommandWidgetContent(context)
+                CommandWidgetContent(context, imageLoader)
             }
         }
     }
 }
 
 @Composable
-private fun CommandWidgetContent(context: Context) {
+private fun CommandWidgetContent(context: Context, imageLoader: WidgetImageLoader) {
     val state = currentState<Preferences>()
     val commandId = state[CommandWidgetState.commandId]
     val commandName = state[CommandWidgetState.commandName].orEmpty()
@@ -182,7 +184,7 @@ private fun CommandWidgetContent(context: Context) {
     var bitmap by remember(output, revision) { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(output, revision) {
         if (output is DisplayOutput.Image) {
-            bitmap = withContext(Dispatchers.IO) { loadWidgetBitmap(context, output.source) }
+            bitmap = imageLoader.load(context, output.source, revision)
         }
     }
 
@@ -201,6 +203,7 @@ private fun CommandWidgetContent(context: Context) {
         }
     )
 
+    val widgetSize = LocalSize.current
     val imageBitmap = bitmap
     if (output is DisplayOutput.Image && imageBitmap != null) {
         Box(
@@ -215,8 +218,9 @@ private fun CommandWidgetContent(context: Context) {
             Image(
                 provider = ImageProvider(imageBitmap),
                 contentDescription = output.description ?: "Command output image",
-                modifier = GlanceModifier.fillMaxWidth().wrapContentHeight().cornerRadius(28.dp),
-                contentScale = ContentScale.Fit
+                modifier = GlanceModifier.fillMaxSize().cornerRadius(28.dp),
+                contentScale = widgetImageContentScale(imageBitmap.width, imageBitmap.height,
+                    widgetSize.width.value, widgetSize.height.value)
             )
         }
         return

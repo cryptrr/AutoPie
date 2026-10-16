@@ -1,5 +1,10 @@
 ### Shell integration tests
 
+Connected device tests install a debug build of `com.autopi`. This project sets
+`android.injected.androidTest.leaveApksInstalledAfterRun=true` so Gradle does not
+uninstall AutoPie (and remove its data and widgets) after testing. Use a dedicated
+test device or emulator for instrumentation work when possible.
+
 Run the host integration suite with:
 
 ```sh
