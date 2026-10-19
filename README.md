@@ -44,6 +44,7 @@ If `pkg install` fails immediately after the first launch, reopen the terminal a
 ### Secondary Android user spaces
 
 Unlike Termux, AutoPie supports running in secondary Android user spaces. For a secondary user space, download and install the separate APK with secondary-user support included in [GitHub Releases](https://github.com/cryptrr/AutoPie/releases/).
+Hence, AutoPie can be used as a Termux alternative on Android's secondary user spaces.
 
 ## Quick start
 
@@ -63,6 +64,8 @@ You can ask an AI assistant to create an AutoPie command recipe for a task you d
 2. Describe what you want the recipe to do, flags or options you need. Ask the assistant to create a valid AutoPie recipe JSON.
 3. Copy the generated JSON.
 4. In AutoPie, tap **Create Command** on the home screen and add the recipe JSON.
+
+Humans and AI agents are welcome and allowed to create pull requests for AutoPie recipes in the [autopie-commands repository](https://github.com/cryptrr/autopie-commands). Contributing reusable recipes helps expand the command catalog so more functionality is ready-made for users. Follow that repository's contribution instructions and recipe format when preparing a pull request.
 
 ## Command types and triggers
 
