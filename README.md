@@ -6,6 +6,8 @@ AutoPie is a command hub and workflow runner for Android. It gives shell command
 
 ### [Download the latest APK](https://github.com/cryptrr/AutoPie/releases/)
 
+[<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/com.autopi/)
+
 > AutoPie currently supports aarch64/arm64-v8a devices (most newer Android phones).
 
 <div style="display:flex;flex-direction:row;justify-content:space-between">
