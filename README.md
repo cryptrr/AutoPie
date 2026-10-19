@@ -41,6 +41,10 @@ AutoPie is a command hub and workflow runner for Android. It gives shell command
 
 If `pkg install` fails immediately after the first launch, reopen the terminal and give the bootstrap a little more time to finish.
 
+### Secondary Android user spaces
+
+Unlike Termux, AutoPie supports running in secondary Android user spaces. For a secondary user space, download and install the separate APK with secondary-user support included in [GitHub Releases](https://github.com/cryptrr/AutoPie/releases/).
+
 ## Quick start
 
 1. Open AutoPie and press the add button.
