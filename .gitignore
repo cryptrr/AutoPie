@@ -11,6 +11,9 @@ local.properties
 app/release
 /termux-app/
 /.termux-app.*
+# Local Termux API export and upstream checkout.
+/termux-api/
+/.termux-api-upstream/
 /.termux-generator.*
 /app/src/main/assets/bootstrap-aarch64.zip
 /base.apk
