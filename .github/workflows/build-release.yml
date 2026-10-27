@@ -15,7 +15,7 @@ jobs:
     name: Build release APK in F-Droid Trixie
     runs-on: ubuntu-latest
     container:
-      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:9cb68105642ca4e7b295f0ceab10f069f5b3247dc18fa7c36046e9d81aa469a8
+      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:1ea8bef1820bff06c2974e31b4fc4c79c364cd24231b86e71fa4b926797e0dac
     timeout-minutes: 360
     defaults:
       run:
@@ -56,7 +56,7 @@ jobs:
         working-directory: /home/vagrant/build/com.autopi
         run: |
           source /etc/profile.d/bsenv.sh
-          printf 'Image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:9cb68105642ca4e7b295f0ceab10f069f5b3247dc18fa7c36046e9d81aa469a8\n'
+          printf 'Image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:1ea8bef1820bff06c2974e31b4fc4c79c364cd24231b86e71fa4b926797e0dac\n'
           printf 'Build directory: %s\n' "$PWD"
           printf 'Java: '
           sudo -u vagrant -H java -version
