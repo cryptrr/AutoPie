@@ -5,4 +5,4 @@ What's New
 - Fixed symlink rewriting for keyrings and other package files.
 - Fixed shell HOME and starting-directory paths, including secondary-user environments.
 
-Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.19.3-beta...v0.20.0-beta
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.19.3-beta...v0.20.3-beta
