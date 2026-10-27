@@ -1,0 +1,8 @@
+What's New
+
+- Added PNG/BMP image widgets with layouts that fit the widget width and tap-to-run support.
+- Protected the dpkg wrapper during package upgrades and added repair support for older installations.
+- Fixed symlink rewriting for keyrings and other package files.
+- Fixed shell HOME and starting-directory paths, including secondary-user environments.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.19.3-beta...v0.20.0-beta
