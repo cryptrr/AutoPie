@@ -7,9 +7,26 @@ plugins {
     id("androidx.room")
 }
 
+// Existing installations need these outside the bootstrap ZIP: upgrading the APK
+// preserves the installed prefix and does not extract a new bootstrap.
+val dpkgRepairAssets = layout.buildDirectory.dir("generated/assets/dpkgRepair")
+val prepareDpkgRepairAssets by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("scripts/bootstrap")) {
+        include("dpkg_setup.py", "dpkg.py")
+        into("autopie-dpkg")
+    }
+    into(dpkgRepairAssets)
+}
+
+tasks.named("preBuild") {
+    dependsOn(prepareDpkgRepairAssets)
+}
+
 android {
     namespace = "com.autopi"
     compileSdk = 35
+
+    sourceSets.getByName("main").assets.srcDir(dpkgRepairAssets)
 
     buildFeatures {
         buildConfig = true
