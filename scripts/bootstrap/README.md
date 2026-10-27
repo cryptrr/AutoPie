@@ -35,3 +35,39 @@ The old APK may already be read-only, so replace it rather than writing into it.
 Check `am --help` and `am to-uri -a android.intent.action.VIEW`; then test an
 actual activity start on the secondary user. The local DEX checks cannot verify
 device-specific Android permission or activity-manager behavior.
+
+## Existing keyring links
+
+The package wrapper relocates absolute symlink targets as well as archive
+member names. Relative symlink targets stay unchanged; hardlink targets follow
+the archive member paths. This keeps `termux-keyring` upgrades from leaving
+trusted-key links pointing into the original Termux app's private directory.
+The bootstrap's `SYMLINKS.txt` is already relocated by the text rewriter.
+
+For an existing installation with the incorrect keyring links, run this inside
+AutoPie. It only retargets existing symlinks into the old Termux keyring directory
+when the corresponding key file exists locally; it does not add trusted keys:
+
+```sh
+(
+  set -eu
+  : "${PREFIX:?Run this inside AutoPie}"
+  for link in "$PREFIX"/etc/apt/trusted.gpg.d/*.gpg; do
+    [ -L "$link" ] || continue
+    target=$(readlink "$link")
+    case "$target" in
+      /data/data/com.termux/files/usr/share/termux-keyring/*)
+        key=${target##*/}
+        [ -f "$PREFIX/share/termux-keyring/$key" ] || continue
+        ln -sfn "../../../share/termux-keyring/$key" "$link"
+        ;;
+    esac
+  done
+  apt update
+)
+```
+
+Also deploy the updated `dpkg.py` wrapper (with its shebang and defaults set for
+the installation's package/root) as `$PREFIX/bin/dpkg` to prevent recurrence on
+future package installs. Preserve the native `$PREFIX/bin/dpkg.real`. An APK
+update alone does not replace the wrapper in an existing prefix.

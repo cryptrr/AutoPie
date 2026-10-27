@@ -21,6 +21,26 @@ SPEC.loader.exec_module(fs_rewriter)
 
 
 class FsRewriterTest(unittest.TestCase):
+    def test_keyring_symlink_manifest_rewrites(self) -> None:
+        for target_root in ("/data/data/com.autopi", "/data/user/10/com.autopi"):
+            with self.subTest(root=target_root), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                manifest = root / "SYMLINKS.txt"
+                manifest.write_text(
+                    "/data/data/com.termux/files/usr/share/termux-keyring/grimler.gpg"
+                    "\u2190./etc/apt/trusted.gpg.d/grimler.gpg\n"
+                    "../../../share/termux-keyring/relative.gpg"
+                    "\u2190./etc/apt/trusted.gpg.d/relative.gpg\n"
+                )
+                rewrites = fs_rewriter.build_rewrites("com.termux", "com.autopi", target_root)
+                self.assertEqual(fs_rewriter.walk_and_rewrite(root, rewrites), 1)
+                self.assertEqual(manifest.read_text(),
+                    f"{target_root}/files/usr/share/termux-keyring/grimler.gpg"
+                    "\u2190./etc/apt/trusted.gpg.d/grimler.gpg\n"
+                    "../../../share/termux-keyring/relative.gpg"
+                    "\u2190./etc/apt/trusted.gpg.d/relative.gpg\n"
+                )
+
     def test_secondary_user_rewrites(self) -> None:
         rewrites = dict(fs_rewriter.build_rewrites("com.termux", "com.pie", "/data/user/10"))
         self.assertEqual(rewrites[b"/data/data/com.termux/files/usr"], b"/data/user/10/com.pie/files/usr")

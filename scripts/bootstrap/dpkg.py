@@ -297,11 +297,19 @@ def rewrite_member_name(name: str, old_prefix: str, new_prefix: str) -> str:
 
 
 def rewrite_linkname(linkname: str, old_prefix: str, new_prefix: str) -> str:
-    if linkname.startswith(old_prefix):
+    # Only absolute symlink targets need relocation. Relative targets are
+    # already relative to the relocated link's parent directory.
+    if linkname == old_prefix or linkname.startswith(old_prefix + "/"):
         return new_prefix + linkname[len(old_prefix):]
     return linkname
 
 def rewrite_path(path: str) -> str:
+    # Tar members (including hardlink targets) can use any of these spellings.
+    if path.startswith("/"):
+        return rewrite_path("." + path)[1:]
+    if path.startswith("data/"):
+        return rewrite_path("./" + path)[2:]
+
     # Most specific first.
     if path == "./data/data/com.termux":
         return f".{NEW_ROOT_DIR}"
@@ -361,14 +369,19 @@ def rewrite_tar_paths_xz(input_xz_path, output_xz_path, old_prefix, new_prefix):
                             file=sys.stderr,
                         )
 
-                        # Rewrite symlink / hardlink targets.
+                        # Symlinks are relative to their parent; hardlinks name
+                        # another archive member. Handle their targets separately.
                         if ti.issym() or ti.islnk():
                             print(
                                 f"rewriting link target for {ti.name}: {ti.linkname}",
                                 file=sys.stderr,
                             )
-                            #ti.linkname = rewrite_linkname(ti.linkname, old_prefix, new_prefix)
-                            ti.linkname = rewrite_path(ti.linkname)
+                            if ti.issym():
+                                ti.linkname = rewrite_linkname(
+                                    ti.linkname, OLD_ROOT_DIR, NEW_ROOT_DIR
+                                )
+                            else:
+                                ti.linkname = rewrite_path(ti.linkname)
 
                         # Rewrite PAX headers too, if present.
                         if ti.pax_headers:
