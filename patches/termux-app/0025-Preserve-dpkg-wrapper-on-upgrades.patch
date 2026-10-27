@@ -1,0 +1,111 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AutoPie <autopie@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 12:00:00 +0530
+Subject: [PATCH] Repair dpkg wrappers before starting shells
+
+Migrate existing prefixes, including dpkg upgrades which overwrote the wrapper.
+Run again after bootstrap installation and retry safely if apt/dpkg is busy.
+
+---
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+@@ -64,6 +64,8 @@
+     @NonNull
+     @Override
+     public HashMap<String, String> getEnvironment(@NonNull Context currentPackageContext, boolean isFailSafe) {
++
++        AutoPieDpkgInstaller.ensureInstalled(currentPackageContext);
+ 
+         // Termux environment builds upon the Android environment
+         HashMap<String, String> environment = super.getEnvironment(currentPackageContext, isFailSafe);
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/AutoPieDpkgInstaller.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/AutoPieDpkgInstaller.java
+new file mode 100644
+--- /dev/null
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/AutoPieDpkgInstaller.java
+@@ -0,0 +1,85 @@
++package com.termux.shared.termux.shell.command.environment;
++
++import android.content.Context;
++
++import com.termux.shared.logger.Logger;
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.InputStream;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.util.Map;
++import java.util.concurrent.TimeUnit;
++
++/** Upgrade existing prefixes as well as bootstraps bundled by older AutoPie APKs. */
++public final class AutoPieDpkgInstaller {
++    private static final String LOG_TAG = "AutoPieDpkgInstaller";
++
++    private AutoPieDpkgInstaller() {}
++
++    public static synchronized void ensureInstalled(Context context) {
++        File prefix = new File(context.getFilesDir(), "usr");
++        File python = new File(prefix, "bin/python");
++        if (!python.canExecute() || !new File(prefix, "var/lib/dpkg/status").isFile()) {
++            return; // Bootstrap not installed yet. Its completion writes the environment again.
++        }
++
++        File log = null;
++        Process process = null;
++        try {
++            File directory = new File(context.getCacheDir(), "autopie-dpkg");
++            if (!directory.isDirectory() && !directory.mkdirs()) {
++                throw new java.io.IOException("Cannot create dpkg repair cache");
++            }
++            File setup = copyAsset(context, directory, "dpkg_setup.py");
++            File wrapper = copyAsset(context, directory, "dpkg.py");
++            log = File.createTempFile("setup-", ".log", directory);
++            ProcessBuilder builder = new ProcessBuilder(python.getAbsolutePath(), setup.getAbsolutePath(),
++                "--prefix", prefix.getAbsolutePath(), "--wrapper", wrapper.getAbsolutePath());
++            Map<String, String> environment = builder.environment();
++            environment.put("HOME", new File(context.getFilesDir(), "home").getAbsolutePath());
++            environment.put("PATH", prefix.getAbsolutePath() + "/bin:/system/bin");
++            environment.put("LD_LIBRARY_PATH", prefix.getAbsolutePath() + "/lib");
++            environment.put("PYTHONHOME", prefix.getAbsolutePath());
++            environment.put("TMPDIR", context.getCacheDir().getAbsolutePath());
++            environment.remove("PYTHONPATH");
++            environment.remove("LD_PRELOAD");
++            builder.redirectErrorStream(true).redirectOutput(log);
++            process = builder.start();
++            if (!process.waitFor(3, TimeUnit.SECONDS)) {
++                process.destroyForcibly();
++                Logger.logError(LOG_TAG, "dpkg repair timed out; retry when opening a new shell");
++            } else if (process.exitValue() != 0) {
++                String message = new String(Files.readAllBytes(log.toPath()), StandardCharsets.UTF_8);
++                Logger.logError(LOG_TAG, "dpkg repair deferred (exit " + process.exitValue() + "): " + message);
++            }
++        } catch (InterruptedException error) {
++            if (process != null) process.destroyForcibly();
++            Thread.currentThread().interrupt();
++            Logger.logError(LOG_TAG, "dpkg repair interrupted");
++        } catch (Exception error) {
++            Logger.logError(LOG_TAG, "Cannot repair dpkg wrapper: " + error);
++        } finally {
++            if (log != null) log.delete();
++        }
++    }
++
++    private static File copyAsset(Context context, File directory, String name) throws java.io.IOException {
++        File target = new File(directory, name);
++        File temporary = File.createTempFile(name, ".tmp", directory);
++        try {
++            try (InputStream input = context.getAssets().open("autopie-dpkg/" + name);
++                 FileOutputStream output = new FileOutputStream(temporary)) {
++                byte[] buffer = new byte[8192];
++                int count;
++                while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
++                output.getFD().sync();
++            }
++            if (!temporary.renameTo(target)) throw new java.io.IOException("Cannot stage " + name);
++        } finally {
++            temporary.delete();
++        }
++        return target;
++    }
++}

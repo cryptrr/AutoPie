@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AutoPie <autopie@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 23:00:00 +0530
+Subject: [PATCH] Derive shell HOME from the current app context
+
+Use the same runtime app files directory for HOME and PREFIX, including on
+secondary Android users and custom package builds.
+
+---
+ .../command/environment/TermuxShellEnvironment.java | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+--- a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java
+@@ -76,7 +76,7 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+         if (termuxApiAppEnvironment != null)
+             environment.putAll(termuxApiAppEnvironment);
+ 
+-        environment.put(ENV_HOME, TermuxConstants.TERMUX_HOME_DIR_PATH);
++        environment.put(ENV_HOME, currentPackageContext.getFilesDir().getAbsolutePath() + "/home");
+         environment.put(ENV_PREFIX, currentPackageContext.getFilesDir().getAbsolutePath() + "/usr");
+         environment.put(ENV_LD_LIBRARY_PATH, currentPackageContext.getFilesDir().getAbsolutePath() + "/usr/lib");
+         environment.put("TERMUX_PREFIX", "/data/data/com.termux/files/usr");
+@@ -103,6 +103,23 @@ public class TermuxShellEnvironment extends AndroidShellEnvironment {
+ 
+ 
++    @NonNull
++    @Override
++    public HashMap<String, String> setupShellCommandEnvironment(@NonNull Context currentPackageContext,
++                                                                @NonNull ExecutionCommand executionCommand) {
++        String home = currentPackageContext.getFilesDir().getAbsolutePath() + "/home";
++        String workingDirectory = executionCommand.workingDirectory;
++        String legacyHome = TermuxConstants.TERMUX_HOME_DIR_PATH;
++        if (workingDirectory == null || workingDirectory.isEmpty()) {
++            executionCommand.workingDirectory = home;
++        } else if (workingDirectory.equals(legacyHome) || workingDirectory.startsWith(legacyHome + "/")) {
++            // Android's /data/data and /data/user/0 aliases must use the same
++            // spelling as HOME so Bash can abbreviate the directory as ~.
++            executionCommand.workingDirectory = home + workingDirectory.substring(legacyHome.length());
++        }
++        return super.setupShellCommandEnvironment(currentPackageContext, executionCommand);
++    }
++
+     @NonNull
+     @Override
+     public String getDefaultWorkingDirectoryPath() {
+         return TermuxConstants.TERMUX_HOME_DIR_PATH;
