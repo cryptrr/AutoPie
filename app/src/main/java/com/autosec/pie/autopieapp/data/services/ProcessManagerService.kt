@@ -359,7 +359,7 @@ class ProcessManagerService(
 
         return hashMapOf(
             "ANDROID_PACKAGE_NAME" to activity.packageName,
-            "HOME" to activity.filesDir.absolutePath,
+            "HOME" to File(activity.filesDir, "home").absolutePath,
             "PREFIX" to prefix,
             "PATH" to "$prefix/bin:${activity.filesDir.absolutePath}/bin:$defaultPath",
             //"LD_LIBRARY_PATH" to "$prefix/lib:$defaultLdLibraryPath",
@@ -373,7 +373,7 @@ class ProcessManagerService(
 
         return """
             export ANDROID_PACKAGE_NAME=${activity.packageName.shellQuote()}
-            export HOME=${activity.filesDir.absolutePath.shellQuote()}
+            export HOME=${File(activity.filesDir, "home").absolutePath.shellQuote()}
             export PREFIX=${prefix.shellQuote()}
             export PATH=${"$prefix/bin".shellQuote()}:${appBin.shellQuote()}:${'$'}PATH
             export TERMINFO=${"$prefix/share/terminfo".shellQuote()}
@@ -938,7 +938,7 @@ class ProcessManagerService(
             val defaultLdLibraryPath = System.getenv("LD_LIBRARY_PATH") ?: ""
 
             val envMap = HashMap<String, String>()
-            envMap["HOME"] = activity.filesDir.absolutePath
+            envMap["HOME"] = File(activity.filesDir, "home").absolutePath
             envMap["PREFIX"] = "${activity.filesDir.absolutePath}/usr"
             envMap["PATH"] = "${activity.filesDir.absolutePath}/usr/bin:${activity.filesDir.absolutePath}/bin:$defaultPath"
             //envMap["LD_LIBRARY_PATH"] = "${activity.filesDir.absolutePath}/usr/lib:$defaultLdLibraryPath"

@@ -179,6 +179,9 @@ python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
     --new-root-dir "$TARGET_ROOT_DIR"
 
 echo "Installing dpkg wrapper"
+mkdir -p "$EXTRACTED_DIR/etc/profile.d"
+install -m 0600 "$ROOT_DIR/scripts/bootstrap/autopie-home.sh" \
+    "$EXTRACTED_DIR/etc/profile.d/00-autopie-home.sh"
 if [[ ! -f "$EXTRACTED_DIR/bin/dpkg" ]]; then
     echo "Missing dpkg binary in extracted bootstrap: $EXTRACTED_DIR/bin/dpkg" >&2
     exit 1

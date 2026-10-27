@@ -42,3 +42,8 @@ Patch 22 makes `RunCommandService` internal to AutoPie and removes Termux's
 package-scoped `RUN_COMMAND` permission declaration. AutoPie invokes the service
 with an explicit in-process intent, so separate package variants can coexist
 without attempting to own the same permission.
+
+Patch 24 derives shell `HOME` from the current app context's files directory,
+matching runtime `PREFIX` for custom package builds and secondary Android users.
+It also aligns home working-directory aliases with `HOME` before constructing
+the shell environment so Bash shows `~` immediately on startup.

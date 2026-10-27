@@ -67,6 +67,7 @@ class ProcessManagerServiceIntegrationTest {
     private lateinit var main: MainViewModel
     private lateinit var cache: File
     private lateinit var workingDirectory: File
+    private lateinit var home: File
     private val notification = mockk<AutoPieNotification>(relaxed = true)
     private val processIds = mutableSetOf<Int>()
 
@@ -75,6 +76,7 @@ class ProcessManagerServiceIntegrationTest {
         cache = temporaryFolder.newFolder("cache with spaces")
         workingDirectory = temporaryFolder.newFolder("working directory's files")
         val files = temporaryFolder.newFolder("files")
+        home = File(files, "home").apply { mkdirs() }
         val bin = File(files, "usr/bin").apply { mkdirs() }
         Files.createSymbolicLink(File(bin, "bash").toPath(), File("/bin/bash").toPath())
         val application = mockk<Application>(relaxed = true)
@@ -135,6 +137,15 @@ class ProcessManagerServiceIntegrationTest {
             main.eventFlow.collect { events.add(it) }
         }
         return events
+    }
+
+    @Test
+    fun `fresh command shells use the app home directory`() = runTest {
+        for (processId in listOf(71030, 71031)) {
+            val result = execute(command("export OUTPUT=\"\$HOME\""), processId = processId)
+            assertTrue(result.output, result.success)
+            assertEquals(home.absolutePath, result.exportedOutput)
+        }
     }
 
     @Test

@@ -15,4 +15,4 @@ export SSL_CERT_FILE="$CUSTOM_DIR/usr/etc/ssl/cert.pem"
 # For ncurses
 export TERMINFO="$CUSTOM_DIR/usr/share/terminfo"
 
-export HOME="$CUSTOM_DIR"
+export HOME="$CUSTOM_DIR/home"

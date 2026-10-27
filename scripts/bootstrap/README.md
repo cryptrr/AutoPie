@@ -71,3 +71,20 @@ Also deploy the updated `dpkg.py` wrapper (with its shebang and defaults set for
 the installation's package/root) as `$PREFIX/bin/dpkg` to prevent recurrence on
 future package installs. Preserve the native `$PREFIX/bin/dpkg.real`. An APK
 update alone does not replace the wrapper in an existing prefix.
+
+## Shell home directory
+
+Shell launchers and the environment assets use the current Android app's files
+directory plus `/home`, matching the prefix's sibling home directory. Both
+bootstrap build paths install `etc/profile.d/00-autopie-home.sh`. This repairs
+an inherited `HOME` pointing to the original Termux app, while preserving custom
+homes. Its paths are derived from `PREFIX` so secondary Android users work too.
+Shell command setup also maps the compiled home path and its subdirectories to
+the runtime home spelling, keeping initial `PWD` consistent with `HOME`. The
+startup guard corrects an existing shell's logical path only when it is already
+in the same directory as `HOME`; other working directories are preserved.
+
+For an existing prefix, copy `scripts/bootstrap/autopie-home.sh` to
+`$PREFIX/etc/profile.d/00-autopie-home.sh` and source that file once in the
+current shell. New login shells source it through `etc/profile`. An APK update
+does not re-extract profile files in an existing prefix.

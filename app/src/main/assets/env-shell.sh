@@ -9,4 +9,4 @@ export PATH=$CUSTOM_DIR/usr/bin:$CUSTOM_DIR/bin:$PATH
 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH$CUSTOM_DIR/usr/lib"
 
-export HOME="$CUSTOM_DIR"
+export HOME="$CUSTOM_DIR/home"

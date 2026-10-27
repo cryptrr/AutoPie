@@ -92,6 +92,9 @@ mkdir -p "$CONVERSION_DIR"
 tar -xJf "$SOURCE_ARTIFACT" -C "$CONVERSION_DIR"
 
 echo "Installing dpkg wrapper"
+mkdir -p "$CONVERSION_DIR/etc/profile.d"
+install -m 0600 "$ROOT_DIR/scripts/bootstrap/autopie-home.sh" \
+    "$CONVERSION_DIR/etc/profile.d/00-autopie-home.sh"
 if [[ ! -f "$CONVERSION_DIR/bin/dpkg" ]]; then
     echo "Missing dpkg binary in source-built bootstrap: $CONVERSION_DIR/bin/dpkg" >&2
     exit 1
