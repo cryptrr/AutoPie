@@ -18,7 +18,6 @@ WORK_DIR="$ROOT_DIR/.termux-generator.reproducible"
 GENERATOR_DIR="$WORK_DIR/termux-generator"
 OUTPUT_DIR="$WORK_DIR/output"
 CONVERSION_DIR="$WORK_DIR/bootstrap-aarch64"
-PATCHED_DPKG_WRAPPER="$WORK_DIR/dpkg"
 DESTINATION="$ASSETS_DIR/bootstrap-aarch64.zip"
 TEMP_DESTINATION="$DESTINATION.tmp"
 
@@ -95,38 +94,10 @@ echo "Installing dpkg wrapper"
 mkdir -p "$CONVERSION_DIR/etc/profile.d"
 install -m 0600 "$ROOT_DIR/scripts/bootstrap/autopie-home.sh" \
     "$CONVERSION_DIR/etc/profile.d/00-autopie-home.sh"
-if [[ ! -f "$CONVERSION_DIR/bin/dpkg" ]]; then
-    echo "Missing dpkg binary in source-built bootstrap: $CONVERSION_DIR/bin/dpkg" >&2
-    exit 1
-fi
-if [[ -e "$CONVERSION_DIR/bin/dpkg.real" ]]; then
-    echo "Unexpected existing dpkg.real in source-built bootstrap: $CONVERSION_DIR/bin/dpkg.real" >&2
-    exit 1
-fi
-mv "$CONVERSION_DIR/bin/dpkg" "$CONVERSION_DIR/bin/dpkg.real"
-python3 - "$DPKG_WRAPPER" "$PATCHED_DPKG_WRAPPER" "$TARGET_ROOT_DIR" "$TARGET_PREFIX" <<'PY'
-from pathlib import Path
-import sys
-
-source = Path(sys.argv[1])
-dest = Path(sys.argv[2])
-target_root = sys.argv[3].rstrip("/")
-target_prefix = sys.argv[4].rstrip("/")
-
-text = source.read_text(encoding="utf-8")
-lines = text.splitlines(keepends=True)
-if not lines or not lines[0].startswith("#!"):
-    raise SystemExit(f"dpkg wrapper has no shebang: {source}")
-
-line_ending = "\n" if lines[0].endswith("\n") else ""
-lines[0] = f"#!{target_prefix}/bin/env python{line_ending}"
-text = "".join(lines)
-text = text.replace("/data/data/com.autopi/files/usr", target_prefix)
-text = text.replace("/data/data/com.autopi", target_root)
-
-dest.write_text(text, encoding="utf-8")
-PY
-install -m 0700 "$PATCHED_DPKG_WRAPPER" "$CONVERSION_DIR/bin/dpkg"
+python3 "$ROOT_DIR/scripts/bootstrap/dpkg_setup.py" \
+    --bootstrap-root "$CONVERSION_DIR" \
+    --prefix "$TARGET_PREFIX" \
+    --wrapper "$DPKG_WRAPPER"
 
 echo "Installing autopie-secret wrapper"
 install -m 0700 "$AUTOPIE_SECRET_WRAPPER" "$CONVERSION_DIR/bin/autopie-secret"

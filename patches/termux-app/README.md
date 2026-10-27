@@ -47,3 +47,8 @@ Patch 24 derives shell `HOME` from the current app context's files directory,
 matching runtime `PREFIX` for custom package builds and secondary Android users.
 It also aligns home working-directory aliases with `HOME` before constructing
 the shell environment so Bash shows `~` immediately on startup.
+
+Patch 25 runs the APK's dpkg migration helper during shell environment setup,
+including app startup and bootstrap completion. It repairs older prefixes
+before package operations can overwrite the wrapper again. Package-manager
+locks defer migration; missing bootstraps are skipped until installation ends.

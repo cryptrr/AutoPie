@@ -59,6 +59,10 @@ NEW_ROOT_DIR = os.environ.get(
     "PIE_ROOT_DIR",
     "/data/data/com.autopi",
 )
+# Match NEW_PREFIX and the diversion database for Android user 0. Older
+# launchers export PIE_ROOT_DIR with /data/user/0 even when PREFIX is canonical.
+if NEW_ROOT_DIR.startswith("/data/user/0/"):
+    NEW_ROOT_DIR = NEW_ROOT_DIR.replace("/data/user/0/", "/data/data/", 1)
 
 REAL_DPKG_ENV_VARS = ("REAL_DPKG", "DPKG_REAL", "TERMUX_REAL_DPKG")
 
