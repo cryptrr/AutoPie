@@ -1,0 +1,6 @@
+What's New
+
+- Added "Show only my tags" in Settings to hide automatic tags on the Commands screen and in the share picker.
+- Fixed the Termux wake lock and unlock commands, including for secondary Android users. Open a new terminal session after updating to repair existing installations.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.20.3-beta...v0.20.4-beta
