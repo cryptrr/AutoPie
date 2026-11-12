@@ -1,6 +1,6 @@
 # AutoPie
 
-[![Join Discord](https://img.shields.io/badge/Join_Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/rsZ3Sr42Am)
+[![Join Discord](https://img.shields.io/badge/Join_Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/BamSSN3TP)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/cryptrr)
 
 AutoPie is a command hub and workflow runner for Android. It gives shell commands and Python scripts a friendly UI, runs them inside an embedded Termux environment, and lets you trigger them manually, from Android's share sheet, when files appear, on a schedule, from a home-screen shortcut, or from another app.
@@ -761,7 +761,7 @@ It installs the generated archive at `app/src/main/assets/bootstrap-aarch64.zip`
 ## Support
 
 - [GitHub issues](https://github.com/cryptrr/AutoPie/issues)
-- [Discord](https://discord.gg/rsZ3Sr42Am)
+- [Discord](https://discord.gg/BamSSN3TP)
 
 ## Thanks
 

@@ -17,7 +17,7 @@ class AutoPieStrings {
         const val GITHUB_URL = "https://github.com/cryptrr/AutoPie"
         const val COMMANDS_REPOSITORY_URL = "https://github.com/cryptrr/autopie-commands"
         const val COMMANDS_JSON_README_URL = "$GITHUB_URL#commandsjson"
-        const val DISCORD_URL = "https://discord.gg/rsZ3Sr42Am"
+        const val DISCORD_URL = "https://discord.gg/BamSSN3TP"
         const val DONATE_TEXT = "Please consider donating if this app helped you. Or you can star us on Github."
     }
 }
