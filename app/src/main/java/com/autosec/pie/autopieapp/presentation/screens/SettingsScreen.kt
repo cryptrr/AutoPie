@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,6 +39,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -283,8 +286,11 @@ fun SettingsToggles() {
     val preferences = remember { KoinJavaComponent.get<AppPreferences>(AppPreferences::class.java) }
     val themeMode = rememberThemeMode(preferences)
     val dynamicColorsEnabled = rememberDynamicColorsEnabled(preferences)
+    val hideAutomaticTags = remember(preferences) {
+        preferences.getBool(AppPreferences.HIDE_AUTOMATIC_TAGS)
+    }.collectAsState(initial = null).value
     val systemDark = isSystemInDarkTheme()
-    val themeScope = rememberCoroutineScope()
+    val settingsScope = rememberCoroutineScope()
 
     Column(
         verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
@@ -309,7 +315,7 @@ fun SettingsToggles() {
                 checked = themeMode.isDark(systemDark),
                 enabled = themeMode != ThemeMode.SYSTEM,
                 onCheckedChange = { dark ->
-                    themeScope.launch {
+                    settingsScope.launch {
                         preferences.setString(AppPreferences.CURRENT_THEME,
                             (if (dark) ThemeMode.DARK else ThemeMode.LIGHT).preferenceValue)
                     }
@@ -325,7 +331,7 @@ fun SettingsToggles() {
         ) {
             Text("Use System Theme")
             Switch(checked = themeMode == ThemeMode.SYSTEM, onCheckedChange = { useSystem ->
-                themeScope.launch {
+                settingsScope.launch {
                     val mode = if (useSystem) ThemeMode.SYSTEM
                         else if (systemDark) ThemeMode.DARK else ThemeMode.LIGHT
                     preferences.setString(AppPreferences.CURRENT_THEME, mode.preferenceValue)
@@ -346,7 +352,7 @@ fun SettingsToggles() {
             Switch(checked = dynamicColorsEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                 enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                 onCheckedChange = { enabled ->
-                    themeScope.launch {
+                    settingsScope.launch {
                         preferences.setBool(AppPreferences.DYNAMIC_COLOR_ENABLED, enabled)
                     }
                 })
@@ -385,6 +391,42 @@ fun SettingsToggles() {
             selected = mainViewModel.homeCommandPreview == HomeCommandPreview.COMMAND,
             onClick = { mainViewModel.updateHomeCommandPreview(HomeCommandPreview.COMMAND) }
         )
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(15.dp))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
+            .fillMaxWidth()
+            .padding(vertical = 7.dp, horizontal = 15.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp)
+                .toggleable(
+                    value = hideAutomaticTags == true,
+                    enabled = hideAutomaticTags != null,
+                    role = Role.Switch,
+                    onValueChange = { hide ->
+                        settingsScope.launch {
+                            preferences.setBool(AppPreferences.HIDE_AUTOMATIC_TAGS, hide)
+                        }
+                    }
+                )
+        ) {
+            Text("Show only my tags")
+            Switch(
+                checked = hideAutomaticTags == true,
+                onCheckedChange = null,
+                enabled = hideAutomaticTags != null
+            )
+        }
     }
 
     Spacer(modifier = Modifier.height(20.dp))

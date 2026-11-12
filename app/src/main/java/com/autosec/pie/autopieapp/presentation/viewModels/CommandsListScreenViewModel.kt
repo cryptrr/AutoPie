@@ -12,6 +12,7 @@ import com.autopi.core.DispatcherProvider
 import com.autopi.autopieapp.data.CommandExtra
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.domain.ViewModelError
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.data.services.JsonService
@@ -21,23 +22,20 @@ import com.autopi.autopieapp.domain.AppNotification
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.AutoPieUseCases
-import com.autopi.utils.getCommandExec
+import com.autopi.use_case.getCommandTags
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,6 +48,7 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 
     val main: MainViewModel by KoinJavaComponent.inject(MainViewModel::class.java)
     private val useCases: AutoPieUseCases by KoinJavaComponent.inject(AutoPieUseCases::class.java)
+    private val appPreferences: AppPreferences by KoinJavaComponent.inject(AppPreferences::class.java)
     val dispatchers: DispatcherProvider by KoinJavaComponent.inject(DispatcherProvider::class.java)
 
     var fullListOfCommands = MutableStateFlow<List<CommandModel>>(emptyList())
@@ -60,7 +59,11 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
     private var repositorySearchJob: Job? = null
 
     val mostUsedPackages: StateFlow<List<String>> =
-        getFrequentPackages(fullListOfCommands)
+        useCases.getCommandTags(
+            fullListOfCommands,
+            appPreferences.getBool(AppPreferences.HIDE_AUTOMATIC_TAGS)
+        )
+            .flowOn(dispatchers.io)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     var selectedICommandTypeIndex by  mutableIntStateOf(0)
@@ -230,35 +233,6 @@ class CommandsListScreenViewModel(application: Application) : AndroidViewModel(a
 //
 //        }
 //    }
-
-    fun getFrequentPackages(
-        inputFlow: StateFlow<List<CommandModel>>
-    ): Flow<List<String>> {
-
-        val latestUsedFlow = useCases.getLatestUsedPackages(3).flowOn(dispatchers.io)
-
-        val userTagsFlow = useCases.getUserTags()
-            .flowOn(dispatchers.io)
-
-        return combine(
-            inputFlow,
-            latestUsedFlow,
-            userTagsFlow
-        ) { input, latestUsed, userTags ->
-            val frequencyMap = input.mapNotNull { getCommandExec(it) }
-                .groupingBy { it }
-                .eachCount()
-
-            val packages = frequencyMap.entries
-                .sortedByDescending { it.value }
-                .map { it.key }
-                .take(7)
-
-            LinkedHashSet(
-                (packages - latestUsed.toSet()) + latestUsed + userTags
-            ).toList()
-        }
-    }
 
     fun deleteUserTag(tag: String){
         viewModelScope.launch(dispatchers.io){

@@ -33,19 +33,16 @@ import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.model.CloudCommandModel
 import com.autopi.autopieapp.domain.model.matchesSearch
 import com.autopi.use_case.AutoPieUseCases
-import com.autopi.utils.getCommandExec
+import com.autopi.use_case.getCommandTags
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -75,7 +72,11 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
     val isRepositorySearchLoading = mutableStateOf(false)
     private var repositorySearchJob: Job? = null
     val mostUsedPackages: StateFlow<List<String>> =
-        getFrequentPackages(shareItemsResult)
+        useCases.getCommandTags(
+            shareItemsResult,
+            appPreferences.getBool(AppPreferences.HIDE_AUTOMATIC_TAGS)
+        )
+            .flowOn(dispatchers.io)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10000), emptyList())
 
     private val autoPieNotification: AutoPieNotification by inject(
@@ -298,35 +299,6 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
                     else -> main.showError(ViewModelError.Unknown)
                 }
             }
-        }
-    }
-
-    fun getFrequentPackages(
-        inputFlow: StateFlow<List<CommandModel>>
-    ): Flow<List<String>> {
-
-        val latestUsedFlow = useCases.getLatestUsedPackages(3).flowOn(dispatchers.io)
-
-        val userTagsFlow = useCases.getUserTags()
-            .flowOn(dispatchers.io)
-
-        return combine(
-            inputFlow,
-            latestUsedFlow,
-            userTagsFlow
-        ) { input, latestUsed, userTags ->
-            val frequencyMap = input.mapNotNull { getCommandExec(it) }
-                .groupingBy { it }
-                .eachCount()
-
-            val packages = frequencyMap.entries
-                .sortedByDescending { it.value }
-                .map { it.key }
-                .take(7)
-
-            LinkedHashSet(
-                (packages - latestUsed.toSet()) + latestUsed + userTags
-            ).toList()
         }
     }
 
