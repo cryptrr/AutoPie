@@ -37,7 +37,7 @@ AutoPie is a command hub and workflow runner for Android. It gives shell command
 ## Installation
 
 1. Download an APK from [Releases](https://github.com/cryptrr/AutoPie/releases/) or build it from source.
-2. Install it and accept any Play Protect prompt.
+2. Open the APK to install it. Google Play Protect may initially block installation with the message “This app was built for an older version of Android.” Expand the dialog and tap **Install anyway** to continue. [Termux APKs can trigger the same warning](https://github.com/termux/termux-app/discussions/4693).
 3. Open AutoPie and wait for the embedded Termux bootstrap to finish installing.
 4. Grant the requested storage and notification permissions.
 5. If scheduled or background workflows are important, disable battery optimization for AutoPie.
