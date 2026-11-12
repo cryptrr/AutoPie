@@ -99,7 +99,7 @@ new file mode 100644
 +
 +    private static File copyAsset(Context context, File directory, String name) throws java.io.IOException {
 +        File target = new File(directory, name);
-+        File temporary = File.createTempFile(name, ".tmp", directory);
++        File temporary = File.createTempFile("asset-" + name, ".tmp", directory);
 +        try {
 +            try (InputStream input = context.getAssets().open("autopie-dpkg/" + name);
 +                 FileOutputStream output = new FileOutputStream(temporary)) {

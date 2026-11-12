@@ -38,6 +38,7 @@ import com.termux.app.RunCommandService
 import com.termux.app.TermuxActivity
 import com.termux.shared.shell.command.ExecutionCommand
 import com.termux.shared.termux.TermuxConstants
+import com.termux.shared.termux.shell.command.environment.AutoPieDpkgInstaller
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import kotlinx.coroutines.CoroutineScope
@@ -573,6 +574,8 @@ class ProcessManagerService(
                 }
             }
 
+            // Recipes can reuse a shell after a deferred startup repair.
+            withContext(dispatchers.io) { AutoPieDpkgInstaller.ensureInstalled(activity) }
             val shell = getOrCreateShell(processId)
 
             Timber.d("Received processId in Command Start: $processId")
