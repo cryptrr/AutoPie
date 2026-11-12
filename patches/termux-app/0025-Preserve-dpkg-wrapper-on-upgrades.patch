@@ -23,7 +23,7 @@ diff --git a/termux-shared/src/main/java/com/termux/shared/termux/shell/command/
 new file mode 100644
 --- /dev/null
 +++ b/termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/AutoPieDpkgInstaller.java
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,91 @@
 +package com.termux.shared.termux.shell.command.environment;
 +
 +import android.content.Context;
@@ -35,6 +35,7 @@ new file mode 100644
 +import java.io.InputStream;
 +import java.nio.charset.StandardCharsets;
 +import java.nio.file.Files;
++import java.util.Arrays;
 +import java.util.Map;
 +import java.util.concurrent.TimeUnit;
 +
@@ -63,6 +64,11 @@ new file mode 100644
 +            log = File.createTempFile("setup-", ".log", directory);
 +            ProcessBuilder builder = new ProcessBuilder(python.getAbsolutePath(), setup.getAbsolutePath(),
 +                "--prefix", prefix.getAbsolutePath(), "--wrapper", wrapper.getAbsolutePath());
++            if (Arrays.asList(context.getAssets().list("autopie-dpkg")).contains("am")) {
++                File am = copyAsset(context, directory, "am");
++                File amApk = copyAsset(context, directory, "am.apk");
++                builder.command().addAll(Arrays.asList("--am", am.getAbsolutePath(), amApk.getAbsolutePath()));
++            }
 +            Map<String, String> environment = builder.environment();
 +            environment.put("HOME", new File(context.getFilesDir(), "home").getAbsolutePath());
 +            environment.put("PATH", prefix.getAbsolutePath() + "/bin:/system/bin");
@@ -85,7 +91,7 @@ new file mode 100644
 +            Thread.currentThread().interrupt();
 +            Logger.logError(LOG_TAG, "dpkg repair interrupted");
 +        } catch (Exception error) {
-+            Logger.logError(LOG_TAG, "Cannot repair dpkg wrapper: " + error);
++            Logger.logError(LOG_TAG, "Cannot repair package tools: " + error);
 +        } finally {
 +            if (log != null) log.delete();
 +        }

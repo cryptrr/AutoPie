@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 import uuid
+import zipfile
 
 
 HERE = Path(__file__).resolve().parent
@@ -139,6 +140,40 @@ class DpkgUpgradeTest(unittest.TestCase):
         self.native_install(second, self.prefix / "bin/dpkg.real")
         self.assert_wrapper_works(payload)
         self.assertEqual(len(setup.read_diversions(self.db / "diversions")), 1)
+
+    def test_termux_am_upgrade_and_reinstall_keep_patched_pair(self):
+        dpkg, _ = self.package("1.0")
+        self.native_install(dpkg)
+        patched_launcher = self.work / "am"
+        patched_launcher.write_text(f'#!/bin/sh\nAM_APK_PATH="{self.prefix}/{setup.AM_APK}"\n')
+        patched_apk = self.work / "am.apk"
+        caller = self.app.name.encode()
+        with zipfile.ZipFile(patched_apk, "w") as archive:
+            archive.writestr("classes.dex", bytes([len(caller)]) + caller + b"\0")
+
+        def am_package(version, prefix):
+            build = self.work / ("termux-am-" + version)
+            (build / "DEBIAN").mkdir(parents=True)
+            (build / "DEBIAN/control").write_text(
+                f"Package: termux-am\nVersion: {version}\nArchitecture: all\n"
+                "Maintainer: AutoPie Test <test@example.invalid>\nDescription: Upgrade regression fixture\n"
+            )
+            for relative in (setup.AM_LAUNCHER, setup.AM_APK):
+                path = build / str(prefix).lstrip("/") / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(version + " " + relative)
+            archive = self.work / ("termux-am-" + version + ".deb")
+            self.run_command("dpkg-deb", "--build", build, archive)
+            return archive
+
+        self.native_install(am_package("1.0", self.alias))
+        setup.install_wrapper(self.alias, str(self.alias), HERE / "dpkg.py", (patched_launcher, patched_apk))
+        second = am_package("2.0", self.prefix)
+        for _ in range(2):
+            self.native_install(second, self.prefix / "bin/dpkg.real")
+            for relative, source in ((setup.AM_LAUNCHER, patched_launcher), (setup.AM_APK, patched_apk)):
+                self.assertEqual((self.prefix / relative).read_bytes(), source.read_bytes())
+                self.assertEqual((self.prefix / (relative + ".distrib")).read_text(), "2.0 " + relative)
 
 
 if __name__ == "__main__":

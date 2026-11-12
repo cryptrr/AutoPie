@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install/repair AutoPie's dpkg wrapper without executing target binaries.
+"""Install/repair AutoPie's dpkg wrapper and patched am without executing them.
 
 Used both for cross-architecture bootstraps and for existing Android prefixes.
 The standard dpkg diversions database is updated under dpkg's POSIX locks, so
@@ -9,11 +9,17 @@ import argparse
 import contextlib
 import errno
 import fcntl
+import io
 import os
 from pathlib import Path
 import stat
 import sys
 import tempfile
+import zipfile
+
+
+AM_LAUNCHER = "bin/am"
+AM_APK = "libexec/termux-am/am.apk"
 
 
 class SetupError(RuntimeError):
@@ -35,13 +41,16 @@ def canonical_prefix(prefix):
     return prefix
 
 
-def diversion_pairs(prefix):
+def prefix_aliases(prefix):
     prefixes = [canonical_prefix(prefix)]
     if prefixes[0].startswith("/data/data/"):
-        # Old wrappers used both spellings. dpkg matches diversion paths by name,
-        # not inode, so protect both without rewriting installed package lists.
+        # dpkg matches diversion paths by name, not inode.
         prefixes.append("/data/user/0/" + prefixes[0][len("/data/data/"):])
-    return [(p + "/bin/dpkg", p + "/bin/dpkg.real", ":") for p in prefixes]
+    return prefixes
+
+
+def diversion_pairs(prefix, source="bin/dpkg", target="bin/dpkg.real"):
+    return [(p + "/" + source, p + "/" + target, ":") for p in prefix_aliases(prefix)]
 
 
 def read_diversions(path):
@@ -135,22 +144,21 @@ def render_wrapper(source, prefix):
     return ("#!" + prefix + "/bin/env python\n" + text.split("\n", 1)[1]).encode()
 
 
-def dpkg_file_list_updates(admindir, prefix):
-    """Align only dpkg's own ownership records with future archive paths.
+def package_file_list_updates(admindir, prefix, package):
+    """Align the protected package's ownership records with future archive paths.
 
-    Otherwise dpkg sees the alias entry as obsolete and may unlink dpkg.real
-    immediately after installing its new version via the canonical diversion.
+    Otherwise dpkg may unlink a freshly installed diverted file when removing
+    an obsolete alias entry for the same file.
     """
-    pairs = diversion_pairs(prefix)
-    if len(pairs) == 1:
+    aliases = prefix_aliases(prefix)
+    if len(aliases) == 1:
         return []
-    canonical_root = pairs[0][0][:-len("/files/usr/bin/dpkg")]
-    legacy_root = pairs[1][0][:-len("/files/usr/bin/dpkg")]
+    canonical_root, legacy_root = (path[:-len("/files/usr")] for path in aliases)
     info = admindir / "info"
     updates = []
-    for path in [info / "dpkg.list", *sorted(info.glob("dpkg:*.list"))]:
+    for path in [info / (package + ".list"), *sorted(info.glob(package + ":*.list"))]:
         if path.is_symlink() or path.with_name(path.name + ".autopie-backup").is_symlink():
-            raise SetupError("Unexpected dpkg file-list symlink: " + str(path))
+            raise SetupError("Unexpected package file-list symlink: " + str(path))
         if not path.is_file():
             continue
         original = path.read_bytes()
@@ -165,6 +173,26 @@ def dpkg_file_list_updates(admindir, prefix):
         if updated != original:
             updates.append((path, original, updated))
     return updates
+
+
+def read_patched_am(launcher, apk, prefix):
+    launcher_data = launcher.read_bytes()
+    lines = launcher_data.splitlines()
+    if not launcher_data.startswith(b"#!") or not any(
+        ('AM_APK_PATH="' + alias + "/" + AM_APK + '"').encode() in lines for alias in prefix_aliases(prefix)
+    ):
+        raise SetupError("Bundled am launcher does not match " + prefix)
+
+    # DEX strings store their UTF-16 length as ULEB128 before the bytes.
+    package = prefix[:-len("/files/usr")].rsplit("/", 1)[-1].encode("ascii")
+    length = len(package)
+    encoded_length = bytes([length]) if length < 128 else bytes([128 | (length % 128), length // 128])
+    caller = encoded_length + package + b"\0"
+    apk_data = apk.read_bytes()
+    with zipfile.ZipFile(io.BytesIO(apk_data)) as archive:
+        if not any(caller in archive.read(name) for name in archive.namelist() if name.endswith(".dex")):
+            raise SetupError("Bundled am APK does not contain the caller package " + package.decode())
+    return launcher_data, apk_data
 
 
 def repair_wake_scripts(root, prefix):
@@ -186,7 +214,7 @@ def repair_wake_scripts(root, prefix):
             atomic_write(path, updated, stat.S_IMODE(path.stat().st_mode))
 
 
-def install_wrapper(root, prefix, source):
+def install_wrapper(root, prefix, source, am_sources=None):
     """root contains bin/, var/, etc.; prefix is the installed Android path."""
     root, source = Path(root), Path(source)
     prefix = canonical_prefix(prefix)
@@ -213,8 +241,21 @@ def install_wrapper(root, prefix, source):
 
         database = admindir / "diversions"
         existing = read_diversions(database)
-        updated = merged_diversions(existing, diversion_pairs(prefix))
-        file_lists = dpkg_file_list_updates(admindir, prefix)
+        required = diversion_pairs(prefix)
+        file_lists = package_file_list_updates(admindir, prefix, "dpkg")
+        am_files = []
+        if am_sources is not None:
+            launcher, apk = read_patched_am(*am_sources, prefix)
+            for relative, data, mode in ((AM_APK, apk, 0o400), (AM_LAUNCHER, launcher, 0o700)):
+                active = root / relative
+                diverted = root / (relative + ".distrib")
+                for path in (active, diverted):
+                    if path.is_symlink() or (path.exists() and not path.is_file()):
+                        raise SetupError("Unexpected am file: " + str(path))
+                required.extend(diversion_pairs(prefix, relative, relative + ".distrib"))
+                am_files.append((active, diverted, data, mode))
+            file_lists.extend(package_file_list_updates(admindir, prefix, "termux-am"))
+        updated = merged_diversions(existing, required)
         # Validate everything before replacing any executables or database files.
         for path in (real, database, admindir / "diversions-old"):
             if path.is_symlink():
@@ -234,6 +275,12 @@ def install_wrapper(root, prefix, source):
                 atomic_write(backup, original, 0o600)
             atomic_write(path, contents, 0o600)
 
+        for active, diverted, data, _ in am_files:
+            if active.is_file() and not diverted.exists():
+                original = active.read_bytes()
+                if original != data:
+                    atomic_write(diverted, original, stat.S_IMODE(active.stat().st_mode))
+
         if updated != existing:
             if database.exists():
                 atomic_write(admindir / "diversions-old", database.read_bytes(), 0o600)
@@ -241,6 +288,9 @@ def install_wrapper(root, prefix, source):
             atomic_write(database, payload, 0o600)
         atomic_write(dpkg, rendered, 0o700)
         repair_wake_scripts(root, prefix)
+        for active, _, data, mode in am_files:
+            active.parent.mkdir(parents=True, exist_ok=True)
+            atomic_write(active, data, mode)
 
 
 def main():
@@ -248,13 +298,15 @@ def main():
     parser.add_argument("--prefix", required=True, help="Installed app files/usr path")
     parser.add_argument("--wrapper", type=Path, required=True, help="AutoPie dpkg.py source")
     parser.add_argument("--bootstrap-root", type=Path, help="Extracted usr directory for cross-architecture builds")
+    parser.add_argument("--am", nargs=2, type=Path, metavar=("LAUNCHER", "APK"),
+                        help="Patched termux-am files for this app package")
     args = parser.parse_args()
     try:
-        install_wrapper(args.bootstrap_root or Path(args.prefix), args.prefix, args.wrapper)
+        install_wrapper(args.bootstrap_root or Path(args.prefix), args.prefix, args.wrapper, args.am)
     except PackageManagerBusy as error:
         print("AutoPie dpkg setup: " + str(error), file=sys.stderr)
         return 75
-    except (SetupError, OSError, UnicodeError) as error:
+    except (SetupError, OSError, UnicodeError, zipfile.BadZipFile) as error:
         print("AutoPie dpkg setup: " + str(error), file=sys.stderr)
         return 1
     return 0

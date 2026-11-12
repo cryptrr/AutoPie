@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 
 
 SCRIPT = Path(__file__).with_name("dpkg_setup.py")
@@ -94,6 +95,43 @@ class DpkgSetupTest(unittest.TestCase):
         self.install()
         self.assert_protected()
         self.assertEqual([p.stat().st_mtime_ns for p in paths], timestamps)
+
+    def test_am_repair_restores_overwritten_pair_and_preserves_diverted_files(self):
+        self.executable(self.dpkg, NATIVE_OLD)
+        launcher = self.root / setup.AM_LAUNCHER
+        apk = self.root / setup.AM_APK
+        apk.parent.mkdir(parents=True)
+        self.executable(launcher, b"upgraded launcher")
+        apk.write_bytes(b"upgraded apk")
+        info = self.db / "info"
+        info.mkdir()
+        file_list = info / "termux-am.list"
+        alias = "/data/user/0/com.autopi/files/usr"
+        file_list.write_text(f"{alias}/{setup.AM_LAUNCHER}\n{alias}/{setup.AM_APK}\n")
+        bundled_launcher = self.root / "bundled-am"
+        bundled_apk = self.root / "bundled-am.apk"
+        bundled_launcher.write_text(f'#!{self.prefix}/bin/sh\nAM_APK_PATH="{self.prefix}/{setup.AM_APK}"\n')
+        with zipfile.ZipFile(bundled_apk, "w") as archive:
+            archive.writestr("classes.dex", b"\x0acom.autopi\0")
+
+        setup.install_wrapper(self.root, alias, WRAPPER, (bundled_launcher, bundled_apk))
+        self.assertEqual(file_list.read_text(), file_list.with_name("termux-am.list.autopie-backup")
+                         .read_text().replace(alias, self.prefix))
+        records = setup.read_diversions(self.db / "diversions")
+        self.assertEqual(len(records), 6)
+        for active, source, original, mode in (
+            (launcher, bundled_launcher, b"upgraded launcher", 0o700),
+            (apk, bundled_apk, b"upgraded apk", 0o400),
+        ):
+            relative = active.relative_to(self.root).as_posix()
+            for prefix in (self.prefix, alias):
+                path = f"{prefix}/{relative}"
+                self.assertIn((path, path + ".distrib", ":"), records)
+            self.assertEqual(active.read_bytes(), source.read_bytes())
+            self.assertEqual(active.stat().st_mode & 0o777, mode)
+            self.assertEqual(active.with_name(active.name + ".distrib").read_bytes(), original)
+        setup.install_wrapper(self.root, alias, WRAPPER, (bundled_launcher, bundled_apk))
+        self.assertEqual(setup.read_diversions(self.db / "diversions"), records)
 
     def test_secondary_user_and_custom_package_rendering(self):
         self.executable(self.dpkg, NATIVE_OLD)

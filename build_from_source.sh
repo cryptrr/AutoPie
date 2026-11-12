@@ -90,14 +90,15 @@ mkdir -p "$ASSETS_DIR"
 mkdir -p "$CONVERSION_DIR"
 tar -xJf "$SOURCE_ARTIFACT" -C "$CONVERSION_DIR"
 
-echo "Installing dpkg wrapper"
+echo "Protecting the dpkg wrapper and patched am"
 mkdir -p "$CONVERSION_DIR/etc/profile.d"
 install -m 0600 "$ROOT_DIR/scripts/bootstrap/autopie-home.sh" \
     "$CONVERSION_DIR/etc/profile.d/00-autopie-home.sh"
 python3 "$ROOT_DIR/scripts/bootstrap/dpkg_setup.py" \
     --bootstrap-root "$CONVERSION_DIR" \
     --prefix "$TARGET_PREFIX" \
-    --wrapper "$DPKG_WRAPPER"
+    --wrapper "$DPKG_WRAPPER" \
+    --am "$CONVERSION_DIR/bin/am" "$CONVERSION_DIR/libexec/termux-am/am.apk"
 
 echo "Installing autopie-secret wrapper"
 install -m 0700 "$AUTOPIE_SECRET_WRAPPER" "$CONVERSION_DIR/bin/autopie-secret"

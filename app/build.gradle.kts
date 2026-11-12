@@ -10,10 +10,18 @@ plugins {
 // Existing installations need these outside the bootstrap ZIP: upgrading the APK
 // preserves the installed prefix and does not extract a new bootstrap.
 val dpkgRepairAssets = layout.buildDirectory.dir("generated/assets/dpkgRepair")
+val bootstrapAsset = layout.projectDirectory.file("src/main/assets/bootstrap-aarch64.zip")
 val prepareDpkgRepairAssets by tasks.registering(Sync::class) {
     from(rootProject.layout.projectDirectory.dir("scripts/bootstrap")) {
         include("dpkg_setup.py", "dpkg.py")
         into("autopie-dpkg")
+    }
+    from({
+        if (bootstrapAsset.asFile.isFile) zipTree(bootstrapAsset.asFile) else emptyList<File>()
+    }) {
+        include("bin/am", "libexec/termux-am/am.apk")
+        eachFile { path = "autopie-dpkg/$name" }
+        includeEmptyDirs = false
     }
     into(dpkgRepairAssets)
 }

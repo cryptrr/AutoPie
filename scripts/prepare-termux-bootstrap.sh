@@ -177,14 +177,15 @@ python3 "$FS_REWRITER" "$EXTRACTED_DIR" \
     --new-package "$NEW_PACKAGE" \
     --new-root-dir "$TARGET_ROOT_DIR"
 
-echo "Installing dpkg wrapper"
+echo "Protecting the dpkg wrapper and patched am"
 mkdir -p "$EXTRACTED_DIR/etc/profile.d"
 install -m 0600 "$ROOT_DIR/scripts/bootstrap/autopie-home.sh" \
     "$EXTRACTED_DIR/etc/profile.d/00-autopie-home.sh"
 python3 "$ROOT_DIR/scripts/bootstrap/dpkg_setup.py" \
     --bootstrap-root "$EXTRACTED_DIR" \
     --prefix "$TARGET_PREFIX" \
-    --wrapper "$DPKG_WRAPPER"
+    --wrapper "$DPKG_WRAPPER" \
+    --am "$EXTRACTED_DIR/bin/am" "$EXTRACTED_DIR/libexec/termux-am/am.apk"
 
 echo "Installing autopie-secret wrapper"
 install -m 0700 "$AUTOPIE_SECRET_WRAPPER" "$EXTRACTED_DIR/bin/autopie-secret"

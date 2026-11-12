@@ -40,18 +40,19 @@ below applies the same correction without reinstalling the bootstrap.
 
 ### Activity manager
 
-An APK update does not replace an already installed Termux prefix. To repair an
-existing installation without deleting its packages or app data, extract only
-`bin/am` and `libexec/termux-am/am.apk` from the **newly built**
-`app/src/main/assets/bootstrap-aarch64.zip`, and copy them to the corresponding
-paths under the installation's `$PREFIX`. Both files must come from the same
-package/root build. Stop any running `am` invocation first, replace the files,
-and set `bin/am` to mode `0700` and `libexec/termux-am/am.apk` to mode `0400`.
-The old APK may already be read-only, so replace it rather than writing into it.
+AutoPie protects `bin/am` and `libexec/termux-am/am.apk` with local dpkg
+diversions. Package upgrades and reinstalls write to the corresponding
+`.distrib` paths, and AutoPie updates the active pair from its bundled
+bootstrap. The same setup runs when generating a bootstrap and when opening a
+shell after an APK update. This repairs prefixes where a previous package
+upgrade replaced the patched files. An active apt/dpkg operation defers the
+repair until a later shell or environment setup.
 
-Check `am --help` and `am to-uri -a android.intent.action.VIEW`; then test an
-actual activity start on the secondary user. The local DEX checks cannot verify
-device-specific Android permission or activity-manager behavior.
+Check the repair with `am start -a android.intent.action.VIEW -d https://example.com`
+from an AutoPie shell. After upgrading or reinstalling `termux-am`, run the same
+command again. For Android user 0, both `/data/data` and `/data/user/0` are
+registered, and the installed `termux-am` file list is normalized to match
+future package paths.
 
 ## Durable dpkg wrapper protection
 
