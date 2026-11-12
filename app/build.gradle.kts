@@ -45,8 +45,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 79
-        versionName = "0.20.5-beta"
+        versionCode = 80
+        versionName = "0.20.6-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
