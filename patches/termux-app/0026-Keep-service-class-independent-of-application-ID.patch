@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AutoPie <autopie@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 12:00:00 +0530
+Subject: [PATCH] Keep service class independent of application ID
+
+AutoPie changes the owning Android package and action namespace, but retains
+the embedded Termux Java namespace. Match the manifest and class-based GUI
+intents when constructing an explicit service component.
+
+---
+diff --git a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+--- a/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
++++ b/termux-shared/src/main/java/com/termux/shared/termux/TermuxConstants.java
+@@ -977,7 +977,7 @@
+ 
+ 
+         /** Termux app core service name. */
+-        public static final String TERMUX_SERVICE_NAME = TERMUX_PACKAGE_NAME + ".app.TermuxService"; // Default: "com.termux.app.TermuxService"
++        public static final String TERMUX_SERVICE_NAME = "com.termux.app.TermuxService";
+ 
+         /**
+          * Termux app core service.

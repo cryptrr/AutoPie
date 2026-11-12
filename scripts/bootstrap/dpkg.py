@@ -252,6 +252,13 @@ def looks_like_text(data: bytes) -> bool:
 
 
 def rewrite_text_bytes(data: bytes) -> bytes:
+    # Upstream termux-tools updates must address the same embedded service as
+    # the GUI. Only its owning app and intent actions use the relocated ID.
+    package = NEW_ROOT_DIR.rsplit("/", 1)[-1].encode()
+    data = data.replace(b"com.termux/com.termux.app.TermuxService",
+                        package + b"/com.termux.app.TermuxService")
+    for action in (b"service_wake_lock", b"service_wake_unlock"):
+        data = data.replace(b"com.termux." + action, package + b"." + action)
     CONTROL_TEXT_REWRITES = [
         (OLD_PREFIX.encode(), NEW_PREFIX.encode()),
         (OLD_ROOT_DIR.encode(), NEW_ROOT_DIR.encode()),

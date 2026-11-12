@@ -52,3 +52,7 @@ Patch 25 runs the APK's dpkg migration helper during shell environment setup,
 including app startup and bootstrap completion. It repairs older prefixes
 before package operations can overwrite the wrapper again. Package-manager
 locks defer migration; missing bootstraps are skipped until installation ends.
+
+Patch 26 keeps `TERMUX_SERVICE_NAME` equal to the embedded Java class name,
+`com.termux.app.TermuxService`. The Android package and service action names
+remain specific to the selected AutoPie application ID.

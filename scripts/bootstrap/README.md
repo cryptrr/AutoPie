@@ -23,6 +23,23 @@ Build normally, including secondary-user builds:
 
 ## Existing installations
 
+### Wake lock commands
+
+The embedded service keeps its Java name `com.termux.app.TermuxService`.
+Bootstrap rewriting and `termux-tools` package updates relocate the component's
+owning application ID and wake-lock actions while retaining that class name.
+Both `termux-wake-lock` and `termux-wake-unlock` therefore use the same service
+as the terminal's notification controls, including custom packages and Android
+secondary users. The service remains internal to the app's UID.
+
+On an APK update, the existing shell-startup dpkg repair helper also corrects
+the two installed scripts, preserving their options and file permissions. Open
+a new shell after updating; an active package-manager operation defers repair
+until a later shell startup. The standalone `dpkg_setup.py` repair procedure
+below applies the same correction without reinstalling the bootstrap.
+
+### Activity manager
+
 An APK update does not replace an already installed Termux prefix. To repair an
 existing installation without deleting its packages or app data, extract only
 `bin/am` and `libexec/termux-am/am.apk` from the **newly built**

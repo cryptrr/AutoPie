@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import codecs
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -207,9 +208,15 @@ def is_dex_file(data: bytes) -> bool:
 
 
 def rewrite_text_bytes(data: bytes, rewrites: list[tuple[bytes, bytes]]) -> bytes:
-    for old, new in rewrites:
-        data = data.replace(old, new)
-    return data
+    # The Android application ID changes, but the embedded Java service class
+    # does not. Keep it intact in explicit components used by termux-wake-*.
+    service = "com.termux.app.TermuxService"
+    protected = [service.encode(), service.encode("utf-16le"), service.replace(".", "/").encode()]
+    parts = re.split(b"(" + b"|".join(re.escape(value) for value in protected) + b")", data)
+    for index in range(0, len(parts), 2):
+        for old, new in rewrites:
+            parts[index] = parts[index].replace(old, new)
+    return b"".join(parts)
 
 
 def rewrite_binary_bytes(data: bytes, rewrites: list[tuple[bytes, bytes]]) -> bytes:

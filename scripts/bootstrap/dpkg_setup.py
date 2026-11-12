@@ -167,6 +167,25 @@ def dpkg_file_list_updates(admindir, prefix):
     return updates
 
 
+def repair_wake_scripts(root, prefix):
+    """Repair prefixes retained across APK updates, preserving script options."""
+    package = prefix[:-len("/files/usr")].rsplit("/", 1)[-1].encode()
+    service = b"/com.termux.app.TermuxService"
+    for name in ("termux-wake-lock", "termux-wake-unlock"):
+        path = root / "bin" / name
+        if path.is_symlink() or not path.is_file():
+            continue
+        original = path.read_bytes()
+        if not original.startswith(b"#!"):
+            continue
+        updated = original.replace(package + b"/" + package + b".app.TermuxService", package + service)
+        updated = updated.replace(b"com.termux" + service, package + service)
+        for action in (b"service_wake_lock", b"service_wake_unlock"):
+            updated = updated.replace(b"com.termux." + action, package + b"." + action)
+        if updated != original:
+            atomic_write(path, updated, stat.S_IMODE(path.stat().st_mode))
+
+
 def install_wrapper(root, prefix, source):
     """root contains bin/, var/, etc.; prefix is the installed Android path."""
     root, source = Path(root), Path(source)
@@ -221,6 +240,7 @@ def install_wrapper(root, prefix, source):
             payload = "".join("\n".join(record) + "\n" for record in updated).encode()
             atomic_write(database, payload, 0o600)
         atomic_write(dpkg, rendered, 0o700)
+        repair_wake_scripts(root, prefix)
 
 
 def main():
