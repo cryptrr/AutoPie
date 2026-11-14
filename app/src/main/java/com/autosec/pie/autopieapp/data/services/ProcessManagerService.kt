@@ -19,11 +19,11 @@ import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
 import com.autopi.autopieapp.data.ProcessResult
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.apiService.AutoPieUserAgent
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
-import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.AutoPieCoreService.Companion.application
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -401,9 +401,9 @@ class ProcessManagerService(
             for (extra in commandObject.extras ?: emptyList()) {
                 //Timber.d("Setting extra to defaults: ${extra.name}=${extra.default}")
                 val extraValue = if (extra.isSecretExtra()) {
-                    secretsService.get(extra.secretKey(commandObject.secretCommandId())) ?: extra.default
+                    secretsService.get(commandObject, extra) ?: extra.default
                 } else if (extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) {
-                    internalConfigService.get(commandObject.id, extra.id) ?: extra.default
+                    internalConfigService.get(commandObject, extra) ?: extra.default
                 } else {
                     extra.default
                 }
@@ -423,7 +423,9 @@ class ProcessManagerService(
                 val commandExtra = commandObject.extras
                     ?.firstOrNull { it.id == extra.id || it.name == extra.name }
                 val extraValue = if (commandExtra?.isSecretExtra() == true) {
-                    secretsService.get(commandExtra.secretKey(commandObject.secretCommandId())) ?: extra.value
+                    extra.value.takeUnless { it.isBlank() || it == SECRET_VALUE_PLACEHOLDER }
+                        ?: secretsService.get(commandObject, commandExtra)
+                        ?: commandExtra.default
                 } else {
                     extra.value
                 }
@@ -443,8 +445,6 @@ class ProcessManagerService(
 
         return envMap
     }
-
-    private fun CommandInterface.secretCommandId(): String = id.ifBlank { name }
 
     fun checkShell(): Boolean {
         try {

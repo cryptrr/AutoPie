@@ -1,6 +1,7 @@
 package com.autopi.autopieApp.data.services
 
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.services.InternalConfigService
 import com.tencent.mmkv.MMKV
@@ -34,7 +35,7 @@ class InternalConfigServiceTest {
             flags = listOf(ExtraFlags.INTERNAL_CONFIG.value)
         )
 
-        val resolved = service.resolve("stable-command-id", extra)
+        val resolved = service.resolve(CommandModel(id = "stable-command-id"), extra)
 
         assertEquals(false, resolved.defaultBoolean)
     }

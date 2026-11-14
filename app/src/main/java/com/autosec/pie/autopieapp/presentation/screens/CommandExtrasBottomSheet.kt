@@ -72,7 +72,6 @@ import com.autopi.autopieapp.data.CommandFlags
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
-import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.environmentVariableReferenceOrNull
 import com.autopi.autopieapp.data.flagValue
 import com.autopi.autopieapp.data.hasFlag
@@ -82,8 +81,8 @@ import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.matchesExtraValues
 import com.autopi.autopieapp.data.resolveMultiSelectableDefaults
 import com.autopi.autopieapp.data.resolveEnvironmentBackedValue
-import com.autopi.autopieapp.data.secretKey
 import com.autopi.autopieapp.data.services.SecretsService
+import com.autopi.autopieapp.data.services.get
 import com.autopi.autopieapp.data.services.InternalConfigService
 import com.autopi.autopieapp.data.toMultiSelectableValue
 import com.autopi.autopieapp.domain.ViewModelEvent
@@ -111,7 +110,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.java.KoinJavaComponent
-import timber.log.Timber
 import kotlin.math.roundToInt
 
 private fun String.toShellBooleanOrNull(): String? = when (trim().lowercase()) {
@@ -215,8 +213,8 @@ fun CommandExtrasBottomSheet(
                 }
 
                 viewModel.currentExtrasDetails.value?.let {
-                    val activeCommand = it.second.firstStepOrSelf()
-                    key(activeCommand.steps.size, activeCommand.path, activeCommand.command) {
+                    val activeCommand = it.second
+                    key(activeCommand.id, it.third.processId) {
                         var isVisible by remember { mutableStateOf(false) }
 
                         LaunchedEffect(Unit) {
@@ -313,20 +311,26 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
 
 
     val resolvedExtras = remember(command.id, command.extras) {
-        command.extras.orEmpty().map { internalConfigService.resolve(command.id, it) }
+        command.extras.orEmpty().map { internalConfigService.resolve(command, it) }
     }
 
     val commandExtraInputs = remember(resolvedExtras) {
         mutableStateOf(
-            resolvedExtras.map { extra -> extra.toInitialInput() }
+            resolvedExtras.map { extra ->
+                val input = extra.toInitialInput()
+                if (extra.isSecretExtra() && secretsService.get(command, extra) != null) {
+                    input.copy(value = SECRET_VALUE_PLACEHOLDER)
+                } else {
+                    input
+                }
+            }
         )
     }
 
     fun isUnsetInternalConfigExtra(extra: CommandExtra): Boolean {
         if (!extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) return false
         if (extra.isSecretExtra()) {
-            val commandId = command.id.ifBlank { command.name }
-            return secretsService.get(extra.secretKey(commandId)).isNullOrBlank()
+            return commandExtraInputs.value.firstOrNull { it.id == extra.id }?.value.isNullOrBlank()
         }
         return when (extra.type) {
             "BOOLEAN", "FLAG" -> false
@@ -361,7 +365,6 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
             commandExtraInputs.value.toMutableList().also { it.add(0, commandExtraInput) }
         }
         commandExtraInputs.value = updatedInputs
-        Timber.d("Extra commands list: $commandExtraInputs")
         return updatedInputs
     }
 
@@ -498,49 +501,29 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                             }
                             val pickerMimeType = extra.flags.flagValue(ExtraFlags.MIME_TYPE) ?: "*/*"
 
-                            val displayedDefault = remember(command.id, command.name, extra.id, extra.default) {
-                                val commandId = command.id.ifBlank { command.name }
-                                if (
-                                    extra.isSecretExtra() &&
-                                    secretsService.get(extra.secretKey(commandId)) != null
-                                ) {
-                                    SECRET_VALUE_PLACEHOLDER
-                                } else {
-                                    extra.default
-                                }
-                            }
-
-                            val textValue = remember(extra.id, displayedDefault) {
-                                mutableStateOf(displayedDefault)
+                            val textValue = remember(extra.id, extra.default) {
+                                mutableStateOf(extraValuesById[extra.id] ?: extra.default)
                             }
 
                             val shellEnvironmentVariable = remember(extra.default) {
                                 extra.default.environmentVariableReferenceOrNull()
                             }
 
+                            fun updateTextInput(value: String) {
+                                textValue.value = value
+                                addToExtraInputs(extra.toInitialInput().copy(value = value))
+                            }
+
                             LaunchedEffect(processId, extra.id, shellEnvironmentVariable) {
-                                shellEnvironmentVariable?.let { variableName ->
-                                    textValue.value = resolveEnvironmentBackedValue(extra.default) {
+                                if (textValue.value == SECRET_VALUE_PLACEHOLDER) return@LaunchedEffect
+                                shellEnvironmentVariable?.let {
+                                    val value = resolveEnvironmentBackedValue(extra.default) {
                                         viewModel.processManagerService
                                             .getShellEnvironmentVariable(processId, it)
                                     }
+                                    updateTextInput(value)
                                 }
                             }
-
-                            LaunchedEffect(key1 = textValue.value) {
-                                addToExtraInputs(
-                                    CommandExtraInput(
-                                        extra.name,
-                                        extra.default,
-                                        textValue.value,
-                                        extra.type,
-                                        extra.defaultBoolean,
-                                        extra.id,
-                                        extra.description
-                                    )
-                                )
-                            }
-
 
                             if(isPasswordField){
                                 PasswordFormField(
@@ -548,6 +531,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     title = displayName,
                                     subtitle = extra.description,
                                     mask = '⬤',
+                                    onValueChange = ::updateTextInput,
                                     singleLine = !isMultilineText,
                                     minLines = if (isMultilineText) 4 else 1
                                 )
@@ -557,13 +541,14 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                     text = textValue,
                                     title = displayName,
                                     subtitle = extra.description,
+                                    onValueChange = ::updateTextInput,
                                     singleLine = !isMultilineText,
                                     minLines = if (isMultilineText) 4 else 1,
                                     trailingIcon = if(useFolderPicker){
                                         {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                                 FolderPicker(useRelativePaths = true) {
-                                                    textValue.value = it
+                                                    updateTextInput(it)
                                                 }
                                             }
                                         }
@@ -575,7 +560,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                                     useRelativePaths = true,
                                                     mimeType = pickerMimeType
                                                 ) {
-                                                    textValue.value = it.joinToString(",")
+                                                    updateTextInput(it.joinToString(","))
                                                 }
                                             }
                                         }
@@ -587,7 +572,7 @@ fun CommandExtraInputs(command: CommandModel, parentSheetState: SheetState? = nu
                                                     useRelativePaths = true,
                                                     mimeType = pickerMimeType
                                                 ) {
-                                                    textValue.value = it
+                                                    updateTextInput(it)
                                                 }
                                             }
                                         }

@@ -454,7 +454,7 @@ fun ShareCard(
 
                     if (activeCard.multiStage == true || hasUserFacingExtras) {
                         shareReceiverViewModel.openCommandExtras(
-                            activeCard,
+                            card,
                             ShareInputs(inputText, inputFiles)
                         )
                     }
@@ -477,7 +477,7 @@ fun ShareCard(
             } else {
                 CommandCard(card = card) {
                     shareReceiverViewModel.openCommandExtras(
-                        activeCard,
+                        card,
                         ShareInputs(inputText, inputFiles)
                     )
                 }

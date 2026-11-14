@@ -33,6 +33,7 @@ data class CommandModel(
     override val version: String = "",
     val installerVersion: String? = null,
     override val summary: String = "",
+    internal val stageParentId: String? = null,
     ) : CommandInterface
 
 data class CommandStep(
@@ -48,7 +49,7 @@ class CommandStepResolutionException(val commandId: String) :
     IllegalArgumentException("Command not found: $commandId")
 
 fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): CommandModel {
-    if (multiStage != true) return this
+    if (multiStage != true || stageParentId != null) return this
     return copy(
         steps = steps.map { step ->
             val referencedId = step.commandId?.takeIf(String::isNotBlank) ?: return@map step
@@ -65,7 +66,7 @@ fun CommandModel.resolveCommandSteps(commandsById: Map<String, CommandModel>): C
 }
 
 fun CommandModel.firstStepOrSelf(): CommandModel {
-    if (multiStage != true) return this
+    if (multiStage != true || stageParentId != null) return this
     val parentId = id.ifBlank { name }
     val identifiedSteps = steps.mapIndexed { index, step ->
         if (step.id.isBlank()) step.copy(id = index.toString()) else step
@@ -73,6 +74,7 @@ fun CommandModel.firstStepOrSelf(): CommandModel {
     val step = identifiedSteps.firstOrNull() ?: return this
     return copy(
         id = step.namespacedId(parentId),
+        stageParentId = parentId,
         path = step.path,
         command = step.command,
         flags = (flags.orEmpty() + step.flags.orEmpty())
@@ -87,9 +89,10 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
     if (multiStage != true || steps.size <= 1) return null
     val remainingSteps = steps.drop(1)
     val nextStep = remainingSteps.first()
-    val parentId = id.substringBeforeLast('.', id).ifBlank { name }
+    val parentId = stageParentId ?: id.substringBeforeLast('.', id).ifBlank { name }
     return copy(
         id = nextStep.namespacedId(parentId),
+        stageParentId = parentId,
         path = nextStep.path,
         command = nextStep.command,
         flags = nextStep.flags,
@@ -100,6 +103,15 @@ fun CommandModel.nextStepOrNull(): CommandModel? {
 
 fun CommandStep.namespacedId(parentId: String): String =
     if (parentId.isBlank()) id else "$parentId.$id"
+
+internal fun CommandInterface.configCommandIds(): List<String> {
+    val commandId = id.ifBlank { name }
+    val stage = (this as? CommandModel)?.takeIf { it.stageParentId != null }?.steps?.firstOrNull()
+        ?: return listOf(commandId)
+    // Older extras sheets could append the active step ID again before saving.
+    val legacyId = stage.namespacedId(commandId)
+    return listOf(commandId, legacyId, stage.namespacedId(legacyId))
+}
 
 fun CommandModel.hasNextStep(): Boolean = multiStage == true && steps.size > 1
 

@@ -1,7 +1,9 @@
 package com.autopi.autopieapp.data.services
 
 import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandInterface
 import com.autopi.autopieapp.data.ExtraFlags
+import com.autopi.autopieapp.data.configCommandIds
 import com.autopi.autopieapp.data.hasFlag
 import com.autopi.autopieapp.data.isSecretExtra
 import com.tencent.mmkv.MMKV
@@ -41,9 +43,9 @@ class InternalConfigService(
         return if (value == null) delete(commandId, extra.id) else set(commandId, extra.id, value)
     }
 
-    fun resolve(commandId: String, extra: CommandExtra): CommandExtra {
-        if (!extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG)) return extra
-        val value = get(commandId, extra.id) ?: return extra
+    internal fun resolve(command: CommandInterface, extra: CommandExtra): CommandExtra {
+        if (!extra.flags.hasFlag(ExtraFlags.INTERNAL_CONFIG) || extra.isSecretExtra()) return extra
+        val value = get(command, extra) ?: return extra
         return extra.withInternalConfigValue(value)
     }
 
@@ -54,6 +56,9 @@ class InternalConfigService(
         const val STORE_ID = "internal-config"
     }
 }
+
+internal fun InternalConfigService.get(command: CommandInterface, extra: CommandExtra): String? =
+    command.configCommandIds().firstNotNullOfOrNull { get(it, extra.id) }
 
 private fun CommandExtra.withInternalConfigValue(value: String): CommandExtra = when (type) {
     "BOOLEAN" -> value.trim().lowercase().toBooleanStrictOrNull()

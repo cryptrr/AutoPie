@@ -3,7 +3,9 @@ package com.autopi.use_case
 import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandHistoryEntity
 import com.autopi.autopieapp.data.CommandModel
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.dbService.AppDatabase
+import com.autopi.autopieapp.data.isSecretExtra
 import com.autopi.autopieapp.data.toEntity
 import timber.log.Timber
 import java.time.Instant
@@ -14,7 +16,15 @@ class AddCommandToHistory(private val dbService: AppDatabase){
         val commandHistoryEntity = CommandHistoryEntity(
             id = Instant.now().toString(),
             commandModelId = command.name,
-            commandExtraInputs = commandExtraInputs.map { it.toEntity() },
+            commandExtraInputs = commandExtraInputs.map { input ->
+                val extra = command.extras?.firstOrNull { it.name == input.name }
+                val historyInput = if (extra?.isSecretExtra() == true) {
+                    input.copy(default = "", value = SECRET_VALUE_PLACEHOLDER)
+                } else {
+                    input
+                }
+                historyInput.toEntity()
+            },
             currentLink = currentLink,
             fileUris = fileUris,
             processId = processId,
