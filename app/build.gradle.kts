@@ -21,9 +21,20 @@ val prepareDpkgRepairAssets by tasks.registering(Sync::class) {
     }) {
         include("bin/am", "libexec/termux-am/am.apk")
         eachFile { path = "autopie-dpkg/$name" }
+        filePermissions { unix("0644") }
         includeEmptyDirs = false
     }
     into(dpkgRepairAssets)
+
+    doFirst {
+        // Older builds copied am.apk with the bootstrap's read-only mode.
+        val previousAmApk = destinationDir.resolve("autopie-dpkg/am.apk")
+        if (previousAmApk.isFile && !previousAmApk.canWrite()) {
+            check(previousAmApk.setWritable(true)) {
+                "Could not make generated asset writable: $previousAmApk"
+            }
+        }
+    }
 }
 
 tasks.named("preBuild") {
@@ -84,7 +95,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            //signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
