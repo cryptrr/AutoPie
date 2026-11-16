@@ -8,18 +8,23 @@ import com.autopi.autopieapp.data.CommandExtraInput
 import com.autopi.autopieapp.data.CommandModel
 import com.autopi.autopieapp.data.CommandStep
 import com.autopi.autopieapp.data.CommandType
+import com.autopi.autopieapp.data.ExtraFlags
 import com.autopi.autopieapp.data.InputParsedData
 import com.autopi.autopieapp.data.JobType
+import com.autopi.autopieapp.data.SECRET_VALUE_PLACEHOLDER
 import com.autopi.autopieapp.data.firstStepOrSelf
 import com.autopi.autopieapp.data.nextStepOrNull
 import com.autopi.autopieapp.data.preferences.AppPreferences
 import com.autopi.autopieapp.data.preferences.AutoPieConfigPathProvider
 import com.autopi.autopieapp.data.services.ProcessManagerService
+import com.autopi.autopieapp.data.services.InternalConfigService
+import com.autopi.autopieapp.data.services.SecretsService
 import com.autopi.autopieapp.data.services.notifications.AutoPieNotification
 import com.autopi.autopieapp.domain.ViewModelEvent
 import com.autopi.autopieapp.presentation.viewModels.MainViewModel
 import com.autopi.core.DefaultDispatchers
 import com.autopi.use_case.RunStandaloneCommand
+import com.autopi.use_case.StoreCommandExtraInputs
 import com.autopi.utils.Shell
 import io.mockk.every
 import io.mockk.mockk
@@ -69,6 +74,8 @@ class ProcessManagerServiceIntegrationTest {
     private lateinit var workingDirectory: File
     private lateinit var home: File
     private val notification = mockk<AutoPieNotification>(relaxed = true)
+    private val secretsService = mockk<SecretsService>(relaxed = true)
+    private val internalConfigService = mockk<InternalConfigService>(relaxed = true)
     private val processIds = mutableSetOf<Int>()
 
     @Before
@@ -94,9 +101,9 @@ class ProcessManagerServiceIntegrationTest {
         service = ProcessManagerService(
             main, DefaultDispatchers(), application, paths,
             shellTimeout = Shell.Timeout(5, TimeUnit.SECONDS),
-            secretsService = mockk(relaxed = true),
+            secretsService = secretsService,
             autoPieNotification = notification,
-            internalConfigService = mockk(relaxed = true)
+            internalConfigService = internalConfigService
         )
         mainDispatcherRule.scheduler.advanceUntilIdle()
     }
@@ -137,6 +144,54 @@ class ProcessManagerServiceIntegrationTest {
             main.eventFlow.collect { events.add(it) }
         }
         return events
+    }
+
+    @Test
+    fun `replacing a legacy stage password carries over to the next invocation`() = runTest {
+        val password = CommandExtra(
+            id = "router_password", name = "ROUTER_PASSWORD", type = "STRING",
+            flags = listOf(ExtraFlags.SECRET.value, ExtraFlags.INTERNAL_CONFIG.value)
+        )
+        val script = """
+            export OUTPUT=old
+            if [[ "${'$'}ROUTER_PASSWORD" == corrected ]]; then
+                export OUTPUT=updated
+            fi
+        """.trimIndent()
+        val workflow = command(script).copy(
+            id = "devices",
+            multiStage = true,
+            steps = listOf(
+                CommandStep(
+                    id = "discover", path = workingDirectory.absolutePath,
+                    command = script, extras = listOf(password)
+                )
+            )
+        )
+        val stage = workflow.firstStepOrSelf()
+        val secrets = mutableMapOf("devices.discover.discover@ROUTER_PASSWORD" to "original")
+        every { secretsService.get(any()) } answers { secrets[firstArg<String>()] }
+        every { secretsService.set(any(), any()) } answers {
+            secrets[firstArg<String>()] = secondArg<String>()
+            true
+        }
+        val maskedInput = CommandExtraInput(
+            name = password.name, default = "", value = SECRET_VALUE_PLACEHOLDER,
+            type = password.type, defaultBoolean = true, id = password.id, description = ""
+        )
+        val editedInput = maskedInput.copy(value = "corrected")
+        val storeInputs = StoreCommandExtraInputs(internalConfigService, secretsService)
+
+        assertEquals("old", execute(stage, processId = 71040, extras = listOf(maskedInput)).exportedOutput)
+        assertEquals("updated", execute(stage, processId = 71041, extras = listOf(editedInput)).exportedOutput)
+
+        storeInputs(stage, listOf(editedInput))
+        val reopenedStage = workflow.firstStepOrSelf()
+        storeInputs(reopenedStage, listOf(maskedInput))
+
+        assertEquals("corrected", secrets["devices.discover@ROUTER_PASSWORD"])
+        assertEquals("updated", execute(reopenedStage, processId = 71042, extras = listOf(maskedInput)).exportedOutput)
+        assertEquals("updated", execute(reopenedStage, processId = 71043).exportedOutput)
     }
 
     @Test

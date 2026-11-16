@@ -4,6 +4,10 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.autopi.autopieapp.data.CommandExtra
+import com.autopi.autopieapp.data.CommandInterface
+import com.autopi.autopieapp.data.configCommandIds
+import com.autopi.autopieapp.data.secretKey
 import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -78,3 +82,6 @@ class SecretsService(private val context: Context) {
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
     }
 }
+
+internal fun SecretsService.get(command: CommandInterface, extra: CommandExtra): String? =
+    command.configCommandIds().firstNotNullOfOrNull { get(extra.secretKey(it)) }

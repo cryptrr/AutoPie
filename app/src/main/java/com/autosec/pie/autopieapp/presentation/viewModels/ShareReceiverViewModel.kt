@@ -317,6 +317,13 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
         Timber.d(item.toString())
         Timber.d(inputText.toString())
 
+        try {
+            useCases.storeCommandExtraInputs(item, commandExtraInputs)
+        } catch (e: Exception) {
+            Timber.e(e)
+            return
+        }
+
         if (keepShellAlive) {
             realtimeProcessIds.add(processId)
         }
@@ -526,12 +533,12 @@ class ShareReceiverViewModel(private val application1: Application) : ViewModel(
 
             try {
                 val resolvedProcessId = processId ?: (100000..999999).random()
-                useCases.storeCommandExtraInputs(
-                    command,
-                    commandExtraInputs
-                )
                 val runnableCommand = prepareCommand(command, resolvedProcessId)?.firstStepOrSelf()
                     ?: return@launch
+                useCases.storeCommandExtraInputs(
+                    runnableCommand,
+                    commandExtraInputs
+                )
 
                 val gson = Gson()
                 val commandJson = gson.toJson(runnableCommand)

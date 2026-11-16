@@ -49,6 +49,23 @@ class MultiStageCommandTest {
     }
 
     @Test
+    fun activeStepKeepsItsIdAcrossRepeatedPreparationAndSerialization() {
+        val workflow = command.copy(
+            id = "catalog.workflow",
+            steps = listOf(command.steps[0].copy(id = "prepare.client"), command.steps[1])
+        )
+        val first = workflow.firstStepOrSelf()
+        val gson = Gson()
+        val restored = gson.fromJson(gson.toJson(first), CommandModel::class.java)
+        val second = restored.nextStepOrNull()!!
+
+        assertEquals("catalog.workflow.prepare.client", first.id)
+        assertEquals(first, restored.firstStepOrSelf())
+        assertEquals("catalog.workflow.1", second.id)
+        assertEquals(second, second.firstStepOrSelf())
+    }
+
+    @Test
     fun explicitStepIdsAreNamespacedUnderParentCommandName() {
         val identified = command.copy(
             steps = command.steps.mapIndexed { index, step ->

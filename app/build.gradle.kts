@@ -21,9 +21,20 @@ val prepareDpkgRepairAssets by tasks.registering(Sync::class) {
     }) {
         include("bin/am", "libexec/termux-am/am.apk")
         eachFile { path = "autopie-dpkg/$name" }
+        filePermissions { unix("0644") }
         includeEmptyDirs = false
     }
     into(dpkgRepairAssets)
+
+    doFirst {
+        // Older builds copied am.apk with the bootstrap's read-only mode.
+        val previousAmApk = destinationDir.resolve("autopie-dpkg/am.apk")
+        if (previousAmApk.isFile && !previousAmApk.canWrite()) {
+            check(previousAmApk.setWritable(true)) {
+                "Could not make generated asset writable: $previousAmApk"
+            }
+        }
+    }
 }
 
 tasks.named("preBuild") {
@@ -45,8 +56,8 @@ android {
         minSdk = 27
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 82
-        versionName = "0.20.8-beta"
+        versionCode = 83
+        versionName = "0.20.9-beta"
 
         testInstrumentationRunner = "com.autopi.AutoPieTestRunner"
         vectorDrawables {
