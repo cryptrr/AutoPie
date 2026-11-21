@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.autopi.autopieapp.presentation.viewModels.CloudCommandsViewModel
 import com.autopi.autopieapp.presentation.viewModels.isCloudCommandUpdateAvailable
+import com.autopi.BuildConfig
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.launch
@@ -119,6 +121,31 @@ fun CloudCommandDetails(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary.copy(0.8F)
                         )
+                        val compatibility = viewModel.selectedCommandDocumentation.value?.compatibility
+                        if (compatibility?.isCompatibleWith(BuildConfig.VERSION_NAME) == false) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                                    Text(
+                                        text = "Incompatible AutoPie version",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = listOfNotNull(
+                                            compatibility.autopieMinVersion?.let { "Minimum: $it" },
+                                            compatibility.autopieMaxVersion?.let { "Maximum: $it" },
+                                            "Installed: ${BuildConfig.VERSION_NAME}"
+                                        ).joinToString("\n"),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(22.dp))
                         Text(
                             text = command?.summary.orEmpty(),

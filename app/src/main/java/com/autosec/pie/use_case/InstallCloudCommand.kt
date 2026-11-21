@@ -12,6 +12,7 @@ import com.autopi.autopieapp.data.services.JsonService
 import com.autopi.autopieapp.data.services.MissingTermuxDependencies
 import com.autopi.autopieapp.data.services.ProcessManagerService
 import com.autopi.autopieapp.domain.ViewModelError
+import com.autopi.autopieapp.domain.model.CloudCommandCompatibility
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -269,10 +270,16 @@ class GetCloudCommandDocumentation(private val appPreferences: AppPreferences) {
 
         return CloudCommandDocumentation(
             manifestYaml = manifestYaml,
-            readme = docs.readme?.let { fetchCloudCommandText("$folderUrl/$it") }.orEmpty(),
-            changelog = docs.changelog?.let { fetchCloudCommandText("$folderUrl/$it") }.orEmpty()
+            readme = docs.readme?.let { fetchOptionalDocumentation("$folderUrl/$it") }.orEmpty(),
+            changelog = docs.changelog?.let { fetchOptionalDocumentation("$folderUrl/$it") }.orEmpty(),
+            compatibility = cloudManifestCompatibility(manifestYaml)
         )
     }
+
+    private fun fetchOptionalDocumentation(url: String): String =
+        runCatching { fetchCloudCommandText(url) }
+            .onFailure { Timber.w(it, "Unable to load command documentation: $url") }
+            .getOrDefault("")
 }
 
 internal data class CloudManifestCommand(
@@ -286,8 +293,21 @@ internal data class CloudManifestCommand(
 data class CloudCommandDocumentation(
     val manifestYaml: String,
     val readme: String,
-    val changelog: String
+    val changelog: String,
+    val compatibility: CloudCommandCompatibility = CloudCommandCompatibility()
 )
+
+internal fun cloudManifestCompatibility(manifestYaml: String): CloudCommandCompatibility {
+    val manifest = Yaml().load<Map<String, Any?>>(manifestYaml)
+        ?: throw ViewModelError.InvalidCommandRepoFile
+    val compatibility = manifest.mapValue("compatibility", required = false)
+    return CloudCommandCompatibility(
+        autopieMinVersion = compatibility.stringValue("autopieMinVersion", required = false)
+            .trim().takeIf(String::isNotEmpty),
+        autopieMaxVersion = compatibility.stringValue("autopieMaxVersion", required = false)
+            .trim().takeIf(String::isNotEmpty)
+    )
+}
 
 internal data class CloudManifestDocs(
     val readme: String?,

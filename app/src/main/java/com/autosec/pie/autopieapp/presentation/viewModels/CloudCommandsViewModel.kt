@@ -26,6 +26,8 @@ import com.autopi.autopieapp.domain.model.GenericResponseDTO
 import com.autopi.core.DispatcherProvider
 import com.autopi.use_case.AutoPieUseCases
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +73,7 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     )
     val selectedCommandDocumentation = mutableStateOf<CloudCommandDocumentation?>(null)
     private var loadedDocumentationCommandId: String? = null
+    private var documentationJob: Job? = null
 
     fun getCommandsList(forceRepositoryRefresh: Boolean = false){
         isLoading.value = true
@@ -143,6 +146,12 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     }
 
     fun selectCommand(command: CloudCommandModel, installedVersion: String? = null) {
+        if (selectedCommand.value?.id != command.id) {
+            documentationJob?.cancel()
+            selectedCommandDocumentation.value = null
+            loadedDocumentationCommandId = null
+            detailsLoading.value = false
+        }
         selectedCommand.value = command
         installedCommandVersions.update { versions ->
             if (installedVersion == null) versions - command.id
@@ -187,11 +196,11 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
     fun loadSelectedCommandDocumentation() {
         val command = selectedCommand.value ?: return
         if (loadedDocumentationCommandId == command.id && selectedCommandDocumentation.value != null) return
-        if (detailsLoading.value) return
+        documentationJob?.cancel()
 
         detailsLoading.value = true
         selectedCommandDocumentation.value = null
-        viewModelScope.launch(dispatchers.io) {
+        documentationJob = viewModelScope.launch(dispatchers.io) {
             try {
                 val docs = useCases.getCloudCommandDocumentation(command.id)
                 withContext(dispatchers.main) {
@@ -199,6 +208,8 @@ class CloudCommandsViewModel(private val application: Application) : ViewModel()
                     selectedCommandDocumentation.value = docs
                     detailsLoading.value = false
                 }
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: Exception) {
                 Timber.e(error)
                 withContext(dispatchers.main) {
