@@ -67,6 +67,7 @@ class RunCommandForDirectory(private val processManagerService: ProcessManagerSe
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                    it.add(InputParsedData(name = "OUTPUT_PRESENTATION_ACTIVITY", value = processManagerService.getOutputPresentationActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT", value = inputDir.absolutePath))
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFiles))
                     it.add(InputParsedData(name = "INPUT_FILE", value = path.absolutePath))

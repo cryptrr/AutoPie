@@ -85,6 +85,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                 val inputParsedData = mutableListOf<InputParsedData>().also {
                     it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                    it.add(InputParsedData(name = "OUTPUT_PRESENTATION_ACTIVITY", value = processManagerService.getOutputPresentationActivityComponentName()))
                     it.add(InputParsedData(name = "INPUT", value = inputFilesString))
                     it.addSharedTextInput(inputText)
                     it.add(InputParsedData(name = "INPUT_FILES", value = inputFilesString))
@@ -158,6 +159,7 @@ class RunCommandForFiles(private val processManagerService: ProcessManagerServic
 
                     val inputParsedData = mutableListOf<InputParsedData>().also {
                         it.add(InputParsedData(name = "LOADING_ACTIVITY", value = processManagerService.getLoadingActivityComponentName()))
+                        it.add(InputParsedData(name = "OUTPUT_PRESENTATION_ACTIVITY", value = processManagerService.getOutputPresentationActivityComponentName()))
                         it.add(InputParsedData(name = "INPUT", value = parsedPath.absolutePathString()))
                         it.addSharedTextInput(inputText)
                         it.add(InputParsedData(name = "INPUT_FILES", value = currentItems.joinToString("\n")))

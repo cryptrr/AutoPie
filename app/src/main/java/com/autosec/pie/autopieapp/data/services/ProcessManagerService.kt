@@ -85,6 +85,8 @@ class ProcessManagerService(
 
     fun getLoadingActivityComponentName(): String = "${activity.packageName}/.LoadingActivity"
 
+    fun getOutputPresentationActivityComponentName(): String = "${activity.packageName}/.OutputPresentationActivity"
+
     fun getCookieJarPath(): String = "${activity.filesDir.absolutePath}/usr/var/lib/cookies.txt"
 
     private fun openOutputViewer(logFile: String, commandName: String) {
