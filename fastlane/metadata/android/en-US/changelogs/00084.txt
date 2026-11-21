@@ -1,0 +1,9 @@
+What's New
+
+- Added AutoPie version compatibility warnings for cloud commands.
+- Improved cloud command documentation loading and handling of missing README or changelog files.
+- Prevented accidental swipe dismissal of the output viewer.
+- Added OUTPUT_ACTIVITY so commands can open the output viewer for the current app package.
+- Stabilized the build toolchain and aligned dependencies.
+
+Full Changelog: https://github.com/cryptrr/AutoPie/compare/v0.20.9-beta...v0.21.0-beta
