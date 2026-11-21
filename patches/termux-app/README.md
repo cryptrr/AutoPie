@@ -7,8 +7,8 @@ by `scripts/prepare-termux-app.sh`.
 The series was rebased and verified against official Termux commit
 `401bbe54b8f4e68302b1ff70678015a24628fb1d` on 2026-06-22.
 
-The preparation script uses the latest official `master` by default. Pin a
-specific revision or use another repository when needed:
+The preparation script defaults to the verified commit above, matching release
+CI. Override the revision or use another repository when needed:
 
 ```sh
 TERMUX_REF=401bbe54b8f4e68302b1ff70678015a24628fb1d \

@@ -4,7 +4,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TERMUX_REPO="${TERMUX_REPO:-https://github.com/termux/termux-app.git}"
-TERMUX_REF="${TERMUX_REF:-master}"
+# Keep local preparation aligned with the revision verified by the patch series and CI.
+TERMUX_REF="${TERMUX_REF:-401bbe54b8f4e68302b1ff70678015a24628fb1d}"
 NEW_PACKAGE="${TERMUX_BOOTSTRAP_NEW_PACKAGE:-com.autopi}"
 NEW_ROOT_DIR="${NEW_ROOT_DIR:-${TERMUX_BOOTSTRAP_NEW_ROOT_DIR:-}}"
 PATCH_DIR="$ROOT_DIR/patches/termux-app"
@@ -21,6 +22,8 @@ Options:
                        the patched Termux source is left unchanged.
 
 Environment:
+  TERMUX_REPO                   Override the official Termux source repository.
+  TERMUX_REF                    Override the pinned upstream Termux commit.
   TERMUX_BOOTSTRAP_NEW_PACKAGE   Same as --new-package.
   TERMUX_BOOTSTRAP_NEW_ROOT_DIR  Same as --new-root-dir.
   NEW_ROOT_DIR                   Also accepted as --new-root-dir by build_with_termux.sh.

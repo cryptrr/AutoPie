@@ -1,10 +1,10 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    kotlin("plugin.serialization") version "2.2.0"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
-    id("com.google.devtools.ksp") version "2.2.0-2.0.2"
-    id("androidx.room")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 // Existing installations need these outside the bootstrap ZIP: upgrading the APK
@@ -68,9 +68,6 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
 
     buildTypes {
         debug {
@@ -95,7 +92,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            //signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -104,14 +101,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {
@@ -121,6 +112,12 @@ android {
             excludes +="META-INF/AL2.0"
             excludes +="META-INF/LGPL2.1"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -170,31 +167,30 @@ dependencies {
     implementation(project(":terminal-view"))
     implementation(project(":terminal-emulator"))
 
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation(libs.appcompat)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    // Keep runtime and test coroutines aligned with the established resolved version.
+    implementation(platform(libs.coroutines.bom))
+    implementation(libs.coroutines.android)
 
-    //TEST IMPLS
-    implementation("androidx.compose.ui:ui-tooling:1.8.3")
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockk.agent)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
 
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("io.mockk:mockk:1.13.16")
-    testImplementation ("io.mockk:mockk-agent:1.13.16")
-    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation("io.mockk:mockk-android:1.13.16")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.ui.test.junit4)
+    androidTestImplementation(libs.koin.test)
+    androidTestImplementation(libs.koin.test.junit4)
 
-    testImplementation ("io.insert-k" +
-            "oin:koin-test:3.5.6")
-    testImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
-    androidTestImplementation ("io.insert-koin:koin-test:3.5.6")
-    androidTestImplementation ("io.insert-koin:koin-test-junit4:3.5.6")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.8.3")
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.ui.test.manifest)
 }
 
 val signingStoreFile = providers.environmentVariable("AUTOPIE_SIGNING_STORE_FILE")

@@ -17,5 +17,5 @@ app/release
 /.termux-generator.*
 /app/src/main/assets/bootstrap-aarch64.zip
 /base.apk
-/.kotlin/errors/
+/.kotlin/
 **/__pycache__/

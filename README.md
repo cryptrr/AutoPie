@@ -725,9 +725,10 @@ Troubleshooting:
 
 ## Build from source
 
-AutoPie requires JDK 17 and an Android SDK. Open the project in Android Studio for normal development builds, or use the included scripts to prepare the patched Termux modules and bootstrap.
+AutoPie requires JDK 17–23 (JDK 21 recommended) and an Android SDK.
+Select a compatible Gradle JDK in Android Studio; Gradle 8.13 cannot run on JDK 25. Open the project in Android Studio for normal development builds, or use the included scripts to prepare the patched Termux modules and bootstrap.
 
-To clone the latest official Termux source, apply AutoPie's patches, prepare the embedded bootstrap, and build a debug APK:
+To clone the pinned official Termux source, apply AutoPie's patches, prepare the embedded bootstrap, and build a debug APK:
 
 ```sh
 ./build_with_termux.sh
@@ -739,7 +740,10 @@ Pass Gradle tasks to make another build, for example:
 ./build_with_termux.sh :app:assembleRelease
 ```
 
-Set `TERMUX_REF` to pin an upstream Termux tag or commit.
+Local preparation and release CI use Termux commit
+`401bbe54b8f4e68302b1ff70678015a24628fb1d`. Set `TERMUX_REF` to override it
+with another upstream tag or commit. See [README-dependencies.md](README-dependencies.md)
+for the toolchain baseline and dependency validation commands.
 
 The build script downloads Termux's pinned bootstrap, injects AutoPie's required packages from the Termux repository, rewrites package paths for `com.autopi`, and writes `app/src/main/assets/bootstrap-aarch64.zip`.
 
