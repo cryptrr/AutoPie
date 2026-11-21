@@ -822,11 +822,11 @@ The activity also accepts string extras `output`, `outputFile`, and `commandName
 or `Intent.EXTRA_TEXT`. Direct text takes precedence over a file. For example:
 
 ```sh
-am start -n "$OUTPUT_PRESENTATION_ACTIVITY" \
+am start -n "$OUTPUT_ACTIVITY" \
   --es output "$OUTPUT" --es commandName "QR Code Generator"
 ```
 
-AutoPie supplies `OUTPUT_PRESENTATION_ACTIVITY` alongside `LOADING_ACTIVITY` in
+AutoPie supplies `OUTPUT_ACTIVITY` alongside `LOADING_ACTIVITY` in
 command environments. It contains the full component name for the current app
 package, so commands do not need to derive or hardcode it. For large output, pass
 `--es outputFile /absolute/path/to/output.json` to avoid Intent size limits.
